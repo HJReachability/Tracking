@@ -2,8 +2,8 @@ function [data,g,tau,runtime] = quadCapture(g, radius, tau, accuracy)
 %% Input: grid, target, time
 
 if nargin <1
-  g_min = [-10; -5; -10; -5];
-  g_max = [10; 5; 10; 5];
+  g_min = [-radius-2; -5; -radius-2; -5];
+  g_max = [radius+2; 5; radius+2; 5];
   g_N = 35*ones(length(g_min),1);
   g = createGrid(g_min,g_max, g_N, [], true);
 end
@@ -61,7 +61,7 @@ schemeData.accuracy = accuracy;
 %% Run
 tic;
 %extraArgs.visualize = 'true';
-%extraArgs.stopInit = [0,0,0,0];
+extraArgs.stopInit = [0,0,0,0];
 extraArgs.stopConverge = 1;
 [data, tau] = ...
   HJIPDE_solve(data0, tau, schemeData, 'zero',extraArgs,0);
