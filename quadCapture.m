@@ -21,7 +21,7 @@ end
 if nargin <3
   % time vector
   t0 = 0;
-  tMax = 30;
+  tMax = 40;
   dt = 0.025;
   tau = t0:dt:tMax;
 end
@@ -61,7 +61,7 @@ schemeData.accuracy = accuracy;
 %% Run
 tic;
 %extraArgs.visualize = 'true';
-extraArgs.stopInit = [0,0,0,0];
+%extraArgs.stopInit = [0,0,0,0];
 extraArgs.stopConverge = 1;
 [data, tau] = ...
   HJIPDE_solve(data0, tau, schemeData, 'zero',extraArgs,0);
