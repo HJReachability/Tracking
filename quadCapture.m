@@ -1,18 +1,19 @@
-function [data,g,tau,runtime] = quadCapture(g, radius, tau, accuracy)
+function [data,g,tau,runtime] = quadCapture(radius, g, tau, accuracy)
 %% Input: grid, target, time
-
 if nargin <1
+  radius = 2;
+%   dataMin = [-10 -inf -10 -inf];
+%   dataMax = [10 inf 10 inf];
+end
+
+if nargin <2
   g_min = [-radius-2; -5; -radius-2; -5];
   g_max = [radius+2; 5; radius+2; 5];
   g_N = 35*ones(length(g_min),1);
   g = createGrid(g_min,g_max, g_N, [], true);
 end
 
-if nargin <2
-  radius = 2;
-%   dataMin = [-10 -inf -10 -inf];
-%   dataMax = [10 inf 10 inf];
-end
+
   %data0 = shapeRectangleByCorners(g, ...
   %  dataMin, dataMax);
   data0 = shapeCylinder(g,[2,4],[0,0,0,0],radius);
