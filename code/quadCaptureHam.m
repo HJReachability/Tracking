@@ -38,15 +38,15 @@ uyMin = schemeData.uyMin;
 % \dot{y_r} = v_y - u_y
 % \dot{v_y} = a_y
 
-% plane minimizes over w, disturbance maximizes over v
+% min 2D, max 4D
 hamValue = deriv{1}.*grid.xs{2} + deriv{3}.*grid.xs{4} ...
     +    abs(deriv{1}).*uxMin + abs(deriv{3}).*uyMin ...
     + abs(deriv{2}).*axMax + abs(deriv{4}).*ayMax;
 
-%for making outside target
-% hamValue = -deriv{1}.*grid.xs{2} - deriv{3}.*grid.xs{4} ...
-%     +    abs(deriv{1}).*uxMin + abs(deriv{3}).*uyMin ...
-%     + abs(deriv{2}).*axMax + abs(deriv{4}).*ayMax;
+  %min 4D, max 2D
+% hamValue = deriv{1}.*grid.xs{2} + deriv{3}.*grid.xs{4} ...
+%     +    abs(deriv{1}).*uxMax + abs(deriv{3}).*uyMax ...
+%     + abs(deriv{2}).*axMin + abs(deriv{4}).*ayMin;
   
 % backwards reachable set
 hamValue = -hamValue;
