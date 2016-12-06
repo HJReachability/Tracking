@@ -4,3 +4,5 @@
 docs/Tracking Journal/tracking.pdf
 *.gz
 ~*
+*.png
+*.asv
