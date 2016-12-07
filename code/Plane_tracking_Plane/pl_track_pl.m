@@ -32,15 +32,15 @@ real_pl = Plane([0;0;0], wMax, vrange, dMax);
 dynSys = PlaneCAvoid({virt_pl; real_pl});
 
 % Grid
-L = 10;
+L = 0.2;
 grid_min = [-L; -L; -pi]; % Lower corner of computation domain
 grid_max = [L; L; pi];    % Upper corner of computation domain
 N = [101; 101; 101]; 
 g = createGrid(grid_min, grid_max, N, 3);
 
 % Track trajectory for up to this time
-tMax = 10; % for SPPwIntruderRTT method 2
-dt = 0.1;
+tMax = 1; % for SPPwIntruderRTT method 2
+dt = 0.01;
 tau = 0:dt:tMax;
 
 % Initial conditions
