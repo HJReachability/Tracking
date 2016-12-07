@@ -1,5 +1,8 @@
-function pl_track_pl_vis()
-load('pl_track_pl/set.mat')
+function pl_track_pl_vis(filename)
+if nargin < 1
+  filename = 'pl_track_pl/set.mat';
+end
+load(filename)
 
 figure
 visSetIm(g, data, 'r', -0.2);

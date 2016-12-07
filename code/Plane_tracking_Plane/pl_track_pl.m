@@ -39,7 +39,7 @@ N = [101; 101; 101];
 g = createGrid(grid_min, grid_max, N, 3);
 
 % Track trajectory for up to this time
-tMax = 1; % for SPPwIntruderRTT method 2
+tMax = 10; % for SPPwIntruderRTT method 2
 dt = 0.01;
 tau = 0:dt:tMax;
 
@@ -53,9 +53,10 @@ extraArgs.visualize = true;
 extraArgs.RS_level = -0.9*L;
 extraArgs.deleteLastPlot = true;
 extraArgs.keepLast = true;
+extraArgs.stopConverge = true;
 
 if save_png
-  folder = sprintf('%s', mfilename);
+  folder = sprintf('%s_%f', mfilename, now);
   system(sprintf('mkdir %s', folder));
   
   extraArgs.fig_filename = sprintf('%s/', folder);
