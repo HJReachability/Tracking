@@ -11,7 +11,7 @@ if nargin <2
   g_max = [5; 5; 5; 5];
 %   g_min = [-10; -10; -10; -10];
 %   g_max = [10; 10; 10; 10];
-  g_N = 35*ones(length(g_min),1);
+  g_N = 51*ones(length(g_min),1);
   g = createGrid(g_min,g_max, g_N, [], true);
 end
 
@@ -43,17 +43,17 @@ if nargin <3
 end
 
 if nargin<4
-  accuracy = 'medium';
+  accuracy = 'high';
 end
 % If intermediate results are not needed, use tau = [t0 tMax];
 
 %% Input: Problem Parameters
-aMax = 4;
+aMax = 2;
 axMax = aMax;
 ayMax = aMax;
 axMin = -aMax;
 ayMin = -aMax;
-uMax = 2;
+uMax = .5;
 uxMax = uMax;
 uyMax = uMax;
 uxMin = -uMax;
