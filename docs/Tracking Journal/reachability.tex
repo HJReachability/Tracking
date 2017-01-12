@@ -37,49 +37,62 @@ The goal of the trajectory, which is a ``virtual'' vehicle, is to maximize the t
 Define an error function $\errfunc(\rstate)$
 
 \begin{equation}
-\valfunc(\rstate, t) = \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau \in [t, T]} \errfunc(\rtraj(\tau; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) 
+\valfunc(\rstate, T) = \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{t \in [-T, 0]} \errfunc(\rtraj(0; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) 
 \end{equation}
 
-Take $T \rightarrow \infty$:
-
-\begin{equation}
-\valfunc_\infty(\rstate) = \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau>t} \errfunc(\rtraj(\tau; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) 
-\end{equation}
+%Take $T \rightarrow \infty$:
+%
+%\begin{equation}
+%\valfunc_\infty(\rstate) = \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{t \le 0} \errfunc(\rtraj(0; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) 
+%\end{equation}
 
 \begin{thm}
-Let $t_0 \geq 0$, and $\rstate_0$ be some state. Then
+Let $T_1 \ge 0$, and suppose
 
 \begin{equation}
+\label{eq:conv_valfunc}
+\valfunc_\infty(\rstate) = \valfunc(\rstate, T) = \valfunc(\rstate, T_1) ~ \forall T > T_1.
+\end{equation}
+
+Then
+
+\begin{equation}
+\valfunc_\infty(\rstate) = \valfunc_\infty(\rtraj(t_2; \rstate, t_1, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))) ~ \forall t_1, t_2 \le 0.
+\end{equation}
+
+\noindent where
+\begin{equation}
 \begin{aligned}
-&\max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau \ge t_0} \valfunc_\infty(\rtraj(\tau; \rstate_0, t_0, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
-&\qquad = \valfunc_\infty(\rstate_0)~ \forall t \ge t_0
+\vctrl^*(\cdot) = \arg \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{t \in [-T_1, 0]} \errfunc(\rtraj(0; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
+\tctrl^*(\cdot) = \arg \min_{\tctrl(\cdot)} \min_{\dstb(\cdot)} \min_{t \in [-T_1, 0]} \errfunc(\rtraj(0; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
+\dstb^*(\cdot) = \arg \min_{\dstb(\cdot)} \min_{t \in [-T_1, 0]} \errfunc(\rtraj(0; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) 
 \end{aligned}
 \end{equation}
+
 \end{thm}
 
 \begin{proof}
-It is clear that $\forall t > t_0$,
-  
+\eqref{eq:conv_valfunc} is equivalent to
+
 \begin{equation}
 \begin{aligned}
-\valfunc_\infty(\rstate(t)) &=\max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau\ge t} \errfunc(\rtraj(\tau; \rstate(t), t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
-&\ge \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau\ge t_0} \errfunc(\rtraj(\tau; \rstate(t), t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot)))\\ 
-&= \bar\valfunc_0
+\max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{t \in [-T_1, 0]} \errfunc(\rtraj(0; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
+= \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{t \in [-T, 0]} \errfunc(\rtraj(0; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
+\forall T > T_1
 \end{aligned}
-\end{equation}  
+\end{equation}
+\end{proof}
 
-\noindent since the only the minimization over $\tau$ in $\bar\valfunc_1$ does not include the interval $[t_0, t)$.
+\begin{proof}
+\begin{equation}
+\begin{aligned}
+\valfunc_\infty(\rstate) = \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{t \in [-T, 0]} \valfunc_\infty(\rtraj(0; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
+\forall T \ge 0
+\end{aligned}
+\end{equation}
 
 \end{proof}
 
-\begin{thm}
-
-\begin{equation}
-\max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau>t} \errfunc(\rtraj(\tau; \rstate(t), t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot)))
-\end{equation}
-
-
-\end{thm}
 
 \subsection{Dynamics of a Geometric Path}
 
