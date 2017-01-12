@@ -1,12 +1,85 @@
 % !TEX root = tracking.tex
-\section{Computing Tracking Safety Radius \label{sec:reachability}}
+\section{Robust-Invariant Region \label{sec:reachability}}
 Goals overview: Compute invariant sets, given by the optimization solution
 
 Properties of solution: 
 
-\subsection{Tracking as a Pursuit-Evasion Game}
+\subsection{Trajectory Tracking as a Pursuit-Evasion Game}
+Dynamics of system
+\begin{equation}
+\dot\vstate = \vdyn(\vstate, \vctrl, \dstb)
+\end{equation}
+
+Dynamics of trajectory
+\begin{equation}
+\dot\tstate = \tdyn(\tstate, \tctrl)
+\end{equation}
+
+Assume $\tstate$ is a subset of $\vstate$. Let $\tvind$ be the set of indices such that $\tstate_i = \vstate_{\tvind_i}$.
+
+Relative state:
+\begin{equation}
+\rstate = \vstate - \tvmat\tstate
+\end{equation}
+
+Relative dynamics
+\begin{equation}
+\dot\rstate = \rdyn(\rstate, \vctrl, \tctrl, \dstb)
+\end{equation}
+
+Tracking error: $\rstate_{\tvind}$.
+
+The goal of the system is to minimize the tracking error.
+
+The goal of the trajectory, which is a ``virtual'' vehicle, is to maximize the tracking error.
 
 \subsection{Optimization Problem}
+Define an error function $\errfunc(\rstate)$
+
+\begin{equation}
+\valfunc(\rstate, t) = \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau \in [t, T]} \errfunc(\rtraj(\tau; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) 
+\end{equation}
+
+Take $T \rightarrow \infty$:
+
+\begin{equation}
+\valfunc_\infty(\rstate) = \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau>t} \errfunc(\rtraj(\tau; \rstate, t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) 
+\end{equation}
+
+\begin{thm}
+Let $t_0 \geq 0$, and $\rstate_0$ be some state. Then
+
+\begin{equation}
+\begin{aligned}
+&\max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau \ge t_0} \valfunc_\infty(\rtraj(\tau; \rstate_0, t_0, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
+&\qquad = \valfunc_\infty(\rstate_0)~ \forall t \ge t_0
+\end{aligned}
+\end{equation}
+\end{thm}
+
+\begin{proof}
+It is clear that $\forall t > t_0$,
+  
+\begin{equation}
+\begin{aligned}
+\valfunc_\infty(\rstate(t)) &=\max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau\ge t} \errfunc(\rtraj(\tau; \rstate(t), t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
+&\ge \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau\ge t_0} \errfunc(\rtraj(\tau; \rstate(t), t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot)))\\ 
+&= \bar\valfunc_0
+\end{aligned}
+\end{equation}  
+
+\noindent since the only the minimization over $\tau$ in $\bar\valfunc_1$ does not include the interval $[t_0, t)$.
+
+\end{proof}
+
+\begin{thm}
+
+\begin{equation}
+\max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tau>t} \errfunc(\rtraj(\tau; \rstate(t), t, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot)))
+\end{equation}
+
+
+\end{thm}
 
 \subsection{Dynamics of a Geometric Path}
 
