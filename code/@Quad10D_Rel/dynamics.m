@@ -48,7 +48,7 @@ switch dim
   case 8
     dx = -obj.d0 * x{dims==7} + obj.n0 * u{2};
   case 9
-    dx = x{dims==10};
+    dx = x{dims==10} - d{3};
   case 10
     dx = obj.kT * u{3} - obj.g;
     
