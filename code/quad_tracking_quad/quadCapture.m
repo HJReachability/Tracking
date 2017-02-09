@@ -1,26 +1,35 @@
-function [data,g,tau,runtime] = quadCapture(g, tau, accuracy)
+function [data, g, tau, runtime]=quadCapture(gN, dt, accuracy, g)
 %% Input: grid, target, time
-% if nargin <1
-%   radius = 2;
-% %   dataMin = [-10 -inf -10 -inf];
-% %   dataMax = [10 inf 10 inf];
-% end
-
-if nargin <2
-    g_min = [-5; -5; -5; -5];
-  g_max = [5; 5; 5; 5];
-%   g_min = [-10; -10; -10; -10];
-%   g_max = [10; 10; 10; 10];
-  g_N = 51*ones(length(g_min),1);
-  g = createGrid(g_min,g_max, g_N, [], true);
+if nargin < 1
+  gN = 21;
 end
 
+t0 = 0;
+tMax = 70;
+if nargin < 2
+  dt = 1;
+end
+tau = t0:dt:tMax;
 
-  %data0 = shapeRectangleByCorners(g, ...
-  %  dataMin, dataMax);
-%   data0 = shapeCylinder(g,[2,4],[0,0,0,0],radius);
-%   data0 = shapeComplement(data0);
-%   data0 = data0 - max(data0(:)); %make maximum value = 0
+if nargin<3
+  accuracy = 'low';
+end
+
+if nargin <4
+  gMinX = [-5; -5];
+  gMaxX = [5; 5];
+  gMinY = [-5; -5];
+  gMaxY = [5; 5];
+  g_NX = gN*ones(length(gMinX),1);
+  g_NX = gN*ones(length(gMinY),1);
+  gX = createGrid(gMinX,gMaxX, g_NX, [], true);
+  gY = createGrid(gMinY,gMaxY, g_NY, [], true);
+%     g_min = [-5; -5; -5; -5];
+%   g_max = [5; 5; 5; 5];
+%   g_N = gN*ones(length(g_min),1);
+%   g = createGrid(g_min,g_max, g_N, [], true);
+end
+
 %% make initial data
 ignoreDims = [2,4];
 center = [0 0 0 0];
@@ -33,45 +42,36 @@ for i = 1 : g.dim
 end
 data0 = -sqrt(data0);
 
-%% time
-if nargin <3
-  % time vector
-  t0 = 0;
-  tMax = .25;
-  dt = 0.025;
-  tau = t0:dt:tMax;
-end
-
-if nargin<4
-  accuracy = 'high';
-end
-% If intermediate results are not needed, use tau = [t0 tMax];
+%% visualize initial data
+f1 = figure(1);
+clf
+[g02D, data02D] = proj(g, data0, [0 1 0 1], 'min');
+h1 = surfc(g02D.xs{1}, g02D.xs{2}, data02D);
+figure(1)
 
 %% Input: Problem Parameters
-aMax = 2;
-axMax = aMax;
-ayMax = aMax;
-axMin = -aMax;
-ayMin = -aMax;
-uMax = .5;
-uxMax = uMax;
-uyMax = uMax;
-uxMin = -uMax;
-uyMin = -uMax;
+aMax = [3 3];
+aMin = -aMax;
 
+bMax = [.5 .5];
+bMin = -bMax;
+
+dMax = [.1 .1];
+dMin = -dMax;
+
+uMax = [bMax(1) aMax(1) bMax(2) aMax(2)];
+uMin = [bMin(1) aMin(1) bMin(2) aMin(2)];
+uMode = 'max';
+dMode = 'min';
 
 %% Input: SchemeDatas
+
+
+dims = [1:4];
+schemeData.dynSys = Quad4D2DCAvoid(zeros(4,1), uMax, uMin, dMax, dMin, dims);
+schemeData.uMode = uMode;
+schemeData.dMode = dMode;
 schemeData.grid = g;
-schemeData.axMax = axMax;
-schemeData.axMin = axMin;
-schemeData.ayMax = ayMax;
-schemeData.ayMin = ayMin;
-schemeData.uxMax = uxMax;
-schemeData.uyMax = uyMax;
-schemeData.uxMin = uxMin;
-schemeData.uyMin = uyMin;
-schemeData.hamFunc = @quadCaptureHam;
-schemeData.partialFunc = @quadCapturePartial;
 schemeData.accuracy = accuracy;
 
 %% Run
@@ -79,10 +79,10 @@ tic;
 %extraArgs.visualize = 'true';
 %extraArgs.stopInit = [0,0,0,0];
 extraArgs.keepLast = true;
-extraArgs.visualize = true;
-extraArgs.deleteLastPlot = true;
-extraArgs.plotData.projpt = 0;
-extraArgs.plotData.plotDims = [1 1 1 0];
+%extraArgs.visualize = true;
+%extraArgs.deleteLastPlot = true;
+% extraArgs.plotData.projpt = 0;
+% extraArgs.plotData.plotDims = [1 1 1 0];
 extraArgs.stopConverge = 1;
 extraArgs.targets = data0;
 [data, tau] = ...

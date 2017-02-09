@@ -56,7 +56,8 @@
 
 %%%
 \begin{abstract}
-Quadrotors have become very popular in research and industry for tasks that require exploration of unknown environments. However, there are limited techniques for fast, real-time path planning that ensure safety for the quadrotor. Simplified models of quadrotor dynamics are easy to plan, but do not capture nonlinear behavior. Guaranteed safe paths can be computed for more realistic and complicated dynamics of quadrotors, but these paths require heavy computational load. We propose a method that combines these two approaches. First we precompute a guaranteed tracking error bound for the realistic dynamics following a simplified dynamics model using reachability analysis. We then perform path planning in real-time using the simplified model. This results in a radius around the simplified model that our quadrotor is guaranteed to remain in.  \color{red} Path planning method, results, etc.
+
+Quadrotors have become very popular in research and industry for tasks that require exploration of unknown environments. However, path planning for autonomous vehicles is a computationally intensive task, and balancing speed of planning with safety and dynamic feasibility is challenging. Simplified models of quadrotor dynamics are easy to plan, but do not capture nonlinear behavior. Guaranteed safe paths can be computed for more realistic and complicated dynamics of quadrotors, but these paths require heavy computational load. We propose a method that combines these two approaches. First we precompute a guaranteed tracking error bound for the realistic dynamics following a simplified dynamics model using reachability analysis. We then perform path planning in real-time using the simplified model. This results in an invariant set around the simplified model that our quadrotor is guaranteed to remain in.  \color{red} Path planning method, results, etc.
 \end{abstract}
 
 \input{introduction.tex}
