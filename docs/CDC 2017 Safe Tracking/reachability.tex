@@ -1,0 +1,84 @@
+% !TEX root = tracking.tex
+\section{Computing Tracking Safety Radius \label{sec:reachability}}
+To precompute the tracking bound we must set up a capture-avoid game between the real and virtual vehicles, which we then analyze using HJ reachability. In this game, the real system will try to "capture" the virtual system, while the virtual system is doing everything it can to avoid capture. By using reachability to analyze this game we will get a guaranteed bound on how far apart the two vehicles will ever be even when the virtual system is acting as inconveniently as possible.
+
+\subsection{Individual and Relative Dynamics}
+
+Let $z_1$ be the state variable of the virtual system used for MPC planning, and $z_2$ be the state variable of the real system. The evolution of these states satisfies their respective ordinary differential equations:
+
+\begin{equation}
+\begin{aligned}
+\label{eq:fdyn}
+\frac{d\state_i}{ds} = \dot{\state_i} = f_i(\state_i, \ctrl_i), s \in [t, 0] \\
+\state_i \in \zset_i, \ctrl_i \in \cset_i, i = 1,2
+\end{aligned}
+\end{equation}
+
+We assume that the system dynamics $f_i : \zset_i\ \times\ \cset_i \rightarrow \zset_i$ are uniformly continuous, bounded, and Lipschitz continuous in $z_i$ for fixed control $u_i$. The control functions functions $u_i(\cdot)$ are drawn from the set of measurable functions\footnote{A function $f:X\to Y$ between two measurable spaces $(X,\Sigma_X)$ and $(Y,\Sigma_Y)$ is said to be measurable if the preimage of a measurable set in $Y$ is a measurable set in $X$, that is: $\forall V\in\Sigma_Y, f^{-1}(V)\in\Sigma_X$, with $\Sigma_X,\Sigma_Y$ $\sigma$-algebras on $X$,$Y$.}:
+\begin{equation}
+\begin{aligned}
+\ctrl_i(\cdot) \in \cfset_i(t) = \{\phi: [t, 0] \rightarrow \cset_i: \phi(\cdot) \text{ is measurable}\}\\
+i = 1,2
+\end{aligned}
+\end{equation}
+
+Under these assumptions there exists a unique trajectory solving \ref{eq:fdyn} for a given $u_i(\cdot) \in \cset_i$ \cite{Evans84}. The trajectories of \ref{eq:fdyn} that solve this ODE will be denoted as $\ctrl(\cdot)$ as $\traj_i(s; \state_i, t, \ctrl_i(\cdot)), i = 1,2$. These trajectories will satisfy the initial condition and the ODE \ref{eq:fdyn} almost everywhere:
+\begin{equation}
+\label{eq:fdyn_traj}
+\begin{aligned}
+\frac{d}{ds}\traj_i(s; \state_i, t, \ctrl_i(\cdot)) &= f_i(\traj_i(s; \state_i, t, \ctrl_i(\cdot)), \ctrl_i(s)) \\
+\traj_i(t; \state_i, t, \ctrl_i(\cdot)) &= \state_i, \ i = 1,2
+\end{aligned}
+\end{equation}
+
+We now have the dynamics for the individual systems, but to set up the capture-avoid game we must first define the relative states and dynamics. We place the virtual vehicle at the origin by subtracting its states $(z_1)$ from the real system's states $(z_2)$. In this frame of reference $(z_r)$ we are given the states of the real system relative to the virtual system.
+
+\begin{equation}
+\begin{aligned}
+z_r =& z_2 - z_1 \\
+g(z_r,u_1,u_2) =& f_2(z_2,u_2) - f_1(z_1,u_1)
+\end{aligned}
+\end{equation}
+
+The relative dynamics will include the relative position states $x_r, y_r$ and any other relevant states such as relative angles and velocities.
+
+\subsection{Formalizing the Capture-Avoid Game}
+Now that we have the relative dynamics between the two systems we must define a metric for the tracking error bound between these systems. We do this by defining an implicit surface function as a cost function in the new frame of reference. Because the metric we care about is distance to the origin, this cost function is a simple signed distance function in position space centered at the origin:
+\begin{equation}
+l(x_r,y_r)= \| [x_r,y_r] \|_2
+\end{equation}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.47\textwidth]{fig/cost_function}
+	\caption{filler image about the implicit surface function}
+	\label{fig:cost}
+\end{figure} 
+
+ This can be seen in Figure \ref{fig:cost}, where the rings represent varying level sets of the cost function. The real vehicle will try to minimize this cost to reduce the relative distance, while the virtual vehicle will do the opposite.
+ 
+ We want to find the farthest distance (and thus highest cost) that this game will ever reach when both players are acting optimally. Therefore we want to find a mapping between the initial state of the system and the maximum cost achieved over the time horizon. This mapping is through our value function, defined as:
+ \begin{equation}
+ 	V(\state_r)= \min_{u_2} \max_{u_1} \max_{t\in [0,T]} l(x_r(t),y_r(t))
+ \end{equation} 
+ 
+ This is a modified version of the Hamilton-Jacobi formulation as described by \textcolor{red}{cite jaime,mo, time varying reachability}. \textcolor{red}{explain why this is equivalent to taking the min (or in the way I wrote it, max) between the current value function and the target set}
+ 
+ run to desired time or convergence
+ conditions for convergence
+ 
+ results in Figure \ref{fig:value}
+ 
+ 
+ \begin{figure}
+ 	\centering
+ 	\includegraphics[width=0.47\textwidth]{fig/value_function}
+ 	\caption{filler image about the value function}
+ 	\label{fig:value}
+ \end{figure} 
+ guarantee to remain within current level set (proof)
+ if p1 does not act optimally, can get into a closer bound
+ eventual limit
+ 
+ can also add external disturbances easily
+ 
