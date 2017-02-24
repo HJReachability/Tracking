@@ -44,9 +44,33 @@
 \newcommand{\zset}{\mathcal{Z}}
 \newcommand{\ctrl}{u}
 
+\newcommand{\tvar}{t}
+\newcommand{\thor}{T} % Time horizon
 
+\newcommand{\vstate}{x} % Vehicle state
+\newcommand{\tstate}{y} % Trajectory state
+\newcommand{\rstate}{z} % Relative state
+
+\newcommand{\vtraj}{\xi_\vdyn}
+\newcommand{\ttraj}{\xi_\tdyn}
+\newcommand{\rtraj}{\xi_\rdyn}
+
+\newcommand{\vctrl}{u} % Vehicle control
+\newcommand{\dstb}{d} % Disturbance
+\newcommand{\tctrl}{w} % Trajectory control
+
+\newcommand{\vdyn}{f} % Vehicle dynamics
+\newcommand{\tdyn}{g} % Trajectory dynamics
+\newcommand{\rdyn}{r} % Relative dynamics
+
+\newcommand{\tvind}{s} % Index of vehicle state corresponding to trajectory state
+\newcommand{\tvmat}{R} % Matrix for transforming trajectory state to the same length as vehicle state
+
+\newcommand{\errfunc}{l} % Error function
+\newcommand{\valfunc}{V} % Value function
+
+\newtheorem{thm}{Theorem}
 \newtheorem{prop}{Proposition}
-\newtheorem{IEEEproof}{Proof}
 
 \title{\LARGE \bf Real-Time Safe Path Tracking of Quadrotors}
 
