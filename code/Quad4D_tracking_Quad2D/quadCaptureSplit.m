@@ -1,25 +1,25 @@
 function [vf, runtime]=quadCaptureSplit(gN, dt, accuracy)
 %% Input: grid, target, time
 if nargin < 1
-  gN = 21;
+  gN = 71;
 end
 
 t0 = 0;
-tMax = 70;
+tMax = 50;
 if nargin < 2
   dt = 1;
 end
 tau = t0:dt:tMax;
 
 if nargin<3
-  accuracy = 'low';
+  accuracy = 'high';
 end
 
 if nargin <4
-  gMinX = [-5; -5];
-  gMaxX = [5; 5];
-  gMinY = [-5; -5];
-  gMaxY = [5; 5];
+  gMinX = [-20; -5];
+  gMaxX = [20; 5];
+  gMinY = [-20; -5];
+  gMaxY = [20; 5];
   g_NX = gN*ones(length(gMinX),1);
   g_NY = gN*ones(length(gMinY),1);
   gX = createGrid(gMinX,gMaxX, g_NX, [], true);
@@ -31,27 +31,30 @@ if nargin <4
 end
 
 %% make initial data
-ignoreDims = 2;
-center = [0 0];
+% ignoreDims = 2;
+% center = [0 0];
+% 
+% dataX0 = zeros(gX.shape);
+% for i = 1 : gX.dim
+%   if(all(i ~= ignoreDims))
+%     dataX0 = dataX0 + (gX.xs{i} - center(i)).^2;
+%   end
+% end
+% dataX0 = -sqrt(dataX0);
+% 
+% 
+%  ignoreDims = 2;
+%  center = [0 0];
+%  dataY0 = zeros(gY.shape);
+%  for i = 1 : gY.dim
+%    if(all(i ~= ignoreDims))
+%      dataY0 = dataY0 + (gY.xs{i} - center(i)).^2;
+%    end
+%  end
+%  dataY0 = -sqrt(dataY0);
 
-dataX0 = zeros(gX.shape);
-for i = 1 : gX.dim
-  if(all(i ~= ignoreDims))
-    dataX0 = dataX0 + (gX.xs{i} - center(i)).^2;
-  end
-end
-dataX0 = -sqrt(dataX0);
-
-
- ignoreDims = 2;
- center = [0 0];
- dataY0 = zeros(gY.shape);
- for i = 1 : gY.dim
-   if(all(i ~= ignoreDims))
-     dataY0 = dataY0 + (gY.xs{i} - center(i)).^2;
-   end
- end
- dataY0 = -sqrt(dataY0);
+dataX0 = -shapeRectangleByCorners(gX,[0 -Inf],[0 Inf]);
+dataY0 = -shapeRectangleByCorners(gY,[0 -Inf],[0 Inf]);
 
 %% visualize initial data
 f1 = figure(1);
@@ -71,7 +74,7 @@ figure(1)
 aMax = [3 3];
 aMin = -aMax;
 
-bMax = [.5 .5];
+bMax = [1 1];
 bMin = -bMax;
 
 dMax = [.1 .1];
@@ -116,7 +119,7 @@ tic;
 %extraArgs.deleteLastPlot = true;
 % extraArgs.plotData.projpt = 0;
 % extraArgs.plotData.plotDims = [1 1 1 0];
-extraArgs.stopConverge = 1;
+%extraArgs.stopConverge = 1;
 extraArgs.targets = dataX0;
 [dataX, tau] = HJIPDE_solve(dataX0, tau, sD_X, 'none', extraArgs);
 extraArgs.targets = dataY0;
@@ -126,6 +129,27 @@ extraArgs.targets = dataY0;
 %  HJIPDE_solve(data0, tau, schemeData, 'none',extraArgs);
 runtime = toc;
 
+%% visualize initial data
+f1 = figure(2);
+clf
+subplot(2,2,1)
+hX = surfc(gX.xs{1}, gX.xs{2}, dataX(:,:,end));
+xlabel('x')
+ylabel('v_x')
+subplot(2,2,2)
+[gX1D, dataX1D] = proj(gX, dataX(:,:,end), [0 1], 1);
+plot(gX1D.xs{1},dataX1D)
+xlabel('x')
+ylabel('value')
+subplot(2,2,3)
+hY = surfc(gY.xs{1}, gY.xs{2}, dataY(:,:,end));
+xlabel('y')
+ylabel('v_y')
+subplot(2,2,4)
+[gY1D, dataY1D] = proj(gY, dataY(:,:,end), [0 1], 1);
+plot(gY1D.xs{1},dataY1D)
+xlabel('y')
+ylabel('value')
 %% Reconstruct
 %     vfs - Self-contained (decoupled) value functions
 %              .gs:     cell structure of grids
@@ -138,7 +162,7 @@ vfs.gs = {[gX],[gY]};
 vfs.tau = tau;
 vfs.datas = {dataX, dataY};
 vfs.dims = {[1,2];[3,4]};
-vf = reconSC(vfs, [gMinX; gMinY], [gMaxX; gMaxY],'full');
+vf = reconSC(vfs, [gMinX; gMinY], [gMaxX; gMaxY],'end','min');
 
 %% Save 
 % if ndims(data) > 4
