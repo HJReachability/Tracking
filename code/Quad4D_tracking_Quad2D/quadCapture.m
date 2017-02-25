@@ -1,11 +1,11 @@
 function [data, g, tau, runtime]=quadCapture(gN, dt, accuracy, g)
 %% Input: grid, target, time
 if nargin < 1
-  gN = 31;
+  gN = 21;
 end
 
 t0 = 0;
-tMax = 100;
+tMax = 50;
 if nargin < 2
   dt = 1;
 end
@@ -16,25 +16,25 @@ if nargin<3
 end
 
 if nargin <4
-    g_min = [-5; -5; -5; -5];
-  g_max = [5; 5; 5; 5];
+    g_min = [-10; -5; -10; -5];
+  g_max = [10; 5; 10; 5];
   g_N = gN*ones(length(g_min),1);
   g = createGrid(g_min,g_max, g_N, [], true);
 end
 
 %% make initial data
-% ignoreDims = [2,4];
-% center = [0 0 0 0];
+ignoreDims = [2,4];
+center = [0 0 0 0];
 
-%data0 = zeros(g.shape);
-% for i = 1 : g.dim
-%   if(all(i ~= ignoreDims))
-%     data0 = data0 + (g.xs{i} - center(i)).^2;
-%   end
-% end
-% data0 = -sqrt(data0);
+data0 = zeros(g.shape);
+for i = 1 : g.dim
+  if(all(i ~= ignoreDims))
+    data0 = data0 + (g.xs{i} - center(i)).^2;
+  end
+end
+data0 = -sqrt(data0);
 
-data0 = -shapeRectangleByCorners(g,[0 -Inf 0 -Inf],[0 Inf 0 Inf]);
+%data0 = -shapeRectangleByCorners(g,[0 -Inf 0 -Inf],[0 Inf 0 Inf]);
 
 
 %% visualize initial data
