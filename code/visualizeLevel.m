@@ -1,4 +1,11 @@
 function [hCost, hValue, hV1, hL1] = visualizeLevel(g,data,type,cost,valExtraStates)
+% inputs:
+% g - grid
+% data - data that has been computed with min w/ target
+% type - quad or plane
+% cost - square or circle (depending how you set the initial cost)
+% valExtraStates - values at the non-position states
+
 figure(3)
 clf
 colormap('winter');
@@ -15,7 +22,7 @@ costMax = g.max(1);%max(data0(:));
 costMin = g.min(1);%min(data0(:));
 
 %project onto valExtraStates
-[gProj, data0Proj] = proj(g, data0, [0 0 1 1], [valExtraStates]);
+[gProj, data0Proj] = proj(g, data0, [0 0 1 1], valExtraStates);
 
 %plot cost
 subplot(1,3,1)
