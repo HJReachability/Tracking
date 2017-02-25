@@ -1,14 +1,18 @@
-function [data, g, tau, runtime]=quadCapture(gN, dt, accuracy, g)
+function [data, g, tau, runtime]=quadCapture(gN, dt, tMax, accuracy, g)
 %% Input: grid, target, time
 if nargin < 1
   gN = 21;
 end
 
 t0 = 0;
-tMax = 50;
 if nargin < 2
   dt = 1;
 end
+
+if nargin <3
+  tMax = 50;
+end
+
 tau = t0:dt:tMax;
 
 if nargin<3

@@ -30,6 +30,9 @@ hCost = surfc(gProj.xs{1},gProj.xs{2},data0Proj);
 title(['Cost Function, v = ' num2str(valExtraStates(1)) ...
   ' m/s and \theta = ' num2str(valExtraStates(2)) ' rad']);
 axis square
+xlabel('$x$','Interpreter','latex','FontSize',20)
+ylabel('$y$','Interpreter','latex','FontSize',20)
+zlabel('$l(z)$','Interpreter','latex','FontSize',20)
 
 %get data
 data = -data;
@@ -56,7 +59,9 @@ hValue(2).LevelList = hValue(2).LevelList(hValue(2).LevelList <= levelMax);
 zlim([levelMin-.05 levelMax]);
 caxis([levelMin levelMax]);
 axis square
-
+xlabel('$x$','Interpreter','latex','FontSize',20)
+ylabel('$y$','Interpreter','latex','FontSize',20)
+zlabel('$V(z)$','Interpreter','latex','FontSize',20)
 
 elseif strcmp(type,'quad')
   if strcmp(cost,'square')
@@ -104,6 +109,9 @@ elseif strcmp(type,'quad')
   zlim([levelMin-.05 levelMax]);
   caxis([levelMin levelMax]);
   axis square
+  xlabel('$x$','Interpreter','latex','FontSize',20)
+ylabel('$y$','Interpreter','latex','FontSize',20)
+zlabel('$V(z)$','Interpreter','latex','FontSize',20)
   
     %plot cost
    subplot(1,3,1)
@@ -116,6 +124,9 @@ elseif strcmp(type,'quad')
   zlim([0 levelMax]);
   caxis([0 levelMax]);
   axis square
+  xlabel('$x$','Interpreter','latex','FontSize',20)
+ylabel('$y$','Interpreter','latex','FontSize',20)
+zlabel('$l(z)$','Interpreter','latex','FontSize',20)
 end
 
 
@@ -132,4 +143,6 @@ title('Mapping initial state to tracking error bound')
 axis square
 set(gcf,'Color','white')
 colorbar
+xlabel('$x$','Interpreter','latex','FontSize',20)
+ylabel('$y$','Interpreter','latex','FontSize',20)
 end

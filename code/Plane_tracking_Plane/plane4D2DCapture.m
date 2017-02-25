@@ -1,23 +1,28 @@
-function [data, g, tau, runtime]=plane4D2DCapture(gN, dt, accuracy, g)
+function [data, g, tau, runtime]=plane4D2DCapture(gN, dt, tMax, accuracy, g)
 %% Input: grid, target, time
 if nargin < 1
   gN = 31;
 end
 
 t0 = 0;
-tMax = 100;
+
 if nargin < 2
   dt = 1;
 end
+
+if nargin <3 
+  tMax = 50;
+end
+
 tau = t0:dt:tMax;
 
-if nargin<3
+if nargin<4
   accuracy = 'low';
 end
 
-if nargin <4
-    g_min = [-5; -5; -5; -pi];
-  g_max = [5; 5; 5; pi];
+if nargin <5
+    g_min = [-10; -10; -5; -pi];
+  g_max = [10; 10; 5; pi];
   g_N = gN*ones(length(g_min),1);
   g = createGrid(g_min,g_max, g_N, 4, true);
 end
