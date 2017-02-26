@@ -27,16 +27,7 @@ if nargin <4
 end
 
 %% make initial data
-ignoreDims = [2,4];
-center = [0 0 0 0];
-
-data0 = zeros(g.shape);
-for i = 1 : g.dim
-  if(all(i ~= ignoreDims))
-    data0 = data0 + (g.xs{i} - center(i)).^2;
-  end
-end
-data0 = -sqrt(data0);
+data0 = -sqrt(g.xs{1}.^2 + g.xs{3}.^2);
 
 %data0 = -shapeRectangleByCorners(g,[0 -Inf 0 -Inf],[0 Inf 0 Inf]);
 
