@@ -1,4 +1,4 @@
-function [hCost, hValue, hV1, hL1] = visualizeLevel(g,data,type,cost,valExtraStates)
+function [hCost, hValue, hV1, hL1] = visualizeLevel(g,data,type,cost,valExtraStates,fig)
 % inputs:
 % g - grid
 % data - data that has been computed with min w/ target
@@ -6,7 +6,7 @@ function [hCost, hValue, hV1, hL1] = visualizeLevel(g,data,type,cost,valExtraSta
 % cost - square or circle (depending how you set the initial cost)
 % valExtraStates - values at the non-position states
 
-figure(3)
+figure(fig)
 clf
 colormap('winter');
 
