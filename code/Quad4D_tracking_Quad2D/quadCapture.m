@@ -38,7 +38,12 @@ elseif strcmp(targetType,'twoNorm')
   data0 = -sqrt(g.xs{1}.^2 + g.xs{3}.^2);
   
 elseif strcmp(targetType,'quadratic')
-  data0 = -(sg.xs{1}.^2 + g.xs{3}.^2);
+  data0 = -(g.xs{1}.^2 + g.xs{3}.^2);
+  
+  elseif strcmp(targetType,'quadratic_2x2D')
+      data01 = g.xs{1}.^2;
+    data02 = g.xs{3}.^2;
+    data0 = max(data01,data02);
 end
 
 
