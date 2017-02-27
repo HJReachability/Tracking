@@ -1,21 +1,25 @@
-function [vf, runtime]=quadCaptureSplit(gN, dt, accuracy)
+function [vf, runtime]=quadCaptureSplit(gN, dt, tMax, accuracy, gX, gY)
 %% Input: grid, target, time
 if nargin < 1
   gN = 71;
 end
 
 t0 = 0;
-tMax = 50;
 if nargin < 2
   dt = 1;
 end
+
+if nargin < 3
+  tMax = 50;
+end
+
 tau = t0:dt:tMax;
 
-if nargin<3
+if nargin<4
   accuracy = 'high';
 end
 
-if nargin <4
+if nargin <5
   gMinX = [-10; -5];
   gMaxX = [10; 5];
   gMinY = [-10; -5];
@@ -47,7 +51,7 @@ figure(1)
 aMax = [3 3];
 aMin = -aMax;
 
-bMax = [1 1];
+bMax = [.5 .5];
 bMin = -bMax;
 
 dMax = [.1 .1];
@@ -90,10 +94,10 @@ tic;
 % extraArgs.plotData.projpt = 0;
 % extraArgs.plotData.plotDims = [1 1 1 0];
 %extraArgs.stopConverge = 1;
-extraArgs.targets = dataX0;
-[dataX, tau] = HJIPDE_solve(dataX0, tau, sD_X, 'none', extraArgs);
-extraArgs.targets = dataY0;
-[dataY, tau] = HJIPDE_solve(dataY0, tau, sD_Y, 'none', extraArgs);
+%extraArgs.targets = dataX0;
+[dataX, tau] = HJIPDE_solve(dataX0, tau, sD_X, 'none');%, extraArgs);
+%extraArgs.targets = dataY0;
+[dataY, tau] = HJIPDE_solve(dataY0, tau, sD_Y, 'none');%, extraArgs);
 
 runtime = toc;
 

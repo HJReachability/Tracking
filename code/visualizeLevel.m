@@ -46,7 +46,7 @@ levels = levels([2,4,6]);
 %Plot
 hValue = surfc(gProj.xs{1},gProj.xs{2},dataProj);
 title(['Value Function, v = ' num2str(valExtraStates(1)) ...
-  ' m/s and \theta = ' num2str(valExtraStates(2)) ' rad'])
+  ' m/s and \theta = ' num2str(valExtraStates(2)) ' rad'],'FontSize',15)
 
 hValue(2).ContourZLevel = levelMin - .05;
 hValue(2).LevelList = hValue(2).LevelList(hValue(2).LevelList <= levelMax);
@@ -54,6 +54,7 @@ hValue(2).LevelList = hValue(2).LevelList(hValue(2).LevelList <= levelMax);
 zlim([levelMin-.05 levelMax]);
 caxis([levelMin levelMax]);
 axis square
+axis([g.min(1) g.max(1) g.min(2) g.max(2) levelMin-.05 levelMax])
 xlabel('$x$','Interpreter','latex','FontSize',20)
 ylabel('$y$','Interpreter','latex','FontSize',20)
 zlabel('$V(z)$','Interpreter','latex','FontSize',20)
@@ -62,13 +63,14 @@ zlabel('$V(z)$','Interpreter','latex','FontSize',20)
 subplot(1,3,1)
 hCost = surfc(gProj.xs{1},gProj.xs{2},data0Proj);
 title(['Cost Function, v = ' num2str(valExtraStates(1)) ...
-  ' m/s and \theta = ' num2str(valExtraStates(2)) ' rad']);
+  ' m/s and \theta = ' num2str(valExtraStates(2)) ' rad'],'FontSize',15);
 hCost(2).LevelList = hCost(2).LevelList(hCost(2).LevelList <= levelMax);
 hCost(2).ContourZLevel = 0; %levelMin - .05;
 
   zlim([0 levelMax]);
   caxis([0 levelMax]);
   axis square
+axis([g.min(1) g.max(1) g.min(2) g.max(2) 0 levelMax])
 xlabel('$x$','Interpreter','latex','FontSize',20)
 ylabel('$y$','Interpreter','latex','FontSize',20)
 zlabel('$l(z)$','Interpreter','latex','FontSize',20)
@@ -109,7 +111,7 @@ elseif strcmp(type,'quad')
   subplot(1,3,2)
   hValue = surfc(gProj.xs{1},gProj.xs{2},dataProj);
   title(['Value Function, v_x = ' num2str(valExtraStates(1)) ...
-    ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'])
+    ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15)
   
   hValue(2).ContourZLevel = levelMin - .05;
   hValue(2).LevelList = hValue(2).LevelList(hValue(2).LevelList <= levelMax);
@@ -125,7 +127,7 @@ zlabel('$V(z)$','Interpreter','latex','FontSize',20)
    subplot(1,3,1)
   hCost = surfc(gProj.xs{1},gProj.xs{2},data0Proj);
   title(['Cost Function, v_x = ' num2str(valExtraStates(1)) ...
-    ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s']);
+    ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15);
   
   hCost(2).LevelList = hCost(2).LevelList(hCost(2).LevelList <= levelMax);
   
@@ -147,7 +149,7 @@ hold on
 [~,hL1] = contour(gProj.xs{1},gProj.xs{2},data0Proj,levels,...
   'LineWidth',2);
 axis([g.min(1) g.max(1) g.min(1) g.max(1)])
-title('Mapping initial state to tracking error bound')
+title('Mapping initial state to tracking error bound','FontSize',15)
 axis square
 set(gcf,'Color','white')
 colorbar

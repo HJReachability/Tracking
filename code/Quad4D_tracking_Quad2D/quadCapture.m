@@ -40,10 +40,10 @@ h1 = surfc(g02D.xs{1}, g02D.xs{2}, data02D);
 figure(1)
 
 %% Input: Problem Parameters
-aMax = [4 4]; %acceleration in each direction
+aMax = [3 3]; %acceleration in each direction
 aMin = -aMax;
 
-bMax = [1 1];
+bMax = [.5 .5];
 bMin = -bMax;
 
 dMax = [.1 .1];
@@ -74,6 +74,7 @@ extraArgs.keepLast = true;
 % extraArgs.plotData.projpt = 0;
 % extraArgs.plotData.plotDims = [1 1 1 0];
 extraArgs.stopConverge = 1;
+extraArgs.convergeThreshold = .05;
 extraArgs.targets = data0;
 [data, tau] = ...
   HJIPDE_solve(data0, tau, schemeData, 'none',extraArgs);
