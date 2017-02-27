@@ -1,4 +1,4 @@
-function [hCost, hValue, hV1, hL1] = visualizeLevel(g,data,type,cost,valExtraStates)
+function [hCost, hValue, hV1, hL1] = visualizeLevel(g,data,type,cost,valExtraStates,fig)
 % inputs:
 % g - grid
 % data - data that has been computed with min w/ target
@@ -6,7 +6,7 @@ function [hCost, hValue, hV1, hL1] = visualizeLevel(g,data,type,cost,valExtraSta
 % cost - square or circle (depending how you set the initial cost)
 % valExtraStates - values at the non-position states
 
-figure(3)
+figure(fig)
 clf
 colormap('winter');
 
@@ -14,8 +14,16 @@ colormap('winter');
 
 if strcmp(type,'plane')
   
+  if strcmp(cost,'square')
+    data0 = shapeRectangleByCorners(g,[0 0 -Inf -Inf],[0 0 Inf Inf]);
+  elseif strcmp(cost,'circle')
+
+     data0 = sqrt(g.xs{1}.^2 + g.xs{2}.^2);
+  end
+
+  
   %find terminal cost
-data0 = shapeRectangleByCorners(g,[0 0 -Inf -Inf],[0 0 Inf Inf]);
+
 
 %largest cost on the map
 costMax = g.max(1);%max(data0(:));
@@ -24,18 +32,8 @@ costMin = g.min(1);%min(data0(:));
 %project onto valExtraStates
 [gProj, data0Proj] = proj(g, data0, [0 0 1 1], valExtraStates);
 
-%plot cost
-subplot(1,3,1)
-hCost = surfc(gProj.xs{1},gProj.xs{2},data0Proj);
-title(['Cost Function, v = ' num2str(valExtraStates(1)) ...
-  ' m/s and \theta = ' num2str(valExtraStates(2)) ' rad']);
-axis square
-
-%get data
-data = -data;
-%data(data>costMax) = nan;
-
 %project onto valExtraStates
+data = -data;
 [~, dataProj] = proj(g,data,[0 0 1 1],valExtraStates);
 subplot(1,3,2)
 
@@ -56,6 +54,29 @@ hValue(2).LevelList = hValue(2).LevelList(hValue(2).LevelList <= levelMax);
 zlim([levelMin-.05 levelMax]);
 caxis([levelMin levelMax]);
 axis square
+xlabel('$x$','Interpreter','latex','FontSize',20)
+ylabel('$y$','Interpreter','latex','FontSize',20)
+zlabel('$V(z)$','Interpreter','latex','FontSize',20)
+
+%plot cost
+subplot(1,3,1)
+hCost = surfc(gProj.xs{1},gProj.xs{2},data0Proj);
+title(['Cost Function, v = ' num2str(valExtraStates(1)) ...
+  ' m/s and \theta = ' num2str(valExtraStates(2)) ' rad']);
+hCost(2).LevelList = hCost(2).LevelList(hCost(2).LevelList <= levelMax);
+hCost(2).ContourZLevel = 0; %levelMin - .05;
+
+  zlim([0 levelMax]);
+  caxis([0 levelMax]);
+  axis square
+xlabel('$x$','Interpreter','latex','FontSize',20)
+ylabel('$y$','Interpreter','latex','FontSize',20)
+zlabel('$l(z)$','Interpreter','latex','FontSize',20)
+
+%get data
+data = -data;
+%data(data>costMax) = nan;
+
 
 
 elseif strcmp(type,'quad')
@@ -63,15 +84,7 @@ elseif strcmp(type,'quad')
     data0 = shapeRectangleByCorners(g,[0 -Inf 0 -Inf],[0 Inf 0 Inf]);
   elseif strcmp(cost,'circle')
     
-    ignoreDims = [2,4];
-    center = [0 0 0 0];
-    data0 = zeros(g.shape);
-    for i = 1 : g.dim
-      if(all(i ~= ignoreDims))
-        data0 = data0 + (g.xs{i} - center(i)).^2;
-      end
-    end
-    data0 = sqrt(data0);
+    data0 = sqrt(g.xs{1}.^2 + g.xs{3}.^2);
   end
   
   %largest cost on the map
@@ -104,6 +117,9 @@ elseif strcmp(type,'quad')
   zlim([levelMin-.05 levelMax]);
   caxis([levelMin levelMax]);
   axis square
+  xlabel('$x$','Interpreter','latex','FontSize',20)
+ylabel('$y$','Interpreter','latex','FontSize',20)
+zlabel('$V(z)$','Interpreter','latex','FontSize',20)
   
     %plot cost
    subplot(1,3,1)
@@ -116,6 +132,9 @@ elseif strcmp(type,'quad')
   zlim([0 levelMax]);
   caxis([0 levelMax]);
   axis square
+  xlabel('$x$','Interpreter','latex','FontSize',20)
+ylabel('$y$','Interpreter','latex','FontSize',20)
+zlabel('$l(z)$','Interpreter','latex','FontSize',20)
 end
 
 
@@ -127,9 +146,11 @@ subplot(1,3,3)
 hold on
 [~,hL1] = contour(gProj.xs{1},gProj.xs{2},data0Proj,levels,...
   'LineWidth',2);
-axis([g.min(1) g.max(1) g.min(3) g.max(3)])
+axis([g.min(1) g.max(1) g.min(1) g.max(1)])
 title('Mapping initial state to tracking error bound')
 axis square
 set(gcf,'Color','white')
 colorbar
+xlabel('$x$','Interpreter','latex','FontSize',20)
+ylabel('$y$','Interpreter','latex','FontSize',20)
 end

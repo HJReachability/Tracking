@@ -1,40 +1,35 @@
-function [data, g, tau, runtime]=plane4D2DCapture(gN, dt, accuracy, g)
+function [data, g, tau, runtime]=plane4D2DCapture(gN, dt, tMax, accuracy, g)
 %% Input: grid, target, time
 if nargin < 1
   gN = 31;
 end
 
 t0 = 0;
-tMax = 100;
+
 if nargin < 2
   dt = 1;
 end
+
+if nargin <3 
+  tMax = 50;
+end
+
 tau = t0:dt:tMax;
 
-if nargin<3
+if nargin<4
   accuracy = 'low';
 end
 
-if nargin <4
-    g_min = [-5; -5; -5; -pi];
-  g_max = [5; 5; 5; pi];
+if nargin <5
+    g_min = [-10; -10; -5; -pi];
+  g_max = [10; 10; 5; pi];
   g_N = gN*ones(length(g_min),1);
   g = createGrid(g_min,g_max, g_N, 4, true);
 end
 
 %% make initial data
-% ignoreDims = [2,4];
-% center = [0 0 0 0];
-
-%data0 = zeros(g.shape);
-% for i = 1 : g.dim
-%   if(all(i ~= ignoreDims))
-%     data0 = data0 + (g.xs{i} - center(i)).^2;
-%   end
-% end
-% data0 = -sqrt(data0);
-
-data0 = -shapeRectangleByCorners(g,[0 0 -Inf -Inf],[0 0 Inf Inf]);
+data0 = -sqrt(g.xs{1}.^2 + g.xs{2}.^2);
+%data0 = -shapeRectangleByCorners(g,[0 0 -Inf -Inf],[0 0 Inf Inf]);
 
 
 %% visualize initial data
@@ -45,7 +40,7 @@ h1 = surfc(g02D.xs{1}, g02D.xs{2}, data02D);
 figure(1)
 
 %% Input: Problem Parameters
-aMax = [3 pi/3]; %acceleration, rotational velocity
+aMax = [4 pi/2]; %acceleration, rotational velocity
 aMin = -aMax;
 
 bMax = [1 1];

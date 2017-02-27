@@ -16,50 +16,23 @@ if nargin<3
 end
 
 if nargin <4
-  gMinX = [-20; -5];
-  gMaxX = [20; 5];
-  gMinY = [-20; -5];
-  gMaxY = [20; 5];
+  gMinX = [-10; -5];
+  gMaxX = [10; 5];
+  gMinY = [-10; -5];
+  gMaxY = [10; 5];
   g_NX = gN*ones(length(gMinX),1);
   g_NY = gN*ones(length(gMinY),1);
   gX = createGrid(gMinX,gMaxX, g_NX, [], true);
   gY = createGrid(gMinY,gMaxY, g_NY, [], true);
-%     g_min = [-5; -5; -5; -5];
-%   g_max = [5; 5; 5; 5];
-%   g_N = gN*ones(length(g_min),1);
-%   g = createGrid(g_min,g_max, g_N, [], true);
 end
 
 %% make initial data
-% ignoreDims = 2;
-% center = [0 0];
-% 
-% dataX0 = zeros(gX.shape);
-% for i = 1 : gX.dim
-%   if(all(i ~= ignoreDims))
-%     dataX0 = dataX0 + (gX.xs{i} - center(i)).^2;
-%   end
-% end
-% dataX0 = -sqrt(dataX0);
-% 
-% 
-%  ignoreDims = 2;
-%  center = [0 0];
-%  dataY0 = zeros(gY.shape);
-%  for i = 1 : gY.dim
-%    if(all(i ~= ignoreDims))
-%      dataY0 = dataY0 + (gY.xs{i} - center(i)).^2;
-%    end
-%  end
-%  dataY0 = -sqrt(dataY0);
-
 dataX0 = -shapeRectangleByCorners(gX,[0 -Inf],[0 Inf]);
 dataY0 = -shapeRectangleByCorners(gY,[0 -Inf],[0 Inf]);
 
 %% visualize initial data
 f1 = figure(1);
 clf
-%[g02D, data02D] = proj(g, data0, [0 1 0 1], 'min');
 subplot(1,2,1)
 hX = surfc(gX.xs{1}, gX.xs{2}, dataX0);
 xlabel('x')
@@ -106,9 +79,6 @@ sD_Y.grid = gY;
 
 sD_X.accuracy = accuracy;
 sD_Y.accuracy = accuracy;
-%schemeData.dMode = dMode;
-%schemeData.grid = g;
-%schemeData.accuracy = accuracy;
 
 %% Run
 tic;
@@ -125,8 +95,6 @@ extraArgs.targets = dataX0;
 extraArgs.targets = dataY0;
 [dataY, tau] = HJIPDE_solve(dataY0, tau, sD_Y, 'none', extraArgs);
 
-%[data, tau] = ...
-%  HJIPDE_solve(data0, tau, schemeData, 'none',extraArgs);
 runtime = toc;
 
 %% visualize initial data
@@ -162,7 +130,7 @@ vfs.gs = {[gX],[gY]};
 vfs.tau = tau;
 vfs.datas = {dataX, dataY};
 vfs.dims = {[1,2];[3,4]};
-vf = reconSC(vfs, [gMinX; gMinY], [gMaxX; gMaxY],'end','min');
+vf = reconSC(vfs, [gMinX; gMinY], [gMaxX; gMaxY],'during','min');
 
 %% Save 
 % if ndims(data) > 4
