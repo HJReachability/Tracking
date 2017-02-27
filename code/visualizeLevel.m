@@ -85,8 +85,12 @@ elseif strcmp(type,'quad')
   if strcmp(cost,'square')
     data0 = shapeRectangleByCorners(g,[0 -Inf 0 -Inf],[0 Inf 0 Inf]);
   elseif strcmp(cost,'circle')
-    
     data0 = sqrt(g.xs{1}.^2 + g.xs{3}.^2);
+  elseif strcmp(cost,'quadratic_2x2D')
+    data01 = g.xs{1}.^2;
+    data02 = g.xs{3}.^2;
+    data0 = max(data01,data02);
+    data0 = sqrt(data0);
   end
   
   %largest cost on the map
@@ -98,7 +102,7 @@ elseif strcmp(type,'quad')
  
   
   %project data onto valExtraStates
-  data = -data; %make positive so contour maps can understand
+  %data = -data; %make positive so contour maps can understand
   [~, dataProj] = proj(g,data,[0 1 0 1],valExtraStates);
   
   %Find a few good levels to plot for next section

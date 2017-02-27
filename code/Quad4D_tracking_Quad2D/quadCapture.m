@@ -1,4 +1,4 @@
-function [data, g, tau, runtime]=quadCapture(gN, dt, tMax, accuracy, g)
+function [data, g, tau, runtime]=quadCapture(gN, dt, tMax, accuracy, targetType, g)
 %% Input: grid, target, time
 if nargin < 1
   gN = 21;
@@ -20,6 +20,10 @@ if nargin<4
 end
 
 if nargin <5
+  targetType = 'oneNorm';
+end
+
+if nargin <6
     g_min = [-10; -5; -10; -5];
   g_max = [10; 5; 10; 5];
   g_N = gN*ones(length(g_min),1);
@@ -27,9 +31,17 @@ if nargin <5
 end
 
 %% make initial data
-%data0 = -sqrt(g.xs{1}.^2 + g.xs{3}.^2);
+if strcmp(targetType,'oneNorm')
+  data0 = -shapeRectangleByCorners(g,[0 -Inf 0 -Inf],[0 Inf 0 Inf]);
+  
+elseif strcmp(targetType,'twoNorm')
+  data0 = -sqrt(g.xs{1}.^2 + g.xs{3}.^2);
+  
+elseif strcmp(targetType,'quadratic')
+  data0 = -(sg.xs{1}.^2 + g.xs{3}.^2);
+end
 
-data0 = -shapeRectangleByCorners(g,[0 -Inf 0 -Inf],[0 Inf 0 Inf]);
+
 
 
 %% visualize initial data
@@ -74,7 +86,7 @@ extraArgs.keepLast = true;
 % extraArgs.plotData.projpt = 0;
 % extraArgs.plotData.plotDims = [1 1 1 0];
 extraArgs.stopConverge = 1;
-extraArgs.convergeThreshold = .05;
+extraArgs.convergeThreshold = .01;
 extraArgs.targets = data0;
 [data, tau] = ...
   HJIPDE_solve(data0, tau, schemeData, 'none',extraArgs);

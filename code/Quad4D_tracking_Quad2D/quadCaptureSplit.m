@@ -1,4 +1,4 @@
-function [vf, runtime]=quadCaptureSplit(gN, dt, tMax, accuracy, gX, gY)
+function [vf, runtime]=quadCaptureSplit(gN, dt, tMax, accuracy, targetType, gX, gY)
 %% Input: grid, target, time
 if nargin < 1
   gN = 71;
@@ -20,6 +20,10 @@ if nargin<4
 end
 
 if nargin <5
+  targetType = 'oneNorm';
+end
+
+if nargin <6
   gMinX = [-10; -5];
   gMaxX = [10; 5];
   gMinY = [-10; -5];
@@ -31,21 +35,29 @@ if nargin <5
 end
 
 %% make initial data
-dataX0 = -shapeRectangleByCorners(gX,[0 -Inf],[0 Inf]);
-dataY0 = -shapeRectangleByCorners(gY,[0 -Inf],[0 Inf]);
+
+
+if strcmp(targetType,'oneNorm')
+  dataX0 = -shapeRectangleByCorners(gX,[0 -Inf],[0 Inf]);
+  dataY0 = -shapeRectangleByCorners(gY,[0 -Inf],[0 Inf]);
+  
+elseif strcmp(targetType,'quadratic')
+  dataX0 = -gX.xs{1}.^2;
+  dataY0 = -gY.xs{1}.^2;
+end
 
 %% visualize initial data
-f1 = figure(1);
-clf
-subplot(1,2,1)
-hX = surfc(gX.xs{1}, gX.xs{2}, dataX0);
-xlabel('x')
-ylabel('v_x')
-subplot(1,2,2)
-hY = surfc(gY.xs{1}, gY.xs{2}, dataY0);
-xlabel('y')
-ylabel('v_y')
-figure(1)
+% f1 = figure(1);
+% clf
+% subplot(1,2,1)
+% hX = surfc(gX.xs{1}, gX.xs{2}, dataX0);
+% xlabel('x')
+% ylabel('v_x')
+% subplot(1,2,2)
+% hY = surfc(gY.xs{1}, gY.xs{2}, dataY0);
+% xlabel('y')
+% ylabel('v_y')
+% figure(1)
 
 %% Input: Problem Parameters
 aMax = [3 3];
@@ -93,35 +105,36 @@ tic;
 %extraArgs.deleteLastPlot = true;
 % extraArgs.plotData.projpt = 0;
 % extraArgs.plotData.plotDims = [1 1 1 0];
-%extraArgs.stopConverge = 1;
-%extraArgs.targets = dataX0;
+extraArgs.stopConverge = 1;
+extraArgs.convergeThreshold = .01;
+extraArgs.targets = dataX0;
 [dataX, tau] = HJIPDE_solve(dataX0, tau, sD_X, 'none');%, extraArgs);
-%extraArgs.targets = dataY0;
+extraArgs.targets = dataY0;
 [dataY, tau] = HJIPDE_solve(dataY0, tau, sD_Y, 'none');%, extraArgs);
 
 runtime = toc;
 
 %% visualize initial data
-f1 = figure(2);
-clf
-subplot(2,2,1)
-hX = surfc(gX.xs{1}, gX.xs{2}, dataX(:,:,end));
-xlabel('x')
-ylabel('v_x')
-subplot(2,2,2)
-[gX1D, dataX1D] = proj(gX, dataX(:,:,end), [0 1], 1);
-plot(gX1D.xs{1},dataX1D)
-xlabel('x')
-ylabel('value')
-subplot(2,2,3)
-hY = surfc(gY.xs{1}, gY.xs{2}, dataY(:,:,end));
-xlabel('y')
-ylabel('v_y')
-subplot(2,2,4)
-[gY1D, dataY1D] = proj(gY, dataY(:,:,end), [0 1], 1);
-plot(gY1D.xs{1},dataY1D)
-xlabel('y')
-ylabel('value')
+% f1 = figure(2);
+% clf
+% subplot(2,2,1)
+% hX = surfc(gX.xs{1}, gX.xs{2}, dataX(:,:,end));
+% xlabel('x')
+% ylabel('v_x')
+% subplot(2,2,2)
+% [gX1D, dataX1D] = proj(gX, dataX(:,:,end), [0 1], 1);
+% plot(gX1D.xs{1},dataX1D)
+% xlabel('x')
+% ylabel('value')
+% subplot(2,2,3)
+% hY = surfc(gY.xs{1}, gY.xs{2}, dataY(:,:,end));
+% xlabel('y')
+% ylabel('v_y')
+% subplot(2,2,4)
+% [gY1D, dataY1D] = proj(gY, dataY(:,:,end), [0 1], 1);
+% plot(gY1D.xs{1},dataY1D)
+% xlabel('y')
+% ylabel('value')
 %% Reconstruct
 %     vfs - Self-contained (decoupled) value functions
 %              .gs:     cell structure of grids
