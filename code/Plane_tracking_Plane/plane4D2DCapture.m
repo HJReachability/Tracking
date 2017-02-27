@@ -40,10 +40,10 @@ h1 = surfc(g02D.xs{1}, g02D.xs{2}, data02D);
 figure(1)
 
 %% Input: Problem Parameters
-aMax = [4 pi/2]; %acceleration, rotational velocity
+aMax = [3 pi/2]; %acceleration, rotational velocity
 aMin = -aMax;
 
-bMax = [1 1];
+bMax = [.5 .5];
 bMin = -bMax;
 
 dMax = [.1 .1];
