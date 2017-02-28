@@ -38,18 +38,26 @@ classdef Quad10D_Rel < DynSys
       %     \dot x_9 = x_10
       %     \dot x_10 = kT * u3 - g
       %         uMin <= [u1; u2; u3] <= uMax
+      
+      % u(1,3,5) = simple player
+      % u(2,4,6) = real player
+      
+      if ~iscolumn(x)
+        x = x';
+      end
+      
       if nargin < 1
         x = zeros(obj.nx, 1);
       end
       
       if nargin < 2
-        uMax = [10/180*pi; 10/180*pi; 2*obj.g];
-        uMin = [-10/180*pi; -10/180*pi; 0];
+        uMax = [.5; 10/180*pi; .5; 10/180*pi; .5; 2*obj.g];
+        uMin = [-.5; -10/180*pi; -.5; -10/180*pi; -.5; 0];
       end
       
       if nargin<4
-        dMax = [0.5;0.5;0.5];
-        dMin = [-0.5;-0.5;-0.5];
+        dMax = [0.1; .1; .1];
+        dMin = [-.1; -.1; -.1];
       end
       
       if nargin < 5
@@ -66,9 +74,10 @@ classdef Quad10D_Rel < DynSys
       
       obj.dims = dims;
       obj.nx = length(dims);
-      obj.nu = 3;
-      obj.pdim = [1 5 9];
-      obj.vdim = [2 6 10];      
+      obj.nu = 6;
+      obj.nd = 3;
+      obj.pdim = [find(dims == 1) find(dims == 5) find(dims == 9)]; % Position dimensions
+      obj.vdim = [find(dims == 2) find(dims == 6) find(dims == 10)]; % Velocity dimensions   
     end
   end
 end

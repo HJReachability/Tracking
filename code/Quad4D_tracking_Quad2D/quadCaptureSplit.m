@@ -4,7 +4,7 @@ if nargin < 1
   gN = 71;
 end
 
-t0 = 0;
+
 if nargin < 2
   dt = 1;
 end
@@ -13,6 +13,7 @@ if nargin < 3
   tMax = 50;
 end
 
+t0 = 0;
 tau = t0:dt:tMax;
 
 if nargin<4
