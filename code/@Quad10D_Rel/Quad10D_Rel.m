@@ -36,7 +36,7 @@ classdef Quad10D_Rel < DynSys
       %     \dot x_7 = -d1 * x_7 + x_8
       %     \dot x_8 = -d0 x_7 + n0 * u2
       %     \dot x_9 = x_10
-      %     \dot x_10 = kT * u3 - g
+      %     \dot x_10 = kT * u3 
       %         uMin <= [u1; u2; u3] <= uMax
       
       % u(1,3,5) = simple player
@@ -51,8 +51,8 @@ classdef Quad10D_Rel < DynSys
       end
       
       if nargin < 2
-        uMax = [.5; 10/180*pi; .5; 10/180*pi; .5; 2*obj.g];
-        uMin = [-.5; -10/180*pi; -.5; -10/180*pi; -.5; 0];
+        uMax = [.5; 10/180*pi; .5; 10/180*pi; .25; 2*obj.g];
+        uMin = [-.5; -10/180*pi; -.5; -10/180*pi; -.25; 0];
       end
       
       if nargin<4

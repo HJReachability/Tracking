@@ -1,4 +1,4 @@
-function [gX, gZ, dataX, dataZ,tau]=Quad10D_Rel_RS(gN, dt, tMax, accuracy, targetType, gX,gZ)
+function [gX, gZ, dataX, dataZ, dataX0, dataZ0, tau]=Quad10D_Rel_RS(gN, dt, tMax, accuracy, targetType, gX,gZ)
 % DubinsCar_RS()
 %     Compares reachable set/tube computation using direct and decomposition
 %     methods
@@ -28,10 +28,11 @@ end
 
 if nargin<6
   % Grid
-gMinX = [-10; -10; -100*pi/180; -10];
-gMaxX = [ 10;  10;  100*pi/180;  10];
+gMinX = [-10; -10; -35*pi/180; -1];
+gMaxX = [ 10;  10;  35*pi/180;  1];
 gMinZ = [-10; -10];
 gMaxZ = [ 10;  10];
+
 gX = createGrid(gMinX, gMaxX, gN*ones(4,1));
 gZ = createGrid(gMinZ, gMaxZ, gN*ones(2,1));
 end
@@ -41,10 +42,13 @@ end
 
 
 gravity = 9.81;
-uMax = [.5; 10/180*pi; .5; 10/180*pi; .5; 2*gravity];
-uMin = [-.5; -10/180*pi; -.5; -10/180*pi; -.5; 0];
-dMax = [.1; .1; .1];
+uMax = [.5; 10/180*pi; .5; 10/180*pi; 0.5; 2*gravity];
+uMin = [-.5; -10/180*pi; -.5; -10/180*pi; -0.5; 0];
+dMax = [.1; .1; 0.1];
 dMin = -dMax;
+
+% dMax = [1/72*pi; 1/72*pi; 1/72*pi];
+% dMin = -dMax;
 
 uMode = 'max'; %10D trying to max
 dMode = 'min'; % disturbance trying to min
@@ -82,16 +86,31 @@ sD_Z.uMode = uMode;
 sD_Z.dMode = dMode;
 
 %% Additional solver parameters
-extraArgs.target = dataZ0;
+extraArgs.targets = dataZ0;
 extraArgs.stopConverge = 1;
+extraArgs.keepLast = 1;
+extraArgs.visualize = 1;
+extraArgs.RS_level = -3;
+extraArgs.fig_num = 4;
+figure(extraArgs.fig_num)
+clf
 
 dataZ = HJIPDE_solve(dataZ0, tau, sD_Z, 'none', extraArgs);
 
-extraArgs.target = dataX0;
+extraArgs.plotData.plotDims = [1 1 1 0];
+extraArgs.plotData.projpt = [0];
+extraArgs.deleteLastPlot = 1;
+extraArgs.fig_Num = 5;
+figure(extraArgs.fig_num)
+clf
+extraArgs.targets = dataX0;
 extraArgs.stopConverge = 1;
+extraArgs.keepLast = 1;
 
 dataX = HJIPDE_solve(dataX0, tau, sD_X, 'none', extraArgs);
 
-save(sprintf('%s_%f.mat', mfilename, now), 'gX', 'gZ', 'dataX', 'dataZ', ...
-  'tau', '-v7.3')
+
+
+%save(sprintf('%s_%f.mat', mfilename, now), 'gX', 'gZ', 'dataX', 'dataZ', ...
+%  'tau', '-v7.3')
 end
