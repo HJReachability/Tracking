@@ -1,4 +1,4 @@
-function [gX, gZ, dataX, dataZ, dataX0, dataZ0, tau]=Quad10D_Rel_RS(gN, dt, tMax, accuracy, targetType, gX,gZ)
+function [gX, gZ, dataX, dataZ, dataX0, dataZ0, tau]=Quad10D_Rel_RS(gN, dt, tMax, accuracy, targetType, visualize, gX,gZ)
 % DubinsCar_RS()
 %     Compares reachable set/tube computation using direct and decomposition
 %     methods
@@ -27,6 +27,10 @@ if nargin<5
 end
 
 if nargin<6
+  visualize = 0;
+end
+
+if nargin<7
   % Grid
 gMinX = [-10; -10; -35*pi/180; -1];
 gMaxX = [ 10;  10;  35*pi/180;  1];
@@ -89,20 +93,26 @@ sD_Z.dMode = dMode;
 extraArgs.targets = dataZ0;
 extraArgs.stopConverge = 1;
 extraArgs.keepLast = 1;
+
+if visualize
 extraArgs.visualize = 1;
 extraArgs.RS_level = -3;
 extraArgs.fig_num = 4;
 figure(extraArgs.fig_num)
 clf
+end
 
 dataZ = HJIPDE_solve(dataZ0, tau, sD_Z, 'none', extraArgs);
 
+if visualize
 extraArgs.plotData.plotDims = [1 1 1 0];
 extraArgs.plotData.projpt = [0];
 extraArgs.deleteLastPlot = 1;
 extraArgs.fig_Num = 5;
 figure(extraArgs.fig_num)
 clf
+end
+
 extraArgs.targets = dataX0;
 extraArgs.stopConverge = 1;
 extraArgs.keepLast = 1;
