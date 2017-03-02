@@ -26,3 +26,21 @@ Refer to figure: planning level and safety level.
 In the safety level, we start with the error dynamics, and we compute two things: bubble which is fed into planner to plan with extra margin, and error-feedback controller for real-time control. These two can be computed offline independent of the planned path.
 
 In the planning level, any planning method such as MPC, RRT, etc. (cite some things) can be used. The planning level does not need to take into account disturbances, and can use simple system dynamics or even no dynamics at all. In fact we will be using a simple RRT planner which simply provides paths, in the form of a sequence of line segments, which are not dynamically feasible. 
+
+\begin{figure}
+\includegraphics[width=\columnwidth]{fig/framework_online}
+\caption{Online framework}
+\label{fig:fw_online}
+\end{figure}
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{fig/framework_offline}
+  \caption{Offline framework}
+  \label{fig:fw_offline}
+\end{figure}
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{fig/hybrid_controller}
+  \caption{Hybrid controller}
+  \label{fig:hybrid_ctrl}
+\end{figure}
