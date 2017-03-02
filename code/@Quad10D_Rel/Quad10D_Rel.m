@@ -36,7 +36,7 @@ classdef Quad10D_Rel < DynSys
       %     \dot x_7 = -d1 * x_7 + x_8
       %     \dot x_8 = -d0 x_7 + n0 * u2
       %     \dot x_9 = x_10
-      %     \dot x_10 = kT * u3 
+      %     \dot x_10 = kT * u3 - g
       %         uMin <= [u1; u2; u3] <= uMax
       
       % u(1,3,5) = simple player
