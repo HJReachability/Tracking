@@ -1,28 +1,39 @@
 % !TEX root = tracking.tex
 \section{General Framework \label{sec:framework}}
-Given a dynamical system, we propose a hierarchical framework for combining Hamilton-Jacobi safety analysis with planning methods in a modular way.
+In the context of real-time robust planning towards a target in an unknown environment, we propose a framework for combining fast planning methods that do not need to take into account disturbances and Hamilton-Jacobi reachability analysis which provides formal guarantees for systems with disturbances. The high level idea of the framework is summarized in Figures \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, and \ref{fig:fw_offline}.
 
-Given: Target, mechanism for sensing obstacles
+Figure \ref{fig:fw_online} shows the online computations under our framework, which uses a hierarchical structure in which a planner plans a path or trajectory for a simple ``virtual system''. Examples of planners include those based on model-predictive control (MPC), rapidly-exploring random tree (RRT), or neural networks; our framework is agnostic to the planner, so any planner can be used. The choice of the virtual system is also flexible, and depends on the requirements of the planner. We will present an example of a virtual system used in conjunction with an RRT planner in \MCnote{Section \ref{}}. The planner outputs a desired ``virtual state'' of the virtual system.
 
-Goal: reach target without colliding with obstacles
+The ``real system'' is a model of a physical system such as a quadrotor, and a subset of the state variables forms the virtual state of the virtual system. The state of real system and the desired virtual state are inputs to a hybrid tracking controller. Based on these two inputs, the hybrid tracking controller outputs a control signal to the real system. The goal of this control is to make the real system track the desired virtual state as closely as possible. Our concept of tracking error will be defined in \MCnote{Section \ref{}}.
 
-Offline: compute bubble and error-feedback controller (tracker)
+The hybrid tracking controller is shown in Fig. \ref{fig:hybrid_ctrl} consists of two controllers: a safety controller and a performance controller. In general, there may be multiple safety and performance controllers depending on various factors such as observed size of disturbances, but for simplicity we will simply consider one safety and one performance controller in this paper. The safety controller consists of a look-up table computed offline via HJ reachability, and guarantees that a tracking error bound is not violated, \textit{despite the worst-case disturbance}. In addition, the table look-up operation is very computationally cheap. When the system is close to violating the tracking error bound, the safety controller must be used to prevent the violation; on the other hand, when the system is far from violating the tracking error, any controller, such as one that minimizes fuel usage or even a random controller, can be used.
 
-Online: At every time iteration,
-\begin{enumerate}
-  \item Sense and update obstacles (can also be done every N iterations)
-  \item Augment obstacles according to bubble
-  \item Plan path or trajectory using planner, assuming currently sensed and augmented obstacles
-  \item Robustly track trajectory using tracker
-\end{enumerate}
+Besides the virtual state, the planner also takes into account any obstacles that must be avoided. In order to be robust to disturbances, planning must be done with a safety margin that accounts for disturbances. This safety margin, which guarantees robustness despite the worst-case disturbance, is given by a tracking error bound obtained in the offline HJ reachability computation, shown in Fig. \ref{fig:fw_offline} and explained in detail in \MCnote{Section \ref{}}. The virtual and real system dynamics are used to compute a value function, which simultaneously gives the tracking error bound and the safety controller look-up table used by the hybrid tracking controller.
+%
+%\textbf{Maybe put next paragraph in the introduction}
+%
+%There are many fast planners that could potentially do planning in real-time; however, these typically cannot account for disturbances in a provably safe way. In addition, complex system models with nonlinear dynamics complicate planning algorithms (non-convex for MPC, more difficult for RRT). On the other hand, HJ reachability is able to handle disturbances, and is agnostic to system dynamics. In addition, provably guarantees can be provided. However, HJ reachability and in general formal verification methods can be very expensive to compute.
+%
+%Refer to figure: planning level and safety level. 
+%
+%In the safety level, we start with the error dynamics, and we compute two things: bubble which is fed into planner to plan with extra margin, and error-feedback controller for real-time control. These two can be computed offline independent of the planned path.
+%
+%In the planning level, any planning method such as MPC, RRT, etc. (cite some things) can be used. The planning level does not need to take into account disturbances, and can use simple system dynamics or even no dynamics at all. In fact we will be using a simple RRT planner which simply provides paths, in the form of a sequence of line segments, which are not dynamically feasible. 
 
+\begin{figure}[h!]
+\includegraphics[width=\columnwidth]{fig/framework_online}
+\caption{Online framework}
+\label{fig:fw_online}
+\end{figure}
 
-\textbf{Maybe put next paragraph in the introduction}
+\begin{figure}[h!]
+  \includegraphics[width=\columnwidth]{fig/hybrid_controller}
+  \caption{Hybrid controller}
+  \label{fig:hybrid_ctrl}
+\end{figure}
 
-There are many fast planners that could potentially do planning in real-time; however, these typically cannot account for disturbances in a provably safe way. In addition, complex system models with nonlinear dynamics complicate planning algorithms (non-convex for MPC, more difficult for RRT). On the other hand, HJ reachability is able to handle disturbances, and is agnostic to system dynamics. In addition, provably guarantees can be provided. However, HJ reachability and in general formal verification methods can be very expensive to compute.
-
-Refer to figure: planning level and safety level. 
-
-In the safety level, we start with the error dynamics, and we compute two things: bubble which is fed into planner to plan with extra margin, and error-feedback controller for real-time control. These two can be computed offline independent of the planned path.
-
-In the planning level, any planning method such as MPC, RRT, etc. (cite some things) can be used. The planning level does not need to take into account disturbances, and can use simple system dynamics or even no dynamics at all. In fact we will be using a simple RRT planner which simply provides paths, in the form of a sequence of line segments, which are not dynamically feasible. 
+\begin{figure}[h!]
+  \includegraphics[width=\columnwidth]{fig/framework_offline}
+  \caption{Offline framework}
+  \label{fig:fw_offline}
+\end{figure}
