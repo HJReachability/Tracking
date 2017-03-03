@@ -32,10 +32,10 @@ end
 
 if nargin<7
   % Grid
-gMinX = [-10; -10; -35*pi/180; -1];
-gMaxX = [ 10;  10;  35*pi/180;  1];
-gMinZ = [-10; -10];
-gMaxZ = [ 10;  10];
+gMinX = [-5; -5; -35*pi/180; -1];
+gMaxX = [ 5;  5;  35*pi/180;  1];
+gMinZ = [-5; -5];
+gMaxZ = [ 5;  5];
 
 gX = createGrid(gMinX, gMaxX, gN*ones(4,1));
 gZ = createGrid(gMinZ, gMaxZ, gN*ones(2,1));
@@ -46,8 +46,8 @@ end
 
 
 gravity = 9.81;
-uMax = [.5; 10/180*pi; .5; 10/180*pi; 0.5; 1.5*gravity];
-uMin = [-.5; -10/180*pi; -.5; -10/180*pi; -0.5; 0];
+uMax = [.5; 20/180*pi; .5; 20/180*pi; 0.5; 1.5*gravity];
+uMin = [-.5; -20/180*pi; -.5; -20/180*pi; -0.5; 0];
 dMax = [.1; .1; 0.1];
 dMin = -dMax;
 
@@ -92,11 +92,12 @@ sD_Z.dMode = dMode;
 %% Additional solver parameters
 extraArgs.targets = dataZ0;
 extraArgs.stopConverge = 1;
+extraArgs.convergeThreshold = 0.01;
 extraArgs.keepLast = 1;
 
 if visualize
 extraArgs.visualize = 1;
-extraArgs.RS_level = -3;
+extraArgs.RS_level = -5;
 extraArgs.fig_num = 4;
 figure(extraArgs.fig_num)
 clf
@@ -104,20 +105,24 @@ end
 
 [dataZ, tauZ] = HJIPDE_solve(dataZ0, tau, sD_Z, 'none', extraArgs);
 
+
+
 if visualize
 extraArgs.plotData.plotDims = [1 1 1 0];
 extraArgs.plotData.projpt = [0];
 extraArgs.deleteLastPlot = 1;
-extraArgs.fig_Num = 5;
+extraArgs.fig_num = 5;
 figure(extraArgs.fig_num)
 clf
 end
 
 extraArgs.targets = dataX0;
 extraArgs.stopConverge = 1;
+extraArgs.convergeThreshold = 0.01;
 extraArgs.keepLast = 1;
 
 [dataX, tauX] = HJIPDE_solve(dataX0, tau, sD_X, 'none', extraArgs);
+
 
 
 
