@@ -1,4 +1,4 @@
-function [hCost, hValue, hV1, hL1] = visualizeLevel(g,data,data0,type, cost,valExtraStates,fig)
+function [hCostS, hCostC, hValueS, hValueC, hV1, hL1] = visualizeLevel(g,data,data0,type, cost,valExtraStates,fig)
 % inputs:
 % g - grid
 % data - data that has been computed with min w/ target
@@ -129,34 +129,40 @@ elseif strcmp(type,'quad')
   
   %plot
   subplot(1,3,2)
-  hValue = surfc(gProj.xs{1},gProj.xs{2},dataProj);
+  hValueS = surf(gProj.xs{1},gProj.xs{2},dataProj);
+  hold on
+ [~, hValueC] = contour(gProj.xs{1},gProj.xs{2},dataProj,levels,...
+    'LineWidth',2);
   title(['Value Function, v_x = ' num2str(valExtraStates(1)) ...
     ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15)
   
-  hValue(2).ContourZLevel = levelMin - .05;
-  hValue(2).LevelList = hValue(2).LevelList(hValue(2).LevelList <= levelMax);
+  %hValueC.ContourZLevel = levelMax + .05;
+  hValueC.LevelList = hValueC.LevelList(hValueC.LevelList >= levelMin);
   
-  zlim([levelMin-.05 levelMax]);
+  zlim([levelMin 0]);%levelMax + .05]);
   caxis([levelMin levelMax]);
   axis square
   xlabel('$x$','Interpreter','latex','FontSize',20)
   ylabel('$y$','Interpreter','latex','FontSize',20)
-  zlabel('$V(z)$','Interpreter','latex','FontSize',20)
+  zlabel('$V(s)$','Interpreter','latex','FontSize',20)
   
   %plot cost
   subplot(1,3,1)
-  hCost = surfc(gProj.xs{1},gProj.xs{2},data0Proj);
+  hCostS = surf(gProj.xs{1},gProj.xs{2},data0Proj);
   title(['Cost Function, v_x = ' num2str(valExtraStates(1)) ...
     ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15);
+  hold on
+  [~, hCostC] = contour(gProj.xs{1},gProj.xs{2},data0Proj,levels,...
+    'LineWidth',2);
   
-  hCost(2).LevelList = hCost(2).LevelList(hCost(2).LevelList <= levelMax);
+  hCostC.LevelList = hCostC.LevelList(hCostC.LevelList >= levelMin);
   
-  zlim([0 levelMax]);
-  caxis([0 levelMax]);
+  zlim([levelMin 0]);
+  caxis([levelMin 0]);
   axis square
   xlabel('$x$','Interpreter','latex','FontSize',20)
   ylabel('$y$','Interpreter','latex','FontSize',20)
-  zlabel('$l(z)$','Interpreter','latex','FontSize',20)
+  zlabel('$l(s)$','Interpreter','latex','FontSize',20)
   
   subplot(1,3,3)
   [~,hV1]=contour(gProj.xs{1},gProj.xs{2},dataProj,levels,...

@@ -1,0 +1,40 @@
+% !TEX root = tracking.tex
+\section{Problem Formulation \label{sec:formulation}}
+
+\textcolor{red}{We want to track a problem with sophisticated dynamics through an environment with obstacles.  Need to define dynamics, environment, sensing abilities, etc.}
+
+\subsection{Real System Dynamics}
+Let $z_1$ be the state variable the real system. The evolution of the dynamics satisfies the ordinary differential equation:
+
+\begin{equation}
+\begin{aligned}
+\label{eq:fdyn}
+\frac{d\state_1}{d\tau} = \dot{\state_1} = f_i(\state_1, \ctrl_1), \tau \in [t, 0] \\
+\state_1 \in \sset_1, \ctrl_1 \in \cset_1
+\end{aligned}
+\end{equation}
+
+We assume that the system dynamics $f_1 : \sset_1\ \times\ \cset_1 \rightarrow \sset_1$ are uniformly continuous, bounded, and Lipschitz continuous in $z_1$ for fixed control $u_1$. The control function $u_1(\cdot)$ is drawn from the set of measurable functions\footnote{A function $f:X\to Y$ between two measurable spaces $(X,\Sigma_X)$ and $(Y,\Sigma_Y)$ is said to be measurable if the preimage of a measurable set in $Y$ is a measurable set in $X$, that is: $\forall V\in\Sigma_Y, f^{-1}(V)\in\Sigma_X$, with $\Sigma_X,\Sigma_Y$ $\sigma$-algebras on $X$,$Y$.}:
+\begin{equation}
+\begin{aligned}
+\ctrl_1(\cdot) \in \cfset_1(t) = \{\phi: [t, 0] \rightarrow \cset_1: \phi(\cdot) \text{ is measurable}\}
+\end{aligned}
+\end{equation}
+
+Under these assumptions there exists a unique trajectory solving \ref{eq:fdyn} for a given $u_1(\cdot) \in \cset_1$ \cite{Evans84}. The trajectories of \ref{eq:fdyn} that solve this ODE will be denoted as $\ctrl(\cdot)$ as $\traj_1(s; \state_1, t, \ctrl_1(\cdot))$. These trajectories will satisfy the initial condition and the ODE \ref{eq:fdyn} almost everywhere:
+\begin{equation}
+\label{eq:fdyn_traj}
+\begin{aligned}
+\frac{d}{ds}\traj_1(s; \state_1, t, \ctrl_1(\cdot)) &= f_1(\traj_1(s; \state_1, t, \ctrl_1(\cdot)), \ctrl_1(s)) \\
+\traj_1(t; \state_1, t, \ctrl_1(\cdot)) &= \state_1
+\end{aligned}
+\end{equation}
+
+\subsection{Planning Environment}
+\textcolor{red}{Requires static obstacles that aren't too densely clustered. Depending on path planner, environment could unknown with a sensing radius, or just a known environment}
+
+\subsection{Goals of This Paper}
+\textcolor{red}{
+	a) Provide look-up table(s) where input is relative state of your true system to your path planner, and the outputs are tracking error bound and optimal safety control for your real system.\\
+	b) Develop a framework for using the look-up table(s) that is simple and easy to use for a variety of path planners\\
+	c) Demonstrate using a 10D model tracking an RRT path planner}

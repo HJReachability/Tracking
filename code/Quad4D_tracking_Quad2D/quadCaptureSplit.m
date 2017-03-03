@@ -25,10 +25,10 @@ if nargin <5
 end
 
 if nargin <6
-  gMinX = [-10; -5];
-  gMaxX = [10; 5];
-  gMinY = [-10; -5];
-  gMaxY = [10; 5];
+  gMinX = [-5; -5];
+  gMaxX = [5; 5];
+  gMinY = [-5; -5];
+  gMaxY = [5; 5];
   g_NX = gN*ones(length(gMinX),1);
   g_NY = gN*ones(length(gMinY),1);
   gX = createGrid(gMinX,gMaxX, g_NX, [], true);
@@ -109,9 +109,9 @@ tic;
 extraArgs.stopConverge = 1;
 extraArgs.convergeThreshold = .01;
 extraArgs.targets = dataX0;
-[dataX, tau] = HJIPDE_solve(dataX0, tau, sD_X, 'none');%, extraArgs);
+[dataX, tau] = HJIPDE_solve(dataX0, tau, sD_X, 'none',extraArgs);%, extraArgs);
 extraArgs.targets = dataY0;
-[dataY, tau] = HJIPDE_solve(dataY0, tau, sD_Y, 'none');%, extraArgs);
+[dataY, tau] = HJIPDE_solve(dataY0, tau, sD_Y, 'none',extraArgs);%, extraArgs);
 
 runtime = toc;
 
