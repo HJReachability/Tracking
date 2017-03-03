@@ -6,13 +6,28 @@ To precompute the tracking bound we set up a capture-avoid game between the real
 \subsection{Relative Dynamics}
 \textcolor{red}{introduce virtual dynamics, explain that it must be a subset of real system dynamics}
 
-We now have the dynamics for the individual systems, but to set up the capture-avoid game we must first define the relative states and dynamics. We place the virtual vehicle at the origin by subtracting its states $(z_2)$ from the real system's states $(z_1)$. In this frame of reference $(z_r)$ we are given the states of the real system relative to the virtual system. \textcolor{red}{incorporate disturbances here?}
+We now have the dynamics for the individual systems, but to set up the capture-avoid game we must first define the relative states and dynamics. We place the virtual vehicle at the origin by subtracting its states $(\vstate)$ from the real system's states $(\tstate)$. In this frame of reference $(\rstate)$ we are given the states of the real system relative to the virtual system. \textcolor{red}{incorporate disturbances here?}
 
+Dynamics of system
 \begin{equation}
-\begin{aligned}
-\state_r =& \state_1 - \state_2 \\
-g(\state_r,\ctrl_1,\ctrl_2) =& f_1(\state_1,\ctrl_1) - f_2(\state_2,\ctrl_2)
-\end{aligned}
+\dot\vstate = \vdyn(\vstate, \vctrl, \dstb)
+\end{equation}
+
+Dynamics of trajectory
+\begin{equation}
+\dot\tstate = \tdyn(\tstate, \tctrl)
+\end{equation}
+
+Assume $\tstate$ is a subset of $\vstate$. 
+
+Relative state:
+\begin{equation}
+\rstate = \vstate - \tvmat\tstate
+\end{equation}
+
+Relative dynamics
+\begin{equation}
+\dot\rstate = \rdyn(\rstate, \vctrl, \tctrl, \dstb)
 \end{equation}
 
 The relative dynamics will include the relative position states and any other relevant states such as relative angles and velocities.
@@ -36,29 +51,8 @@ Now that we have the relative dynamics between the two systems we must define a 
  This is a modified version of the Hamilton-Jacobi formulation as described by \textcolor{red}{cite jaime, time varying reachability}. By implementing reachability analysis we solve for this value function over the time horizon. If the control authority of the real system is powerful enough to always eventually reach the virtual system, this value function will converge to an invariant solution for all time.  An example of this value function is in Figure \ref{fig:quad4D_example}-b. In the next section we will prove that the sub-level sets of this value function will map initial relative states to the guaranteed furthest possible tracking error over all time, as seen in Figure \ref{fig:quad4D_example}-c.
  
  \subsection{Tracking Error Precomputation: Guarantees and Proofs}
- Dynamics of system
- \begin{equation}
- \dot\vstate = \vdyn(\vstate, \vctrl, \dstb)
- \end{equation}
  
- Dynamics of trajectory
- \begin{equation}
- \dot\tstate = \tdyn(\tstate, \tctrl)
- \end{equation}
- 
- Assume $\tstate$ is a subset of $\vstate$. Let $\tvind$ be the set of indices such that $\tstate_i = \vstate_{\tvind_i}$.
- 
- Relative state:
- \begin{equation}
- \rstate = \vstate - \tvmat\tstate
- \end{equation}
- 
- Relative dynamics
- \begin{equation}
- \dot\rstate = \rdyn(\rstate, \vctrl, \tctrl, \dstb)
- \end{equation}
- 
- Tracking error: $\rstate_{\tvind}$.
+ Tracking error: $\rstate\tvind$.
  
  The goal of the system is to minimize the tracking error.
  
