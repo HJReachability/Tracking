@@ -1,4 +1,4 @@
-function [hCostS, hCostC, hValueS, hValueC, hV1, hL1] = visualizeLevel(g,data,data0,type, cost,valExtraStates,fig)
+function [hCostS, hCostC, hValueS, hValueC, hV, hL] = visualizeLevel(g,data,data0,type, cost,valExtraStates,fig)
 % inputs:
 % g - grid
 % data - data that has been computed with min w/ target
@@ -79,11 +79,11 @@ if strcmp(type,'plane')
   data = -data;
   %data(data>costMax) = nan;
   
-  subplot(1,3,3)
-  [~,hV1]=contour(gProj.xs{1},gProj.xs{2},dataProj,levels,...
+  subplot(2,3,2)
+  [~,hV]=contour(gProj.xs{1},gProj.xs{2},dataProj,levels,...
     'Linestyle','--','LineWidth',2);
   hold on
-  [~,hL1] = contour(gProj.xs{1},gProj.xs{2},data0Proj,levels,...
+  [~,hL] = contour(gProj.xs{1},gProj.xs{2},data0Proj,levels,...
     'LineWidth',2);
   axis([g.min(1) g.max(1) g.min(1) g.max(1)])
   title('Mapping initial state to tracking error bound','FontSize',15)
@@ -165,10 +165,10 @@ elseif strcmp(type,'quad')
   zlabel('$l(s)$','Interpreter','latex','FontSize',20)
   
   subplot(1,3,3)
-  [~,hV1]=contour(gProj.xs{1},gProj.xs{2},dataProj,levels,...
+  [~,hV]=contour(gProj.xs{1},gProj.xs{2},dataProj,levels,...
     'Linestyle','--','LineWidth',2);
   hold on
-  [~,hL1] = contour(gProj.xs{1},gProj.xs{2},data0Proj,levels,...
+  [~,hL] = contour(gProj.xs{1},gProj.xs{2},data0Proj,levels,...
     'LineWidth',2);
   axis([g.min(1) g.max(1) g.min(1) g.max(1)])
   title('Mapping initial state to tracking error bound','FontSize',15)
@@ -180,7 +180,9 @@ elseif strcmp(type,'quad')
 
 %% Quad10D
 elseif strcmp(type,'quad10D')
-  
+  textSize = 20;
+  titleTextSize = 15;
+  cmap = colormap('winter');
 % Reconstruct
 vfs.gs = g;
 vfs.datas = data;
@@ -189,130 +191,136 @@ vfs.dims{1} = 1:4;
 vfs.dims{2} = 5:8;
 vfs.dims{3} = 9:10;
 
-range_lower_X = [vfs.gs{1}.min(1) vfs.gs{1}.min(2) valExtraStates(3)-.1 ...
-  valExtraStates(4)-.1];
-range_lower_Y = [vfs.gs{2}.min(1) vfs.gs{2}.min(2) valExtraStates(7)-.1 ...
-  valExtraStates(8)-.1];
-range_lower_Z = [vfs.gs{3}.min(1) vfs.gs{3}.min(2)];
-range_lower = [range_lower_X range_lower_Y range_lower_Z];
+small = 1e-3;
+range_lower = valExtraStates - 0.5*[vfs.gs{1}.dx; vfs.gs{2}.dx; vfs.gs{3}.dx];
+range_upper = valExtraStates + 0.5*[vfs.gs{1}.dx; vfs.gs{2}.dx; vfs.gs{3}.dx];
 
-range_upper_X = [vfs.gs{1}.max(1) vfs.gs{1}.max(2) valExtraStates(3)+.1 ...
-  valExtraStates(4)+.1];
-range_upper_Y = [vfs.gs{2}.max(1) vfs.gs{2}.max(2) valExtraStates(7)+.1 ...
-  valExtraStates(8)+.1];
-range_upper_Z = [vfs.gs{3}.max(1) vfs.gs{3}.max(2)];
-range_upper = [range_upper_X range_upper_Y range_upper_Z];
+range_lower([1 5 9]) = [vfs.gs{1}.min(1); vfs.gs{2}.min(1); vfs.gs{3}.min(1)]-small;
+range_upper([1 5 9]) = [vfs.gs{1}.max(1); vfs.gs{2}.max(1); vfs.gs{3}.max(1)]+small;
 
 vf = reconSC(vfs, range_lower, range_upper, 0, 'min');
 
 vfs0 = vfs;
-vfs0.data = data0;
+vfs0.datas = data0;
 vf0 = reconSC(vfs0, range_lower, range_upper, 0, 'min');
-g = vf.g;
+gProj = vf.g;
 
 if strcmp(cost,'quadratic_decomp')
-  data = sqrt(-vf.data);
-  data0 = sqrt(-vf0.data);
+  dataProj = -sqrt(-vf.data);
+  data0Proj = -sqrt(-vf0.data);
 else
   error 'what cost?'
 end
 
     %largest cost on the map
-  costMax = g.max(1);%max(data0(:));
-  costMin = g.min(1);%min(data0(:));
+  costMax = gProj.max(1);%max(data0(:));
+  costMin = gProj.min(1);%min(data0(:));
   
-  if g.dim == 6
+  if gProj.dim == 6
   %project cost onto valExtraStates
   [gProj, data0Proj] = proj(g, data0, [0 1 0 1 0 1], ...
     [valExtraStates(2) valExtraStates(6) valExtraStates(10)]);
   %project data onto valExtraStates
   [~, dataProj] = proj(g,data,[0 1 0 1 0 1],...
     [valExtraStates(2) valExtraStates(6) valExtraStates(10)]);
-  elseif g.dim == 10
+  elseif gProj.dim == 10
     error 'too many dims!'
   end
   
-
-
   
   %Find a few good levels to plot for next section
   levelMin = max(min(dataProj(:)), costMin);
   levelMax = min(max(dataProj(:)),costMax);
-  levels = linspace(levelMin,levelMax,8);
-  levels = levels([2,4,6]);
+  levels = linspace(levelMin,levelMax,100);
+  levels = levels([end-40, end-20, end-1]);
   
   %plot
-  subplot(1,3,2)
+  subplot(2,3,4)
   [gProj2D, dataProj2D] = proj(gProj, dataProj, [0 0 1], 0);
-  hValue = surfc(gProj2D.xs{1},gProj2D.xs{2},dataProj2D);
-  title(['Value Function, v_x = ' num2str(valExtraStates(1)) ...
-    ' m/s, v_y = ' num2str(valExtraStates(2)) ' m/s' ...
-    'v_z = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15)
+  hValueS = surf(gProj2D.xs{1},gProj2D.xs{2},dataProj2D);
+  hold on
+  [~, hValueC] = contour(gProj2D.xs{1},gProj2D.xs{2},dataProj2D,levels,...
+    'LineWidth',2);
+  set(gca,'FontSize',textSize)
+  title('Value Function','FontSize',titleTextSize)
+  %title(['Value Function, v_x = ' num2str(valExtraStates(1)) ...
+  %  ' m/s, v_y = ' num2str(valExtraStates(2)) ' m/s' ...
+  %  'v_z = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15)
   
-  hValue(2).ContourZLevel = levelMin - .05;
-  hValue(2).LevelList = hValue(2).LevelList(hValue(2).LevelList <= levelMax);
+  %hValueC.ContourZLevel = levelMax + .05;
+  hValueC.LevelList = hValueC.LevelList(hValueC.LevelList >= levelMin);
   
-  zlim([levelMin-.05 levelMax]);
+  zlim([levelMin 0]);%levelMax + .05]);
   caxis([levelMin levelMax]);
   axis square
-  xlabel('$x$','Interpreter','latex','FontSize',20)
-  ylabel('$y$','Interpreter','latex','FontSize',20)
-  zlabel('$V(z)$','Interpreter','latex','FontSize',20)
+  xlabel('$x$','Interpreter','latex','FontSize',textSize)
+  ylabel('$y$','Interpreter','latex','FontSize',textSize)
+  zlabel('$V(s)$','Interpreter','latex','FontSize',textSize)
   
   %   %plot cost
   [~, data0Proj2D] = proj(gProj, data0Proj, [0 0 1], 0);
   
-  subplot(1,3,1)
-  hCost = surfc(gProj2D.xs{1},gProj2D.xs{2},data0Proj2D);
-  title(['Cost Function, v_x = ' num2str(valExtraStates(1)) ...
-    ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15);
+  subplot(2,3,1)
+  hCostS = surf(gProj2D.xs{1},gProj2D.xs{2},data0Proj2D);
+  hold on
+  [~, hCostC] = contour(gProj2D.xs{1},gProj2D.xs{2},data0Proj2D,levels,...
+    'LineWidth',2);
+  set(gca,'FontSize',textSize)
+  title('Cost Function','FontSize',titleTextSize)
+  %title(['Cost Function, v_x = ' num2str(valExtraStates(1)) ...
+  %  ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15);
   
-  hCost(2).LevelList = hCost(2).LevelList(hCost(2).LevelList <= levelMax);
+  hCostC.LevelList = hCostC.LevelList(hCostC.LevelList >= levelMin);
   
-  zlim([0 levelMax]);
-  caxis([0 levelMax]);
+  zlim([levelMin 0]);
+  caxis([levelMin 0]);
   axis square
-  xlabel('$x$','Interpreter','latex','FontSize',20)
-  ylabel('$y$','Interpreter','latex','FontSize',20)
-  zlabel('$l(z)$','Interpreter','latex','FontSize',20)
+  xlabel('$x$','Interpreter','latex','FontSize',textSize)
+  ylabel('$y$','Interpreter','latex','FontSize',textSize)
+  zlabel('$l(s)$','Interpreter','latex','FontSize',textSize)
+  colorbar
   
-  subplot(1,3,3)
+  for i = 1:length(levels)
+  color = cmap(16*i,:);
   
+  if i <= 2
+  subplot(2,3,i+1)
+  else
+    subplot(2,3,i+2)
+  end
   
+  level = levels(i);
   [ mesh_xs, mesh_data ] = gridnd2mesh(gProj, dataProj);
-  hV1 = patch(isosurface(mesh_xs{:}, mesh_data, levels(3)));
-  isonormals(mesh_xs{:}, mesh_data, hV1);
-  hV1.FaceColor = 'r';
-  hV1.EdgeColor = 'none';
-  hV1.FaceAlpha = .4;
-  lighting phong
-  camlight left
-  camlight right
+  hV(i) = patch(isosurface(mesh_xs{:}, mesh_data, level));
+  isonormals(mesh_xs{:}, mesh_data, hV(i));
+  hV(i).FaceColor = color;
+  hV(i).EdgeColor = 'none';
+  hV(i).FaceAlpha = 1;
+%   lighting phong
+%   camlight left
+%   camlight right
   view(3)
   hold on
-
     [ mesh_xs0, mesh_data0 ] = gridnd2mesh(gProj, data0Proj);
-  hL1 = patch(isosurface(mesh_xs0{:}, mesh_data0, levels(3)));
-  isonormals(mesh_xs0{:}, mesh_data0, hL1);
-  hL1.FaceColor = 'b';
-  hL1.EdgeColor = 'none';
-  hL1.FaceAlpha = 1;
+  hL(i) = patch(isosurface(mesh_xs0{:}, mesh_data0, level));
+  isonormals(mesh_xs0{:}, mesh_data0, hL(i));
+  hL(i).FaceColor = color;%[0.5 0.5 0.5];
+  hL(i).EdgeColor = 'none';
+  hL(i).FaceAlpha = .2;
   lighting phong
   camlight left
   camlight right
+  axis([vf.g.min(1) vf.g.max(1) vf.g.min(2) vf.g.max(2) vf.g.min(3) vf.g.max(3)])
+  axis square
+  set(gca,'FontSize',textSize)
+    xlabel('$x$','Interpreter','latex','FontSize',textSize)
+  ylabel('$y$','Interpreter','latex','FontSize',textSize)
+  zlabel('$z$','Interpreter','latex','FontSize',textSize)
+  title(['Max Tracking Error = ' num2str(-level,3) ' m'],'FontSize',titleTextSize);
+ 
   view(3)
-  % [~,hV1]=contour(gProj.xs{1},gProj.xs{2},dataProj,levels,...
-  %   'Linestyle','--','LineWidth',2);
-  % hold on
-  % [~,hL1] = contour(gProj.xs{1},gProj.xs{2},data0Proj,levels,...
-  %   'LineWidth',2);
-  % axis([g.min(1) g.max(1) g.min(1) g.max(1)])
-  % title('Mapping initial state to tracking error bound','FontSize',15)
-  % axis square
-  % set(gcf,'Color','white')
-  % colorbar
-  % xlabel('$x$','Interpreter','latex','FontSize',20)
-  % ylabel('$y$','Interpreter','latex','FontSize',20)
+
+  end
 end
 
 
