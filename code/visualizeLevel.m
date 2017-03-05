@@ -62,7 +62,7 @@ if strcmp(type,'plane')
   %plot cost
   subplot(1,3,1)
   hCost = surfc(gProj.xs{1},gProj.xs{2},data0Proj);
-  title(['Cost Function, v = ' num2str(valExtraStates(1)) ...
+  title(['Reward Function, v = ' num2str(valExtraStates(1)) ...
     ' m/s and \theta = ' num2str(valExtraStates(2)) ' rad'],'FontSize',15);
   hCost(2).LevelList = hCost(2).LevelList(hCost(2).LevelList <= levelMax);
   hCost(2).ContourZLevel = 0; %levelMin - .05;
@@ -149,7 +149,7 @@ elseif strcmp(type,'quad')
   %plot cost
   subplot(1,3,1)
   hCostS = surf(gProj.xs{1},gProj.xs{2},data0Proj);
-  title(['Cost Function, v_x = ' num2str(valExtraStates(1)) ...
+  title(['Reward Function, v_x = ' num2str(valExtraStates(1)) ...
     ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15);
   hold on
   [~, hCostC] = contour(gProj.xs{1},gProj.xs{2},data0Proj,levels,...
@@ -266,7 +266,7 @@ end
   [~, hCostC] = contour(gProj2D.xs{1},gProj2D.xs{2},data0Proj2D,levels,...
     'LineWidth',2);
   set(gca,'FontSize',textSize)
-  title('Cost Function','FontSize',titleTextSize)
+  title('Reward Function','FontSize',titleTextSize)
   %title(['Cost Function, v_x = ' num2str(valExtraStates(1)) ...
   %  ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15);
   
