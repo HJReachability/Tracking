@@ -76,7 +76,7 @@ Now that we have the relative dynamics between the two systems we must define a 
 	\label{fig:quad4D_example}
 \end{figure} 
  
- We want to find the farthest distance (and thus highest cost) that this game will ever reach when both players are acting optimally. Therefore we want to find a mapping between the initial state of the system and the maximum cost achieved over the time horizon. This mapping is through our value function, defined as:
+ We want to find the farthest distance (and thus highest cost) that this game will ever reach when both players are acting optimally. Therefore we want to find a mapping between the initial state of the system and the maximum cost achieved over the time horizon. This mapping is through our value function, defined as: \MCnote{Time horizon, time variable notation, control/disturbance functions, trajectory notation}
  \begin{equation}
  \begin{aligned}
  	V(\rstate)= \min_{\vctrl} \max_{\tctrl} \max_{t\in [0,T]} l(\state_r(\tau)), \ \tau \in [t, 0]
