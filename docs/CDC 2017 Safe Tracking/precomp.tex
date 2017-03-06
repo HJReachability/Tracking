@@ -103,6 +103,7 @@ Now that we have the relative dynamics between the two systems we must define a 
    Then $\forall \tvar_1, \tvar_2$ with $\tvar_1 \ge \tvar_2$,
    
    \begin{equation}
+   \label{eq:invariant}
    \valfunc_\infty\Big(\rtraj(\tvar_2; \rstate, \tvar_1, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))\Big) \ge \valfunc_\infty(\rstate)
    \end{equation}
    
@@ -150,4 +151,21 @@ First, we break up the expression ``$\min_{\tvar \in [-\thor, 0]}$'' into two pa
    
    Since the system dynamics are time-invariant, we can pick $\tvar_2 = -\thor_c$ without loss of generality, and $\tvar_1 = -\thor$ to obtain the desired result. \hfill $\blacksquare$
  
- \textit{Remark:} Theorem \ref{thm:main} is a well-known result in differential game theory \cite{}, and has been utilized in the context of using the subzero level set of $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{}. 
+\begin{rem}
+  The interpretation of Theorem \ref{thm:main}, particularly \eqref{eq:invariant}, is that every level set of $\valfunc_\infty(\rstate)$ is invariant under the following conditions:
+  \begin{itemize}
+    \item The real system applies the optimal control which tries to track the virtual system;
+    \item The virtual system applies the optimal virtual control that tries to escape from the real system;
+    \item The real system experiences the worst-case disturbance.
+  \end{itemize}
+  
+  In particular, the value of $\underline\valfunc := \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error \MCnote{(we need to explicitly define tracking error)} given the above assumptions. The tracking error bound in Fig. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, \ref{fig:fw_offline} is given by\footnote{In practice, since $\valfunc_\infty$ is obtained numerically, we set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc + \epsilon\}$ for some suitably small $\epsilon>0$} the set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc\}$.
+  
+  \MCnote{what if disturbances are not optimal?}
+\end{rem}
+ 
+ 
+ \begin{rem} 
+   Theorem \ref{thm:main} is very similar to well-known results in differential game theory with a slightly different cost function \cite{}, and has been utilized in the context of using the subzero level set of $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{}. In our work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to perform solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was previously done in \MCnote{SPP paper \cite{}}.
+ \end{rem}
+
