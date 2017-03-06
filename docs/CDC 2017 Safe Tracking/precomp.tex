@@ -7,7 +7,18 @@ To precompute the tracking bound we set up a capture-avoid game between the real
 The states and dynamics of the real system, as defined in section \ref{sec:formulation}, are $\dot\tstate = \tdyn(\tstate, \tctrl, \dstb)$. The virtual system will have states $\vstate$, which we assume to be a subset of $\tstate$. The virtual system has dynamics $\dot\vstate = \vdyn(\vstate, \vctrl)$, with control $\vctrl$.
 \SHnote{restrictions on $vctrl$?}
 
-We now have the dynamics for the individual systems, but to set up the capture-avoid game we must first define the relative states and dynamics. We subtract the virtual system states from the real system states to fix the virtual system at the origin:
+\textcolor{red}{introduce virtual dynamics, explain that it must be a subset of real system dynamics}
+We now have the dynamics for the individual systems, but to set up the capture-avoid game we must first define the relative states and dynamics. We place the virtual vehicle at the origin by subtracting its states $(\vstate)$ from the real system's states $(\tstate)$. In this frame of reference $(\rstate)$ we are given the states of the real system relative to the virtual system. \textcolor{red}{incorporate disturbances here?}
+
+
+\MCnote{I copied some old writing here. We should choose a common set of commands for stuff like real state and virtual state.}
+
+Dynamics of system
+\begin{equation}
+\dot\vstate = \vdyn(\vstate, \vctrl, \dstb)
+\end{equation}
+
+Dynamics of trajectory
 
 \begin{equation}
 \begin{aligned}
@@ -25,6 +36,31 @@ Matrix $\tvmat$ matches the common states of $\tstate$ and $\vstate$. The states
 Tracking error: $\rstate {\tvind}$.
 
 Define an error function $\errfunc(\rstate)$
+
+We now have the dynamics for the individual systems, but to set up the capture-avoid game we must first define the relative states and dynamics. We place the virtual vehicle at the origin by subtracting its states $(z_2)$ from the real system's states $(z_1)$. In this frame of reference $(z_r)$ we are given the states of the real system relative to the virtual system. \textcolor{red}{incorporate disturbances here?}
+
+\MCnote{Yes, we should always incorporate disturbances for the real system dynamics. I think the relative dynamics needs the $\tvmat$ matrix though, otherwise subtraction wouldn't make sense.}
+
+\begin{equation}
+\dot\vstate = \vdyn(\vstate, \vctrl, \dstb)
+\end{equation}
+
+Dynamics of trajectory
+\begin{equation}
+\dot\tstate = \tdyn(\tstate, \tctrl)
+\end{equation}
+
+Assume $\tstate$ is a subset of $\vstate$. 
+
+Relative state:
+\begin{equation}
+\rstate = \vstate - \tvmat\tstate
+\end{equation}
+
+Relative dynamics
+\begin{equation}
+\dot\rstate = \rdyn(\rstate, \vctrl, \tctrl, \dstb)
+\end{equation}
 
 The relative dynamics will include the relative position states and any other relevant states such as relative angles and velocities.
 
@@ -49,9 +85,8 @@ Now that we have the relative dynamics between the two systems we must define a 
  
  This is a modified version of the Hamilton-Jacobi formulation as described by \textcolor{red}{cite jaime, time varying reachability}. By implementing reachability analysis we solve for this value function over the time horizon. If the control authority of the real system is powerful enough to always eventually reach the virtual system, this value function will converge to an invariant solution for all time.  An example of this value function is in Figure \ref{fig:quad4D_example}-b. In the next section we will prove that the sub-level sets of this value function will map initial relative states to the guaranteed furthest possible tracking error over all time, as seen in Figure \ref{fig:quad4D_example}-c.
  
+\subsection{Main Result}
 
- \subsection{Proof of Main Theoretical Result}
- 
  \begin{equation}
  \begin{aligned}
 & \valfunc(\rstate, \thor) = \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \big\{\\
@@ -60,6 +95,7 @@ Now that we have the relative dynamics between the two systems we must define a 
   \end{equation}
  
  \begin{thm}
+   \label{thm:main}
    Let $\thor_c \ge 0$, and suppose
    
    \begin{equation}
@@ -70,33 +106,51 @@ Now that we have the relative dynamics between the two systems we must define a 
    Then $\forall \tvar_1, \tvar_2$ with $\tvar_1 \ge \tvar_2$,
    
    \begin{equation}
-   \valfunc_\infty(\rtraj(\tvar_2; \rstate, \tvar_1, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))) \ge \valfunc_\infty(\rstate)
+   \valfunc_\infty\Big(\rtraj(\tvar_2; \rstate, \tvar_1, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))\Big) \ge \valfunc_\infty(\rstate)
    \end{equation}
    
    \noindent where
    \begin{equation}
    \begin{aligned}
-   \vctrl^*(\cdot) = \arg \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \min_{\tvar \in [-\thor_1, 0]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
-   \tctrl^*(\cdot) = \arg \min_{\tctrl(\cdot)} \min_{\dstb(\cdot)} \min_{t \in [-\thor_1, 0]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \\
-   \dstb^*(\cdot) = \arg \min_{\dstb(\cdot)} \min_{\tvar \in [-\thor_1, 0]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) 
+   & \vctrl^*(\cdot) = \arg \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)}\big\{ \\
+   & \qquad \min_{\tvar \in [-\thor_1, 0]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \big\}\\
+   & \tctrl^*(\cdot) = \arg \min_{\tctrl(\cdot)} \min_{\dstb(\cdot)} \big\{ \\
+   & \qquad \min_{t \in [-\thor_1, 0]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \big\} \\
+   & \dstb^*(\cdot) = \arg \min_{\dstb(\cdot)} \big\{\min_{\tvar \in [-\thor_1, 0]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot),  \dstb(\cdot))) \big\}
    \end{aligned}
    \end{equation}
    
  \end{thm}
  
-\textit{Proof:} For all $\thor \ge \thor_c$,
+\textit{Proof:} For convenience, let
+
+\begin{equation}
+\rtraj^*(0;, \rstate, \tvar) := \rtraj(0; \rstate, \tvar, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot)))
+\end{equation}
+
+First, we break up the expression ``$\min_{\tvar \in [-\thor, 0]}$'' into two parts with time intervals $[-\thor_c, 0], [-\thor, -\thor_c]$. For all $\thor \ge \thor_c$,
    
    \begin{equation}
    \begin{aligned}
-   \valfunc(\rstate, \thor) &= \min_{\tvar \in [-\thor, 0]} \errfunc(\rtraj(\tvar; \rstate, -\thor, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))) \\
-   &= \min \Big[ \min_{\tvar \in [-\thor_c, 0]} \errfunc(\rtraj(\tvar; \rstate, -\thor, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))), \\
-   &\qquad\min_{\tvar \in [-\thor, -\thor_c]} \errfunc(\rtraj(\tvar; \rstate, -\thor, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))) \Big] \\
-   \valfunc_\infty(\rstate) &= \min \Big[ \valfunc_\infty(\rtraj(-\thor_c; \rstate, -\thor, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))), \\
-   &\qquad\min_{\tvar \in [-\thor, -\thor_c]} \errfunc(\rtraj(\tvar; \rstate, -\thor, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))) \Big] \\
-   \valfunc_\infty(\rstate) &\le \valfunc_\infty(\rtraj(-\thor_c; \rstate, -\thor, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))) \\
+   \valfunc(\rstate, \thor) &= \min_{\tvar \in [-\thor, 0]} \errfunc(\rtraj^*(\tvar; \rstate, -\thor)) \\
+   &= \min \Big[ \min_{\tvar \in [-\thor_c, 0]} \errfunc(\rtraj^*(\tvar; \rstate, -\thor)), \\
+   &\qquad\qquad\min_{\tvar \in [-\thor, -\thor_c]} \errfunc(\rtraj^*(\tvar; \rstate, -\thor)) \Big]
    \end{aligned}
+   \end{equation}
+   
+   Next, using \eqref{eq:conv_valfunc}, we have
+   \begin{equation}
+   \begin{aligned}
+   \valfunc_\infty(\rstate) &= \min \Big[ \valfunc_\infty(\rtraj^*(-\thor_c; \rstate, -\thor)), \\
+   &\qquad\qquad\min_{\tvar \in [-\thor, -\thor_c]} \errfunc(\rtraj^*(\tvar; \rstate, -\thor)) \Big]
+   \end{aligned}
+   \end{equation}
+   
+   \noindent which trivially implies
+   \begin{equation}
+   \valfunc_\infty(\rstate) \le \valfunc_\infty(\rtraj^*(-\thor_c; \rstate, -\thor))
    \end{equation}
    
    Since the system dynamics are time-invariant, we can pick $\tvar_2 = -\thor_c$ without loss of generality, and $\tvar_1 = -\thor$ to obtain the desired result. \hfill $\blacksquare$
  
- \textit{Remark:} 
+ \textit{Remark:} Theorem \ref{thm:main} is a well-known result in differential game theory \cite{}, and has been utilized in the context of using the subzero level set of $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{}. 
