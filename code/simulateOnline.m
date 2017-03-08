@@ -130,5 +130,6 @@ quadVirt.x = quadTrue.x([1 5 9]);
 % 2. check if reached goal. dummy equation for now
 value = value + [.1; .1; .1];
 
+
 dtNew = toc;
 end

@@ -9,7 +9,7 @@ function [hCostS, hCostC, hValueS, hValueC, hV, hL] = visualizeLevel(g,data,data
 figure(fig)
 clf
 colormap('winter');
-
+converge = 1;
 
 %% Plane
 if strcmp(type,'plane')
@@ -200,9 +200,23 @@ range_upper([1 5 9]) = [vfs.gs{1}.max(1); vfs.gs{2}.max(1); vfs.gs{3}.max(1)]+sm
 
 vf = reconSC(vfs, range_lower, range_upper, 0, 'min');
 
-vfs0 = vfs;
-vfs0.datas = data0;
-vf0 = reconSC(vfs0, range_lower, range_upper, 0, 'min');
+if converge
+  [gConv{1},dataCon{1}]=proj(vfs.gs{1},vfs.datas{1},[0 1 1 1],'max');
+  [gConv{2},dataCon{2}]=proj(vfs.gs{2},vfs.datas{2},[0 1 1 1],'max');
+  [gConv{3},dataCon{3}]=proj(vfs.gs{3},vfs.datas{3},[0 1],'max');
+  vfs0.gs = gConv;
+  vfs0.datas = dataCon;
+  vfs0.dims={1;2;3};
+  vfs0.tau=0;
+  range_lower = [vfs0.gs{1}.min; vfs0.gs{2}.min; vfs0.gs{3}.min]-small;
+  range_upper = [vfs0.gs{1}.max; vfs0.gs{2}.max; vfs0.gs{3}.max]+small;
+  vf0 = reconSC(vfs0, range_lower, range_upper, 0, 'min');
+else
+  vfs0 = vfs;
+  vfs0.datas = data0;
+  vf0 = reconSC(vfs0, range_lower, range_upper, 0, 'min');  
+end
+
 gProj = vf.g;
 
 if strcmp(cost,'quadratic_decomp')
