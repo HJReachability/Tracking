@@ -20,17 +20,21 @@ classdef ObstacleMap
         % with the new matrix (then this must be modified within the 
         % Run method of RRTPlanner)
         
+        % sensor has to be a cube around the point
+        
+        % point will be a vector of xyz coordinates
         function SenseAndUpdate(point, range)
-            senseRange = MakeCubeRange(point, range);
+            
             
         end
         
-        % helper function for SenseAndUpdate. Creates the sensing radius
-        % and cube data structure for sensing
-        % point will be a vector of xyz coordinates
+        % helper function for SenseAndUpdate
         function MakeCubeRange(point, range)
-            
         end
+        
+%       function plot()
+%          self.rrt.plot(); % just call existing plot method in RrtPlanner class 
+%       end
         
     end
 end

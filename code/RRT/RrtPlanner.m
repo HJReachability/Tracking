@@ -95,6 +95,9 @@ classdef RrtPlanner < handle
     
     % The obstacles
     obs;
+
+    % MINE: the obstacle map
+    obsmap;
     
     % The plane parameters of each obstacle plane
     obstaclePlaneParameters;
@@ -407,7 +410,7 @@ classdef RrtPlanner < handle
         for i=1:num_obs
           self.obs(:,:,i)=obs_temp(i*4-3:i*4,:);
         end
-        
+
       else % Add some number of obstacle walls
         if self.wallCount == 1
           y = 0;
@@ -438,6 +441,9 @@ classdef RrtPlanner < handle
         self.obstaclePlaneParameters(i,:) = [normalVec(1:3), -sum(self.obs(1,:,i).*normalVec)];
         self.obstacleCount = size(self.obstaclePlaneParameters,1);
       end
+
+      % MINE: creates an obstacle map instance out of the obstacle file passed in
+      self.obsmap = ObstacleMap(self.rrt);
       
       % Need to clear the data structure since obstacles may have changed
       self.SetUpDataStructures();
@@ -578,6 +584,7 @@ classdef RrtPlanner < handle
         ,self.lim(2,1) + range(2)*rand ...
         ,self.lim(3,1) + range(3)*rand];
       
+      % MINE: should we check for collisions using local_obs? Maybe sense before adding newPoint
       % If the new point is on an obstacle plane the get another one
       while self.IsOnObstaclePlane(newPoint)
         newPoint=[self.lim(1,1) + range(1)*rand ...
@@ -585,7 +592,6 @@ classdef RrtPlanner < handle
           ,self.lim(3,1) + range(3)*rand];
       end
     end
-    
     
     %% Check if the point is on any of the obstacle planes
     function result = IsOnObstaclePlane(self,point)
@@ -602,7 +608,6 @@ classdef RrtPlanner < handle
         == -self.obstaclePlaneParameters(:,4) ...
         ,1));
     end
-    
     
     %% Function TracePath
     %
@@ -692,13 +697,15 @@ classdef RrtPlanner < handle
     %% Function CollisionCheck
     % *Description:* Returns whether a collision occurs between an edge and a set
     % of obstacles. Also gives the point of intersection. (P1=node,P2=parent node)
+
+    % MINE: checked for collision using self.obsmap.local_obs
     function [collision,PInt] = CollisionCheck(self,P1,P2)
       self.collisionCheckCount = self.collisionCheckCount + 1;
       %default is that it is safe, then if a collision is found it is set to 1
       %and we return
       collision = false;
       
-      if size(self.obs,1)==0
+      if size(self.obsmap.local_obs,1)==0
         PInt=inf;
         return;
       end
@@ -707,8 +714,8 @@ classdef RrtPlanner < handle
       
       % Line equation
       r_var=[P1(1)-P2(1) P1(2)-P2(2) P1(3)-P2(3)];
-      plane_equ = self.obstaclePlaneParameters;
-      for i = 1:size(self.obs,3)
+      plane_equ = self.obstaclePlaneParameters; % MINE: what is this...
+      for i = 1:size(self.obsmap.local_obs,3)
         % Plane * Line
         bottomof_t_var = plane_equ(i,1) * r_var(1) ...
           + plane_equ(i,2) * r_var(2) ...
@@ -735,7 +742,7 @@ classdef RrtPlanner < handle
           % -------------------------------------------------
           % Check if point lies within plane boundaries
           % Ref: http://www.blackpawn.com/texts/pointinpoly/default.html
-          if PointInQuad(PInt,self.obs(:,:,i));
+          if PointInQuad(PInt,self.obsmap.local_obs(:,:,i));
             collision = true;
             % No need to check anymore since there is a collision
             return;
