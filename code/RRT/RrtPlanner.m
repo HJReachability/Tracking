@@ -464,6 +464,9 @@ classdef RrtPlanner < handle
       % Create local variable. Could cause problems if self.rrt is used in the mean time
       rrtLocal = self.rrt;
       
+      % MINE:
+      size(rrtLocal,2)
+
       %find the valid trees
       for t=1:size(rrtLocal,2)
         if ~rrtLocal(t).valid
@@ -477,6 +480,7 @@ classdef RrtPlanner < handle
         %determine the closest (node or edge)
         if d2nodes(t).vals(minNode_index)<=d2edges(t).vals(minEdge_index) %then try and get to the node first
           % Check for collision
+          % MINE: Sense at new_pnt for new obstacles
           if ~self.CollisionCheck(new_pnt,rrtLocal(t).cords(minNode_index,:));
             rrtLocal(t).parent=[rrtLocal(t).parent;minNode_index];
             rrtLocal(t).cords=[rrtLocal(t).cords;new_pnt];

@@ -6,7 +6,6 @@ classdef ObstacleMap
     end
     
     methods
-   
         % initialization
         function self = ObstacleMap(rrt)
             if nargin == 1
@@ -20,21 +19,27 @@ classdef ObstacleMap
         % with the new matrix (then this must be modified within the 
         % Run method of RRTPlanner)
         
-        % sensor has to be a cube around the point
-        
-        % point will be a vector of xyz coordinates
         function SenseAndUpdate(point, range)
-            
-            
+            % sense
+            senseRange = MakeCubeRange(point, range);
+            % all the obstacles that have not been explored yet
+            other_obs = setdiff(self.global_obs, self.local_obs);
+            if ~isempty(other_obs) % if there are still some other unexplored obstacles...
+                % check for obstacle intersection with each face that makes up
+                % the sensing range
+                for face = senseRange
+                    CheckIntersection()
+
+                end
+            end
         end
         
-        % helper function for SenseAndUpdate
+        % helper function for SenseAndUpdate. Creates the sensing radius
+        % and cube data structure for sensing
+        % point will be a vector of xyz coordinates
         function MakeCubeRange(point, range)
+            
         end
-        
-%       function plot()
-%          self.rrt.plot(); % just call existing plot method in RrtPlanner class 
-%       end
         
     end
 end
