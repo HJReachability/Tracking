@@ -46,17 +46,15 @@ Now that we have the relative dynamics between the two systems we must define a 
  This is a modified version of the Hamilton-Jacobi formulation as described by \textcolor{red}{cite jaime, time varying reachability}. By implementing reachability analysis we solve for this value function over the time horizon. If the control authority of the real system is powerful enough to always eventually reach the virtual system, this value function will converge to an invariant solution for all time.  An example of this value function is in Figure \ref{fig:quad4D_example}-b. In the next section we will prove that the sub-level sets of this value function will map initial relative states to the guaranteed furthest possible tracking error over all time, as seen in Figure \ref{fig:quad4D_example}-c.
  
 \subsection{Main Result}
-
-\SHnote{max/min to sup/inf, see if it's easy to change to [0,T] instead of [-T,0]}
-
  \begin{equation}
  \begin{aligned}
-& \valfunc(\rstate, \thor) = \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)} \big\{\\
-&\quad \min_{\tvar \in [-\thor, 0]} \errfunc(\rtraj(\tvar; \rstate, -\thor, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot)))\big\} 
+& \valfunc(\rstate, \thor) = \inf_{\vctrl(\cdot)} \sup_{\tctrl(\cdot), \dstb(\cdot)} \big\{\\
+&\quad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot)))\big\} \\
+& \valfunc(\rstate, \thor) = \max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0)) 
  \end{aligned}
   \end{equation}
  
- \begin{thm}
+ \begin{claim}
    \label{thm:main}
    Let $\thor_c \ge 0$, and suppose
    
@@ -65,55 +63,80 @@ Now that we have the relative dynamics between the two systems we must define a 
    \valfunc_\infty(\rstate) := \valfunc(\rstate, \thor) = \valfunc(\rstate, \thor_c) ~ \forall \thor \ge \thor_c.
    \end{equation}
    
-   Then $\forall \tvar_1, \tvar_2$ with $\tvar_1 \ge \tvar_2$,
+   Then $\forall \tvar_1, \tvar_2$ with $\tvar_2 \ge \tvar_1$,
    
    \begin{equation}
    \label{eq:invariant}
-   \valfunc_\infty\Big(\rtraj(\tvar_2; \rstate, \tvar_1, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))\Big) \ge \valfunc_\infty(\rstate)
+   \valfunc_\infty(\rstate) \ge \valfunc_\infty\Big(\rtraj^*(\tvar_2;, \rstate, \tvar_1)\Big)
    \end{equation}
    
    \noindent where
    \begin{equation}
    \begin{aligned}
-   & \vctrl^*(\cdot) = \arg \max_{\vctrl(\cdot)} \min_{\tctrl(\cdot), \dstb(\cdot)}\big\{ \\
-   & \qquad \min_{\tvar \in [-\thor_1, 0]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \big\}\\
-   & \tctrl^*(\cdot) = \arg \min_{\tctrl(\cdot)} \min_{\dstb(\cdot)} \big\{ \\
-   & \qquad \min_{t \in [-\thor_1, 0]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \big\} \\
-   & \dstb^*(\cdot) = \arg \min_{\dstb(\cdot)} \big\{\min_{\tvar \in [-\thor_1, 0]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot),  \dstb(\cdot))) \big\}
+   & \rtraj^*(0;, \rstate, \tvar) := \rtraj(0; \rstate, \tvar, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot))) \\
+   & \vctrl^*(\cdot) = \arg \inf_{\vctrl(\cdot)} \sup_{\tctrl(\cdot), \dstb(\cdot)}\big\{ \\
+   & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \big\}\\
+   & \tctrl^*(\cdot) = \arg \sup_{\tctrl(\cdot)} \sup_{\dstb(\cdot)} \big\{ \\
+   & \qquad \max_{t \in [0, \thor]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot), \dstb(\cdot))) \big\} \\
+   & \dstb^*(\cdot) = \arg \sup_{\dstb(\cdot)} \big\{\max_{\tvar \in [0, \thor]} \errfunc(\rtraj(0; \rstate, \tvar, \vctrl(\cdot), \tctrl(\cdot),  \dstb(\cdot))) \big\}
    \end{aligned}
    \end{equation}
    
- \end{thm}
+ \end{claim}
  
-\textit{Proof:} For convenience, let
+\textit{Proof:}
+
+Assume $\thor \ge \thor_c$.
 
 \begin{equation}
-\rtraj^*(0;, \rstate, \tvar) := \rtraj(0; \rstate, \tvar, \vctrl^*(\cdot), \tctrl^*(\cdot), \dstb^*(\cdot)))
+\begin{aligned}
+\valfunc(\rstate, \thor) &= \valfunc_\infty(\rstate) = \max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0))\\
+\end{aligned}
 \end{equation}
 
-First, we break up the expression ``$\min_{\tvar \in [-\thor, 0]}$'' into two parts with time intervals $[-\thor_c, 0], [-\thor, -\thor_c]$. For all $\thor \ge \thor_c$,
-   
-   \begin{equation}
-   \begin{aligned}
-   \valfunc(\rstate, \thor) &= \min_{\tvar \in [-\thor, 0]} \errfunc(\rtraj^*(\tvar; \rstate, -\thor)) \\
-   &= \min \Big[ \min_{\tvar \in [-\thor_c, 0]} \errfunc(\rtraj^*(\tvar; \rstate, -\thor)), \\
-   &\qquad\qquad\min_{\tvar \in [-\thor, -\thor_c]} \errfunc(\rtraj^*(\tvar; \rstate, -\thor)) \Big]
-   \end{aligned}
-   \end{equation}
-   
-   Next, using \eqref{eq:conv_valfunc}, we have
-   \begin{equation}
-   \begin{aligned}
-   \valfunc_\infty(\rstate) &= \min \Big[ \valfunc_\infty(\rtraj^*(-\thor_c; \rstate, -\thor)), \\
-   &\qquad\qquad\min_{\tvar \in [-\thor, -\thor_c]} \errfunc(\rtraj^*(\tvar; \rstate, -\thor)) \Big]
-   \end{aligned}
-   \end{equation}
-   
-   \noindent which trivially implies
-   \begin{equation}
-   \valfunc_\infty(\rstate) \le \valfunc_\infty(\rtraj^*(-\thor_c; \rstate, -\thor))
-   \end{equation}
-   
+By time-invariance
+ \begin{equation}
+ \begin{aligned}
+ \valfunc_\infty(\rstate) &= \max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0)) \\
+ &= \max_{\tvar \in [\thor_c-\thor, \thor_c]} \errfunc(\rtraj^*(\tvar; \rstate, \thor_c-\thor)) \\
+ \end{aligned}
+ \end{equation}  
+ 
+Consider time subinterval:
+ 
+ \begin{equation}
+\begin{aligned}
+\valfunc_\infty(\rstate) &= \max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0)) \\
+&\ge \max_{\tvar \in [0, \thor_c]} \errfunc(\rtraj^*(\tvar; \rstate, \thor_c-\thor)) \\
+\end{aligned}
+\end{equation}  
+
+Now look at trajectory $\rtraj^*(\tvar; \rstate, \thor_c-\thor)$:
+
+\begin{equation}
+\begin{aligned}
+\rtraj^*(\tvar; \rstate, \thor_c-\thor) = \rtraj^*(\tvar; \rtraj^*(0; \rstate, \thor_c-\thor), 0)
+\end{aligned}
+\end{equation}
+
+Continuing from value function:
+
+\begin{equation}
+\begin{aligned}
+\valfunc_\infty(\rstate) &\ge \max_{\tvar \in [0, \thor_c]} \errfunc(\rtraj^*(\tvar; \rtraj^*(0; \rstate, \thor_c-\thor), 0)) \\
+&= \valfunc_\infty(\rtraj^*(0; \rstate, \thor_c-\thor))
+\end{aligned}
+\end{equation} 
+ 
+ By time-invariance again,
+ 
+ \begin{equation}
+ \begin{aligned}
+ \valfunc_\infty(\rstate) &\ge \valfunc_\infty(\rtraj^*(\thor-\thor_c; \rstate, 0)) ~ \forall \thor\ge\thor_c \\
+ \Leftrightarrow  \valfunc_\infty(\rstate) &\ge \valfunc_\infty(\rtraj^*(\tvar_2; \rstate, 0)) ~ \forall \tvar_2 \ge 0
+ \end{aligned}
+ \end{equation} 
+ 
    Since the system dynamics are time-invariant, we can pick $\tvar_2 = -\thor_c$ without loss of generality, and $\tvar_1 = -\thor$ to obtain the desired result. \hfill $\blacksquare$
  
 \begin{rem}
