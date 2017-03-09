@@ -80,11 +80,19 @@ classdef ObstacleMap < handle
             for obs = obst % iterate over the global obst set
                 numInRange = 0; % count the number of corners of the plane that are within the cube
                 for point = obs % iterate over the four points that make up the obs
-                    if point(1)
+                    if point(1) <= oneCubeRan(2)
                         numInRange = numInRange + 1;
+                    end
                     
-                    
-                       
+                    if numInRange == 3
+                        % update local obs to combine entire obs
+                        % pad the obs with track err
+                        % break the loop early
+                    end
+                end
+                if numInRange == 2
+                    % cut off the local obs at sense range. Do the brute
+                    % force checking
                 end
             end
         end

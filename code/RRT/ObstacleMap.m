@@ -2,7 +2,7 @@ classdef ObstacleMap < handle
     properties
         rrt; % the stored RRT
         global_obs; % a cell array of all the obstacles on the map.
-        local_obs = cell(4, 3); % a cell array of the obstacles that the drone has seen so far.
+        local_obs; % a cell array of the obstacles that the drone has seen so far. Starts empty.
         cube; % the cube sensing range
         track_err; % the tracking error bound to pad each obstacle with
     end
@@ -16,7 +16,11 @@ classdef ObstacleMap < handle
             if nargin == 4
                 self.global_obs = rrt.obs;
                 self.cube = MakeCubeRange(point, senseRange);
-                self.track_err = trackErrBnd;                
+                self.track_err = trackErrBnd; 
+                
+                glbSize = size(global_obs);
+                self.local_obs = cell(4, 3, glbSize(3)); % preallocate memory for local obstacles. 
+                                                         % Same size as global_obs
             end
         end
         
@@ -37,7 +41,6 @@ classdef ObstacleMap < handle
                     for obst = other_obs
                         obs = CheckIntersection(obst, face); % just use global_obs and index the same way as 
                                                       % local_obs so update part into whole obs is easier...
-                        % update local_obs here
                     end
                 end
             end
@@ -68,24 +71,27 @@ classdef ObstacleMap < handle
         % Then normal vector N points inwards and check sign of dot product with
         % point P on cube face and Q on obs 1 or 2. v = dot(Q - P, N);
         
-        % plane is a 4x3 array
+        % plane is a 4x3 array. Also updates local obstacles!
         function CheckIntersection(obst, cube)
             % compute the coordinates' ranges of the cube
             mostPositive = cube(:,1);
             mostNegative = cube(:,8);
-            oneCubeRan = [mostPositive(1), mostNegative(1)];
-            twoCubeRan = [mostPositive(2), mostNegative(2)];
-            threeCubeRan = [mostPositive(3), mostNegative(3)];
+            oneCubeRan = [mostNegative(1), mostPositive(1)];
+            twoCubeRan = [mostNegative(2), mostPositive(2)];
+            threeCubeRan = [mostNegative(3), mostPositive(3)];
             
             for obs = obst % iterate over the global obst set
                 numInRange = 0; % count the number of corners of the plane that are within the cube
-                for point = obs % iterate over the four points that make up the obs
-                    if point(1)
+                for point = obs % iterate over the four corner points that make up the obs
+                    % if the point is within the sensing cube...
+                    if oneCubeRan(1) <= point(1) <= oneCubeRan(2) && twoCubeRan(1) <= point(2) <= twoCubeRan(2) && threeCubeRan(1) <= point(3) <= threeCubeRan(2) 
                         numInRange = numInRange + 1;
                     end
                     
                     if numInRange == 3
-                        % update local obs to combine entire obs
+                        % update local obs to combine entire obs// use obst
+                        % index so that smae index coud be used for local
+                        % obs
                         % pad the obs with track err
                         % break the loop early
                     end
@@ -94,6 +100,8 @@ classdef ObstacleMap < handle
                     % cut off the local obs at sense range. Do the brute
                     % force checking
                 end
+                % having only one corner in the cube is impossible with
+                % this setup
             end
         end
         
