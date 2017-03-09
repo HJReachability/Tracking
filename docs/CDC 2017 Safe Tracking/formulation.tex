@@ -21,7 +21,7 @@ We assume that the system dynamics $f_1 : \tset\ \times\ \tcset \rightarrow \tse
 \end{aligned}
 \end{equation}
 
-Under these assumptions there exists a unique trajectory solving \ref{eq:fdyn} for a given $\tctrl(\cdot) \in \tcset$ \cite{Evans84}. The trajectories of \ref{eq:fdyn} that solve this ODE will be denoted as $\tctrl(\cdot)$ as $\ttraj(\tau; \tstate, t, \tctrl(\cdot))$. These trajectories will satisfy the initial condition and the ODE \ref{eq:fdyn} almost everywhere:
+Under these assumptions there exists a unique trajectory solving \ref{eq:fdyn} for a given $\tctrl(\cdot) \in \tcset$ \cite{Coddington84}. The trajectories of \ref{eq:fdyn} that solve this ODE will be denoted as $\tctrl(\cdot)$ as $\ttraj(\tau; \tstate, t, \tctrl(\cdot))$. These trajectories will satisfy the initial condition and the ODE \ref{eq:fdyn} almost everywhere:
 \begin{equation}
 \label{eq:fdyn_traj}
 \begin{aligned}
@@ -29,6 +29,8 @@ Under these assumptions there exists a unique trajectory solving \ref{eq:fdyn} f
 \ttraj(t; \tstate, t, \tctrl(\cdot)) &= \tstate
 \end{aligned}
 \end{equation}
+
+\SHnote{explain what trajectory notation means better}
 
 \subsection{Planning Environment}
 \textcolor{red}{Requires static obstacles that aren't too densely clustered. Depending on path planner, environment could unknown with a sensing radius, or just a known environment}

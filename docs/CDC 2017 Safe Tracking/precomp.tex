@@ -8,10 +8,7 @@ The states and dynamics of the real system, as defined in section \ref{sec:formu
 \SHnote{restrictions on $vctrl$?}
 
 \textcolor{red}{introduce virtual dynamics, explain that it must be a subset of real system dynamics}
-We now have the dynamics for the individual systems, but to set up the capture-avoid game we must first define the relative states and dynamics. We place the virtual vehicle at the origin by subtracting its states $(\vstate)$ from the real system's states $(\tstate)$. In this frame of reference $(\rstate)$ we are given the states of the real system relative to the virtual system. \textcolor{red}{incorporate disturbances here?}
-
-
-\MCnote{I copied some old writing here. We should choose a common set of commands for stuff like real state and virtual state.}
+We now have the dynamics for the individual systems, but to set up the capture-avoid game we must first define the relative states and dynamics. We place the virtual vehicle at the origin by subtracting its states $(\vstate)$ from the real system's states $(\tstate)$. In this frame of reference $(\rstate)$ we are given the states of the real system relative to the virtual system. 
 
 Dynamics of system
 \begin{equation}
@@ -29,63 +26,28 @@ Dynamics of trajectory
 
 Matrix $\tvmat$ matches the common states of $\tstate$ and $\vstate$. The states $\rstate$ now represent the real state relative to the virtual state.
 
-\MCnote{I copied some old writing here. We should choose a common set of commands for stuff like real state and virtual state.}
-\MCnote{$\tvmat$ is a matrix that subsamples the states. It could be a more general transformation which would be useful for doing rotations (eg. in air3D there's also rotation so that one vehicle is facing right)}
-
-
-Tracking error: $\rstate {\tvind}$.
-
-Define an error function $\errfunc(\rstate)$
-
-We now have the dynamics for the individual systems, but to set up the capture-avoid game we must first define the relative states and dynamics. We place the virtual vehicle at the origin by subtracting its states $(z_2)$ from the real system's states $(z_1)$. In this frame of reference $(z_r)$ we are given the states of the real system relative to the virtual system. \textcolor{red}{incorporate disturbances here?}
-
-\MCnote{Yes, we should always incorporate disturbances for the real system dynamics. I think the relative dynamics needs the $\tvmat$ matrix though, otherwise subtraction wouldn't make sense.}
-
-\begin{equation}
-\dot\vstate = \vdyn(\vstate, \vctrl, \dstb)
-\end{equation}
-
-Dynamics of trajectory
-\begin{equation}
-\dot\tstate = \tdyn(\tstate, \tctrl)
-\end{equation}
-
-Assume $\tstate$ is a subset of $\vstate$. 
-
-Relative state:
-\begin{equation}
-\rstate = \vstate - \tvmat\tstate
-\end{equation}
-
-Relative dynamics
-\begin{equation}
-\dot\rstate = \rdyn(\rstate, \vctrl, \tctrl, \dstb)
-\end{equation}
-
-The relative dynamics will include the relative position states and any other relevant states such as relative angles and velocities.
-
 \subsection{Formalizing the Capture-Avoid Game}
-\MCnote{The goal of the system is to minimize the tracking error. The goal of the trajectory, which is a ``virtual'' vehicle, is to maximize the tracking error. (copied from old writing)}
-
-Now that we have the relative dynamics between the two systems we must define a metric for the tracking error bound between these systems. We do this by defining an implicit surface function as a reward function $l(\rstate)$ in the new frame of reference \SHnote{requirements on $l(\rstate)$} Because the metric we care about is distance to the origin, this reward function can be as simple as negative distance in position space to the origin. An example can be seen in Figure \ref{fig:quad4D_example}-a, where the rings represent varying level sets of the cost function. The real vehicle will try to maximize this reward to reduce the relative distance, while the virtual vehicle will do the opposite.
+Now that we have the relative dynamics between the two systems we must define a metric for the tracking error bound between these systems. We do this by defining an implicit surface function as a cost function $\errfunc(\rstate)$ in the new frame of reference \SHnote{requirements on $l(\rstate)$} Because the metric we care about is distance to the origin, this cost function can be as simple as negative distance in position space to the origin. An example can be seen in Figure \ref{fig:quad4D_example}-a, where the rings represent varying level sets of the cost function. The true vehicle will try to maximize this reward to reduce the relative distance, while the virtual vehicle will do the opposite.
 
 \begin{figure}
 	\centering
 	\includegraphics[width=0.5\textwidth]{fig/quad4D_example}
-	\caption{\textcolor{red}{a) reward function, b) value function, c) level sets of both mapping initial state to tracking error bound}}
+	\caption{\textcolor{red}{a) cost function, b) value function, c) level sets of both mapping initial state to tracking error bound}}
 	\label{fig:quad4D_example}
 \end{figure} 
  
  We want to find the farthest distance (and thus highest cost) that this game will ever reach when both players are acting optimally. Therefore we want to find a mapping between the initial state of the system and the maximum cost achieved over the time horizon. This mapping is through our value function, defined as: \MCnote{Time horizon, time variable notation, control/disturbance functions, trajectory notation}
  \begin{equation}
  \begin{aligned}
- 	V(\rstate)= \min_{\vctrl} \max_{\tctrl} \max_{t\in [0,T]} l(\state_r(\tau)), \ \tau \in [t, 0]
+ 	V(\rstate)= \sup_{\vctrl(\cdot)} \inf_{\tctrl(\cdot), \dstb(\cdot)} \big\{\sup_{\tvar\in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \vctrl(\cdot), \tctrl(\cdot)))\big\}
  	\end{aligned}
  \end{equation} 
  
  This is a modified version of the Hamilton-Jacobi formulation as described by \textcolor{red}{cite jaime, time varying reachability}. By implementing reachability analysis we solve for this value function over the time horizon. If the control authority of the real system is powerful enough to always eventually reach the virtual system, this value function will converge to an invariant solution for all time.  An example of this value function is in Figure \ref{fig:quad4D_example}-b. In the next section we will prove that the sub-level sets of this value function will map initial relative states to the guaranteed furthest possible tracking error over all time, as seen in Figure \ref{fig:quad4D_example}-c.
  
 \subsection{Main Result}
+
+\SHnote{max/min to sup/inf, see if it's easy to change to [0,T] instead of [-T,0]}
 
  \begin{equation}
  \begin{aligned}
@@ -172,3 +134,4 @@ First, we break up the expression ``$\min_{\tvar \in [-\thor, 0]}$'' into two pa
    Theorem \ref{thm:main} is very similar to well-known results in differential game theory with a slightly different cost function \cite{}, and has been utilized in the context of using the subzero level set of $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{}. In our work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to perform solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was previously done in \MCnote{SPP paper \cite{}}.
  \end{rem}
 
+\SHnote{say that this implicitly encodes all BRSs of initial states from which the tracking error reaches each level curve of the implicit value function}
