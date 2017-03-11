@@ -44,12 +44,11 @@ classdef ObstacleMap < handle
       threeCubeRan = [mostNegative(3), mostPositive(3)];
       
       for i = 1:length(obst) % iterate over the indices of the global obst set
-        for point = obs % iterate over the four corner points that make up the obs
+        for point = obst(i) % iterate over the four corner points that make up the obs
           % if the point is within the sensing cube...
           if oneCubeRan(1) <= point(1) <= oneCubeRan(2) && twoCubeRan(1) <= point(2) <= twoCubeRan(2) && threeCubeRan(1) <= point(3) <= threeCubeRan(2)
-            % there is a point of th obstacle within sensing range. Just
-            % add entire obstacle into local
-            self.local_obs(i) = self.global_obs(i);
+            obs = obst(i);
+            TrackErrorPadding(self.track_err, obs);
             break
           end
         end
@@ -63,6 +62,17 @@ classdef ObstacleMap < handle
     function [smallest, largest] = MakeCubeRange(point, size)
       largest = [point(1) + size/2, point(2) + size/2, point(3) + size/2];
       smallest = [point(1) - size/2, point(2) - size/2, point(3) - size/2];
+    end
+    
+    % helper function for sense and update that adds the tracking error
+    % bound to each obstacle before adding from global to local
+    % TODO: add extra dimension of length 6 to local_obs to keep track of
+    % each side of error bound
+    function TrackErrorPadding(track_err, obs)
+      for point = obs
+        % pad each of four edges, must use adjacent points       
+      end    
+      % then pad each of two sides
     end
 
   end
