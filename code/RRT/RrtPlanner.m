@@ -96,7 +96,8 @@ classdef RrtPlanner < handle
     % The obstacles
     obs;
 
-    % MINE: the obstacle map
+    % MINE: the obstacle map, initialize after global obstacles have been
+    % set up
     obsmap;
     
     % The plane parameters of each obstacle plane
@@ -148,7 +149,7 @@ classdef RrtPlanner < handle
     % treesMax = How many multiple trees (must be at least 2, 1 for source and 1 for destination
     % seedsPerAxis = Number of seeds allowed on each axis (discretely placed seeds which idealy helps the RRT expansion)
     % wallCount = the Number of mock walls to be placed in the environment
-    function self = RrtPlanner(treesMax,seedsPerAxis,wallCountOrObstacleFilename)
+    function self = RrtPlanner(treesMax, seedsPerAxis, wallCountOrObstacleFilename)
       % Check inputs
       if 1 <= nargin
         self.treesMax = treesMax;
@@ -443,7 +444,8 @@ classdef RrtPlanner < handle
       end
 
       % MINE: creates an obstacle map instance out of the obstacle file passed in
-      self.obsmap = ObstacleMap(self.rrt);
+      self.obs
+      % self.obsmap = ObstacleMap(self.obs, point, senseRange, trackErrBnd);
       
       % Need to clear the data structure since obstacles may have changed
       self.SetUpDataStructures();
@@ -481,7 +483,7 @@ classdef RrtPlanner < handle
         if d2nodes(t).vals(minNode_index)<=d2edges(t).vals(minEdge_index) %then try and get to the node first
           % Check for collision
           % MINE: Sense at new_pnt for new obstacles
-          if ~self.CollisionCheck(new_pnt,rrtLocal(t).cords(minNode_index,:));
+          if ~self.CollisionCheck(new_pnt,rrtLocal(t).cords(minNode_index,:))
             rrtLocal(t).parent=[rrtLocal(t).parent;minNode_index];
             rrtLocal(t).cords=[rrtLocal(t).cords;new_pnt];
             addedtotree(t)=1;
