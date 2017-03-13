@@ -64,7 +64,7 @@ tic;
 extraArgs.stopInit = [0,0,0,0];
 extraArgs.stopConverge = 1;
 [data, tau] = ...
-  HJIPDE_solve(data0, tau, schemeData, 'zero',extraArgs,0);
+  HJIPDE_solve(data0, tau, schemeData, 'zero',extraArgs);
 runtime = toc;
 
 

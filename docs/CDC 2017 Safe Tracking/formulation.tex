@@ -1,0 +1,42 @@
+% !TEX root = tracking.tex
+\section{Problem Formulation \label{sec:formulation}}
+
+\textcolor{red}{We want to track a problem with sophisticated dynamics through an environment with obstacles.  Need to define dynamics, environment, sensing abilities, etc.}
+
+\subsection{Real System Dynamics}
+Let $\tstate$ be the state variable the real system. The evolution of the dynamics satisfies the ordinary differential equation:
+
+\begin{equation}
+\begin{aligned}
+\label{eq:fdyn}
+\frac{d\tstate}{d\tau} = \dot{\tstate} = \tdyn(\tstate, \tctrl, \dstb), \tau \in [t, 0] \\
+\tstate \in \tset, \tctrl_1 \in \tcset, \dstb \in \dset
+\end{aligned}
+\end{equation}
+
+We assume that the system dynamics $f_1 : \tset\ \times\ \tcset \rightarrow \tset$ are uniformly continuous, bounded, and Lipschitz continuous in $\tstate$ for fixed control $\tctrl$. The control function $\tctrl(\cdot)$ is drawn from the set of measurable functions\footnote{A function $f:X\to Y$ between two measurable spaces $(X,\Sigma_X)$ and $(Y,\Sigma_Y)$ is said to be measurable if the preimage of a measurable set in $Y$ is a measurable set in $X$, that is: $\forall V\in\Sigma_Y, f^{-1}(V)\in\Sigma_X$, with $\Sigma_X,\Sigma_Y$ $\sigma$-algebras on $X$,$Y$.}:
+\begin{equation}
+\begin{aligned}
+\tctrl(\cdot) \in \tcfset(t) = \{\phi: [t, 0] \rightarrow \tcset: \phi(\cdot) \text{ is measurable}\}
+\end{aligned}
+\end{equation}
+
+Under these assumptions there exists a unique trajectory solving \ref{eq:fdyn} for a given $\tctrl(\cdot) \in \tcset$ \cite{Coddington84}. The trajectories of \ref{eq:fdyn} that solve this ODE will be denoted as $\tctrl(\cdot)$ as $\ttraj(\tau; \tstate, t, \tctrl(\cdot))$. These trajectories will satisfy the initial condition and the ODE \ref{eq:fdyn} almost everywhere:
+\begin{equation}
+\label{eq:fdyn_traj}
+\begin{aligned}
+\frac{d}{d\tau}\ttraj(\tau; \tstate, t, \tctrl(\cdot)) &= f_1(\ttraj(\tau; \tstate, t, \tctrl(\cdot)), \tctrl(\tau)) \\
+\ttraj(t; \tstate, t, \tctrl(\cdot)) &= \tstate
+\end{aligned}
+\end{equation}
+
+\SHnote{explain what trajectory notation means better}
+
+\subsection{Planning Environment}
+\textcolor{red}{Requires static obstacles that aren't too densely clustered. Depending on path planner, environment could unknown with a sensing radius, or just a known environment}
+
+\subsection{Goals of This Paper}
+\textcolor{red}{
+	a) Provide look-up table(s) where input is relative state of your true system to your path planner, and the outputs are tracking error bound and optimal safety control for your real system.\\
+	b) Develop a framework for using the look-up table(s) that is simple and easy to use for a variety of path planners\\
+	c) Demonstrate using a 10D model tracking an RRT path planner}
