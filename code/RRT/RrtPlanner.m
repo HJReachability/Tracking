@@ -64,6 +64,9 @@ classdef RrtPlanner < handle
     % Number of seeds
     seedsPerAxis = 3;
     
+    % run with global obs or local ob
+    runWithLocalObs = true;
+    
     %% VARIABLES
     %  ************************************************************************
     
@@ -173,6 +176,13 @@ classdef RrtPlanner < handle
     %% Run
     % Main RRT search algorithm
     function Run(self)
+      
+      if self.runWithLocalObs
+        self.obs = self.obsmap.local_obs;
+        disp('self.local_obs, line 182')
+        self.obsmap.local_obs
+      end
+      
       % Initial plotting and environment setup
       self.InitDisplay();
       
@@ -183,6 +193,9 @@ classdef RrtPlanner < handle
         
         % GENERATE A NEW POINT
         new_pnt = self.NewPoint(); %if doDraw; plot3(new_pnt(1),new_pnt(2),new_pnt(3),'.c'); end
+        disp('new point generated')
+        new_pnt
+        self.obsmap.SenseAndUpdate(new_pnt, 100, 0.1);
         
         % FIND NEAREST NEIGHBOURS
         [d2nodes,d2edges] = NearestNeighbour(new_pnt,self.rrt);
@@ -200,7 +213,10 @@ classdef RrtPlanner < handle
         end
         
         % Check if we can break out yet
-        if objective; break; end
+        if objective
+          disp('objective reached')
+          break; 
+        end
       end
       
       toc;
@@ -355,8 +371,6 @@ classdef RrtPlanner < handle
       self.goalNodePlot_h = plot3(self.goal(1),self.goal(2),self.goal(3),'marker','.','color','b','Parent',self.GetAxisHandle());
       
       % Plot obstacles
-      % MINE: note--must plot local obstacles instead of global...
-      % also must update after delta-t timestep
       for i = 1:length(self.obsPlot_h)
         try delete(self.obsPlot_h(i));end %#ok<TRYNC>
       end
@@ -446,14 +460,18 @@ classdef RrtPlanner < handle
       end
 
       % MINE: creates an obstacle map instance out of the obstacle file
-      % passed in. TODO: more accurate values for error bound/ sensing
+      % passed in. Also does first time sensing.
+      % TODO: more accurate values for error bound/ sensing
       % range/ point.
-      self.obsmap = ObstacleMap(self.obs, [0 0.2 0], 0.4, 0.2);
-      self.obsmap.SenseAndUpdate([0 0.2 0], 0.4, 0.2);
-      
-      % TODO: whenever new point is input, how to receive/where else to
-      % call this method? RrtPlanner's GenerateObstacle isn't called every
-      % delta_t time units...merge with Sylvia code?
+      self.obsmap = ObstacleMap(self.obs);
+      disp('obsmap generated')
+      self.obsmap
+      self.obsmap.SenseAndUpdate(self.start, 10, 0.1);
+      if self.runWithLocalObs
+        self.obs = self.obsmap.local_obs;
+        disp('self.local_obs, line 470')
+        self.obsmap.local_obs
+      end
       
       % Need to clear the data structure since obstacles may have changed
       self.SetUpDataStructures();
@@ -473,10 +491,6 @@ classdef RrtPlanner < handle
       
       % Create local variable. Could cause problems if self.rrt is used in the mean time
       rrtLocal = self.rrt;
-      
-      % MINE: just a print, wasn't sure how rrtLocal worked
-      disp('size of local rrt, near line 474 of RrtPlanner file')
-      size(rrtLocal,2)
 
       %find the valid trees
       for t=1:size(rrtLocal,2)
@@ -711,14 +725,13 @@ classdef RrtPlanner < handle
     % *Description:* Returns whether a collision occurs between an edge and a set
     % of obstacles. Also gives the point of intersection. (P1=node,P2=parent node)
 
-    % MINE: check for collision using self.obsmap.local_obs (replace every self.obs)
     function [collision,PInt] = CollisionCheck(self,P1,P2)
       self.collisionCheckCount = self.collisionCheckCount + 1;
       %default is that it is safe, then if a collision is found it is set to 1
       %and we return
       collision = false;
       
-      if size(self.obss,1)==0
+      if size(self.obs,1)==0
         PInt=inf;
         return;
       end
