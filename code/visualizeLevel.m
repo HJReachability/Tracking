@@ -9,7 +9,7 @@ function [hCostS, hCostC, hValueS, hValueC, hV, hL] = visualizeLevel(g,data,data
 figure(fig)
 clf
 colormap('winter');
-converge = 1;
+converge = 0;
 
 %% Plane
 if strcmp(type,'plane')
@@ -220,8 +220,11 @@ end
 gProj = vf.g;
 
 if strcmp(cost,'quadratic_decomp')
-  dataProj = -sqrt(-vf.data);
-  data0Proj = -sqrt(-vf0.data);
+  dataProj = sqrt(-vf.data);
+  data0Proj = sqrt(-vf0.data);
+elseif strcmp(cost, 'oneNorm')
+  dataProj = -vf.data;
+  data0Proj = -vf0.data;
 else
   error 'what cost?'
 end
@@ -246,7 +249,7 @@ end
   levelMin = max(min(dataProj(:)), costMin);
   levelMax = min(max(dataProj(:)),costMax);
   levels = linspace(levelMin,levelMax,100);
-  levels = levels([end-40, end-20, end-1]);
+  levels = levels([5, 20, 40]);
   
   %plot
   subplot(2,3,4)
@@ -261,10 +264,10 @@ end
   %  ' m/s, v_y = ' num2str(valExtraStates(2)) ' m/s' ...
   %  'v_z = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15)
   
-  %hValueC.ContourZLevel = levelMax + .05;
-  hValueC.LevelList = hValueC.LevelList(hValueC.LevelList >= levelMin);
+  hValueC.ContourZLevel = levelMin - .05;
+  hValueC.LevelList = hValueC.LevelList(hValueC.LevelList <= levelMax);
   
-  zlim([levelMin 0]);%levelMax + .05]);
+  zlim([0 levelMax + .05]);
   caxis([levelMin levelMax]);
   axis square
   xlabel('$x$','Interpreter','latex','FontSize',textSize)
@@ -286,8 +289,8 @@ end
   
   hCostC.LevelList = hCostC.LevelList(hCostC.LevelList >= levelMin);
   
-  zlim([levelMin 0]);
-  caxis([levelMin 0]);
+  zlim([0 levelMax]);
+  caxis([0 levelMax]);
   axis square
   xlabel('$x$','Interpreter','latex','FontSize',textSize)
   ylabel('$y$','Interpreter','latex','FontSize',textSize)
@@ -295,7 +298,7 @@ end
   colorbar
   
   for i = 1:length(levels)
-  color = cmap(16*i,:);
+  color = cmap(10*i,:);
   
   if i <= 2
   subplot(2,3,i+1)
