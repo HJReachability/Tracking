@@ -1,4 +1,4 @@
-function [hV, hL] = visualize10D(g,data,data0, viewSlice, cost,valExtraStates,fig)
+function [hV, hL] = visualize10D(g,data,data0, cost,valExtraStates,fig)
 figure(fig)
 clf
 
