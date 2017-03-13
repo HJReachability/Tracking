@@ -8,3 +8,4 @@ docs/Tracking Journal/tracking.pdf
 *.asv
 *.mat
 docs/CDC 2017 Safe Tracking/tracking.pdf
+*.m~
