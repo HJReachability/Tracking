@@ -1,7 +1,7 @@
 % !TEX root = tracking.tex
 \section{Offline Computations \label{sec:precomp}}
 
-To precompute the tracking bound we set up a capture-avoid game between the real and virtual vehicles, which we then analyze using HJ reachability. In this game, the real system will try to "capture" the virtual system, while the virtual system is doing everything it can to avoid capture. By using reachability to analyze this game we will get a guaranteed bound on how far apart the two vehicles will ever be even when the virtual system is acting as inconveniently as possible.
+To precompute the tracking bound we set up a capture-avoid game between the real and virtual vehicles, which we then analyze using HJ reachability. In this game, the real system will try to "capture" the virtual system, while the virtual system is doing everything it can to avoid capture. By using reachability to analyze this game we will get a guaranteed bound on how far apart the two vehicles will ever be even when the virtual system is acting as inconveniently as possible. \MCnote{In addition, the tracking bound will be independent of the actual trajectory. (This is important to emphasize; Marco was confused about this.)}
 
 \subsection{Relative Dynamics}
 The states and dynamics of the real system, as defined in section \ref{sec:formulation}, are $\dot\tstate = \tdyn(\tstate, \tctrl, \dstb)$. The virtual system will have states $\vstate$, which we assume to be a subset of $\tstate$. The virtual system has dynamics $\dot\vstate = \vdyn(\vstate, \vctrl)$, with control $\vctrl$.
