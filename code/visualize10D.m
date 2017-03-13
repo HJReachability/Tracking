@@ -1,4 +1,4 @@
-function [hV, hL] = visualize10D(g,data,data0, viewSlice, cost,valExtraStates,fig)
+function [hV, hL] = visualize10D(g,data,data0, cost,valExtraStates,fig)
 figure(fig)
 clf
 
@@ -68,7 +68,7 @@ subplot(2,2,i)
   %Find a few good levels to plot for next section
   levelMin = max(min(dataProj(:)), costMin);
   levelMax = min(max(dataProj(:)),costMax);
-  levels = linspace(levelMin,levelMax,50);
+  levels = linspace(levelMin,levelMax,20);
   %levels = levels([end-40, end-20, end-1]);
   level = levels(end-1);
   

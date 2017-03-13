@@ -115,10 +115,11 @@ elseif strcmp(type,'quad')
   
   %project cost onto valExtraStates
   [gProj, data0Proj] = proj(g, data0, [0 1 0 1], valExtraStates);
-  
+  data0Proj = -data0Proj;
   
   %project data onto valExtraStates
   %data = -data; %make positive so contour maps can understand
+  data = sqrt(-data);
   [~, dataProj] = proj(g,data,[0 1 0 1],valExtraStates);
   
   %Find a few good levels to plot for next section
@@ -133,36 +134,38 @@ elseif strcmp(type,'quad')
   hold on
  [~, hValueC] = contour(gProj.xs{1},gProj.xs{2},dataProj,levels,...
     'LineWidth',2);
-  title(['Value Function, v_x = ' num2str(valExtraStates(1)) ...
-    ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15)
+  title('Value Function')
+  %title(['Value Function, v_x = ' num2str(valExtraStates(1)) ...
+  %  ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15)
   
   %hValueC.ContourZLevel = levelMax + .05;
   hValueC.LevelList = hValueC.LevelList(hValueC.LevelList >= levelMin);
   
-  zlim([levelMin 0]);%levelMax + .05]);
+  zlim([0 levelMax]);%levelMax + .05]);
   caxis([levelMin levelMax]);
   axis square
   xlabel('$x$','Interpreter','latex','FontSize',20)
   ylabel('$y$','Interpreter','latex','FontSize',20)
-  zlabel('$V(s)$','Interpreter','latex','FontSize',20)
+  zlabel('$V(s_r)$','Interpreter','latex','FontSize',20)
   
   %plot cost
   subplot(1,3,1)
   hCostS = surf(gProj.xs{1},gProj.xs{2},data0Proj);
-  title(['Reward Function, v_x = ' num2str(valExtraStates(1)) ...
-    ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15);
+  title('Cost Function')
+  %title(['Cost Function, v_x = ' num2str(valExtraStates(1)) ...
+  %  ' m/s and v_y = ' num2str(valExtraStates(2)) ' m/s'],'FontSize',15);
   hold on
   [~, hCostC] = contour(gProj.xs{1},gProj.xs{2},data0Proj,levels,...
     'LineWidth',2);
   
   hCostC.LevelList = hCostC.LevelList(hCostC.LevelList >= levelMin);
   
-  zlim([levelMin 0]);
-  caxis([levelMin 0]);
+  zlim([0 levelMax]);
+  caxis([0 levelMax]);
   axis square
   xlabel('$x$','Interpreter','latex','FontSize',20)
   ylabel('$y$','Interpreter','latex','FontSize',20)
-  zlabel('$l(s)$','Interpreter','latex','FontSize',20)
+  zlabel('$l(s_r)$','Interpreter','latex','FontSize',20)
   
   subplot(1,3,3)
   [~,hV]=contour(gProj.xs{1},gProj.xs{2},dataProj,levels,...
