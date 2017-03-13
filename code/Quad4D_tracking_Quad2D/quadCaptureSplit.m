@@ -1,21 +1,30 @@
-function [vf, runtime]=quadCaptureSplit(gN, dt, accuracy)
+function [vf, runtime]=quadCaptureSplit(gN, dt, tMax, accuracy, targetType, gX, gY)
 %% Input: grid, target, time
 if nargin < 1
-  gN = 21;
+  gN = 71;
 end
 
-t0 = 0;
-tMax = 70;
+
 if nargin < 2
   dt = 1;
 end
-tau = t0:dt:tMax;
 
-if nargin<3
-  accuracy = 'low';
+if nargin < 3
+  tMax = 50;
 end
 
-if nargin <4
+t0 = 0;
+tau = t0:dt:tMax;
+
+if nargin<4
+  accuracy = 'high';
+end
+
+if nargin <5
+  targetType = 'oneNorm';
+end
+
+if nargin <6
   gMinX = [-5; -5];
   gMaxX = [5; 5];
   gMinY = [-5; -5];
@@ -24,48 +33,32 @@ if nargin <4
   g_NY = gN*ones(length(gMinY),1);
   gX = createGrid(gMinX,gMaxX, g_NX, [], true);
   gY = createGrid(gMinY,gMaxY, g_NY, [], true);
-%     g_min = [-5; -5; -5; -5];
-%   g_max = [5; 5; 5; 5];
-%   g_N = gN*ones(length(g_min),1);
-%   g = createGrid(g_min,g_max, g_N, [], true);
 end
 
 %% make initial data
-ignoreDims = 2;
-center = [0 0];
 
-dataX0 = zeros(gX.shape);
-for i = 1 : gX.dim
-  if(all(i ~= ignoreDims))
-    dataX0 = dataX0 + (gX.xs{i} - center(i)).^2;
-  end
+
+if strcmp(targetType,'oneNorm')
+  dataX0 = -shapeRectangleByCorners(gX,[0 -Inf],[0 Inf]);
+  dataY0 = -shapeRectangleByCorners(gY,[0 -Inf],[0 Inf]);
+  
+elseif strcmp(targetType,'quadratic')
+  dataX0 = -gX.xs{1}.^2;
+  dataY0 = -gY.xs{1}.^2;
 end
-dataX0 = -sqrt(dataX0);
-
-
- ignoreDims = 2;
- center = [0 0];
- dataY0 = zeros(gY.shape);
- for i = 1 : gY.dim
-   if(all(i ~= ignoreDims))
-     dataY0 = dataY0 + (gY.xs{i} - center(i)).^2;
-   end
- end
- dataY0 = -sqrt(dataY0);
 
 %% visualize initial data
-f1 = figure(1);
-clf
-%[g02D, data02D] = proj(g, data0, [0 1 0 1], 'min');
-subplot(1,2,1)
-hX = surfc(gX.xs{1}, gX.xs{2}, dataX0);
-xlabel('x')
-ylabel('v_x')
-subplot(1,2,2)
-hY = surfc(gY.xs{1}, gY.xs{2}, dataY0);
-xlabel('y')
-ylabel('v_y')
-figure(1)
+% f1 = figure(1);
+% clf
+% subplot(1,2,1)
+% hX = surfc(gX.xs{1}, gX.xs{2}, dataX0);
+% xlabel('x')
+% ylabel('v_x')
+% subplot(1,2,2)
+% hY = surfc(gY.xs{1}, gY.xs{2}, dataY0);
+% xlabel('y')
+% ylabel('v_y')
+% figure(1)
 
 %% Input: Problem Parameters
 aMax = [3 3];
@@ -103,9 +96,6 @@ sD_Y.grid = gY;
 
 sD_X.accuracy = accuracy;
 sD_Y.accuracy = accuracy;
-%schemeData.dMode = dMode;
-%schemeData.grid = g;
-%schemeData.accuracy = accuracy;
 
 %% Run
 tic;
@@ -117,15 +107,35 @@ tic;
 % extraArgs.plotData.projpt = 0;
 % extraArgs.plotData.plotDims = [1 1 1 0];
 extraArgs.stopConverge = 1;
+extraArgs.convergeThreshold = .01;
 extraArgs.targets = dataX0;
-[dataX, tau] = HJIPDE_solve(dataX0, tau, sD_X, 'none', extraArgs);
+[dataX, tau] = HJIPDE_solve(dataX0, tau, sD_X, 'none',extraArgs);%, extraArgs);
 extraArgs.targets = dataY0;
-[dataY, tau] = HJIPDE_solve(dataY0, tau, sD_Y, 'none', extraArgs);
+[dataY, tau] = HJIPDE_solve(dataY0, tau, sD_Y, 'none',extraArgs);%, extraArgs);
 
-%[data, tau] = ...
-%  HJIPDE_solve(data0, tau, schemeData, 'none',extraArgs);
 runtime = toc;
 
+%% visualize initial data
+% f1 = figure(2);
+% clf
+% subplot(2,2,1)
+% hX = surfc(gX.xs{1}, gX.xs{2}, dataX(:,:,end));
+% xlabel('x')
+% ylabel('v_x')
+% subplot(2,2,2)
+% [gX1D, dataX1D] = proj(gX, dataX(:,:,end), [0 1], 1);
+% plot(gX1D.xs{1},dataX1D)
+% xlabel('x')
+% ylabel('value')
+% subplot(2,2,3)
+% hY = surfc(gY.xs{1}, gY.xs{2}, dataY(:,:,end));
+% xlabel('y')
+% ylabel('v_y')
+% subplot(2,2,4)
+% [gY1D, dataY1D] = proj(gY, dataY(:,:,end), [0 1], 1);
+% plot(gY1D.xs{1},dataY1D)
+% xlabel('y')
+% ylabel('value')
 %% Reconstruct
 %     vfs - Self-contained (decoupled) value functions
 %              .gs:     cell structure of grids
@@ -138,7 +148,7 @@ vfs.gs = {[gX],[gY]};
 vfs.tau = tau;
 vfs.datas = {dataX, dataY};
 vfs.dims = {[1,2];[3,4]};
-vf = reconSC(vfs, [gMinX; gMinY], [gMaxX; gMaxY],'full');
+vf = reconSC(vfs, [gMinX; gMinY], [gMaxX; gMaxY],'during','min');
 
 %% Save 
 % if ndims(data) > 4
