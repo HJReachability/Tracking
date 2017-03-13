@@ -7,7 +7,7 @@ classdef ObstacleMap < handle
   end
   
   methods
-    % constructor. Calls for the sense and update method immediately.
+    % Constructor. Calls for the sense and update method immediately.
     function self = ObstacleMap(obs, point, senseRange, trackErrBnd)
       if ~self.global_obs % so that we won't have to overwrite global obstacles.
         self.global_obs = obs;
@@ -54,8 +54,8 @@ classdef ObstacleMap < handle
     
     % helper function for sense and update that adds the tracking error
     % bound to each obstacle before adding from global to local
-    % don't use for loop?
     function TrackErrorPadding(err, obs)
+        % assume all obstacles are axes-aligned
         % find the coordinate that remains constant
         countOne = 0;
         countTwo = 0;
