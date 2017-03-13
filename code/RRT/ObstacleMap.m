@@ -14,7 +14,7 @@ classdef ObstacleMap < handle
         dimen = size(obs);
         self.num_obs = dimen(3);
         self.global_obs = mat2cell(self.global_obs, [1 1 1 1], 3, ones(1, self.num_obs)); 
-        % self.global_obs is now a multidim cell array
+        % self.global_obs is now a cell array
       end
         self.global_obs
         %SenseAndUpdate(point, senseRange, trackErrBnd)
@@ -24,7 +24,7 @@ classdef ObstacleMap < handle
     % sense for obstacles that are within the sensing range (*size*) at the *point* given
     % then update local/known obstacles. overwrite the original matrix
     % with the new matrix    
-    function SenseAndUpdate(point, size, track_err)
+    function SenseAndUpdate(self, point, size, track_err)
       % compute the cube sensing range where point is the center 
       % and size is the side length
       mostPositive = [point(1) + size./2, point(2) + size./2, point(3) + size./2];
