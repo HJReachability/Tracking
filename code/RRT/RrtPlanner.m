@@ -443,9 +443,13 @@ classdef RrtPlanner < handle
         self.obstacleCount = size(self.obstaclePlaneParameters,1);
       end
 
-      % MINE: creates an obstacle map instance out of the obstacle file passed in
-      self.obs
-      % self.obsmap = ObstacleMap(self.obs, point, senseRange, trackErrBnd);
+      % MINE: creates an obstacle map instance out of the obstacle file
+      % passed in. TODO: more acurate values for error bound and sensing
+      % range.
+      point = [0 0 0];
+      senseRange = 0.2;
+      trackErrBnd = 0.05;
+      self.obsmap = ObstacleMap(self.obs, point, senseRange, trackErrBnd);
       
       % Need to clear the data structure since obstacles may have changed
       self.SetUpDataStructures();
@@ -467,6 +471,7 @@ classdef RrtPlanner < handle
       rrtLocal = self.rrt;
       
       % MINE:
+      disp('size of local rrt, near line 474 of RrtPlanner file')
       size(rrtLocal,2)
 
       %find the valid trees
@@ -482,7 +487,6 @@ classdef RrtPlanner < handle
         %determine the closest (node or edge)
         if d2nodes(t).vals(minNode_index)<=d2edges(t).vals(minEdge_index) %then try and get to the node first
           % Check for collision
-          % MINE: Sense at new_pnt for new obstacles
           if ~self.CollisionCheck(new_pnt,rrtLocal(t).cords(minNode_index,:))
             rrtLocal(t).parent=[rrtLocal(t).parent;minNode_index];
             rrtLocal(t).cords=[rrtLocal(t).cords;new_pnt];
@@ -590,7 +594,6 @@ classdef RrtPlanner < handle
         ,self.lim(2,1) + range(2)*rand ...
         ,self.lim(3,1) + range(3)*rand];
       
-      % MINE: should we check for collisions using local_obs? Maybe sense before adding newPoint
       % If the new point is on an obstacle plane the get another one
       while self.IsOnObstaclePlane(newPoint)
         newPoint=[self.lim(1,1) + range(1)*rand ...
