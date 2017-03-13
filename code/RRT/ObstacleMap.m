@@ -1,7 +1,5 @@
 classdef ObstacleMap < handle  
-  % TODO: plot time shots of local obst updating to eventually get to
-  % global obst, understand where environment walls are
-  
+
   properties
     global_obs; % a three dimensional matrix of all the obstacles on the map. TODO: reformatting into cell etc...
     local_obs; % a three dimensional matrix of the obstacles that the drone has seen so far. Starts empty.

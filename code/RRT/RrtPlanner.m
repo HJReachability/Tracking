@@ -470,7 +470,7 @@ classdef RrtPlanner < handle
       % Create local variable. Could cause problems if self.rrt is used in the mean time
       rrtLocal = self.rrt;
       
-      % MINE:
+      % MINE: just a print, wasn't sure how rrtLocal worked
       disp('size of local rrt, near line 474 of RrtPlanner file')
       size(rrtLocal,2)
 
@@ -723,7 +723,7 @@ classdef RrtPlanner < handle
       
       % Line equation
       r_var=[P1(1)-P2(1) P1(2)-P2(2) P1(3)-P2(3)];
-      plane_equ = self.obstaclePlaneParameters; % MINE: what is this...
+      plane_equ = self.obstaclePlaneParameters;
       for i = 1:size(self.obsmap.local_obs,3)
         % Plane * Line
         bottomof_t_var = plane_equ(i,1) * r_var(1) ...
