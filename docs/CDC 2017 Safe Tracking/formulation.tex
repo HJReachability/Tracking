@@ -1,20 +1,23 @@
 % !TEX root = tracking.tex
 \section{Problem Formulation \label{sec:formulation}}
+In this paper we seek to plan a path or trajectory online and in real-time using a general, potentially kinematic planning system. This planner is then followed with a tracking system. The environment may contain static obstacles that are known or unknown with a limited sensing range on the system. In this section we will define the planning model, tracking model, and environment. We will conclude the section with the goals of the paper.
 
-\textcolor{red}{We want to track a problem with sophisticated dynamics through an environment with obstacles.  Need to define dynamics, environment, sensing abilities, etc.}
+\subsection{Planning Model}
 
-\subsection{Real System Dynamics}
-Let $\tstate$ be the state variable the real system. The evolution of the dynamics satisfies the ordinary differential equation:
+Let 
+
+\subsection{Tracking Model}
+Let $\tstate$ be the state variable the tracking model. The evolution of the dynamics satisfies the ordinary differential equation:
 
 \begin{equation}
 \begin{aligned}
 \label{eq:fdyn}
 \frac{d\tstate}{d\tau} = \dot{\tstate} = \tdyn(\tstate, \tctrl, \dstb), \tau \in [t, 0] \\
-\tstate \in \tset, \tctrl_1 \in \tcset, \dstb \in \dset
+\tstate \in \tset, \tctrl \in \tcset, \dstb \in \dset
 \end{aligned}
 \end{equation}
 
-We assume that the system dynamics $f_1 : \tset\ \times\ \tcset \rightarrow \tset$ are uniformly continuous, bounded, and Lipschitz continuous in $\tstate$ for fixed control $\tctrl$. The control function $\tctrl(\cdot)$ is drawn from the set of measurable functions\footnote{A function $f:X\to Y$ between two measurable spaces $(X,\Sigma_X)$ and $(Y,\Sigma_Y)$ is said to be measurable if the preimage of a measurable set in $Y$ is a measurable set in $X$, that is: $\forall V\in\Sigma_Y, f^{-1}(V)\in\Sigma_X$, with $\Sigma_X,\Sigma_Y$ $\sigma$-algebras on $X$,$Y$.}:
+We assume that the system dynamics $\tdyn : \tset\ \times\ \tcset \rightarrow \tset$ are uniformly continuous, bounded, and Lipschitz continuous in $\tstate$ for fixed control $\tctrl$. The control function $\tctrl(\cdot)$ is drawn from the set of measurable functions\footnote{A function $f:X\to Y$ between two measurable spaces $(X,\Sigma_X)$ and $(Y,\Sigma_Y)$ is said to be measurable if the preimage of a measurable set in $Y$ is a measurable set in $X$, that is: $\forall V\in\Sigma_Y, f^{-1}(V)\in\Sigma_X$, with $\Sigma_X,\Sigma_Y$ $\sigma$-algebras on $X$,$Y$.}:
 \begin{equation}
 \begin{aligned}
 \tctrl(\cdot) \in \tcfset(t) = \{\phi: [t, 0] \rightarrow \tcset: \phi(\cdot) \text{ is measurable}\}
@@ -25,7 +28,7 @@ Under these assumptions there exists a unique trajectory solving \ref{eq:fdyn} f
 \begin{equation}
 \label{eq:fdyn_traj}
 \begin{aligned}
-\frac{d}{d\tau}\ttraj(\tau; \tstate, t, \tctrl(\cdot)) &= f_1(\ttraj(\tau; \tstate, t, \tctrl(\cdot)), \tctrl(\tau)) \\
+\frac{d}{d\tau}\ttraj(\tau; \tstate, t, \tctrl(\cdot)) &= \tdyn(\ttraj(\tau; \tstate, t, \tctrl(\cdot)), \tctrl(\tau)) \\
 \ttraj(t; \tstate, t, \tctrl(\cdot)) &= \tstate
 \end{aligned}
 \end{equation}

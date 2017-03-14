@@ -41,40 +41,40 @@
 \newcommand{\state}{s}
 
 
-\newcommand{\tcset}{\mathcal{A}}
-\newcommand{\tcfset}{\mathbb{A}}
-\newcommand{\vcset}{\mathcal{B}}
-\newcommand{\vcfset}{\mathbb{B}}
+\newcommand{\pcset}{\mathcal{A}} %planner control set
+\newcommand{\pcfset}{\mathbb{A}} %planner control function set
+\newcommand{\tcset}{\mathcal{B}} %tracker control set
+\newcommand{\tcfset}{\mathbb{B}} %tracker control funciton set
 \newcommand{\dset}{\mathcal{D}}
 \newcommand{\dfset}{\mathbb{D}}
 
-\newcommand{\tset}{\mathcal{S}_1}
-\newcommand{\vset}{\mathcal{S}_2}
+\newcommand{\pset}{\mathcal{S}_1} %planner set set
+\newcommand{\tset}{\mathcal{S}_2} %tracker set
 \newcommand{\rset}{\mathcal{S}_r}
 
 \newcommand{\tvar}{t}
 \newcommand{\thor}{T} % Time horizon
 
-\newcommand{\vstate}{\state_2} % Vehicle state
-\newcommand{\tstate}{\state_1} % Trajectory state
+\newcommand{\tstate}{\state_2} % Tracker state
+\newcommand{\pstate}{\state_1} % Planner state
 \newcommand{\rstate}{\state_r} % Relative state
 
 
-\newcommand{\vtraj}{\xi_{f2}}
-\newcommand{\ttraj}{\xi_{f1}}
+\newcommand{\ttraj}{\xi_{f2}} % Tracker trajectory
+\newcommand{\ptraj}{\xi_{f1}} %Planner trajectory
 \newcommand{\rtraj}{\xi_\rdyn}
 
 
-\newcommand{\vctrl}{b} % Vehicle control
+\newcommand{\tctrl}{b} % Tracker control
 \newcommand{\dstb}{d} % Disturbance
-\newcommand{\tctrl}{a} % Trajectory control
+\newcommand{\pctrl}{a} % Planner control
 
-\newcommand{\vdyn}{f_2} % Vehicle dynamics
-\newcommand{\tdyn}{f_1} % Trajectory dynamics
+\newcommand{\tdyn}{f_2} % Tracker dynamics
+\newcommand{\pdyn}{f_1} % Planner Dynamics
 \newcommand{\rdyn}{g} % Relative dynamics
 
-\newcommand{\tvind}{s} % Index of vehicle state corresponding to trajectory state
-\newcommand{\tvmat}{R} % Matrix for transforming trajectory state to the same length as vehicle state
+\newcommand{\ptind}{s} % Index of vehicle state corresponding to planner state
+\newcommand{\ptmat}{R} % Matrix for transforming planner state to the same length as tracker state
 
 \newcommand{\errfunc}{l} % Error function
 \newcommand{\valfunc}{V} % Value function
