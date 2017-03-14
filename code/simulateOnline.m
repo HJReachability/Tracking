@@ -9,7 +9,7 @@ function timesteps = simulateOnline(gs,datas,quadTrue,quadVirt,quadRel,extraArgs
 %       extraArgs    -  this structure can be used to leverage other 
 %                       additional functionalities within this function. 
 %                       Its subfields are:
-%           .R            -  Matrix to compare position states
+%           .Q            -  Matrix to compare position states
 %           .costFunction -  type of cost function, default quadratic
 %           .environment  -  type of environment, default known
 %           .dt           -  initial time step
@@ -23,17 +23,17 @@ function timesteps = simulateOnline(gs,datas,quadTrue,quadVirt,quadRel,extraArgs
 %% Before Looping
 
 %matrix to compare position states (virt vs. true)
-if ~isfield(extraArgs,'R')
-  R = zeros(10,3);
-  R(1,1) = 1;
-  R(5,2) = 1;
-  R(9,3) = 1;
+if ~isfield(extraArgs,'Q')
+  Q = zeros(10,3);
+  Q(1,1) = 1;
+  Q(5,2) = 1;
+  Q(9,3) = 1;
 end
 
 %set initial states to zero
 quadTrue.x = zeros(10,1);
 quadVirt.x = zeros(3,1);
-quadRel.x = quadTrue.x - R*quadVirt.x;
+quadRel.x = quadTrue.x - Q*quadVirt.x;
 
 %find corresponding tracking error bound
 if isfield(extraArgs, 'costFunction') && strcmp(costFunction,'quadratic')
@@ -84,7 +84,7 @@ quadVirt.x = quadVirt.x + [.1; .1; .1];
 %outputs: control
 
 % 1. find relative state
-quadRel.x = quadTrue.x - R*quadVirt.x;
+quadRel.x = quadTrue.x - Q*quadVirt.x;
 
 % 2. Determine which controller to use, find optimal control
 
