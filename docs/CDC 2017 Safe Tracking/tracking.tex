@@ -38,43 +38,42 @@
 \newcommand{\reachset}{\mathcal{V}}
 \newcommand{\targetset}{\mathcal{L}}
 \newcommand{\traj}{\zeta} % trajectory
-\newcommand{\state}{s}
 
 
-\newcommand{\pcset}{\mathcal{A}} %planner control set
-\newcommand{\pcfset}{\mathbb{A}} %planner control function set
-\newcommand{\tcset}{\mathcal{B}} %tracker control set
-\newcommand{\tcfset}{\mathbb{B}} %tracker control funciton set
+\newcommand{\pcset}{\mathcal{U}_p} %planner control set
+\newcommand{\pcfset}{\mathbb{U}_p} %planner control function set
+\newcommand{\tcset}{\mathcal{U}_s} %tracker control set
+\newcommand{\tcfset}{\mathbb{U}_s} %tracker control funciton set
 \newcommand{\dset}{\mathcal{D}}
 \newcommand{\dfset}{\mathbb{D}}
 
-\newcommand{\pset}{\mathcal{S}_1} %planner set set
-\newcommand{\tset}{\mathcal{S}_2} %tracker set
-\newcommand{\rset}{\mathcal{S}_r}
+\newcommand{\pset}{\mathcal{P}} %planner set set
+\newcommand{\tset}{\mathcal{S}} %tracker set
+\newcommand{\rset}{\mathcal{R}}
 
 \newcommand{\tvar}{t}
 \newcommand{\thor}{T} % Time horizon
 
-\newcommand{\tstate}{\state_2} % Tracker state
-\newcommand{\pstate}{\state_1} % Planner state
-\newcommand{\rstate}{\state_r} % Relative state
+\newcommand{\tstate}{s} % Tracker state
+\newcommand{\pstate}{p} % Planner state
+\newcommand{\rstate}{r} % Relative state
 
 
-\newcommand{\ttraj}{\xi_{f2}} % Tracker trajectory
-\newcommand{\ptraj}{\xi_{f1}} %Planner trajectory
+\newcommand{\ttraj}{\xi_{s}} % Tracker trajectory
+\newcommand{\ptraj}{\xi_{p}} %Planner trajectory
 \newcommand{\rtraj}{\xi_\rdyn}
 
 
-\newcommand{\tctrl}{b} % Tracker control
+\newcommand{\tctrl}{u_s} % Tracker control
 \newcommand{\dstb}{d} % Disturbance
-\newcommand{\pctrl}{a} % Planner control
+\newcommand{\pctrl}{u_p} % Planner control
 
-\newcommand{\tdyn}{f_2} % Tracker dynamics
-\newcommand{\pdyn}{f_1} % Planner Dynamics
+\newcommand{\tdyn}{f_s} % Tracker dynamics
+\newcommand{\pdyn}{f_p} % Planner Dynamics
 \newcommand{\rdyn}{g} % Relative dynamics
 
-\newcommand{\ptind}{s} % Index of vehicle state corresponding to planner state
-\newcommand{\ptmat}{R} % Matrix for transforming planner state to the same length as tracker state
+\newcommand{\ptind}{i} % Index of vehicle state corresponding to planner state
+\newcommand{\ptmat}{Q} % Matrix for transforming planner state to the same length as tracker state
 
 \newcommand{\errfunc}{l} % Error function
 \newcommand{\valfunc}{V} % Value function
