@@ -75,7 +75,7 @@ classdef RrtPlanner < handle
     
     % Search Space Limits               => [x(min) x(max) y(min) y(max) z(min) z(max)]
     % lim=[-0.5 +0.5;-0.5 +0.5 ;-0.5 +0.5];
-    lim=[-0.5 +0.5;-1 +1 ;-0.5 +0.5];
+    lim=[-1 +1;-1 +1 ;-1 +1];
     
     % Default Start and Goal  => Point [x y z]
     start=[+0.00 -0.9 +0.00];
@@ -96,7 +96,8 @@ classdef RrtPlanner < handle
     % The obstacles
     obs;
 
-    % MINE: the obstacle map
+    % MINE: the obstacle map, initialize after global obstacles have been
+    % set up
     obsmap;
     
     % The plane parameters of each obstacle plane
@@ -148,7 +149,7 @@ classdef RrtPlanner < handle
     % treesMax = How many multiple trees (must be at least 2, 1 for source and 1 for destination
     % seedsPerAxis = Number of seeds allowed on each axis (discretely placed seeds which idealy helps the RRT expansion)
     % wallCount = the Number of mock walls to be placed in the environment
-    function self = RrtPlanner(treesMax,seedsPerAxis,wallCountOrObstacleFilename)
+    function self = RrtPlanner(treesMax, seedsPerAxis, wallCountOrObstacleFilename)
       % Check inputs
       if 1 <= nargin
         self.treesMax = treesMax;
@@ -209,7 +210,7 @@ classdef RrtPlanner < handle
       
       % PATH SMOOTHING
       if self.smooth_path && objective
-        display('Doing path smoothing now');
+        disp('Doing path smoothing now');
         tic
         self.SmoothPath();
         toc;
@@ -354,6 +355,8 @@ classdef RrtPlanner < handle
       self.goalNodePlot_h = plot3(self.goal(1),self.goal(2),self.goal(3),'marker','.','color','b','Parent',self.GetAxisHandle());
       
       % Plot obstacles
+      % MINE: note--must plot local obstacles instead of global...
+      % also must update after delta-t timestep
       for i = 1:length(self.obsPlot_h)
         try delete(self.obsPlot_h(i));end %#ok<TRYNC>
       end
@@ -442,8 +445,15 @@ classdef RrtPlanner < handle
         self.obstacleCount = size(self.obstaclePlaneParameters,1);
       end
 
-      % MINE: creates an obstacle map instance out of the obstacle file passed in
-      self.obsmap = ObstacleMap(self.rrt);
+      % MINE: creates an obstacle map instance out of the obstacle file
+      % passed in. TODO: more accurate values for error bound/ sensing
+      % range/ point.
+      self.obsmap = ObstacleMap(self.obs, [0 0.2 0], 0.4, 0.2);
+      self.obsmap.SenseAndUpdate([0 0.2 0], 0.4, 0.2);
+      
+      % TODO: whenever new point is input, how to receive/where else to
+      % call this method? RrtPlanner's GenerateObstacle isn't called every
+      % delta_t time units...merge with Sylvia code?
       
       % Need to clear the data structure since obstacles may have changed
       self.SetUpDataStructures();
@@ -464,7 +474,8 @@ classdef RrtPlanner < handle
       % Create local variable. Could cause problems if self.rrt is used in the mean time
       rrtLocal = self.rrt;
       
-      % MINE:
+      % MINE: just a print, wasn't sure how rrtLocal worked
+      disp('size of local rrt, near line 474 of RrtPlanner file')
       size(rrtLocal,2)
 
       %find the valid trees
@@ -480,8 +491,7 @@ classdef RrtPlanner < handle
         %determine the closest (node or edge)
         if d2nodes(t).vals(minNode_index)<=d2edges(t).vals(minEdge_index) %then try and get to the node first
           % Check for collision
-          % MINE: Sense at new_pnt for new obstacles
-          if ~self.CollisionCheck(new_pnt,rrtLocal(t).cords(minNode_index,:));
+          if ~self.CollisionCheck(new_pnt,rrtLocal(t).cords(minNode_index,:))
             rrtLocal(t).parent=[rrtLocal(t).parent;minNode_index];
             rrtLocal(t).cords=[rrtLocal(t).cords;new_pnt];
             addedtotree(t)=1;
@@ -588,7 +598,6 @@ classdef RrtPlanner < handle
         ,self.lim(2,1) + range(2)*rand ...
         ,self.lim(3,1) + range(3)*rand];
       
-      % MINE: should we check for collisions using local_obs? Maybe sense before adding newPoint
       % If the new point is on an obstacle plane the get another one
       while self.IsOnObstaclePlane(newPoint)
         newPoint=[self.lim(1,1) + range(1)*rand ...
@@ -702,14 +711,14 @@ classdef RrtPlanner < handle
     % *Description:* Returns whether a collision occurs between an edge and a set
     % of obstacles. Also gives the point of intersection. (P1=node,P2=parent node)
 
-    % MINE: checked for collision using self.obsmap.local_obs
+    % MINE: check for collision using self.obsmap.local_obs (replace every self.obs)
     function [collision,PInt] = CollisionCheck(self,P1,P2)
       self.collisionCheckCount = self.collisionCheckCount + 1;
       %default is that it is safe, then if a collision is found it is set to 1
       %and we return
       collision = false;
       
-      if size(self.obsmap.local_obs,1)==0
+      if size(self.obss,1)==0
         PInt=inf;
         return;
       end
@@ -718,8 +727,8 @@ classdef RrtPlanner < handle
       
       % Line equation
       r_var=[P1(1)-P2(1) P1(2)-P2(2) P1(3)-P2(3)];
-      plane_equ = self.obstaclePlaneParameters; % MINE: what is this...
-      for i = 1:size(self.obsmap.local_obs,3)
+      plane_equ = self.obstaclePlaneParameters;
+      for i = 1:size(self.obs,3)
         % Plane * Line
         bottomof_t_var = plane_equ(i,1) * r_var(1) ...
           + plane_equ(i,2) * r_var(2) ...
@@ -746,7 +755,7 @@ classdef RrtPlanner < handle
           % -------------------------------------------------
           % Check if point lies within plane boundaries
           % Ref: http://www.blackpawn.com/texts/pointinpoly/default.html
-          if PointInQuad(PInt,self.obsmap.local_obs(:,:,i));
+          if PointInQuad(PInt,self.obs(:,:,i));
             collision = true;
             % No need to check anymore since there is a collision
             return;

@@ -1,16 +1,9 @@
-obstacleFilename = 'obstacles.txt';
+obstacleFilename = 'simpleobst.txt';
 seedsPerAxis = 7;
 treesMax = seedsPerAxis^3*3+2;
 rrt = RrtPlanner(treesMax,seedsPerAxis,obstacleFilename);
+rrt.drawingSkipsPerDrawing = 5;
+rrt.SetStart([-0.5 0 0.2]);
+rrt.SetGoal([0.9 0 0.2]);
 rrt.Run()
-
-% origin = [1 1 1];
-% size = 6;
-% cube = [];
-% x=([0 1 1 0 0 0;1 1 0 0 1 1;1 1 0 0 1 1;0 1 1 0 0 0]-0.5)*size+origin(1);
-% y=([0 0 1 1 0 0;0 1 1 0 0 0;0 1 1 0 1 1;0 0 1 1 1 1]-0.5)*size+origin(2);
-% z=([0 0 0 0 0 1;0 0 0 0 0 1;1 1 1 1 0 1;1 1 1 1 0 1]-0.5)*size+origin(3);
-% for i=1:6
-%     h = patch(x(:,i),y(:,i),z(:,i),'w');
-%     cube(:, i) = h;
-% end 
+plot3(rrt.path(:,1),rrt.path(:,2),rrt.path(:,3),'k*');
