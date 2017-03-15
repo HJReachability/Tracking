@@ -2,7 +2,7 @@ seedsPerAxis = 7;
 treesMax = seedsPerAxis^3*3+2;
 
 % arguments to change
-obstacleFilename = 'obstacles.txt'; % file that has global obstacles, used for init setup
+
 start = [0 -0.5 +0.2];
 goal = [+0.0 +0.9 +0.4];
 obsType = 'padded'; % obstacle type among padded, global, local. path is drawn according to this.

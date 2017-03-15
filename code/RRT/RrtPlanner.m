@@ -66,11 +66,8 @@ classdef RrtPlanner < handle
     
     %% Extra properties
     % DONE:
-    
-    % string whether to run with global obs, local obs, or padded obs
-    runGlobalOrLocalOrPaddedObs;
-    
-      % binary variable: whether to plot traced path or not
+
+    % binary variable: whether to plot traced path or not
     plotTrace;
     
     % binary variable: whether to plot smoothed path or not
@@ -111,10 +108,6 @@ classdef RrtPlanner < handle
     % The obstacles
     obs;
 
-    % DONE: the obstacle map, initialize after global obstacles have been
-    % set up
-    obsmap;
-    
     % The plane parameters of each obstacle plane
     obstaclePlaneParameters;
     
@@ -166,20 +159,14 @@ classdef RrtPlanner < handle
     % seedsPerAxis = Number of seeds allowed on each axis (discretely placed seeds which idealy helps the RRT expansion)
     % wallCount = the Number of mock walls to be placed in the environment
     % see properties for explanation of other inputs
-    function self = RrtPlanner(treesMax, seedsPerAxis, wallCountOrObstacleFilename, rrtSoFar, runGlobalOrLocalOrPaddedObs, ...
-        senseRange, trackErr, start, goal, plotGlobal, plotLocal, plotPadded, plotTrace, plotSmooth)
+    function self = RrtPlanner(treesMax, seedsPerAxis, obs, rrtSoFar, ...
+        start, goal)
+      
       % Check inputs
       if 1 <= nargin
         self.treesMax = treesMax;
         if 2 <= nargin
           self.seedsPerAxis = seedsPerAxis;
-          if 3 <= nargin && isa(wallCountOrObstacleFilename,'char')
-            self.wallCount = 0;
-            self.obstacleFilename = wallCountOrObstacleFilename;
-          elseif 3 <= nargin && isa(wallCountOrObstacleFilename,'numeric')
-            self.obstacleFilename = '';
-            self.wallCount = wallCountOrObstacleFilename;
-          end
         end
       end
       
@@ -187,12 +174,7 @@ classdef RrtPlanner < handle
       
       self.start = start;
       self.goal = goal;
-      
-      self.runGlobalOrLocalOrPaddedObs = runGlobalOrLocalOrPaddedObs;
-
-      self.plotTrace = plotTrace;
-      self.plotSmooth = plotSmooth;
-      
+      self.obs = obs;
       % Define or add obstacles
       self.GenerateObstacles();
     end
@@ -201,14 +183,6 @@ classdef RrtPlanner < handle
     %% Run
     % Main RRT search algorithm
     function Run(self)
-      
-      % DONE: replacing self.obs with self.padded or local obs etc...
-      if strcmp(self.runGlobalOrLocalOrPaddedObs, 'local')
-        self.obs = self.obsmap.local_obs;
-      elseif strcmp(self.runGlobalOrLocalOrPaddedObs, 'padded')
-        self.obs = self.obsmap.padded_obs;
-      end
-        
       % Precalculate the 4 obstacle plane parameters [a,b,c,d]
       self.obstaclePlaneParameters = zeros(size(self.obs,3),4);
       for i = 1:size(self.obs,3)
@@ -439,7 +413,6 @@ classdef RrtPlanner < handle
     % multiple sets of 4 3D point which define a planar obstacle. Or we use the
     % default walls where wallCount decides how many walls there are to be
     function GenerateObstacles(self)
-      self.obs = [];
       self.obstacleCount = 0;
       self.obstaclePlaneParameters = [];
       
@@ -447,32 +420,31 @@ classdef RrtPlanner < handle
         return;
       end
       
-      % Obstacles                     => Define a obstacles using four points [x(1:4,:) y(1:4,:) z(1:4,:)]
-      if ~isempty(self.obstacleFilename)
-        try obs_temp=load(self.obstacleFilename);
-        catch  %#ok<CTCH>
-          error(['Cant load ',self.obstacleFilename]);
-        end
-        num_obs = size(obs_temp,1)/4;
-        for i=1:num_obs
-          self.obs(:,:,i)=obs_temp(i*4-3:i*4,:);
-        end
-
-      else % Add some number of obstacle walls
-        if self.wallCount == 1
-          y = 0;
-          self.obs(:,:,1:4) = self.WallAtY(y,1);
-        elseif 1 < self.wallCount
-          for i=1:self.wallCount
-            y = self.lim(2,1) + 0.2 + (i-1)*(self.lim(2,2)-self.lim(2,1)-0.4)/(self.wallCount-1);
-            if mod(i,2) == 1
-              self.obs(:,:,i*4-3:i*4) = self.WallAtY(y,1);
-            else
-              self.obs(:,:,i*4-3:i*4) = self.WallAtY(y,2);
-            end
-          end
-        end
-      end
+%       % Obstacles > Define a obstacles using four points [x(1:4,:) y(1:4,:) z(1:4,:)]
+%       if ~isempty(self.obstacleFilename)
+%         try obs_temp=load(self.obstacleFilename);
+%         catch  %#ok<CTCH>
+%           error(['Cant load ',self.obstacleFilename]);
+%         end
+%         num_obs = size(obs_temp,1)/4;
+%         for i=1:num_obs
+%           self.obs(:,:,i)=obs_temp(i*4-3:i*4,:);
+%         end
+%       else % Add some number of obstacle walls
+%         if self.wallCount == 1
+%           y = 0;
+%           self.obs(:,:,1:4) = self.WallAtY(y,1);
+%         elseif 1 < self.wallCount
+%           for i=1:self.wallCount
+%             y = self.lim(2,1) + 0.2 + (i-1)*(self.lim(2,2)-self.lim(2,1)-0.4)/(self.wallCount-1);
+%             if mod(i,2) == 1
+%               self.obs(:,:,i*4-3:i*4) = self.WallAtY(y,1);
+%             else
+%               self.obs(:,:,i*4-3:i*4) = self.WallAtY(y,2);
+%             end
+%           end
+%         end
+%       end
       
       % Precalculate the 4 obstacle plane parameters [a,b,c,d]
       self.obstaclePlaneParameters = zeros(size(self.obs,3),4);
