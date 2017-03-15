@@ -136,6 +136,11 @@ M.~Diehl, H.~J. Ferreau, and N.~Haverbeke, ``Efficient numerical methods for
   predictive control}.\hskip 1em plus 0.5em minus 0.4em\relax Springer, 2009,
   pp. 391--417.
 
+\bibitem{Findeisen2007}
+R.~Findeisen, F.~Allg{\"o}wer, and L.~T. Biegler, \emph{Assessment and future
+  directions of nonlinear model predictive control}.\hskip 1em plus 0.5em minus
+  0.4em\relax Springer, 2007, vol. 358.
+
 \bibitem{Grune2011}
 L.~Gr{\"u}ne and J.~Pannek, ``Nonlinear model predictive control,'' in
   \emph{Nonlinear Model Predictive Control}.\hskip 1em plus 0.5em minus
@@ -186,6 +191,11 @@ Z.~Yan and J.~Wang, ``Robust model predictive control of nonlinear systems with
 D.~Q. Mayne, E.~C. Kerrigan, E.~Van~Wyk, and P.~Falugi, ``Tube-based robust
   nonlinear model predictive control,'' \emph{International Journal of Robust
   and Nonlinear Control}, vol.~21, no.~11, pp. 1341--1353, 2011.
+
+\bibitem{Cannon2011}
+M.~Cannon, J.~Buerger, B.~Kouvaritakis, and S.~Rakovic, ``Robust tubes in
+  nonlinear model predictive control,'' \emph{IEEE Transactions on Automatic
+  Control}, vol.~56, no.~8, pp. 1942--1947, 2011.
 
 \bibitem{Gao2014}
 Y.~Gao, A.~Gray, H.~E. Tseng, and F.~Borrelli, ``A tube-based robust nonlinear
@@ -257,5 +267,15 @@ M.~Chen, S.~L. Herbert, M.~S. Vashishtha, S.~Bansal, and C.~J. Tomlin, ``A
 \bibitem{Coddington84}
 E.~A. Coddington and N.~Levinson, \emph{Theory of Ordinary Differential
   Equations}.\hskip 1em plus 0.5em minus 0.4em\relax Krieger Pub Co, 1984.
+
+\bibitem{Fisac15}
+J.~F. Fisac, M.~Chen, C.~J. Tomlin, and S.~S. Shankar, ``Reach-avoid problems
+  with time-varying dynamics, targets and constraints,'' in \emph{18th
+  International Conference on Hybrid Systems: Computation and Controls}, 2015.
+
+\bibitem{Bouffard12}
+P.~Bouffard, ``On-board model predictive control of a quadrotor helicopter:
+  Design, implementation, and experiments,'' Master's thesis, University of
+  California, Berkeley, 2012.
 
 \end{thebibliography}

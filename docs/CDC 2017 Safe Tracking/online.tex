@@ -79,7 +79,6 @@
 %\end{itemize}
 %\end{enumerate}
 
-\MCnote{Sampled data}
 Algorithm \ref{alg:algOnline} describes the online computation. The inputs are the tracking error look-up table $\valfunc$, the safety control look-up table $\deriv$, and the planning distance $\dx$. The planning distance is the distance that the path planner (and thus the planning model) may take for each iteration of the online algorithm, and is chosen to be $0< \dx \leq \TEB$. This in turn determines the time step of each iteration (as shown on line \ref{ln:dt}): $\dt = \frac{\dx}{v_{max}}$, where $v_{max}$ is the maximum speed of the planning model.
 
 Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation and set the planning and tracking model states to zero. The relative state is computed (also zero in this case), and plugged into the tracking error look-up table $\valfunc$ to determine the tracking error bound $\TEB$. Note that by initializing the relative state to be zero we can use the smallest possible $\TEB$ for the entire online computation. Finally, we determine the minimum possible sensing distance for obstacle detection as $\senseDist = 2\TEB + \dx$.

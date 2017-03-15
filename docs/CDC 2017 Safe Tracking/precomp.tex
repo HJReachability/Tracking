@@ -32,9 +32,9 @@ Now that we have the relative dynamics between the two systems we must define a 
  	\end{aligned}
  \end{equation} 
  
- This is a modified version of the Hamilton-Jacobi formulation as described by \textcolor{red}{cite jaime, time varying reachability}. By implementing HJ reachability analysis we solve for this value function over the time horizon. If the control authority of the tracking system is powerful enough to always eventually reach the planning system, this value function will converge to an invariant solution for all time. An example of this value function is in Figure \ref{fig:quad4D_example}-b. In the next section we will prove that the sub-level sets of this value function will map initial relative states to the guaranteed furthest possible tracking error over all time, as seen in Figure \ref{fig:quad4D_example}-c.
+ This is a modified version of the Hamilton-Jacobi formulation as described by \cite{Fisac15}. By implementing HJ reachability analysis we solve for this value function over the time horizon. If the control authority of the tracking system is powerful enough to always eventually reach the planning system, this value function will converge to an invariant solution for all time. An example of this value function is in Figure \ref{fig:quad4D_example}-b. In the next section we will prove that the sub-level sets of this value function will map initial relative states to the guaranteed furthest possible tracking error over all time, as seen in Figure \ref{fig:quad4D_example}-c.
  
- In preparation for the online computation described in Section \ref{sec:online}, the value function $\valfunc(\rstate)$ is saved over a grid representing the relative state space. Similarly the spatial gradients of the value function $\nabla\valfunc(\rstate)$ are saved as the safety control look-up table $\deriv$.
+ \SHnote{In preparation for the online computation described in Section \ref{sec:online}, the value function $\valfunc(\rstate)$ is saved over a grid representing the relative state space. Similarly the spatial gradients of the value function $\nabla\valfunc(\rstate)$ are saved as the safety control look-up table $\deriv$}.
  
 \subsection{Main Result}
  \begin{equation}
@@ -138,7 +138,7 @@ Continuing from value function:
     \item The real system experiences the worst-case disturbance.
   \end{itemize}
   
-  In particular, the value of $\underline\valfunc := \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error \MCnote{(we need to explicitly define tracking error)} given the above assumptions. The tracking error bound in Fig. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, \ref{fig:fw_offline} is given by\footnote{In practice, since $\valfunc_\infty$ is obtained numerically, we set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc + \epsilon\}$ for some suitably small $\epsilon>0$} the set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc\}$.
+  In particular, the value of $\underline\valfunc := \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error \MCnote{(we need to explicitly define tracking error)} given the above assumptions. The tracking error bound in Fig. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, \ref{fig:fw_offline} is given by\footnote{In practice, since $\valfunc_\infty$ is obtained numerically, we set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc + \epsilon\}$ for some suitably small $\epsilon>0$} the set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc\}$. \SHnote{mention that the tracking bound in the planning reference frame is $\TEB_\pstate(\tstate) = \{\pstate: \valfunc_\infty(\tstate-\ptmat\pstate) \le \underline\valfunc\}$, and this is what we will use for augmenting obstacles}
   
   \MCnote{what if disturbances are not optimal?}
 \end{rem}
