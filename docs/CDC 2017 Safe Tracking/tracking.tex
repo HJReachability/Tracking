@@ -75,16 +75,23 @@
 \newcommand{\pdyn}{f_p} % Planner Dynamics
 \newcommand{\rdyn}{g} % Relative dynamics
 
+\newcommand{\plannerfunc}{h}
+
 \newcommand{\ptind}{i} % Index of vehicle state corresponding to planner state
 \newcommand{\ptmat}{Q} % Matrix for transforming planner state to the same length as tracker state
+\newcommand{\tpmat}{W}
 
 \newcommand{\errfunc}{l} % Error function
 \newcommand{\valfunc}{V} % Value function
 
-\newcommand{\deriv}{deriv} %gradient look-up table
+\newcommand{\deriv}{\nabla\valfunc} %gradient look-up table
 
-\newcommand{\dx}{dx} %distance allowed in a time step
-\newcommand{\dt}{dt} %time step
+\newcommand{\dx}{\Delta x} %distance allowed in a time step
+\newcommand{\dt}{\Delta t} %time step
+
+\newcommand{\obsSense}{\mathcal{O}_{sense}}
+\newcommand{\obsAug}{\mathcal{O}_{aug}}
+
 
 
 \newcommand{\TEB}{\mathcal B} % tracking error bound
