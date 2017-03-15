@@ -21,6 +21,21 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
+\bibitem{Hoy2015}
+A.~S.~A. Hoy, M;~Mateev, ``Algorithms for collision-free navigation of mobile
+  robots in complex cluttered environments: a survey,'' \emph{Robotica}, vol.
+  33.03, pp. 463--497, 2015.
+
+\bibitem{Kuffner2000}
+------, ``Rrt-connect: An efficient approach to single-query path planning,''
+  \emph{In Proceedings of the IEEE International Conference on Robotics and
+  Automation (ICRA)}, pp. 995--1001, 2000.
+
+\bibitem{Kavraki1996}
+------, ``Probabilistic roadmaps for path planning in high-dimensional
+  configuration spaces,'' \emph{IEEE transactions on Robotics and
+  Automation }, vol. 12.4, pp. 566--580, 1996.
+
 \bibitem{Coddington84}
 E.~A. Coddington and N.~Levinson, \emph{Theory of Ordinary Differential
   Equations}.\hskip 1em plus 0.5em minus 0.4em\relax Krieger Pub Co, 1984.

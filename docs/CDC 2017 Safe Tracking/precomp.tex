@@ -1,9 +1,9 @@
 % !TEX root = tracking.tex
 \section{Offline Computations \label{sec:precomp}}
-The offline computation begins with setting up a capture-avoid game between the tracking system and the planning system, which we then analyze using Hamilton Jacobi (HJ) reachability. In this game, the tracking system will try to "capture" the planning system, while the planning system is doing everything it can to avoid capture. In reality the planner may not actively be trying to avoid the tracking system, but this allows us to account for worst-case scenarios. If both systems are acting optimally in this way, we want to determine the largest relative distance that may occur over time. This distance is the maximum possible tracking error between the two systems. Note that this tracking error is independent of specific online paths; it depends only on relative states and dynamics.
+The offline computation begins with setting up a capture-avoid game between the tracking system and the planning system, which we then analyze using Hamilton Jacobi (HJ) reachability. In this game, the tracking system will try to "capture" the planning system, while the planning system is doing everything it can to avoid capture. In reality the planner is typically not actively be trying to avoid the tracking system, but this allows us to account for worst-case scenarios. If both systems are acting optimally in this way, we want to determine the largest relative distance that may occur over time. This distance is the maximum possible tracking error between the two systems. Note that this tracking error is independent of specific online paths; it depends only on relative states and dynamics.
 
 \subsection{Relative Dynamics}
-To determine the relative distance that may occur over time we must first define the relative states and dynamics between the tracking and planning models. The individual dynamics are defined in Section \ref{sec:formulation}. The relative system is found by fixing the planning model to the origin and finding the states of the tracking model relative to the planning model, as shown below.
+To determine the relative distance that may occur over time we must first define the relative states and dynamics between the tracking and planning models. The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). The relative system is found by fixing the planning model to the origin and finding the states of the tracking model relative to the planning model, as shown below.
 
 \begin{equation}
 \label{eq:rdyn}
@@ -21,7 +21,7 @@ Now that we have the relative dynamics between the two systems we must define a 
 \begin{figure}
 	\centering
 	\includegraphics[width=0.5\textwidth]{fig/quad4D_example}
-	\caption{illustrative example of the precomputation steps for a 4D quadrotor tracking a 2D kinematic planner. a) Cost Function defined on relative states, b) Value function computed using HJ reachability, c) Level sets of the cost function (solid) and value function (dashed). If the initial relative state is contained within the dashed set the system is guaranteed to remain within the solid set (i.e. the tracking error bound)}
+	\caption{illustrative example of the precomputation steps for a 4D quadrotor tracking a 2D kinematic planner. All graphs are defined over a 2D slice of the 4D system. a) Cost function $\errfunc(\rstate)$ defined on relative states as distance to the origin, b) Value function $\valfunc(\rstate)$ computed using HJ reachability, c) Level sets of $\errfunc(\rstate)$ (solid) and $\valfunc(\rstate)$ (dashed). If the initial relative state is contained within the dashed set the system is guaranteed to remain within the solid set (i.e. the tracking error bound)}
 	\label{fig:quad4D_example}
 \end{figure} 
  
@@ -33,6 +33,8 @@ Now that we have the relative dynamics between the two systems we must define a 
  \end{equation} 
  
  This is a modified version of the Hamilton-Jacobi formulation as described by \textcolor{red}{cite jaime, time varying reachability}. By implementing HJ reachability analysis we solve for this value function over the time horizon. If the control authority of the tracking system is powerful enough to always eventually reach the planning system, this value function will converge to an invariant solution for all time. An example of this value function is in Figure \ref{fig:quad4D_example}-b. In the next section we will prove that the sub-level sets of this value function will map initial relative states to the guaranteed furthest possible tracking error over all time, as seen in Figure \ref{fig:quad4D_example}-c.
+ 
+ In preparation for the online computation described in Section \ref{sec:online}, the value function $\valfunc(\rstate)$ is saved over a grid representing the relative state space. Similarly the spatial gradients of the value function $\nabla\valfunc(\rstate)$ are saved as the safety control look-up table $\deriv$.
  
 \subsection{Main Result}
  \begin{equation}

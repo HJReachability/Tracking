@@ -1,5 +1,7 @@
 % !TEX root = tracking.tex
 \section{General Framework \label{sec:framework}}
+\SHnote{1. change real and virtual system to tracking and planning system in both the text and the figures.\\ 2. Might not need to go into as much detail as we currently are here.\\ 3. Should we introduce the frameworks in the same order that we go through them in the paper (i.e. offline, online, hybrid controller)?\\
+4. explain that having a tracking bound around the planner in the workspace is equivalent to expanding the obstacles by the tracking bound amount in the configuration space\\}
 In the context of real-time robust planning towards a target in an unknown environment, we propose a framework for combining fast planning methods that do not need to take into account disturbances, and HJ reachability analysis which provides formal guarantees for systems with disturbances. The high level idea of the framework is summarized in Fig. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, and \ref{fig:fw_offline}. Formal definitions will be introduced in \MCnote{Section \ref{}}.
 
 Fig. \ref{fig:fw_online} shows the online computations under our framework, which uses a hierarchical structure in which a planner plans a path or trajectory for a simple ``virtual system''. Examples of planners include those based on model-predictive control (MPC), rapidly-exploring random tree (RRT), or neural networks; our framework is agnostic to the planner, so any planner can be used. The choice of the virtual system is also flexible, and depends on the requirements of the planner. We will present an example of a virtual system used in conjunction with an RRT planner in \MCnote{Section \ref{}}. The planner outputs a desired ``virtual state'' of the virtual system.
@@ -7,6 +9,7 @@ Fig. \ref{fig:fw_online} shows the online computations under our framework, whic
 The ``real system'' is a model of a physical system such as a quadrotor, and a subset of the state variables forms the virtual state of the virtual system. The state of real system and the desired virtual state are inputs to a hybrid tracking controller. Based on these two inputs, the hybrid tracking controller outputs a control signal to the real system. The goal of this control is to make the real system track the desired virtual state as closely as possible. Our concept of tracking error will be defined in \MCnote{Section \ref{}}.
 
 The hybrid tracking controller is shown in Fig. \ref{fig:hybrid_ctrl} and consists of two controllers: a safety controller and a performance controller. In general, there may be multiple safety and performance controllers depending on various factors such as observed size of disturbances, but for simplicity we will simply consider one safety and one performance controller in this paper. The safety controller consists of a look-up table computed offline via HJ reachability, and guarantees that a tracking error bound is not violated, \textit{despite the worst-case disturbance}. In addition, the table look-up operation is very computationally cheap. When the system is close to violating the tracking error bound, the safety controller must be used to prevent the violation; on the other hand, when the system is far from violating the tracking error, any controller, such as one that minimizes fuel usage or even a random controller, can be used.
+
 
 Besides the virtual state, the planner also takes into account any obstacles that must be avoided. In order to be robust to disturbances, planning must be done with a safety margin that accounts for disturbances. A safety margin that guarantees robustness despite the worst-case disturbance is given by a tracking error bound obtained in the offline HJ reachability computation, shown in Fig. \ref{fig:fw_offline} and explained in detail in \MCnote{Section \ref{}}. The virtual and real system dynamics are used to compute a value function, which simultaneously gives the tracking error bound and the safety controller look-up table used by the hybrid tracking controller.
 %
@@ -24,6 +27,7 @@ Besides the virtual state, the planner also takes into account any obstacles tha
 \includegraphics[width=\columnwidth]{fig/framework_online}
 \caption{Online framework}
 \label{fig:fw_online}
+\SHnote{if there's room I think it would be nice to keep the labels on the arrows}
 \end{figure}
 
 \begin{figure}[h!]
