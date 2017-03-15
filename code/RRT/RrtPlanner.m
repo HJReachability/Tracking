@@ -100,6 +100,9 @@ classdef RrtPlanner < handle
     % same for padded obs
     paddedHandle;
     
+    % previous rrt to reduce computation
+    rrtSoFar;
+    
     %% VARIABLES
     %  ************************************************************************
     
@@ -187,7 +190,7 @@ classdef RrtPlanner < handle
     % seedsPerAxis = Number of seeds allowed on each axis (discretely placed seeds which idealy helps the RRT expansion)
     % wallCount = the Number of mock walls to be placed in the environment
     % see properties for explanation of other inputs
-    function self = RrtPlanner(treesMax, seedsPerAxis, wallCountOrObstacleFilename, runGlobalOrLocalOrPaddedObs, ...
+    function self = RrtPlanner(treesMax, seedsPerAxis, wallCountOrObstacleFilename, rrtSoFar, runGlobalOrLocalOrPaddedObs, ...
         senseRange, trackErr, start, goal, plotGlobal, plotLocal, plotPadded, plotTrace, plotSmooth)
       % Check inputs
       if 1 <= nargin
@@ -203,6 +206,9 @@ classdef RrtPlanner < handle
           end
         end
       end
+      
+      self.rrtSoFar = rrtSoFar;
+      
       self.start = start;
       self.goal = goal;
       
@@ -257,6 +263,13 @@ classdef RrtPlanner < handle
         
         % GENERATE A NEW POINT
         new_pnt = self.NewPoint(); %if doDraw; plot3(new_pnt(1),new_pnt(2),new_pnt(3),'.c'); end
+        
+        % MINE: 
+        % if a previous tree exists, start off with it
+        if cur_it == 1 && ~isempty(self.rrtSoFar)
+          self.rrt = self.rrtSoFar;
+          new_pnt = self.start;
+        end
         
         % FIND NEAREST NEIGHBOURS
         [d2nodes,d2edges] = NearestNeighbour(new_pnt,self.rrt);
@@ -535,9 +548,8 @@ classdef RrtPlanner < handle
       objective=0;
       addedtotree=zeros([size(self.rrt,2),1]);
       
-      % Create local variable. Could cause problems if self.rrt is used in the mean time
       rrtLocal = self.rrt;
-
+      
       %find the valid trees
       for t=1:size(rrtLocal,2)
         if ~rrtLocal(t).valid

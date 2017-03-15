@@ -9,14 +9,15 @@ obsType = 'padded'; % obstacle type among padded, global, local. path is drawn a
 senseRange = 0.5;
 trackErrBnd = 0.05;
 plotGlobal = 1;
-plotLocal = 1;
+plotLocal = 0;
 plotPadded = 1;
 plotTrace = 1;
 plotSmooth = 1;
 
 % runs everything
-rrt = RrtPlanner(treesMax, seedsPerAxis, obstacleFilename, obsType, senseRange, trackErrBnd,...
-  start, goal, plotGlobal, plotLocal, plotPadded, plotTrace, plotSmooth); 
+rrtSoFar = [];
+rrt = RrtPlanner(treesMax, seedsPerAxis, obstacleFilename, rrtSoFar, obsType, senseRange, trackErrBnd,...
+start, goal, plotGlobal, plotLocal, plotPadded, plotTrace, plotSmooth); 
 
 rrt.drawingSkipsPerDrawing = 5;
 rrt.Run()
@@ -25,6 +26,15 @@ rrt.Run()
 path = unique(double(rrt.smoothedPath), 'rows'); % output smoothed path
 nextPoint = path(2, :); % point that rrt would head towards
 direction = (nextPoint - start)./norm(nextPoint - start); % unit vector of direction to go towards
-% newState = start + delta_x.*direction;
+
+% MINE:
+% tests whether it keeps old rrt // computation time should be a lot faster
+newState = start + 0.02.*direction;
+rrtSoFar = rrt.rrt;
+rrt = RrtPlanner(treesMax, seedsPerAxis, obstacleFilename, rrtSoFar, obsType, senseRange, trackErrBnd,...
+newState, goal, plotGlobal, plotLocal, plotPadded, plotTrace, plotSmooth); 
+
+rrt.drawingSkipsPerDrawing = 5;
+rrt.Run()
 
 % can call rrt.obsmap.obstaclePlot(1, 1, 0)
