@@ -1,5 +1,5 @@
 function timesteps = simulateOnline(gs, datas, quadTrue, quadVirt, quadRel, ...
-  obstacleMap, data_filename, extraArgs)
+  data_filename, extraArgs)
 
 %inputs:
 %       gs           -  cell of grids
@@ -27,17 +27,6 @@ if nargin < 8
   extraArgs = [];
 end
 
-%% Before Looping
-load(data_filename)
-uMode = 'max';
-% dMode = 'min'; % Not needed since we're not using worst-case control
-dt = 0.1;
-
-% plot global obstacles
-if vis
-  obstacleMap.plotSomething()
-end
-
 % matrix to compare position states (virt vs. true)
 if ~isfield(extraArgs,'Q')
   Q = zeros(10,3);
@@ -48,6 +37,21 @@ end
 
 if ~isfield(extraArgs, 'visualize')
   vis = true;
+end
+
+%% Before Looping
+load(data_filename)
+uMode = 'max';
+% dMode = 'min'; % Not needed since we're not using worst-case control
+dt = 0.1;
+delta_x = dt*velocity;
+
+% plot global obstacles
+if vis
+  plotGlobal = true;
+  plotLocal = false;
+  plotPadded = false;
+  hG = rrt.obsmap.ObstaclePlot(plotGlobal, plotLocal, plotPadded);
 end
 
 % set initial states to zero
@@ -92,7 +96,7 @@ while value < goal
   %outputs: desired virtual state
   
   % 1. run RRT stuff, get new virtual state. using dummy example for now.
-  virt_x = planner(something_something);
+   [virt_x, rrt] = rrtNextState(delta_x, virt_x);
   
   %% Hybrid Tracking Controller
   %inputs: desired virtual state, true state
