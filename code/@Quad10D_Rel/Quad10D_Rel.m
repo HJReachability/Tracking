@@ -2,8 +2,8 @@ classdef Quad10D_Rel < DynSys
   properties
     uMin        % Control bounds (3x1 vector)
     uMax
-    dMax        %virtual velocity bounds
     dMin
+    dMax        % virtual velocity bounds
     
     % Constants
     %   The choices of n0, d1, d0 actually results in a very large
@@ -22,8 +22,8 @@ classdef Quad10D_Rel < DynSys
   end
   
   methods
-    function obj = Quad10D_Rel(x, uMin, uMax, dMax, dMin, dims)
-      % obj = Quad10D(x, uMin, uMax)
+    function obj = Quad10D_Rel(x, uMin, uMax, dMin, dMax, dims)
+      % obj = Quad10D_Rel(x, uMin, uMax, dMin, dMax, dims)
       %     Constructor for a 10D quadrotor
       %
       % Dynamics:

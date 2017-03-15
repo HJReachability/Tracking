@@ -1,4 +1,5 @@
-function [gX, gZ, dataX, dataZ, dataX0, dataZ0, tauX, tauZ]=Quad10D_Rel_RS(gN, dt, tMax, accuracy, targetType, visualize, gX,gZ)
+function [gX, gZ, dataX, dataZ, dataX0, dataZ0, tauX, tauZ] = ...
+  Quad10D_Rel_RS(gN, dt, tMax, accuracy, targetType, visualize, gX, gZ)
 % DubinsCar_RS()
 %     Compares reachable set/tube computation using direct and decomposition
 %     methods
@@ -32,13 +33,13 @@ end
 
 if nargin<7
   % Grid
-gMinX = [-5; -5; -35*pi/180; -1];
-gMaxX = [ 5;  5;  35*pi/180;  1];
-gMinZ = [-5; -5];
-gMaxZ = [ 5;  5];
-
-gX = createGrid(gMinX, gMaxX, gN*ones(4,1));
-gZ = createGrid(gMinZ, gMaxZ, gN*ones(2,1));
+  gMinX = [-5; -5; -35*pi/180; -1];
+  gMaxX = [ 5;  5;  35*pi/180;  1];
+  gMinZ = [-5; -5];
+  gMaxZ = [ 5;  5];
+  
+  gX = createGrid(gMinX, gMaxX, gN*ones(4,1));
+  gZ = createGrid(gMinZ, gMaxZ, gN*ones(2,1));
 end
 
 
@@ -75,8 +76,8 @@ end
 Xdims = 1:4;
 Zdims = 9:10;
 
-sD_X.dynSys = Quad10D_Rel(zeros(10,1), uMin, uMax, dMax, dMin, Xdims);
-sD_Z.dynSys = Quad10D_Rel(zeros(10,1), uMin, uMax, dMax, dMin, Zdims);
+sD_X.dynSys = Quad10D_Rel(zeros(10,1), uMin, uMax, dMin, dMax, Xdims);
+sD_Z.dynSys = Quad10D_Rel(zeros(10,1), uMin, uMax, dMin, dMax, Zdims);
 
 %% Grids and initial conditions
 
@@ -96,11 +97,11 @@ extraArgs.convergeThreshold = 0.01;
 extraArgs.keepLast = 1;
 
 if visualize
-extraArgs.visualize = 1;
-extraArgs.RS_level = -5;
-extraArgs.fig_num = 4;
-figure(extraArgs.fig_num)
-clf
+  extraArgs.visualize = 1;
+  extraArgs.RS_level = -5;
+  extraArgs.fig_num = 4;
+  figure(extraArgs.fig_num)
+  clf
 end
 
 [dataZ, tauZ] = HJIPDE_solve(dataZ0, tau, sD_Z, 'none', extraArgs);
@@ -108,12 +109,12 @@ end
 
 
 if visualize
-extraArgs.plotData.plotDims = [1 1 1 0];
-extraArgs.plotData.projpt = [0];
-extraArgs.deleteLastPlot = 1;
-extraArgs.fig_num = 5;
-figure(extraArgs.fig_num)
-clf
+  extraArgs.plotData.plotDims = [1 1 1 0];
+  extraArgs.plotData.projpt = [0];
+  extraArgs.deleteLastPlot = 1;
+  extraArgs.fig_num = 5;
+  figure(extraArgs.fig_num)
+  clf
 end
 
 extraArgs.targets = dataX0;

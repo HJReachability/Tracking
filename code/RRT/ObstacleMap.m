@@ -1,203 +1,264 @@
-classdef ObstacleMap < handle  
-
+classdef ObstacleMap < handle
+  
   properties
     global_obs; % a three dimensional matrix of all the obstacles on the map. TODO: reformatting into cell etc...
     local_obs; % a three dimensional matrix of the obstacles that the drone has seen so far. Starts empty.
+    padded_obs; % three dimensional matrix of the obstacles that the drone has seen so far PLUS trackErrBd
     num_obs; % the number of global obstacles
+    seen_obs; % 1 x num_obs vector of obstacles seen so far, so that it isn't added again into local_obs
+    indexx = 0; % counter for number of local obstacles added in
+    
+    % handle for the global obstacle plot
+    hG
+    
+    % same for local obs
+    hL
+    
+    % same for padded obs
+    hP
+    
   end
   
   methods
-    %% Constructor. Calls for the sense and update method immediately.
-    function self = ObstacleMap(obs, point, senseRange, trackErrBnd)
-      if isempty(self.global_obs)
-        self.global_obs = obs;
-        dimen = size(obs);
-        self.num_obs = dimen(3);
-        self.global_obs = mat2cell(self.global_obs, [1 1 1 1], 3, ones(1, self.num_obs)); 
-        % self.global_obs is now a cell array
-      end
-        self.global_obs
-        %SenseAndUpdate(point, senseRange, trackErrBnd)
+    %% Constructor.
+    function self = ObstacleMap(obs)
+      self.num_obs = size(obs, 3);
+      self.global_obs = obs;
+      self.local_obs = inf(size(self.global_obs));
+      self.padded_obs = inf(4, 3, 6.*self.num_obs);
+      self.seen_obs = false(1, self.num_obs);
     end
     
     %% SenseAndUpdate
-    % sense for obstacles that are within the sensing range (*size*) at the *point* given
-    % then update local/known obstacles. overwrite the original matrix
-    % with the new matrix    
-    function SenseAndUpdate(self, point, size, track_err)
-      % compute the cube sensing range where point is the center 
-      % and size is the side length
-      mostPositive = [point(1) + size./2, point(2) + size./2, point(3) + size./2];
-      mostNegative = [point(1) - size./2, point(2) - size./2, point(3) - size./2];
+    % sense for obstacles that are within sense_range of the point
+    % then update local and padded obstacles.
+    function sense_update(obj, point, sense_range, track_err)
+      % SenseAndUpdate(obj, point, sense_range, track_err)
+      if ~iscolumn(point)
+        point = point';
+      end
       
-      % separate coordinate ranges
-      oneCubeRan = [mostNegative(1), mostPositive(1)];
-      twoCubeRan = [mostNegative(2), mostPositive(2)];
-      threeCubeRan = [mostNegative(3), mostPositive(3)];
+      sense_ranges = [point-sense_range, point+sense_range];
       
-      for i = 1:self.num_obs % iterate over the indices of the (self.global) obst set
-        [one, two, three, four] = self.global_obs{:, :, i};
-        all_points = [one two three four]'; % reformat into regular 4x3 matrix
-        for pt = all_points % iterate over the four corner points that make up the obs
-          % check if point is within the sensing cube
-          if oneCubeRan(1) <= pt(1) <= oneCubeRan(2) && twoCubeRan(1) <= pt(2) <= twoCubeRan(2) && threeCubeRan(1) <= pt(3) <= threeCubeRan(2)
-            % pad it and add it into the local set
-            TrackErrorPadding(track_err, mat2cell(all_points, [1 1 1 1], 3)); % reformat into cell array of points
-            break
-          end
+      for i = find(~obj.seen_obs) % iterate over unseen global obs
+        if obj.ableToSense(sense_ranges, i)
+          obj.seen_obs(i) = true; % mark as seen
+          
+          % pad it and add it into the padded set
+          obj.pad(track_err, obj.global_obs(:,:,i));
+          
+          % add to local set
+          obj.local_obs(:, :, obj.indexx./6) = obj.global_obs(:,:,i);
         end
       end
     end
     
-    %% TrackErrorPadding
-    % helper function for sense and update that adds the tracking error
-    % bound to each obstacle before adding from global to local
-    function TrackErrorPadding(err, obs)
-        % assume all obstacles are axes-aligned
-        % find the coordinate that remains constant
-        countOne = 0;
-        countTwo = 0;
-        countThree = 0;
-        for i = 1:3
-          pt = obs{i};
-          ptTwo = obs{i + 1};
-          if pt(1) == ptTwo(1)
-            countOne = countOne + 1;
-          end
-          if pt(2) == ptTwo(2)
-            countTwo = countTwo + 1;
-          end
-          if pt(3) == ptTwo(3)
-            countThree = countThree + 1;
-          end
+    %% AbleToSense
+    % helper function for SenseAndUpdate that determines if obstacle can
+    % be sensed or not
+    function contained = chk_containment(obj, interval1, interval2)
+      % function contained = chk_containment(interval1, interval2)
+      if length(interval1) ~= 2 || length(interval2) ~= 2
+        error('Intervals must be of length 2!')
+      end
+      
+      % Determine which interval is smaller
+      if abs(diff(interval1)) < abs(diff(interval2))
+        small = interval1;
+        big = interval2;
+      else
+        small = interval2;
+        big = interval1;
+      end
+      
+      for i = 1:length(small)
+        if small(i) >= min(big) && small(i) <= max(big)
+          contained = true;
+          return
         end
-        
-        if countOne == 3
-          index = 1;
-        elseif countTwo == 3
-          index = 2;
-        else
-          index = 3;
-        end
-        % now the constant coordinate is *index*
-        
-        % required obstacle file format: start with lowermost/least-coordinate 
-        % point then go clockwise from there (up, right, down, back to start)
-        
-        if index == 2 % if obstacle is flat on y-plane
-          % front face extended
-          new_obs_front = cell(4, 1);
-          point = obs{1};
-          new_obs_front(1) = [point(1) - err, point(2) + err, point(3) - err];
-          point = obs{2};
-          new_obs_front(2, 1) = [point(1) - err, point(2) + err, point(3) + err];
-          point = obs(3);
-          new_obs_front{3} = [point(1) + err, point(2) + err, point(3) + err];
-          point = obs(4);
-          new_obs_front{4} = [point(1) + err, point(2) + err, point(3) - err];
-          
-          if isempty(self.local_obs) % if no obstacles have been sensed yet
-            self.local_obs = cell2mat(new_obs_front);          
-          else
-            self.local_obs(:,:,length(self.local_obs) + 1) = cell2mat(new_obs_front);
-          end
-
-          % back face extended
-          new_obs_back = cell(4, 1);
-          point = obs(1);
-          new_obs_back{1} = [point(1) - err, point(2) - err, point(3) - err];
-          point = obs(2);
-          new_obs_back{2} = [point(1) - err, point(2) - err, point(3) + err];
-          point = obs(3);
-          new_obs_back{3} = [point(1) + err, point(2) - err, point(3) + err];
-          point = obs(4);
-          new_obs_back{4} = [point(1) + err, point(2) - err, point(3) - err];
-          self.local_obs(:,:,length(self.local_obs) + 1) = cell2mat(new_obs_back);
-          
-        elseif index == 3 % flat on z-plane
-          new_obs_front = cell(4, 1); 
-          point = obs(1);
-          new_obs_front{1} = [point(1) - err, point(2) - err, point(3) + err];
-          point = obs(2);
-          new_obs_front{2} = [point(1) - err, point(2) + err, point(3) + err];
-          point = obs(3);
-          new_obs_front{3} = [point(1) + err, point(2) + err, point(3) + err];
-          point = obs(4);
-          new_obs_front{4} = [point(1) + err, point(2) - err, point(3) + err];
-          
-          if isempty(self.local_obs)
-            self.local_obs = cell2mat(new_obs_front);          
-          else
-            self.local_obs(:,:,length(self.local_obs) + 1) = cell2mat(new_obs_front);
-          end
-
-          new_obs_back = cell(4, 1);
-          point = obs(1);
-          new_obs_back{1} = [point(1) - err, point(2) - err, point(3) - err];
-          point = obs(2);
-          new_obs_back{2} = [point(1) - err, point(2) + err, point(3) - err];
-          point = obs(3);
-          new_obs_back{3} = [point(1) + err, point(2) + err, point(3) - err];
-          point = obs(4);
-          new_obs_back{4} = [point(1) + err, point(2) - err, point(3) - err];
-          self.local_obs(:,:,length(self.local_obs) + 1) = cell2mat(new_obs_back);
-          
-        else % flat on x-plane
-          new_obs_front = cell(4, 1);
-          point = obs(1);
-          new_obs_front{1} = [point(1) + err, point(2) - err, point(3) - err];
-          point = obs(2);
-          new_obs_front{2} = [point(1) + err, point(2) - err, point(3) + err];
-          point = obs(3);
-          new_obs_front{3} = [point(1) + err, point(2) + err, point(3) + err];
-          point = obs(4);
-          new_obs_front{4} = [point(1) + err, point(2) + err, point(3) - err];
-          
-          if isempty(self.local_obs)
-            self.local_obs = cell2mat(new_obs_front);          
-          else
-            self.local_obs(:,:,length(self.local_obs) + 1) = cell2mat(new_obs_front);
-          end
-
-          new_obs_back = cell(4, 1);
-          point = obs(1);
-          new_obs_back{1} = [point(1) - err, point(2) - err, point(3) - err];
-          point = obs(2);
-          new_obs_back{2} = [point(1) - err, point(2) - err, point(3) + err];
-          point = obs(3);
-          new_obs_back{3} = [point(1) - err, point(2) + err, point(3) + err];
-          point = obs(4);
-          new_obs_back{4} = [point(1) - err, point(2) + err, point(3) - err];
-          self.local_obs(:,:,length(self.local_obs) + 1) = cell2mat(new_obs_back);          
-        end
-        
-        % four edge/borders to close off
-        new_obs_side = cell(4, 1);
-        
-        new_obs_side{1} = new_obs_back{1};
-        new_obs_side{2} = new_obs_back{2};
-        new_obs_side{3} = new_obs_front{2};
-        new_obs_side{4} = new_obs_front{1};
-        self.local_obs(:,:,length(self.local_obs) + 1) = cell2mat(new_obs_side); 
-        
-        new_obs_side{1} = new_obs_back{2};
-        new_obs_side{2} = new_obs_back{3};
-        new_obs_side{3} = new_obs_front{3};
-        new_obs_side{4} = new_obs_front{2};
-        self.local_obs(:,:,length(self.local_obs) + 1) = cell2mat(new_obs_side); 
-        
-        new_obs_side{1} = new_obs_back{4};
-        new_obs_side{2} = new_obs_back{3};
-        new_obs_side{3} = new_obs_front{3};
-        new_obs_side{4} = new_obs_front{4};
-        self.local_obs(:,:,length(self.local_obs) + 1) = cell2mat(new_obs_side); 
-        
-        new_obs_side{1} = new_obs_back{1};
-        new_obs_side{2} = new_obs_back{4};
-        new_obs_side{3} = new_obs_front{4};
-        new_obs_side{4} = new_obs_front{1};
-        self.local_obs(:,:,length(self.local_obs) + 1) = cell2mat(new_obs_side); 
+      end
+      
+      contained = false;
     end
     
+    function sensed = ableToSense(obj, sense_ranges, obs_ind)
+      % compute the max and min coordinates of obstacs
+      
+      obstacle = obj.global_obs(:,:,obs_ind);
+      for i = 1:3
+        obs_range_i = [min(obstacle(:,i)) max(obstacle(:,i))];
+        
+        if ~obj.chk_containment(sense_ranges(i,:), obs_range_i)
+          sensed = false;
+          return
+        end
+      end
+      
+      sensed = true;
+    end
+    
+    %% TrackErrorPadding
+    % helper function for SenseAndUpdate that adds the tracking error
+    % bound to each obstacle before adding it to padded
+    function pad(self, err, obs)
+      % assume all obstacles are axes-aligned
+      % find the coordinate that remains constant
+      one = unique(obs(:, 1));
+      two = unique(obs(:, 2));
+      if length(one) == 1
+        index = 1;
+      elseif length(two) == 1
+        index = 2;
+      else
+        index = 3;
+      end
+      % now the constant coordinate is *index*
+      
+      % IMPORTANT: required obstacle file format: start with lowermost/least-coordinate
+      % point then go clockwise from there (up, right, down, back to start)
+      
+      pointOne = obs(1, :);
+      pointTwo = obs(2, :);
+      pointThree = obs(3, :);
+      pointFour = obs(4, :);
+      
+      % front and back faces extended
+      new_obs_front = cell(4, 1);
+      new_obs_back = cell(4, 1);
+      
+      if index == 2 % if obstacle is flat on y-plane
+        new_obs_front{1} = [pointOne(1) - err, pointOne(2) + err, pointOne(3) - err];
+        new_obs_front{2} = [pointTwo(1) - err, pointTwo(2) + err, pointTwo(3) + err];
+        new_obs_front{3} = [pointThree(1) + err, pointThree(2) + err, pointThree(3) + err];
+        new_obs_front{4} = [pointFour(1) + err, pointFour(2) + err, pointFour(3) - err];
+        
+        self.indexx = self.indexx + 1;
+        self.padded_obs(:,:, self.indexx) = cell2mat(new_obs_front);
+        
+        new_obs_back{1} = [pointOne(1) - err, pointOne(2) - err, pointOne(3) - err];
+        new_obs_back{2} = [pointTwo(1) - err, pointTwo(2) - err, pointTwo(3) + err];
+        new_obs_back{3} = [pointThree(1) + err, pointThree(2) - err, pointThree(3) + err];
+        new_obs_back{4} = [pointFour(1) + err, pointFour(2) - err, pointFour(3) - err];
+        self.indexx = self.indexx + 1;
+        self.padded_obs(:,:,self.indexx) = cell2mat(new_obs_back);
+        
+      elseif index == 3 % flat on z-plane
+        new_obs_front{1} = [pointOne(1) - err, pointOne(2) - err, pointOne(3) + err];
+        new_obs_front{2} = [pointTwo(1) - err, pointTwo(2) + err, pointTwo(3) + err];
+        new_obs_front{3} = [pointThree(1) + err, pointThree(2) + err, pointThree(3) + err];
+        new_obs_front{4} = [pointFour(1) + err, pointFour(2) - err, pointFour(3) + err];
+        
+        self.indexx = self.indexx + 1;
+        self.padded_obs(:,:, self.indexx) = cell2mat(new_obs_front);
+        
+        new_obs_back{1} = [pointOne(1) - err, pointOne(2) - err, pointOne(3) - err];
+        new_obs_back{2} = [pointTwo(1) - err, pointTwo(2) + err, pointTwo(3) - err];
+        new_obs_back{3} = [pointThree(1) + err, pointThree(2) + err, pointThree(3) - err];
+        new_obs_back{4} = [pointFour(1) + err, pointFour(2) - err, pointFour(3) - err];
+        self.indexx = self.indexx + 1;
+        self.padded_obs(:,:,self.indexx) = cell2mat(new_obs_back);
+        
+      else % flat on x-plane
+        new_obs_front{1} = [pointOne(1) + err, pointOne(2) - err, pointOne(3) - err];
+        new_obs_front{2} = [pointTwo(1) + err, pointTwo(2) - err, pointTwo(3) + err];
+        new_obs_front{3} = [pointThree(1) + err, pointThree(2) + err, pointThree(3) + err];
+        new_obs_front{4} = [pointFour(1) + err, pointFour(2) + err, pointFour(3) - err];
+        
+        self.indexx = self.indexx + 1;
+        self.padded_obs(:,:, self.indexx) = cell2mat(new_obs_front);
+        
+        new_obs_back{1} = [pointOne(1) - err, pointOne(2) - err, pointOne(3) - err];
+        new_obs_back{2} = [pointTwo(1) - err, pointTwo(2) - err, pointTwo(3) + err];
+        new_obs_back{3} = [pointThree(1) - err, pointThree(2) + err, pointThree(3) + err];
+        new_obs_back{4} = [pointFour(1) - err, pointFour(2) + err, pointFour(3) - err];
+        self.indexx = self.indexx + 1;
+        self.padded_obs(:,:,self.indexx) = cell2mat(new_obs_back);
+      end
+      
+      % four edge/border faces to close off
+      new_obs_side = cell(4, 1);
+      
+      new_obs_side{1} = new_obs_back{1};
+      new_obs_side{2} = new_obs_back{2};
+      new_obs_side{3} = new_obs_front{2};
+      new_obs_side{4} = new_obs_front{1};
+      self.indexx = self.indexx + 1;
+      self.padded_obs(:,:,self.indexx) = cell2mat(new_obs_side);
+      
+      new_obs_side{1} = new_obs_back{2};
+      new_obs_side{2} = new_obs_back{3};
+      new_obs_side{3} = new_obs_front{3};
+      new_obs_side{4} = new_obs_front{2};
+      self.indexx = self.indexx + 1;
+      self.padded_obs(:,:,self.indexx) = cell2mat(new_obs_side);
+      
+      new_obs_side{1} = new_obs_back{4};
+      new_obs_side{2} = new_obs_back{3};
+      new_obs_side{3} = new_obs_front{3};
+      new_obs_side{4} = new_obs_front{4};
+      self.indexx = self.indexx + 1;
+      self.padded_obs(:,:,self.indexx) = cell2mat(new_obs_side);
+      
+      new_obs_side{1} = new_obs_back{1};
+      new_obs_side{2} = new_obs_back{4};
+      new_obs_side{3} = new_obs_front{4};
+      new_obs_side{4} = new_obs_front{1};
+      self.indexx = self.indexx + 1;
+      self.padded_obs(:,:,self.indexx) = cell2mat(new_obs_side);
+    end
+    
+    %% ObstaclePlot
+    function coords = get_obs_coords_for_plot(obj, obstacles)
+      coords = cell(3,1);
+      for i = 1:3
+        coords{i} = squeeze(obstacles(:,i,:));
+      end
+    end    
+    
+    function plotGlobal(obj, color)
+      if nargin < 2
+        color = 'k';
+      end
+      % Global obstacles
+      coords = get_obs_coords_for_plot(obj, obj.global_obs);
+      
+      if ~isempty(obj.hG)
+        delete(obj.hG)
+      end
+      
+      obj.hG = fill3(coords{:}, color, 'FaceAlpha', 0.1);
+    end
+    
+    function plotLocal(obj, color)
+      if nargin < 2
+        color = 'r';
+      end
+      
+      % Local obstacles
+      coords = get_obs_coords_for_plot(obj, obj.local_obs);
+      
+      if ~isempty(obj.hL)
+        delete(obj.hL)
+      end
+      
+      obj.hL = fill3(coords{:}, color, 'FaceAlpha', 0.1);
+    end
+    
+    function plotPadded(obj)
+      if nargin < 2
+        color = 'b';
+      end
+      
+      % Augmented obstacles
+      coords = get_obs_coords_for_plot(obj, obj.padded_obs);
+      
+      if ~isempty(obj.hP)
+        delete(obj.hP)
+      end
+      
+      obj.hP = fill3(coords{:}, color, 'FaceAlpha', 0.1);
+    end
+     
+  % END OF METHODS
   end
 end
