@@ -20,6 +20,7 @@
 \usepackage{graphicx}   % need for figures
 \usepackage{subcaption}
 \usepackage{epsfig} 
+\usepackage{algorithmic}
 \usepackage{color}
 \usepackage[normalem]{ulem}
 \usepackage{cancel}
@@ -38,46 +39,53 @@
 \newcommand{\reachset}{\mathcal{V}}
 \newcommand{\targetset}{\mathcal{L}}
 \newcommand{\traj}{\zeta} % trajectory
-\newcommand{\state}{s}
 
 
-\newcommand{\tcset}{\mathcal{A}}
-\newcommand{\tcfset}{\mathbb{A}}
-\newcommand{\vcset}{\mathcal{B}}
-\newcommand{\vcfset}{\mathbb{B}}
+\newcommand{\pcset}{\mathcal{U}_p} %planner control set
+\newcommand{\pcfset}{\mathbb{U}_p} %planner control function set
+\newcommand{\tcset}{\mathcal{U}_s} %tracker control set
+\newcommand{\tcfset}{\mathbb{U}_s} %tracker control funciton set
 \newcommand{\dset}{\mathcal{D}}
 \newcommand{\dfset}{\mathbb{D}}
 
-\newcommand{\tset}{\mathcal{S}_1}
-\newcommand{\vset}{\mathcal{S}_2}
-\newcommand{\rset}{\mathcal{S}_r}
+\newcommand{\pset}{\mathcal{P}} %planner set set
+\newcommand{\tset}{\mathcal{S}} %tracker set
+\newcommand{\rset}{\mathcal{R}}
 
 \newcommand{\tvar}{t}
 \newcommand{\thor}{T} % Time horizon
 
-\newcommand{\vstate}{\state_2} % Vehicle state
-\newcommand{\tstate}{\state_1} % Trajectory state
-\newcommand{\rstate}{\state_r} % Relative state
+\newcommand{\tstate}{s} % Tracker state
+\newcommand{\pstate}{p} % Planner state
+\newcommand{\rstate}{r} % Relative state
 
 
-\newcommand{\vtraj}{\xi_{f2}}
-\newcommand{\ttraj}{\xi_{f1}}
+\newcommand{\ttraj}{\xi_{s}} % Tracker trajectory
+\newcommand{\ptraj}{\xi_{p}} %Planner trajectory
 \newcommand{\rtraj}{\xi_\rdyn}
 
+\newcommand{\senseDist}{k}
 
-\newcommand{\vctrl}{b} % Vehicle control
+
+\newcommand{\tctrl}{u_s} % Tracker control
 \newcommand{\dstb}{d} % Disturbance
-\newcommand{\tctrl}{a} % Trajectory control
+\newcommand{\pctrl}{u_p} % Planner control
 
-\newcommand{\vdyn}{f_2} % Vehicle dynamics
-\newcommand{\tdyn}{f_1} % Trajectory dynamics
+\newcommand{\tdyn}{f_s} % Tracker dynamics
+\newcommand{\pdyn}{f_p} % Planner Dynamics
 \newcommand{\rdyn}{g} % Relative dynamics
 
-\newcommand{\tvind}{s} % Index of vehicle state corresponding to trajectory state
-\newcommand{\tvmat}{R} % Matrix for transforming trajectory state to the same length as vehicle state
+\newcommand{\ptind}{i} % Index of vehicle state corresponding to planner state
+\newcommand{\ptmat}{Q} % Matrix for transforming planner state to the same length as tracker state
 
 \newcommand{\errfunc}{l} % Error function
 \newcommand{\valfunc}{V} % Value function
+
+\newcommand{\deriv}{deriv} %gradient look-up table
+
+\newcommand{\dx}{dx} %distance allowed in a time step
+\newcommand{\dt}{dt} %time step
+
 
 \newcommand{\TEB}{\mathcal B} % tracking error bound
 

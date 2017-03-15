@@ -1,41 +1,85 @@
 % !TEX root = tracking.tex
 \section{Online Computation \label{sec:online}}
+
+\MCnote{Sampled data}
+
 The following list describes the online computation. Be sure to begin your computation by starting the path planner at the same position as the true system. This will allow for the smallest tracking error bound.
 \SHnote{details of size of sensing radius needed, dt needed, dx needed, how finding optimal control works}
-\begin{enumerate}
-\item Tracking Error Block
-\begin{itemize}
-	\item Inputs: sensor information, tracking error bound
-	\item Output: augmented obstacles
-	\item Sense local environment, locate obstacles
-	\item Expand sensed obstacles by the tracking error bound
-\end{itemize}
-\item Path Planner Block
-\begin{itemize}
-	\item Inputs: virtual  state, augmented obstacles
-	\item Output: desired next virtual state
-	\item Use current virtual state and augmented obstacles to find desired next state
-\end{itemize}
-\item Hybrid Tracking Controller
-\begin{itemize}
-	\item Inputs: desired next virtual state, true model state
-	\item Output: true model control
-	\item Compute relative state
-	\item Compare relative state to tracking error bound. If the relative state is greater than dx from the tracking error bound, use the performance controller. Otherwise, use the safety controller.
-	\item Performance Controller: \SHnote{performance controller}
-	\item Safety Controller: Use controller lookup table to find the spatial gradients of the value function at that relative state. Plug in spatial gradients to the hamiltonian; find argmin control
-\end{itemize}
-\item True System Block
-\begin{itemize}
-	\item Input: control, current true system state
-	\item Output: updated true system state
-	\item Propagate true system by dt using given control
-\end{itemize}
-\item Virtual System Block
-\begin{itemize}
-	\item Input: true system state
-	\item Output: virtual system state
-	\item Project true system state onto virtual system subspace; use this as the next virtual system state
-	\item Check if goal has been reached.  If not, repeat loop
-\end{itemize}
-\end{enumerate}
+
+\begin{algorithm}[bp]
+	
+	\caption{Online Trajectory Planning}
+	\label{alg:algOnline}
+	\begin{algorithmic}[1]
+		\STATE \textbf{Initialization}: \label{ln:Istart}
+		\STATE Inputs: tracking error look-up table $\valfunc$, optimal control look-up table $\deriv$
+		\STATE $\pstate = \tstate = 0$
+		\STATE $\rstate = \tstate - \ptmat\pstate$
+		\STATE $\TEB = \valfunc(\rstate)$
+		\STATE $\senseDist = 2\TEB+\dx$
+		
+		\WHILE{planning goal is not reached}
+		\STATE \textbf{Obstacles Block}:
+		\STATE Sense obstacles within sensing range $\senseDist$
+		\STATE Expand sensed obstacles by $\TEB$
+		
+		\STATE \textbf{Path Planner Block}:
+		\STATE Input state $\pstate$ and augmented obstacles to path planner; output $\pstate_{new}$
+		
+		\STATE \textbf{Hybrid Tracking Controller Block}:
+		\STATE $\rstate_{next} = \tstate - \ptmat\pstate_{next}$
+		
+		\IF{$\rstate_{next}$ is near boundary $\TEB$} 
+		\STATE {use safety controller:}
+		\STATE {$\tctrl = \arg\min_{\tctrl}<\rdyn(\rstate_{next},\tctrl,\pctrl,\dstb),deriv\{\rstate_{next}\}>$}
+		\ELSE \STATE{use performance controller} \ENDIF
+		
+		\STATE \textbf{Tracking Model Block}:
+		\STATE apply control $\tctrl$ to vehicle for a time step of $\dt$, save next state $\tstate_{next}$
+		
+		\STATE \textbf{Planning Model Block}:
+		\STATE $\pstate = \ptmat^\intercal\tstate_{next}^\intercal$
+		\STATE check if $\pstate$ is at planning goal
+		\STATE reset states $\tstate = \tstate_{next}, \rstate = \rstate_{next}$
+		\ENDWHILE
+	\end{algorithmic}
+\end{algorithm}
+
+
+%\begin{enumerate}
+%\item Tracking Error Block
+%\begin{itemize}
+%	\item Inputs: sensor information, tracking error bound
+%	\item Output: augmented obstacles
+%	\item Sense local environment, locate obstacles
+%	\item Expand sensed obstacles by the tracking error bound
+%\end{itemize}
+%\item Path Planner Block
+%\begin{itemize}
+%	\item Inputs: virtual  state, augmented obstacles
+%	\item Output: desired next virtual state
+%	\item Use current virtual state and augmented obstacles to find desired next state
+%\end{itemize}
+%\item Hybrid Tracking Controller
+%\begin{itemize}
+%	\item Inputs: desired next virtual state, true model state
+%	\item Output: true model control
+%	\item Compute relative state
+%	\item Compare relative state to tracking error bound. If the relative state is greater than dx from the tracking error bound, use the performance controller. Otherwise, use the safety controller.
+%	\item Performance Controller: \SHnote{performance controller}
+%	\item Safety Controller: Use controller lookup table to find the spatial gradients of the value function at that relative state. Plug in spatial gradients to the hamiltonian; find argmin control
+%\end{itemize}
+%\item True System Block
+%\begin{itemize}
+%	\item Input: control, current true system state
+%	\item Output: updated true system state
+%	\item Propagate true system by dt using given control
+%\end{itemize}
+%\item Virtual System Block
+%\begin{itemize}
+%	\item Input: true system state
+%	\item Output: virtual system state
+%	\item Project true system state onto virtual system subspace; use this as the next virtual system state
+%	\item Check if goal has been reached.  If not, repeat loop
+%\end{itemize}
+%\end{enumerate}
