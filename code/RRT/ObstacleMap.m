@@ -209,7 +209,6 @@ classdef ObstacleMap < handle
     
     %% ObstaclePlot
     % plots all the obstacles, returns the handles for local, global, etc.
-    
     function h = plotGlobal(self)
       if size(self.global_obs,1)>0
         for i = 1:size(self.global_obs,3)
@@ -252,27 +251,7 @@ classdef ObstacleMap < handle
         end
       end
     end
-    
-    function [hG, hL, hP] = plotObs(self, plotGlobal, plotLocal, plotPadded)
-      hG = [];
-      hL = [];
-      hP = [];
-      
-      % plot with global obstacles
-      if plotGlobal
-
-      end
-      
-      % plot with local obstacles
-      if plotLocal
-
-      end
-      
-      % plot with padded obstacles
-      if plotPadded
-
-      end
-    end
-    
+     
+  % END OF METHODS
   end
 end

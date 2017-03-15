@@ -54,10 +54,7 @@ obsMap = ObstacleMap(obs);
 
 % plot global obstacles
 if vis
-  plotGlobal = true;
-  plotLocal = false;
-  plotPadded = false;
-  hG = rrt.obsmap.ObstaclePlot(plotGlobal, plotLocal, plotPadded);
+  hG = obsMap.plotGlobal;
 end
 
 % set initial states to zero
