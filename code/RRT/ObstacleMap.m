@@ -168,9 +168,6 @@ classdef ObstacleMap < handle
         new_obs_side{4} = new_obs_front{1};
         self.indexx = self.indexx + 1;
         self.padded_obs(:,:,self.indexx) = cell2mat(new_obs_side);
-        
-        disp('padded_obs')
-        self.padded_obs
     end
 
     %% ObstaclePlot
