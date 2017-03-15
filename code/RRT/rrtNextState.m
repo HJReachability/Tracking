@@ -1,4 +1,5 @@
-function [newState, rrt] = rrtNextState(delta_x, start) % the function version of script.m // includes delta_x input
+function [newState, path, rrt] = rrtNextState(delta_x, start)
+% [newState, path, rrt] = rrtNextState(delta_x, start) 
 
 if nargin < 1
   delta_x = 0.1;
@@ -25,8 +26,9 @@ plotTrace = 1;
 plotSmooth = 1;
 
 % runs everything
-rrt = RrtPlanner(treesMax, seedsPerAxis, obstacleFilename, obsType, senseRange, trackErrBnd,...
-  start, goal, plotGlobal, plotLocal, plotPadded, plotTrace, plotSmooth);
+rrt = RrtPlanner(treesMax, seedsPerAxis, obstacleFilename, obsType, ...
+  senseRange, trackErrBnd, start, goal, plotGlobal, plotLocal, plotPadded, ...
+  plotTrace, plotSmooth);
 
 rrt.drawingSkipsPerDrawing = 5;
 rrt.Run()

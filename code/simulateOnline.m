@@ -1,5 +1,5 @@
 function timesteps = simulateOnline(gs, datas, quadTrue, quadVirt, quadRel, ...
-  data_filename, extraArgs)
+  data_filename, obs_filename, extraArgs)
 
 %inputs:
 %       gs           -  cell of grids
@@ -24,6 +24,10 @@ if nargin < 7
 end
 
 if nargin < 8
+  obs_filename = 'obs.mat';
+end
+
+if nargin < 9
   extraArgs = [];
 end
 
@@ -45,6 +49,8 @@ uMode = 'max';
 % dMode = 'min'; % Not needed since we're not using worst-case control
 dt = 0.1;
 delta_x = dt*velocity;
+
+obsMap = ObstacleMap(obs);
 
 % plot global obstacles
 if vis
@@ -86,6 +92,8 @@ end
 while value < goal
   tic
   if isfield(extraArgs,'environment') && strcmp(environment,'unknown')
+    
+    self.obsmap.SenseAndUpdate(self.start, self.senseRange, self.trackErr);    
     % 1. Sense your environment, locate obstacles
     
     % 2. Expand sensed obstacles by tracking error bound

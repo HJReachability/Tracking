@@ -70,35 +70,11 @@ classdef RrtPlanner < handle
     % string whether to run with global obs, local obs, or padded obs
     runGlobalOrLocalOrPaddedObs;
     
-    % sensing range
-    senseRange;
-    
-    % tracking error
-    trackErr; 
-    
-    % binary variable: whether to plot global obs or not
-    plotGlobal;
-    
-    % same for local obs
-    plotLocal;
-    
-    % same for padded obs
-    plotPadded;
-    
-    % binary variable: whether to plot traced path or not
+      % binary variable: whether to plot traced path or not
     plotTrace;
     
     % binary variable: whether to plot smoothed path or not
     plotSmooth;
-    
-    % handle for the global obstacle plot
-    globalHandle;
-   
-    % same for local obs
-    localHandle;
-    
-    % same for padded obs
-    paddedHandle;
     
     % previous rrt to reduce computation
     rrtSoFar;
@@ -213,12 +189,7 @@ classdef RrtPlanner < handle
       self.goal = goal;
       
       self.runGlobalOrLocalOrPaddedObs = runGlobalOrLocalOrPaddedObs;
-      self.senseRange = senseRange;
-      self.trackErr = trackErr;
-      
-      self.plotGlobal = plotGlobal;
-      self.plotLocal = plotLocal;
-      self.plotPadded = plotPadded;
+
       self.plotTrace = plotTrace;
       self.plotSmooth = plotSmooth;
       
@@ -444,10 +415,6 @@ classdef RrtPlanner < handle
       try delete(self.goalNodePlot_h);end %#ok<TRYNC>
       self.goalNodePlot_h = plot3(self.goal(1),self.goal(2),self.goal(3),'marker','.','color','b','Parent',self.GetAxisHandle());
 
-      % Plot obstacles 
-      % DONE:
-      [self.globalHandle, self.localHandle, self.paddedHandle] = self.obsmap.ObstaclePlot(self.plotGlobal, self.plotLocal, self.plotPadded);
-      
       % Delete all rrt lines and previous paths
       for i = 1:length(self.plotHandles)
         try delete(self.plotHandles(i).lines);end; %#ok<TRYNC>
@@ -522,16 +489,6 @@ classdef RrtPlanner < handle
         self.obstacleCount = size(self.obstaclePlaneParameters,1);
       end
 
-      % DONE: creates an obstacle map instance out of the obstacle file
-      % passed in. Also does first time sensing.
-      self.obsmap = ObstacleMap(self.obs);
-      self.obsmap.SenseAndUpdate(self.start, self.senseRange, self.trackErr);
-      if strcmp(self.runGlobalOrLocalOrPaddedObs, 'local')
-        self.obs = self.obsmap.local_obs;
-      elseif strcmp(self.runGlobalOrLocalOrPaddedObs, 'padded')
-        self.obs = self.obsmap.padded_obs;
-      end
-      
       % Need to clear the data structure since obstacles may have changed
       self.SetUpDataStructures();
       
