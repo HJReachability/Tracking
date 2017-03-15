@@ -6,6 +6,10 @@ if nargin < 1
   start = [0.00 -0.5 0.2];
 end
 
+if iscolumn(start)
+  start = start';
+end
+
 if nargin < 2
   goal = [0.00 0.9 0.4];
 end

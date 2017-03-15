@@ -9,13 +9,13 @@ classdef ObstacleMap < handle
     indexx = 0; % counter for number of local obstacles added in
     
     % handle for the global obstacle plot
-    globalHandle;
+    hG
     
     % same for local obs
-    localHandle;
+    hL
     
     % same for padded obs
-    paddedHandle;
+    hP
     
   end
   
@@ -208,48 +208,55 @@ classdef ObstacleMap < handle
     end
     
     %% ObstaclePlot
-    % plots all the obstacles, returns the handles for local, global, etc.
-    function h = plotGlobal(self)
-      if size(self.global_obs,1)>0
-        for i = 1:size(self.global_obs,3)
-          h(i) = fill3([self.global_obs(1,1,i) self.global_obs(2,1,i) self.global_obs(3,1,i) self.global_obs(4,1,i) self.global_obs(1,1,i)] ...
-            ,[self.global_obs(1,2,i) self.global_obs(2,2,i) self.global_obs(3,2,i) self.global_obs(4,2,i) self.global_obs(1,2,i)] ...
-            ,[self.global_obs(1,3,i) self.global_obs(2,3,i) self.global_obs(3,3,i) self.global_obs(4,3,i) self.global_obs(1,3,i)] ...
-            ,'b','EdgeAlpha',0);
-          alpha(0.1);
-          if i == 1
-            hold on;
-          end
-        end
+    function coords = get_obs_coords_for_plot(obj, obstacles)
+      coords = cell(3,1);
+      for i = 1:3
+        coords{i} = squeeze(obstacles(:,i,:));
       end
+    end    
+    
+    function plotGlobal(obj, color)
+      if nargin < 2
+        color = 'k';
+      end
+      % Global obstacles
+      coords = get_obs_coords_for_plot(obj, obj.global_obs);
+      
+      if ~isempty(obj.hG)
+        delete(obj.hG)
+      end
+      
+      obj.hG = fill3(coords{:}, color, 'FaceAlpha', 0.1);
     end
     
-    function h = plotLocal(self)
-      if size(self.local_obs,1)>0
-        for i = 1:size(self.local_obs,3)
-          h(i) = fill3([self.local_obs(1,1,i) self.local_obs(2,1,i) self.local_obs(3,1,i) self.local_obs(4,1,i) self.local_obs(1,1,i)] ...
-            ,[self.local_obs(1,2,i) self.local_obs(2,2,i) self.local_obs(3,2,i) self.local_obs(4,2,i) self.local_obs(1,2,i)] ...
-            ,[self.local_obs(1,3,i) self.local_obs(2,3,i) self.local_obs(3,3,i) self.local_obs(4,3,i) self.local_obs(1,3,i)] ...
-            ,'r','EdgeAlpha',0);
-          alpha(0.1);
-          if i == 1
-            hold on;
-          end
-        end
+    function plotLocal(obj, color)
+      if nargin < 2
+        color = 'r';
       end
+      
+      % Local obstacles
+      coords = get_obs_coords_for_plot(obj, obj.local_obs);
+      
+      if ~isempty(obj.hL)
+        delete(obj.hL)
+      end
+      
+      obj.hL = fill3(coords{:}, color, 'FaceAlpha', 0.1);
     end
     
-    function h = plotPadded(self)
-      for i = 1:size(self.padded_obs,3)
-        h(i) = fill3([self.padded_obs(1,1,i) self.padded_obs(2,1,i) self.padded_obs(3,1,i) self.padded_obs(4,1,i) self.padded_obs(1,1,i)] ...
-          ,[self.padded_obs(1,2,i) self.padded_obs(2,2,i) self.padded_obs(3,2,i) self.padded_obs(4,2,i) self.padded_obs(1,2,i)] ...
-          ,[self.padded_obs(1,3,i) self.padded_obs(2,3,i) self.padded_obs(3,3,i) self.padded_obs(4,3,i) self.padded_obs(1,3,i)] ...
-          ,'g','EdgeAlpha',0);
-        alpha(0.1);
-        if i == 1
-          hold on;
-        end
+    function plotPadded(obj)
+      if nargin < 2
+        color = 'b';
       end
+      
+      % Augmented obstacles
+      coords = get_obs_coords_for_plot(obj, obj.padded_obs);
+      
+      if ~isempty(obj.hP)
+        delete(obj.hP)
+      end
+      
+      obj.hP = fill3(coords{:}, color, 'FaceAlpha', 0.1);
     end
      
   % END OF METHODS
