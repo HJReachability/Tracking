@@ -64,6 +64,42 @@ classdef RrtPlanner < handle
     % Number of seeds
     seedsPerAxis = 3;
     
+    %% Extra properties
+    % DONE:
+    
+    % string whether to run with global obs, local obs, or padded obs
+    runGlobalOrLocalOrPaddedObs;
+    
+    % sensing range
+    senseRange;
+    
+    % tracking error
+    trackErr; 
+    
+    % binary variable: whether to plot global obs or not
+    plotGlobal;
+    
+    % same for local obs
+    plotLocal;
+    
+    % same for padded obs
+    plotPadded;
+    
+    % binary variable: whether to plot traced path or not
+    plotTrace;
+    
+    % binary variable: whether to plot smoothed path or not
+    plotSmooth;
+    
+    % handle for the global obstacle plot
+    globalHandle;
+   
+    % same for local obs
+    localHandle;
+    
+    % same for padded obs
+    paddedHandle;
+    
     %% VARIABLES
     %  ************************************************************************
     
@@ -78,8 +114,8 @@ classdef RrtPlanner < handle
     lim=[-1 +1;-1 +1 ;-1 +1];
     
     % Default Start and Goal  => Point [x y z]
-    start=[+0.00 -0.9 +0.00];
-    goal =[+0.00 +0.9 +0.00];
+    start=[0.00 -0.9 0.00];
+    goal =[0.00 +0.9 0.00];
     
     % Number of attempts at path smoothing
     nsmooth=1000;
@@ -96,7 +132,7 @@ classdef RrtPlanner < handle
     % The obstacles
     obs;
 
-    % MINE: the obstacle map, initialize after global obstacles have been
+    % DONE: the obstacle map, initialize after global obstacles have been
     % set up
     obsmap;
     
@@ -145,11 +181,14 @@ classdef RrtPlanner < handle
   
   methods
     %% .. structors
+    % DONE:
     % *Inputs:*
     % treesMax = How many multiple trees (must be at least 2, 1 for source and 1 for destination
     % seedsPerAxis = Number of seeds allowed on each axis (discretely placed seeds which idealy helps the RRT expansion)
     % wallCount = the Number of mock walls to be placed in the environment
-    function self = RrtPlanner(treesMax, seedsPerAxis, wallCountOrObstacleFilename)
+    % see properties for explanation of other inputs
+    function self = RrtPlanner(treesMax, seedsPerAxis, wallCountOrObstacleFilename, runGlobalOrLocalOrPaddedObs, ...
+        senseRange, trackErr, start, goal, plotGlobal, plotLocal, plotPadded, plotTrace, plotSmooth)
       % Check inputs
       if 1 <= nargin
         self.treesMax = treesMax;
@@ -164,6 +203,18 @@ classdef RrtPlanner < handle
           end
         end
       end
+      self.start = start;
+      self.goal = goal;
+      
+      self.runGlobalOrLocalOrPaddedObs = runGlobalOrLocalOrPaddedObs;
+      self.senseRange = senseRange;
+      self.trackErr = trackErr;
+      
+      self.plotGlobal = plotGlobal;
+      self.plotLocal = plotLocal;
+      self.plotPadded = plotPadded;
+      self.plotTrace = plotTrace;
+      self.plotSmooth = plotSmooth;
       
       % Define or add obstacles
       self.GenerateObstacles();
@@ -173,6 +224,29 @@ classdef RrtPlanner < handle
     %% Run
     % Main RRT search algorithm
     function Run(self)
+      
+      % DONE: replacing self.obs with self.padded or local obs etc...
+      if strcmp(self.runGlobalOrLocalOrPaddedObs, 'local')
+        self.obs = self.obsmap.local_obs;
+      elseif strcmp(self.runGlobalOrLocalOrPaddedObs, 'padded')
+        self.obs = self.obsmap.padded_obs;
+      end
+        
+      % Precalculate the 4 obstacle plane parameters [a,b,c,d]
+      self.obstaclePlaneParameters = zeros(size(self.obs,3),4);
+      for i = 1:size(self.obs,3)
+        % Normal vector (this code is quicker than 'cross(obs2-obs1,obs1-obs3)')
+        v1 = (self.obs(2,:,i) - self.obs(1,:,i))';
+        v2 = (self.obs(1,:,i) - self.obs(3,:,i))';
+        normalVec = [v1(2,:).*v2(3,:) - v1(3,:).*v2(2,:) ...
+          ;v1(3,:).*v2(1,:) - v1(1,:).*v2(3,:) ...
+          ;v1(1,:).*v2(2,:) - v1(2,:).*v2(1,:)]';
+
+        % Plane equation
+        self.obstaclePlaneParameters(i,:) = [normalVec(1:3), -sum(self.obs(1,:,i).*normalVec)];
+        self.obstacleCount = size(self.obstaclePlaneParameters,1);
+      end
+      
       % Initial plotting and environment setup
       self.InitDisplay();
       
@@ -200,7 +274,10 @@ classdef RrtPlanner < handle
         end
         
         % Check if we can break out yet
-        if objective; break; end
+        if objective
+          break; 
+        end
+        
       end
       
       toc;
@@ -353,23 +430,10 @@ classdef RrtPlanner < handle
       % Plot goal node
       try delete(self.goalNodePlot_h);end %#ok<TRYNC>
       self.goalNodePlot_h = plot3(self.goal(1),self.goal(2),self.goal(3),'marker','.','color','b','Parent',self.GetAxisHandle());
-      
-      % Plot obstacles
-      % MINE: note--must plot local obstacles instead of global...
-      % also must update after delta-t timestep
-      for i = 1:length(self.obsPlot_h)
-        try delete(self.obsPlot_h(i));end %#ok<TRYNC>
-      end
-      self.obsPlot_h = [];
-      if size(self.obs,1)>0
-        for i = 1:size(self.obs,3)
-          self.obsPlot_h(i) = fill3([self.obs(1,1,i) self.obs(2,1,i) self.obs(3,1,i) self.obs(4,1,i) self.obs(1,1,i)] ...
-            ,[self.obs(1,2,i) self.obs(2,2,i) self.obs(3,2,i) self.obs(4,2,i) self.obs(1,2,i)] ...
-            ,[self.obs(1,3,i) self.obs(2,3,i) self.obs(3,3,i) self.obs(4,3,i) self.obs(1,3,i)] ...
-            ,'b','EdgeAlpha',0,'Parent',self.GetAxisHandle());
-          alpha(0.1);
-        end
-      end
+
+      % Plot obstacles 
+      % DONE:
+      [self.globalHandle, self.localHandle, self.paddedHandle] = self.obsmap.ObstaclePlot(self.plotGlobal, self.plotLocal, self.plotPadded);
       
       % Delete all rrt lines and previous paths
       for i = 1:length(self.plotHandles)
@@ -445,15 +509,15 @@ classdef RrtPlanner < handle
         self.obstacleCount = size(self.obstaclePlaneParameters,1);
       end
 
-      % MINE: creates an obstacle map instance out of the obstacle file
-      % passed in. TODO: more accurate values for error bound/ sensing
-      % range/ point.
-      self.obsmap = ObstacleMap(self.obs, [0 0.2 0], 0.4, 0.2);
-      self.obsmap.SenseAndUpdate([0 0.2 0], 0.4, 0.2);
-      
-      % TODO: whenever new point is input, how to receive/where else to
-      % call this method? RrtPlanner's GenerateObstacle isn't called every
-      % delta_t time units...merge with Sylvia code?
+      % DONE: creates an obstacle map instance out of the obstacle file
+      % passed in. Also does first time sensing.
+      self.obsmap = ObstacleMap(self.obs);
+      self.obsmap.SenseAndUpdate(self.start, self.senseRange, self.trackErr);
+      if strcmp(self.runGlobalOrLocalOrPaddedObs, 'local')
+        self.obs = self.obsmap.local_obs;
+      elseif strcmp(self.runGlobalOrLocalOrPaddedObs, 'padded')
+        self.obs = self.obsmap.padded_obs;
+      end
       
       % Need to clear the data structure since obstacles may have changed
       self.SetUpDataStructures();
@@ -473,10 +537,6 @@ classdef RrtPlanner < handle
       
       % Create local variable. Could cause problems if self.rrt is used in the mean time
       rrtLocal = self.rrt;
-      
-      % MINE: just a print, wasn't sure how rrtLocal worked
-      disp('size of local rrt, near line 474 of RrtPlanner file')
-      size(rrtLocal,2)
 
       %find the valid trees
       for t=1:size(rrtLocal,2)
@@ -644,13 +704,10 @@ classdef RrtPlanner < handle
         % Plot path
         if self.doDraw;
           %delete all other crap off screen
-          for t=1:size(self.rrt,2)
-            for i=2:size(self.rrt(t).parent,1)
-              try delete(self.plotHandles(t).lines(i));end  %#ok<TRYNC>
-            end
-            try delete(self.plotHandles(t).points);end  %#ok<TRYNC>
+          % DONE:
+          if self.plotTrace
+            plotTracedPath(self);
           end
-          self.plotHandles(t).lines = plot3(self.path(:,1),self.path(:,2),self.path(:,3),'LineWidth',2,'Color','r','Parent',self.GetAxisHandle());
         end
       else
         if self.doDraw; fprintf('Failed to find a path to the goal.\n\n'); end;
@@ -698,12 +755,9 @@ classdef RrtPlanner < handle
       self.smoothedPath = final_path;
       
       % Plot final path
-      if self.doDraw
-        self.smoothedPathPlot_h = plot3(self.smoothedPath(:,1),self.smoothedPath(:,2),self.smoothedPath(:,3),'LineWidth',2,'Color','g','Parent',self.GetAxisHandle());
-        title_h = get(self.GetAxisHandle(),'title');
-        title_string=get(title_h,'String');
-        title_string=[title_string,'. Initial(Red), Smoothed(Green)'];
-        set(title_h,'String',title_string)
+      % DONE:
+      if self.plotSmooth
+        plotSmoothedPath(self);
       end
     end
     
@@ -711,14 +765,13 @@ classdef RrtPlanner < handle
     % *Description:* Returns whether a collision occurs between an edge and a set
     % of obstacles. Also gives the point of intersection. (P1=node,P2=parent node)
 
-    % MINE: check for collision using self.obsmap.local_obs (replace every self.obs)
     function [collision,PInt] = CollisionCheck(self,P1,P2)
       self.collisionCheckCount = self.collisionCheckCount + 1;
       %default is that it is safe, then if a collision is found it is set to 1
       %and we return
       collision = false;
       
-      if size(self.obss,1)==0
+      if size(self.obs,1)==0
         PInt=inf;
         return;
       end
@@ -813,6 +866,27 @@ classdef RrtPlanner < handle
       end
       
       value = self.axis_h;
+    end
+    
+    % DONE: separated path plotting functions
+    function plotSmoothedPath(self)
+      if self.doDraw
+        self.smoothedPathPlot_h = plot3(self.smoothedPath(:,1),self.smoothedPath(:,2),self.smoothedPath(:,3),'LineWidth',2,'Color','g','Parent',self.GetAxisHandle());
+        title_h = get(self.GetAxisHandle(),'title');
+        title_string=get(title_h,'String');
+        title_string=[title_string,'. Initial(Red), Smoothed(Green)'];
+        set(title_h,'String',title_string)
+      end
+    end
+    
+    function plotTracedPath(self)
+      for t=1:size(self.rrt,2)
+        for i=2:size(self.rrt(t).parent,1)
+          try delete(self.plotHandles(t).lines(i));end  %#ok<TRYNC>
+        end
+        try delete(self.plotHandles(t).points);end  %#ok<TRYNC>
+      end
+      self.plotHandles(t).lines = plot3(self.path(:,1),self.path(:,2),self.path(:,3),'LineWidth',2,'Color','r','Parent',self.GetAxisHandle());
     end
   end
   
