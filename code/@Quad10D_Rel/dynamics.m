@@ -45,7 +45,7 @@ switch dim
   case 4
     dx = -obj.d0 * x{dims==3} + obj.n0 * u{2};
   case 5
-    dx = x{dims==5} - u{3} + d{2} ;
+    dx = x{dims==6} - u{3} + d{2} ;
   case 6
     dx = obj.g * tan(x{dims==7});
   case 7
