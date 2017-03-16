@@ -1,5 +1,7 @@
 function simulateOnline(data_filename, obs_filename, extraArgs)
-
+% simulateOnline(data_filename, obs_filename, extraArgs)
+%     Does not include tracking
+%
 %inputs:
 %       gs           -  cell of grids
 %       datas        -  cell of datas
@@ -24,6 +26,7 @@ goal = [10; 0; 0];
 delta_x = 0.25;
 trackErr = 0.5;
 senseRange = 1.5;
+dt = 0.01;
 
 if nargin < 1
   data_filename = 'Quad10D_g61_dt01_t50_veryHigh_quadratic.mat';
@@ -55,7 +58,6 @@ load(obs_filename)
 
 uMode = 'max';
 % dMode = 'min'; % Not needed since we're not using worst-case control
-dt = 0.1;
 
 obsMap = ObstacleMap(obs);
 
