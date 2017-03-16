@@ -49,15 +49,25 @@ p = rrt.smoothedPath;
 [~, ia] = uniquetol(p, 1e-3, 'ByRows', true);
 p = p(sort(ia), :);
 
-nextPoint = p(2, :); % point that rrt would head towards
-dist = norm(nextPoint - start);
-steps = ceil(dist/delta_x);
-direction = (nextPoint - start)/dist; % unit vector of direction to go towards
-
-newStates = start + delta_x.*direction;
-for i = 2:steps
-  newStates = [newStates; newStates(end,:) + delta_x*direction];
+p(1,:) = [];
+prev_point = start;
+newStates = start;
+while ~isempty(p)
+  nextPoint = p(1, :); % point that rrt would head towards
+  
+  dist = norm(nextPoint - prev_point);
+  steps = ceil(dist/delta_x);
+  direction = (nextPoint - prev_point)/dist;
+  
+  for i = 1:steps
+    newStates = [newStates; newStates(end,:) + delta_x*direction];
+  end
+  
+  prev_point = p(1,:);
+  p(1,:) = [];
 end
+
+newStates(1,:) = [];
 
 if vis
   figure

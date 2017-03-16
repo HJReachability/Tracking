@@ -87,7 +87,7 @@ classdef RrtPlanner < handle
     
     % Search Space Limits               => [x(min) x(max) y(min) y(max) z(min) z(max)]
     % lim=[-0.5 +0.5;-0.5 +0.5 ;-0.5 +0.5];
-    lim=[-1 +11;-1 +11 ;-1 +11];
+    lim=[-11 +11;-11 +11 ;-11 +11];
     
     % Default Start and Goal  => Point [x y z]
     start=[0.00 -0.9 0.00];

@@ -19,7 +19,7 @@ function simulateOnline(data_filename, obs_filename, extraArgs)
 addpath(genpath('.'))
 
 % Problem setup
-start = [0; 0; 0];
+start = [-10; 0; 0];
 goal = [10; 0; 0];
 delta_x = 0.25;
 trackErr = 0.5;
@@ -86,7 +86,7 @@ rel_x = true_x - Q*virt_x;
 %output: augmented obstacles
 newStates = [];
 iter = 0;
-while norm(true_x([1 5 9]) - goal) > 1
+while norm(virt_x - goal) > 1
   tic
   iter = iter + 1;
   % 1. Sense your environment, locate obstacles
@@ -147,6 +147,7 @@ while norm(true_x([1 5 9]) - goal) > 1
 %   % 2. update state of true vehicle
 %   trueQuad.updateState(u, dt, [], d);
 %   trueQuad.x([1 5 9]) = virt_x;
+  true_x = virt_x;
   
   %% Virtual System Block
   % inputs: true system state
@@ -163,8 +164,7 @@ while norm(true_x([1 5 9]) - goal) > 1
     obsMap.plotLocal;
 %     obsMap.plotPadded;
     plot3(virt_x(1), virt_x(2), virt_x(3), '.')
-%     uistack(obsMap.hG, 'bottom');
-%     uistack(obsMap.hL, 'top');
+
   % plot local obstacles
   % plot expanded obstacles
   % plot planned path
@@ -173,5 +173,5 @@ while norm(true_x([1 5 9]) - goal) > 1
   end
   
   drawnow
-  export_fig(sprintf('pics/%d', iter), '-png')
+%   export_fig(sprintf('pics/%d', iter), '-png')
 end
