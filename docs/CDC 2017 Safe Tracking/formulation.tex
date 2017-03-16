@@ -1,6 +1,6 @@
 % !TEX root = tracking.tex
 \section{Problem Formulation \label{sec:formulation}}
-In this paper we seek to plan a path or trajectory online and in real-time using a kinematic or dynamic planning model. At every time step this planner is followed with a tracking model representing the autonomous system. The environment may contain static obstacles that are either known, or unknown with a limited sensing range on the system (as described in Section \ref{sec:online}). In this section we will define the tracking model and planning model, as well as the goals of the paper.
+In this paper we seek to plan a path or trajectory online and in real-time using a kinematic or dynamic planning model. At every time step this planner is followed by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known, or unknown with a limited sensing range on the system (as described in Section \ref{sec:online}). In this section we will define the tracking model and planning model, as well as the goals of the paper.
 
 \subsection{Tracking Model}
 The tracking model is a representation of the true autonomous system dynamics, and in general may be nonlinear or high-dimensional. Let $\tstate$ be the state variable of the tracking model. The evolution of the dynamics satisfies the ordinary differential equation:
@@ -20,7 +20,7 @@ We assume that the system dynamics $\tdyn : \tset\ \times\ \tcset \rightarrow \t
 \end{aligned}
 \end{equation}
 
-Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn}) for a given $\tctrl(\cdot) \in \tcset$ \cite{Coddington84}. The trajectories of (\ref{eq:tdyn}) that solve this ODE will be denoted as $\tctrl(\cdot)$ as $\ttraj(\tau; \tstate, t, \tctrl(\cdot))$. These trajectories will satisfy the initial condition and the ODE (\ref{eq:tdyn}) almost everywhere:
+Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn}) for a given $\tctrl(\cdot) \in \tcset$ \cite{Coddington84}. The trajectories of (\ref{eq:tdyn}) that solve this ODE will be denoted as $\ttraj(\tau; \tstate, t, \tctrl(\cdot))$. These trajectories will satisfy the initial condition and the ODE (\ref{eq:tdyn}) almost everywhere:
 \begin{equation}
 \label{eq:fdyn_traj}
 \begin{aligned}
@@ -30,7 +30,7 @@ Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn})
 \end{equation}
 
 \subsection{Planning Model}
-The planning model is used by the path or trajectory planning to solve for the desired path online. The dynamics of the system can be kinematic or dynamic depending on the requirements of the planner. Let $\pstate$ be the state variable of the planning model with control $\pctrl$. The planning states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$. The dynamics similarly satisfy the ordinary differential equation:
+The planning model is used by the path or trajectory planner to solve for the desired path online. The dynamics of the system can be kinematic or dynamic depending on the requirements of the planner. Let $\pstate$ be the state variable of the planning model with control $\pctrl$. The planning states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$. The dynamics similarly satisfy the ordinary differential equation:
 
 \begin{equation}
 \begin{aligned}
