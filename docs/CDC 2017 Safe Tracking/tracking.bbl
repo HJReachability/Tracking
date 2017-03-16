@@ -209,9 +209,20 @@ J.~H. Gillula, H.~Huang, M.~P. Vitus, and C.~J. Tomlin, ``Design of guaranteed
   International Conference on}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE,
   2010, pp. 1649--1654.
 
+\bibitem{Dey2016}
+D.~Dey, K.~S. Shankar, S.~Zeng, R.~Mehta, M.~T. Agcayazi, C.~Eriksen,
+  S.~Daftry, M.~Hebert, and J.~A. Bagnell, ``Vision and learning for
+  deliberative monocular cluttered flight,'' in \emph{Field and Service
+  Robotics}.\hskip 1em plus 0.5em minus 0.4em\relax Springer, 2016, pp.
+  391--409.
+
 \bibitem{Barry2016}
 A.~J. Barry, ``High-speed autonomous obstacle avoidance with pushbroom
   stereo,'' Ph.D. dissertation, Massachusetts Institute of Technology, 2016.
+
+\bibitem{Majumdar2016}
+A.~Majumdar and R.~Tedrake, ``Funnel libraries for real-time robust feedback
+  motion planning,'' \emph{arXiv preprint arXiv:1601.04037}, 2016.
 
 \bibitem{Kalakrishnan2011}
 M.~Kalakrishnan, S.~Chitta, E.~Theodorou, P.~Pastor, and S.~Schaal, ``Stomp:

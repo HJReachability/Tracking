@@ -75,9 +75,9 @@
 %\end{itemize}
 %\end{enumerate}
 
-Algorithm \ref{alg:algOnline} describes the online computation. The inputs are the tracking error function $\valfunc$, the safety control look-up function $\deriv$. Note that when discretized on a computer these functions will be look-up tables \SHnote{add Mo's citation about how this isn't a big deal to change to discrete stuff}. 
+Algorithm \ref{alg:algOnline} describes the online computation. The inputs are the tracking error function $\valfunc$ and the safety control look-up function $\deriv$. Note that when discretized on a computer these functions will be look-up tables \SHnote{add Mo's citation about how this isn't a big deal to change to discrete stuff}. 
 
-Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by the planning and tracking model states (and therefore the relative state) to zero. The tracking error bound in the planning frame of reference is computed using (\ref{eq:TEBp}). Note that by initializing the relative state to be zero we can use the smallest possible invariant $\TEB_\pstate$ for the entire online computation. 
+Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the planning and tracking model states (and therefore the relative state) to zero. The tracking error bound in the planning frame of reference is computed using (\ref{eq:TEBp}). Note that by initializing the relative state to be zero we can use the smallest possible invariant $\TEB_\pstate$ for the entire online computation. 
 
 The obstacle block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. The sensor detects obstacles $\obsSense$ within the sensing distance around the vehicle. The minimum allowable sensing distance to guarantee safety is $\senseDist = 2\TEB + \dx$, where $\dx$ is the largest possible step in space that the planner can make in one time step. \SHnote{should we elaborate on $\dx, \dt$?} Once sensed, the obstacles $\obsSense$ are augmented by $\TEB_\pstate(0)$ using the Minkowski sum. The returned obstacles $\obsAug$ are padded by the tracking error bound to ensure that no unsafe path can be generated.
 
