@@ -25,9 +25,10 @@ start = [-10; 0; 0];
 goal = [10; 0; 0];
 trackErr = 0.8;
 senseRange = 2;
-dt = 0.01;
 
-virt_v = 0.25;
+virt_v = 0.5;
+
+dt = 0.2;
 delta_x = virt_v*dt;
 
 % Subsystems
@@ -72,7 +73,7 @@ obsMap = ObstacleMap(obs);
 % plot global obstacles
 if vis
   figure
-%   obsMap.plotGlobal()
+  obsMap.plotGlobal()
   hold on
 end
 
@@ -163,17 +164,16 @@ while norm(virt_x - goal) > 1
   fprintf('Iteration took %.2f seconds\n', toc);
   
   if vis
-%     obsMap.plotLocal;
-    %     obsMap.plotPadded;
-    subplot(1, 2, 1)
+    obsMap.plotLocal;
+%     obsMap.plotPadded;
+%     subplot(1, 2, 1)
     plot3(true_x(1), true_x(5), true_x(9), 'b.')
     hold on
     plot3(virt_x(1), virt_x(2), virt_x(3), 'r.')
     
-    subplot(1,2,2)
-    plot3(rel_x(1), rel_x(5), rel_x(9), 'k.')
-    hold on
-    
+%     subplot(1,2,2)
+%     plot3(rel_x(1), rel_x(5), rel_x(9), 'k.')
+%     hold on
     
 %     if exist('hPlanned', 'var')
 %       delete(hPlanned)
