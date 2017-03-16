@@ -1,4 +1,4 @@
-function [newState, p, rrt] = rrtNextState(start, goal, obs, ...
+function [newStates, p, rrt] = rrtNextState(start, goal, obs, ...
   delta_x, rrtSoFar, vis)
 % [newState, path, rrt] = rrtNextState(delta_x, start) 
 
@@ -13,6 +13,11 @@ end
 if nargin < 2
   goal = [0.00 0.9 0.4];
 end
+
+if iscolumn(goal)
+  goal = goal';
+end
+
 
 if nargin < 3
   load('obs.mat');
@@ -30,7 +35,6 @@ if nargin < 6
   vis = true;
 end
 
-
 seedsPerAxis = 7;
 treesMax = seedsPerAxis^3*3+2;
 
@@ -42,12 +46,18 @@ rrt.Run()
 
 % Remove points close together in smoothed path, and keep same sorted order
 p = rrt.smoothedPath;
-[~, ia] = uniquetol(p, 1e-4, 'ByRows', true);
+[~, ia] = uniquetol(p, 1e-3, 'ByRows', true);
 p = p(sort(ia), :);
 
 nextPoint = p(2, :); % point that rrt would head towards
-direction = (nextPoint - start)./norm(nextPoint - start); % unit vector of direction to go towards
-newState = start + delta_x.*direction;
+dist = norm(nextPoint - start);
+steps = ceil(dist/delta_x);
+direction = (nextPoint - start)/dist; % unit vector of direction to go towards
+
+newStates = start + delta_x.*direction;
+for i = 2:steps
+  newStates = [newStates; newStates(end,:) + delta_x*direction];
+end
 
 if vis
   figure

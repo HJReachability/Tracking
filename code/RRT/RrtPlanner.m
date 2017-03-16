@@ -47,7 +47,7 @@ classdef RrtPlanner < handle
     %% RUN OPTIONS
     %  ************************************************************************
     % Display                           => Activate visual display, SLIGHTLY SLOWER
-    doDraw=true;
+    doDraw=false;
     
     % Skip this number of drawings before doing an update to the figure (speeds up plotting)
     drawingSkipsPerDrawing = 10;
@@ -87,7 +87,7 @@ classdef RrtPlanner < handle
     
     % Search Space Limits               => [x(min) x(max) y(min) y(max) z(min) z(max)]
     % lim=[-0.5 +0.5;-0.5 +0.5 ;-0.5 +0.5];
-    lim=[-1 +1;-1 +1 ;-1 +1];
+    lim=[-1 +11;-1 +11 ;-1 +11];
     
     % Default Start and Goal  => Point [x y z]
     start=[0.00 -0.9 0.00];
@@ -199,7 +199,7 @@ classdef RrtPlanner < handle
       end
       
       % Initial plotting and environment setup
-      self.InitDisplay();
+%       self.InitDisplay();
       
       tic;
       % Continue search while the number of steps is less than Iterations and
@@ -381,13 +381,13 @@ classdef RrtPlanner < handle
       
       % Plot initial node
       try delete(self.startNodePlot_h);end %#ok<TRYNC>
-      self.startNodePlot_h = plot3(self.start(1), self.start(2), ...
-        self.start(3), 'marker', '.', 'color', 'k', 'Parent', ...
-          self.GetAxisHandle());
+%       self.startNodePlot_h = plot3(self.start(1), self.start(2), ...
+%         self.start(3), 'marker', '.', 'color', 'k', 'Parent', ...
+%           self.GetAxisHandle());
       
-      % Plot goal node
-      try delete(self.goalNodePlot_h);end %#ok<TRYNC>
-      self.goalNodePlot_h = plot3(self.goal(1),self.goal(2),self.goal(3),'marker','.','color','b','Parent',self.GetAxisHandle());
+%       % Plot goal node
+%       try delete(self.goalNodePlot_h);end %#ok<TRYNC>
+%       self.goalNodePlot_h = plot3(self.goal(1),self.goal(2),self.goal(3),'marker','.','color','b','Parent',self.GetAxisHandle());
 
       % Delete all rrt lines and previous paths
       for i = 1:length(self.plotHandles)
@@ -768,13 +768,13 @@ classdef RrtPlanner < handle
       for t=1:size(self.rrt,2)
         if self.rrt(t).valid
           validtrees = validtrees + 1;
-          % Plot new edges
-          for i=2:size(self.rrt(t).parent,1)
-            try delete(self.plotHandles(t).lines(i));end %#ok<TRYNC>
-            self.plotHandles(t).lines(i)=plot3([self.rrt(t).cords(self.rrt(t).parent(i),1),self.rrt(t).cords(i,1)] ...
-              ,[self.rrt(t).cords(self.rrt(t).parent(i),2),self.rrt(t).cords(i,2)] ...
-              ,[self.rrt(t).cords(self.rrt(t).parent(i),3),self.rrt(t).cords(i,3)],colours(mod(t,size(colours,2))+1)); %,'Color',[t/(treesMax*3) t/(treesMax*1) t/(treesMax*2)]); %[t/size(self.rrt,2),t/size(self.rrt,2),t/size(self.rrt,2)]);
-          end
+%           % Plot new edges
+%           for i=2:size(self.rrt(t).parent,1)
+%             try delete(self.plotHandles(t).lines(i));end %#ok<TRYNC>
+%             self.plotHandles(t).lines(i)=plot3([self.rrt(t).cords(self.rrt(t).parent(i),1),self.rrt(t).cords(i,1)] ...
+%               ,[self.rrt(t).cords(self.rrt(t).parent(i),2),self.rrt(t).cords(i,2)] ...
+%               ,[self.rrt(t).cords(self.rrt(t).parent(i),3),self.rrt(t).cords(i,3)],colours(mod(t,size(colours,2))+1)); %,'Color',[t/(treesMax*3) t/(treesMax*1) t/(treesMax*2)]); %[t/size(self.rrt,2),t/size(self.rrt,2),t/size(self.rrt,2)]);
+%           end
         else
           for i=2:size(self.rrt(t).parent,1)
             try delete(self.plotHandles(t).lines(i));end %#ok<TRYNC>

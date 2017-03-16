@@ -32,13 +32,14 @@ classdef ObstacleMap < handle
     %% SenseAndUpdate
     % sense for obstacles that are within sense_range of the point
     % then update local and padded obstacles.
-    function sense_update(obj, point, sense_range, track_err)
+    function new_sensed = sense_update(obj, point, sense_range, track_err)
       % SenseAndUpdate(obj, point, sense_range, track_err)
       if ~iscolumn(point)
         point = point';
       end
       
       sense_ranges = [point-sense_range, point+sense_range];
+      new_sensed = false;
       
       for i = find(~obj.seen_obs) % iterate over unseen global obs
         if obj.ableToSense(sense_ranges, i)
@@ -48,7 +49,10 @@ classdef ObstacleMap < handle
           obj.pad(track_err, obj.global_obs(:,:,i));
           
           % add to local set
-          obj.local_obs(:, :, obj.indexx./6) = obj.global_obs(:,:,i);
+%           small = 1e-3;
+          obj.local_obs(:, :, obj.indexx./6) = obj.global_obs(:,:,i)-1e-2;
+          
+          new_sensed = true;
         end
       end
     end
@@ -209,6 +213,7 @@ classdef ObstacleMap < handle
     
     %% ObstaclePlot
     function coords = get_obs_coords_for_plot(obj, obstacles)
+%       obstacles(isinf(obstacles)) = [];
       coords = cell(3,1);
       for i = 1:3
         coords{i} = squeeze(obstacles(:,i,:));
@@ -241,12 +246,12 @@ classdef ObstacleMap < handle
         delete(obj.hL)
       end
       
-      obj.hL = fill3(coords{:}, color, 'FaceAlpha', 0.1);
+      obj.hL = fill3(coords{:}, color, 'FaceAlpha', 0.8);
     end
     
     function plotPadded(obj)
       if nargin < 2
-        color = 'b';
+        color = 'g';
       end
       
       % Augmented obstacles
@@ -256,7 +261,7 @@ classdef ObstacleMap < handle
         delete(obj.hP)
       end
       
-      obj.hP = fill3(coords{:}, color, 'FaceAlpha', 0.1);
+      obj.hP = fill3(coords{:}, color, 'FaceAlpha', 0.05);
     end
      
   % END OF METHODS

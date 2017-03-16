@@ -1,4 +1,4 @@
-function timesteps = simulateOnline(data_filename, obs_filename, extraArgs)
+function simulateOnline(data_filename, obs_filename, extraArgs)
 
 %inputs:
 %       gs           -  cell of grids
@@ -19,11 +19,11 @@ function timesteps = simulateOnline(data_filename, obs_filename, extraArgs)
 addpath(genpath('.'))
 
 % Problem setup
-start = [0 -0.5 0.2];
-goal = [0.01 0.91 0.41];
-delta_x = 0.02;
-trackErr = 0.02;
-senseRange = 0.3;
+start = [0; 0; 0];
+goal = [10; 0; 0];
+delta_x = 0.25;
+trackErr = 0.5;
+senseRange = 1.5;
 
 if nargin < 1
   data_filename = 'Quad10D_g61_dt01_t50_veryHigh_quadratic.mat';
@@ -69,7 +69,7 @@ end
 % set initial states to zero
 true_x = zeros(10,1);
 true_x([1 5 9]) = start;
-virt_x = start';
+virt_x = start;
 rel_x = true_x - Q*virt_x;
 
 % % Create real quadrotor system
@@ -84,18 +84,25 @@ rel_x = true_x - Q*virt_x;
 %% Start loop! Tracking error bound block
 %input: environment, sensing
 %output: augmented obstacles
-while 1%value < goal
+newStates = [];
+iter = 0;
+while norm(true_x([1 5 9]) - goal) > 1
   tic
+  iter = iter + 1;
   % 1. Sense your environment, locate obstacles
   % 2. Expand sensed obstacles by tracking error bound
-  obsMap.sense_update(virt_x, senseRange, trackErr); 
+  sensed_new = obsMap.sense_update(virt_x, senseRange, trackErr); 
   
   %% Path Planner Block
   %inputs: virtual state, augmented obstacles
   %outputs: desired virtual state
   
   % 1. run RRT stuff, get new virtual state. using dummy example for now.
-  virt_x = rrtNextState(virt_x, goal, obsMap.padded_obs, delta_x, [], false);
+  if isempty(newStates) || sensed_new
+    newStates = rrtNextState(virt_x, goal, obsMap.padded_obs, delta_x, [], false);
+  end
+  virt_x = newStates(1,:)';
+  newStates(1,:) = [];
   
 %   %% Hybrid Tracking Controller
 %   %inputs: desired virtual state, true state
@@ -139,24 +146,25 @@ while 1%value < goal
 %   
 %   % 2. update state of true vehicle
 %   trueQuad.updateState(u, dt, [], d);
-  trueQuad.x([1 5 9]) = virt_x;
-  true_x = trueQuad.x;
+%   trueQuad.x([1 5 9]) = virt_x;
   
   %% Virtual System Block
   % inputs: true system state
   % outputs: virtual system state
   
-  % 1. set virtual state to position states from true vehicle
-  virt_x = true_x([1 5 9]);
+%   % 1. set virtual state to position states from true vehicle
+%   virt_x = true_x([1 5 9]);
   
   % 2. check if reached goal. dummy equation for now
   
-  fprintf('Iteration took %.2f seconds', toc);
+  fprintf('Iteration took %.2f seconds\n', toc);
   
   if vis
     obsMap.plotLocal;
-    obsMap.plotPadded;
+%     obsMap.plotPadded;
     plot3(virt_x(1), virt_x(2), virt_x(3), '.')
+%     uistack(obsMap.hG, 'bottom');
+%     uistack(obsMap.hL, 'top');
   % plot local obstacles
   % plot expanded obstacles
   % plot planned path
@@ -165,4 +173,5 @@ while 1%value < goal
   end
   
   drawnow
+  export_fig(sprintf('pics/%d', iter), '-png')
 end
