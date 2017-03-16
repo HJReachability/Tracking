@@ -17,75 +17,75 @@ Matrix $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenti
 
 \subsection{Formalizing the Capture-Avoid Game}
 Now that we have the relative dynamics between the two systems we must define a metric for the tracking error bound between these systems. We do this by defining an implicit surface function as a cost function $\errfunc(\rstate)$ in the new frame of reference. Because the metric we care about is distance to the origin (and thus distance to the planner), this cost function can be as simple as distance in position space to the origin. An example can be seen in Fig. \ref{fig:quad4D_example}-a, where $\errfunc(\rstate)$ is defined for a 4D quadrotor model tracking a 2D kinematic planning model. The contour rings beneath the function represent varying level sets of the cost function. The tracking system will try to minimize this cost to reduce the relative distance, while the planning system will do the opposite.
-
 \begin{figure}
 	\centering
 	\includegraphics[width=0.5\textwidth]{fig/quad4D_example}
 	\caption{illustrative example of the precomputation steps for a 4D quadrotor model tracking a 2D kinematic planning model. All graphs are defined over a 2D slice of the 4D system. a) Cost function $\errfunc(\rstate)$ defined on relative states as distance to the origin, b) Value function $\valfunc(\rstate)$ computed using HJ reachability, c) Level sets of $\errfunc(\rstate)$ (solid) and $\valfunc(\rstate)$ (dashed). If the initial relative state is contained within the dashed set the system is guaranteed to remain within the corresponding solid set (i.e. the tracking error bound)}
 	\label{fig:quad4D_example}
+	\vspace{-.2in}
 \end{figure} 
- 
+
  We want to find the farthest distance (and thus highest cost) that this game will ever reach when both players are acting optimally. Therefore we want to find a mapping between the initial relative state of the system and the maximum possible cost achieved over the time horizon. This mapping is through our value function, defined as:
  \begin{equation}
  \begin{aligned}
  \label{eq:valfunc}
- 	V(\rstate,\thor)= \sup_{\pctrl(\cdot), \dstb(\cdot)} \inf_{\tctrl(\cdot)} \big\{\max_{\tvar\in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl(\cdot)))\big\}
+ 	V(\rstate,\thor)= \inf_{\tctrl(\cdot)} \sup_{\pctrl(\cdot), \dstb(\cdot)}  \big\{\max_{\tvar\in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl(\cdot)))\big\}
  	\end{aligned}
  \end{equation} 
- 
  This is a modified version of the Hamilton-Jacobi formulation as described by \cite{Fisac15}. By implementing HJ reachability analysis we solve for this value function over the time horizon. If the control authority of the tracking system is powerful enough to always eventually reach the planning system, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \valfunc(\rstate, \thor)$. An example of this converged value function is in Fig. \ref{fig:quad4D_example}-b. In the next section we will prove that the sub-level sets of this value function will map initial relative states to the guaranteed furthest possible tracking error over all time, as seen in Fig. \ref{fig:quad4D_example}-c.
  
 In the context of the online framework, the value function $\valfunc_\infty(\rstate)$ is the tracking error bound function. The spatial gradients of the value function, $\deriv_\infty(\rstate)$, comprise the safety controller function (as describe in Section \ref{sec:online}). When the framework is executed on a computer, these two functions are saved as look-up tables over a grid representing the state space of the relative system.
  
 \subsection{Main Result}
- \begin{equation}
- \begin{aligned}
-& \valfunc(\rstate, \thor) = \sup_{\pctrl(\cdot), \dstb(\cdot)} \inf_{\tctrl(\cdot)} \big\{\\
-&\quad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl(\cdot), \dstb(\cdot)))\big\} \\
-& \valfunc(\rstate, \thor) = \max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0)) 
- \end{aligned}
-  \end{equation}
- 
+Theorem \ref{thm:main} below proves that every level set of $\valfunc_\infty(\rstate)$ is invariant under the following conditions:
+	\begin{enumerate}
+		\item The tracking system applies the optimal control which tries to track the planning system;
+		\item The planning system applies the optimal control that tries to escape from the tracking system; \label{ln:plan}
+		\item The tracking system experiences the worst-case disturbance. \label{ln:dist}
+	\end{enumerate}
+In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking system and will make it easier to stay within its current level set of $\valfunc_\infty(\rstate)$, or to move to a smaller invariant level set of $\valfunc_\infty(\rstate)$. The smallest invariant level set $\underline\valfunc := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. The tracking error bound is given by\footnote{In practice, since $\valfunc_\infty$ is obtained numerically, we set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc + \epsilon\}$ for some suitably small $\epsilon>0$} the set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc\}$. This tracking error bound in the planner's frame of reference is given by:
+		\begin{equation} \label{eq:TEBp}
+		\TEB_\pstate(\tstate) = \{\pstate: \valfunc_\infty(\tstate-\ptmat\pstate) \le \underline\valfunc\}
+		\end{equation}
+This is the tracking error bound that will be used in the online framework as shown in Fig. \ref{fig:fw_online}.
+
  \begin{claim}
    \label{thm:main}
-   Let $\thor_c \ge 0$, and suppose
-   
+   \SHnote{still need to add better explanations in the proof}
+   Let $\thor_c \ge 0$, and define:
+      \begin{equation}
+      \label{eq:conv_valfunc}
+      \valfunc_\infty(\rstate) := \valfunc(\rstate, \thor_c)
+      \end{equation}
+   suppose
    \begin{equation}
    \label{eq:conv_valfunc}
-   \valfunc_\infty(\rstate) := \valfunc(\rstate, \thor) = \valfunc(\rstate, \thor_c) ~ \forall \thor \ge \thor_c.
+   \valfunc(\rstate, \thor) = \valfunc(\rstate, \thor_c) ~ \forall \thor \ge \thor_c.
    \end{equation}
-   
    Then $\forall \tvar_1, \tvar_2$ with $\tvar_2 \ge \tvar_1$,
-   
    \begin{equation}
    \label{eq:invariant}
    \valfunc_\infty(\rstate) \ge \valfunc_\infty\Big(\rtraj^*(\tvar_2;, \rstate, \tvar_1)\Big)
    \end{equation}
-   
    \noindent where
    \begin{equation}
    \begin{aligned}
-   & \rtraj^*(0;, \rstate, \tvar) := \rtraj(0; \rstate, \tvar, \pctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \\
+   & \rtraj^*(\tvar;, \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \\
    & \tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)} \sup_{\pctrl(\cdot), \dstb(\cdot)}\big\{ \\
-   & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(0; \rstate, \tvar, \tctrl(\cdot), \pctrl(\cdot), \dstb(\cdot))) \big\}\\
+   & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl(\cdot), \dstb(\cdot))) \big\}\\
    & \pctrl^*(\cdot) = \arg \sup_{\pctrl(\cdot)} \sup_{\dstb(\cdot)} \big\{ \\
-   & \qquad \max_{t \in [0, \thor]} \errfunc(\rtraj(0; \rstate, \tvar, \tctrl(\cdot), \pctrl(\cdot), \dstb(\cdot))) \big\} \\
-   & \dstb^*(\cdot) = \arg \sup_{\dstb(\cdot)} \big\{\max_{\tvar \in [0, \thor]} \errfunc(\rtraj(0; \rstate, \tvar, \tctrl(\cdot), \pctrl(\cdot),  \dstb(\cdot))) \big\}
+   & \qquad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl(\cdot), \dstb(\cdot))) \big\} \\
+   & \dstb^*(\cdot) = \arg \sup_{\dstb(\cdot)} \big\{\max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl(\cdot),  \dstb(\cdot))) \big\}
    \end{aligned}
    \end{equation}
-   
  \end{claim}
- 
 \textit{Proof:}
-
-Assume $\thor \ge \thor_c$.
-
+Assume $\thor \ge \thor_c$, and $\tvar_1=0$,
 \begin{equation}
 \begin{aligned}
 \valfunc(\rstate, \thor) &= \valfunc_\infty(\rstate) = \max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0))\\
 \end{aligned}
 \end{equation}
-
 By time-invariance
  \begin{equation}
  \begin{aligned}
@@ -93,60 +93,35 @@ By time-invariance
  &= \max_{\tvar \in [\thor_c-\thor, \thor_c]} \errfunc(\rtraj^*(\tvar; \rstate, \thor_c-\thor)) \\
  \end{aligned}
  \end{equation}  
- 
 Consider time subinterval:
- 
  \begin{equation}
 \begin{aligned}
-\valfunc_\infty(\rstate) &= \max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0)) \\
-&\ge \max_{\tvar \in [0, \thor_c]} \errfunc(\rtraj^*(\tvar; \rstate, \thor_c-\thor)) \\
+\valfunc_\infty(\rstate) \ge \max_{\tvar \in [0, \thor_c]} \errfunc(\rtraj^*(\tvar; \rstate, \thor_c-\thor)) \\
 \end{aligned}
 \end{equation}  
-
 Now look at trajectory $\rtraj^*(\tvar; \rstate, \thor_c-\thor)$:
-
 \begin{equation}
 \begin{aligned}
 \rtraj^*(\tvar; \rstate, \thor_c-\thor) = \rtraj^*(\tvar; \rtraj^*(0; \rstate, \thor_c-\thor), 0)
 \end{aligned}
 \end{equation}
-
 Continuing from value function:
-
 \begin{equation}
 \begin{aligned}
 \valfunc_\infty(\rstate) &\ge \max_{\tvar \in [0, \thor_c]} \errfunc(\rtraj^*(\tvar; \rtraj^*(0; \rstate, \thor_c-\thor), 0)) \\
 &= \valfunc_\infty(\rtraj^*(0; \rstate, \thor_c-\thor))
 \end{aligned}
 \end{equation} 
- 
  By time-invariance again,
- 
  \begin{equation}
  \begin{aligned}
  \valfunc_\infty(\rstate) &\ge \valfunc_\infty(\rtraj^*(\thor-\thor_c; \rstate, 0)) ~ \forall \thor\ge\thor_c \\
  \Leftrightarrow  \valfunc_\infty(\rstate) &\ge \valfunc_\infty(\rtraj^*(\tvar_2; \rstate, 0)) ~ \forall \tvar_2 \ge 0
  \end{aligned}
  \end{equation} 
- 
    Since the system dynamics are time-invariant, we can pick $\tvar_2 = -\thor_c$ without loss of generality, and $\tvar_1 = -\thor$ to obtain the desired result. \hfill $\blacksquare$
  
-\begin{rem}
-  The interpretation of Theorem \ref{thm:main}, particularly \eqref{eq:invariant}, is that every level set of $\valfunc_\infty(\rstate)$ is invariant under the following conditions:
-  \begin{itemize}
-    \item The real system applies the optimal control which tries to track the virtual system;
-    \item The virtual system applies the optimal virtual control that tries to escape from the real system;
-    \item The real system experiences the worst-case disturbance.
-  \end{itemize}
-  
-  In particular, the value of $\underline\valfunc := \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error \MCnote{(we need to explicitly define tracking error)} given the above assumptions. The tracking error bound in Fig. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, \ref{fig:fw_offline} is given by\footnote{In practice, since $\valfunc_\infty$ is obtained numerically, we set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc + \epsilon\}$ for some suitably small $\epsilon>0$} the set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc\}$. \SHnote{mention that the tracking bound in the planning reference frame is:
-  	\begin{equation} \label{eq:TEBp}
-  	\TEB_\pstate(\tstate) = \{\pstate: \valfunc_\infty(\tstate-\ptmat\pstate) \le \underline\valfunc\}
-  	\end{equation}
-  	and this is what we will use for augmenting obstacles}
-  
-  \MCnote{what if disturbances are not optimal?}
-\end{rem}
+
  
  
  \begin{rem} 

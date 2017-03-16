@@ -136,27 +136,16 @@ M.~Diehl, H.~J. Ferreau, and N.~Haverbeke, ``Efficient numerical methods for
   predictive control}.\hskip 1em plus 0.5em minus 0.4em\relax Springer, 2009,
   pp. 391--417.
 
-\bibitem{Findeisen2007}
-R.~Findeisen, F.~Allg{\"o}wer, and L.~T. Biegler, \emph{Assessment and future
-  directions of nonlinear model predictive control}.\hskip 1em plus 0.5em minus
-  0.4em\relax Springer, 2007, vol. 358.
-
-\bibitem{Grune2011}
-L.~Gr{\"u}ne and J.~Pannek, ``Nonlinear model predictive control,'' in
-  \emph{Nonlinear Model Predictive Control}.\hskip 1em plus 0.5em minus
-  0.4em\relax Springer, 2011, pp. 43--66.
-
 \bibitem{Quirynen2015}
 R.~Quirynen, M.~Vukov, M.~Zanon, and M.~Diehl, ``Autogenerating microsecond
   solvers for nonlinear mpc: a tutorial using acado integrators,''
   \emph{Optimal Control Applications and Methods}, vol.~36, no.~5, pp.
   685--704, 2015.
 
-\bibitem{Gupta2015}
-R.~Gupta, U.~V. Kalabi{\'c}, S.~Di~Cairano, A.~M. Bloch, and I.~V. Kolmanovsky,
-  ``Constrained spacecraft attitude control on so (3) using fast nonlinear
-  model predictive control,'' in \emph{American Control Conference (ACC),
-  2015}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE, 2015, pp. 2980--2986.
+\bibitem{Grune2011}
+L.~Gr{\"u}ne and J.~Pannek, ``Nonlinear model predictive control,'' in
+  \emph{Nonlinear Model Predictive Control}.\hskip 1em plus 0.5em minus
+  0.4em\relax Springer, 2011, pp. 43--66.
 
 \bibitem{Neunert2016}
 M.~Neunert, C.~de~Crousaz, F.~Furrer, M.~Kamel, F.~Farshidian, R.~Siegwart, and
@@ -164,43 +153,6 @@ M.~Neunert, C.~de~Crousaz, F.~Furrer, M.~Kamel, F.~Farshidian, R.~Siegwart, and
   optimization and tracking,'' in \emph{Robotics and Automation (ICRA), 2016
   IEEE International Conference on}.\hskip 1em plus 0.5em minus 0.4em\relax
   IEEE, 2016, pp. 1398--1404.
-
-\bibitem{Torrisi2016}
-G.~Torrisi, S.~Grammatico, R.~S. Smith, and M.~Morari, ``A variant to
-  sequential quadratic programming for nonlinear model predictive control,'' in
-  \emph{Decision and Control (CDC), 2016 IEEE 55th Conference on}.\hskip 1em
-  plus 0.5em minus 0.4em\relax IEEE, 2016, pp. 2814--2819.
-
-\bibitem{Lofberg2003}
-J.~L{\"o}fberg, \emph{Minimax approaches to robust model predictive
-  control}.\hskip 1em plus 0.5em minus 0.4em\relax Link{\"o}ping University
-  Electronic Press, 2003, vol. 812.
-
-\bibitem{Kumar2014}
-D.~Kumar and H.~Budman, ``Robust nonlinear mpc based on volterra series and
-  polynomial chaos expansions,'' \emph{Journal of Process Control}, vol.~24,
-  no.~1, pp. 304--317, 2014.
-
-\bibitem{Yan2014}
-Z.~Yan and J.~Wang, ``Robust model predictive control of nonlinear systems with
-  unmodeled dynamics and bounded uncertainties based on neural networks,''
-  \emph{IEEE transactions on neural networks and learning systems}, vol.~25,
-  no.~3, pp. 457--469, 2014.
-
-\bibitem{Mayne2011}
-D.~Q. Mayne, E.~C. Kerrigan, E.~Van~Wyk, and P.~Falugi, ``Tube-based robust
-  nonlinear model predictive control,'' \emph{International Journal of Robust
-  and Nonlinear Control}, vol.~21, no.~11, pp. 1341--1353, 2011.
-
-\bibitem{Cannon2011}
-M.~Cannon, J.~Buerger, B.~Kouvaritakis, and S.~Rakovic, ``Robust tubes in
-  nonlinear model predictive control,'' \emph{IEEE Transactions on Automatic
-  Control}, vol.~56, no.~8, pp. 1942--1947, 2011.
-
-\bibitem{Gao2014}
-Y.~Gao, A.~Gray, H.~E. Tseng, and F.~Borrelli, ``A tube-based robust nonlinear
-  predictive control approach to semiautonomous ground vehicles,''
-  \emph{Vehicle System Dynamics}, vol.~52, no.~6, pp. 802--823, 2014.
 
 \bibitem{Gillula2010}
 J.~H. Gillula, H.~Huang, M.~P. Vitus, and C.~J. Tomlin, ``Design of guaranteed
