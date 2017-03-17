@@ -212,26 +212,25 @@ classdef ObstacleMap < handle
     end
     
     %% ObstaclePlot
-    function coords = get_obs_coords_for_plot(obj, obstacles)
-%       obstacles(isinf(obstacles)) = [];
-      coords = cell(3,1);
-      for i = 1:3
-        coords{i} = squeeze(obstacles(:,i,:));
-      end
-    end    
+
     
-    function plotGlobal(obj, color)
+    function plotGlobal(obj, color, linestyle)
       if nargin < 2
         color = 'k';
       end
+      
+      if nargin < 3
+        linestyle = 'none';
+      end
+      
       % Global obstacles
-      coords = get_obs_coords_for_plot(obj, obj.global_obs);
+      coords = get_obs_coords_for_plot(obj.global_obs);
       
       if ~isempty(obj.hG)
         delete(obj.hG)
       end
       
-      obj.hG = fill3(coords{:}, color, 'FaceAlpha', 0.1);
+      obj.hG = fill3(coords{:}, color, 'FaceAlpha', 0.1, 'LineStyle',linestyle);
     end
     
     function plotLocal(obj, color)
@@ -240,13 +239,13 @@ classdef ObstacleMap < handle
       end
       
       % Local obstacles
-      coords = get_obs_coords_for_plot(obj, obj.local_obs);
+      coords = get_obs_coords_for_plot(obj.local_obs);
       
       if ~isempty(obj.hL)
         delete(obj.hL)
       end
       
-      obj.hL = fill3(coords{:}, color, 'FaceAlpha', 0.8);
+      obj.hL = fill3(coords{:}, color, 'FaceAlpha', 0.7, 'LineStyle', 'none');
     end
     
     function plotPadded(obj)
@@ -255,13 +254,13 @@ classdef ObstacleMap < handle
       end
       
       % Augmented obstacles
-      coords = get_obs_coords_for_plot(obj, obj.padded_obs);
+      coords = get_obs_coords_for_plot(obj.padded_obs);
       
       if ~isempty(obj.hP)
         delete(obj.hP)
       end
       
-      obj.hP = fill3(coords{:}, color, 'FaceAlpha', 0.05);
+      obj.hP = fill3(coords{:}, color, 'FaceAlpha', 0.05, 'LineStyle', 'none');
     end
      
   % END OF METHODS
