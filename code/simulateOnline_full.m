@@ -90,15 +90,17 @@ if vis
 %   ylim([-10 10])
 %   zlim([-10 10])
   view([-10 10])
+  box on
+  grid on
 end
 
 % set initial states to zero
-true_x = zeros(10,1);
-true_x([1 5 9]) = start;
+start_x = zeros(10,1);
+start_x([1 5 9]) = start;
 
 % Create real quadrotor system
 rl_ui = [2 4 6];
-trueQuad = Quad10D(true_x, dynSysX.uMin(rl_ui), dynSysX.uMax(rl_ui), ...
+trueQuad = Quad10D(start_x, dynSysX.uMin(rl_ui), dynSysX.uMax(rl_ui), ...
   dynSysX.dMin, dynSysX.dMax, 1:10);
 
 % % define when to switch from safety control to performance control
@@ -109,20 +111,21 @@ trueQuad = Quad10D(true_x, dynSysX.uMin(rl_ui), dynSysX.uMax(rl_ui), ...
 %input: environment, sensing
 %output: augmented obstacles
 newStates = [];
+virt_x = [];
 iter = 0;
-while norm(true_x([1 5 9]) - goal) > 1
+while norm(trueQuad.x([1 5 9]) - goal) > 0.5
   tic
   iter = iter + 1;
 
   % 1. Sense your environment, locate obstacles
   % 2. Expand sensed obstacles by tracking error bound
-  sensed_new = obsMap.sense_update(true_x([1 5 9]), senseRange, trackErr);
+  sensed_new = obsMap.sense_update(trueQuad.x([1 5 9]), senseRange, trackErr);
   
   %% Path Planner Block
   % Replan if a new obstacle is seen
   if isempty(newStates) || sensed_new
     % Update next virtual state
-    newStates = rrtNextState(true_x([1 5 9]), goal, obsMap.padded_obs, ...
+    newStates = rrtNextState(trueQuad.x([1 5 9]), goal, obsMap.padded_obs, ...
       delta_x, [], false);
   end
   virt_x = newStates(1,:)';
@@ -130,7 +133,7 @@ while norm(true_x([1 5 9]) - goal) > 1
 
   %% Hybrid Tracking Controller
   % 1. find relative state
-  rel_x = true_x - Q*virt_x;
+  rel_x = trueQuad.x - Q*virt_x;
   
   % 2. Determine which controller to use, find optimal control
   %get spatial gradients
@@ -152,10 +155,8 @@ while norm(true_x([1 5 9]) - goal) > 1
   % 2. update state of true vehicle
   trueQuad.updateState(u, dt, [], d);
 
-  true_x = trueQuad.x;
-
   % Make sure error isn't too big (shouldn't happen)
-  if norm(virt_x - true_x([1 5 9])) > 3
+  if norm(virt_x - trueQuad.x([1 5 9])) > 3
     keyboard
   end
   
@@ -166,8 +167,7 @@ while norm(true_x([1 5 9]) - goal) > 1
   if vis
     % Local obstacles and true position
     obsMap.plotLocal;
-    plot3(true_x(1), true_x(5), true_x(9), 'b.')
-%     trueQuad.plotPosition();
+    plot3(trueQuad.x(1), trueQuad.x(5), trueQuad.x(9), 'b.')
     hold on
     
     % Virtual state
@@ -176,7 +176,7 @@ while norm(true_x([1 5 9]) - goal) > 1
       hV.YData = virt_x(2);
       hV.ZData = virt_x(3);
     else
-      hV = plot3(virt_x(1), virt_x(2), virt_x(3), '*', 'color', [0 0.5 0]);
+      hV = plot3(virt_x(1,end), virt_x(2,end), virt_x(3,end), '*', 'color', [0 0.75 0]);
     end
     
     % Tracking error bound
@@ -234,9 +234,9 @@ while norm(true_x([1 5 9]) - goal) > 1
 
   drawnow
   
-  if mod(iter, 5) == 1
-    export_fig(sprintf('pics/%d', iter), '-png')
-    savefig(sprintf('pics/%d.fig', iter))
-  end
+  export_fig(sprintf('pics/%d', iter), '-png')
+  savefig(sprintf('pics/%d.fig', iter))
+end
+
 
 end
