@@ -1,6 +1,6 @@
 % !TEX root = tracking.tex
 \section{Problem Formulation \label{sec:formulation}}
-In this paper we seek to plan a path or trajectory online and in real-time using a kinematic or dynamic planning model. At every time step this planner is followed by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known, or unknown with a limited sensing range on the system (as described in Section \ref{sec:online}). In this section we will define the tracking model and planning model, as well as the goals of the paper.
+In this paper we seek to simultaneously plan and track a path or trajectory online and in real-time. The planning is done using a kinematic or dynamic planning model. The tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known, or unknown with a limited sensing range on the system (as described in Section \ref{sec:online}). In this section we will define the tracking model and planning model, as well as the goals of the paper.
 
 \subsection{Tracking Model}
 The tracking model is a representation of the true autonomous system dynamics, and in general may be nonlinear or high-dimensional. Let $\tstate$ represent the state variables of the tracking model. The evolution of the dynamics satisfy the ordinary differential equation:
@@ -36,9 +36,9 @@ The planning model is used by the path or trajectory planner to solve for the de
 \end{aligned}
 \end{equation}
 \subsection{Goals of This Paper}
-The goals of the paper are as follows:
+The goals of the paper are threefold:
 \begin{enumerate}
-	\item Provide a tool for precomputing functions (or look-up tables) to determine a guaranteed tracking error bound and optimal safety. controller for robust motion planning with nonlinear dynamic systems
-	\item Develop a framework for easily implementing this tool with fast real-time path and trajectory planners.
-	\item Demonstrate the tool and framework by safely tracking a 3D RRT planner with a 10D near-hover quadrotor model in real time.
+	\item To provide a tool for precomputing functions (or look-up tables) to determine a guaranteed tracking error bound and optimal safety controller for robust motion planning with nonlinear dynamic systems
+	\item To develop a framework for easily implementing this tool with fast real-time path and trajectory planners.
+	\item To demonstrate the tool and framework by safely tracking a 3D RRT planner with a 10D near-hover quadrotor model in real time.
 \end{enumerate}
