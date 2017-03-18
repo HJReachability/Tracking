@@ -1,6 +1,6 @@
 % !TEX root = tracking.tex
 \section{General Framework \label{sec:framework}}
-The overall framework of the FASTrack tool is summarized in Figs. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, and \ref{fig:fw_offline}. The online real-time framework is shown in Fig. \ref{fig:fw_online}. At the center of this framework is the path or trajectory planner; our framework is agnostic to the planner, so any may be used (e.g. MPC, RRT, neural networks, etc.). We will present an example using an RRT planner in Section \ref{sec:results}.
+The framework of the FASTrack tool is summarized in Figs. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, \ref{fig:fw_offline}. The online real-time framework is shown in Fig. \ref{fig:fw_online}. At the center of this framework is the path or trajectory planner, to which our framework is agnostic: any may be used (e.g. MPC, RRT, neural networks, etc.). We will present an example with an RRT planner in Section \ref{sec:results}.
 
 When executing the online framework the first step is to augment the sensed obstacles by a precomputed tracking error bound as describe in Section \ref{sec:precomp}. This tracking error bound is a safety margin that guarantees robustness despite the worst-case disturbance. Augmenting the obstacles by this margin can be thought of as equivalent to wrapping the planning system with a ``safety bubble". These augmented obstacles are inputs to the planner along with the current state of the planning system. The planner then outputs the next desired state of the planning system. 
 
@@ -30,21 +30,21 @@ In this paper we will first explain the precomputation steps taken in the offlin
 %In the planning level, any planning method such as MPC, RRT, etc. (cite some things) can be used. The planning level does not need to take into account disturbances, and can use simple system dynamics or even no dynamics at all. In fact we will be using a simple RRT planner which simply provides paths, in the form of a sequence of line segments, which are not dynamically feasible. 
 
 \begin{figure}[h!]
-\includegraphics[width=\columnwidth]{fig/framework_online}
+\includegraphics[width=0.95\columnwidth]{fig/framework_online}
 \caption{Online framework}
 \label{fig:fw_online}
 \vspace{-.2in}
 \end{figure}
 
 \begin{figure}[h!]
-  \includegraphics[width=\columnwidth]{fig/hybrid_controller}
+  \includegraphics[width=0.95\columnwidth]{fig/hybrid_controller}
   \caption{Hybrid controller}
   \label{fig:hybrid_ctrl}
   \vspace{-.2in}
 \end{figure}
 
 \begin{figure}[h!]
-  \includegraphics[width=\columnwidth]{fig/framework_offline}
+  \includegraphics[width=0.95\columnwidth]{fig/framework_offline}
   \caption{Offline framework}
   \label{fig:fw_offline}
   \vspace{-.2in}
