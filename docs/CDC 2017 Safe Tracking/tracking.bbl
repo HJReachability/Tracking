@@ -239,16 +239,39 @@ J.~F. Fisac, M.~Chen, C.~J. Tomlin, and S.~S. Shankar, ``Reach-avoid problems
 \bibitem{Akametalu2014}
 A.~K. Akametalu, J.~F. Fisac, J.~H. Gillula, S.~Kaynama, M.~N. Zeilinger, and
   C.~J. Tomlin, ``{Reachability-based safe learning with Gaussian processes},''
-  in \emph{IEEE Proc. Conf. on Decision and Control}, Dec. 2014.
+  in \emph{Proc. IEEE Conf. on Decision and Control}, Dec. 2014.
 
 \bibitem{Bansal2017}
 S.~Bansal, M.~Chen, J.~F. Fisac, and C.~J. Tomlin, ``{Safe Sequential Path
   Planning of Multi-Vehicle Systems Under Presence of Disturbances and
   Imperfect Information},'' \emph{American Control Conference}, 2017.
 
+\bibitem{Mitchell2012}
+I.~M. Mitchell, M.~Chen, and M.~Oishi, ``{Ensuring safety of nonlinear sampled
+  data systems through reachability},'' \emph{IFAC Proc. Volumes}, vol.~45,
+  no.~9, pp. 108--114, 2012.
+
+\bibitem{Mitchell13}
+I.~M. Mitchell, S.~Kaynama, M.~Chen, and M.~Oishi, ``{Safety preserving control
+  synthesis for sampled data systems},'' \emph{Nonlinear Analysis: Hybrid
+  Systems}, vol.~10, no.~1, pp. 63--82, Nov. 2013.
+
+\bibitem{Dabadie2014}
+C.~Dabadie, S.~Kaynama, and C.~J. Tomlin, ``{A practical reachability-based
+  collision avoidance algorithm for sampled-data systems: Application to ground
+  robots},'' in \emph{Proc. IEEE Int. Conf. on Intelligent Robots and Systems},
+  Sept. 2014, pp. 4161--4168.
+
 \bibitem{Bouffard12}
 P.~Bouffard, ``On-board model predictive control of a quadrotor helicopter:
   Design, implementation, and experiments,'' Master's thesis, University of
   California, Berkeley, 2012.
+
+\bibitem{Gavin2013}
+\BIBentryALTinterwordspacing
+{Gavin (Matlab community Contributor)}, ``{Multiple Rapidly-exploring Random
+  Tree (RRT)},'' 2013. [Online]. Available:
+  \url{https://www.mathworks.com/matlabcentral/fileexchange/21443-multiple-rapidly-exploring-random-tree--rrt-}
+\BIBentrySTDinterwordspacing
 
 \end{thebibliography}

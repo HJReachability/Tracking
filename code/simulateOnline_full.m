@@ -57,7 +57,7 @@ if ~isfield(extraArgs,'Q')
 end
 
 if ~isfield(extraArgs, 'visualize')
-  vis = true;
+  vis = false;
 end
 
 %% Before Looping
@@ -111,10 +111,13 @@ trueQuad = Quad10D(start_x, dynSysX.uMin(rl_ui), dynSysX.uMax(rl_ui), ...
 %input: environment, sensing
 %output: augmented obstacles
 newStates = [];
-virt_x = [];
 iter = 0;
-while norm(trueQuad.x([1 5 9]) - goal) > 0.5
-  tic
+global_start = tic; % Time entire simulation
+
+max_iter = 5000;
+lookup_time = 0;
+
+while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   iter = iter + 1;
 
   % 1. Sense your environment, locate obstacles
@@ -133,6 +136,7 @@ while norm(trueQuad.x([1 5 9]) - goal) > 0.5
 
   %% Hybrid Tracking Controller
   % 1. find relative state
+  local_start = tic;
   rel_x = trueQuad.x - Q*virt_x;
   
   % 2. Determine which controller to use, find optimal control
@@ -147,6 +151,7 @@ while norm(trueQuad.x([1 5 9]) - goal) > 0.5
   uZ = dynSysZ.optCtrl([], rel_x(ZDims), pZ, uMode);
   u = [uX uY uZ];
   u = u(rl_ui);
+  lookup_time = lookup_time + toc(local_start);
   
   %% True System Block
   % 1. add random disturbance to velocity within given bound
@@ -161,7 +166,7 @@ while norm(trueQuad.x([1 5 9]) - goal) > 0.5
   end
   
   %% Virtual System Block  
-  fprintf('Iteration took %.2f seconds\n', toc);
+%   fprintf('Iteration took %.2f seconds\n', toc);
   
   % Visualize
   if vis
@@ -230,13 +235,19 @@ while norm(trueQuad.x([1 5 9]) - goal) > 0.5
     end
     boxMap.plotGlobal('b', '-');
 
-  end
+    drawnow
 
-  drawnow
-  
-  export_fig(sprintf('pics/%d', iter), '-png')
-  savefig(sprintf('pics/%d.fig', iter))
+%     export_fig(sprintf('pics/%d', iter), '-png')
+%     savefig(sprintf('pics/%d.fig', iter))    
+  end
 end
+
+comp_time = toc(global_start);
+fprintf('%d iterations in %.4f seconds\n', iter, comp_time)
+fprintf('%.4f seconds per iteration on average\n', comp_time/iter)
+
+fprintf('%d iterations in %.4f seconds\n', iter, lookup_time)
+fprintf('%.4f seconds per iteration on average\n', lookup_time/iter)
 
 
 end
