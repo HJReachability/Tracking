@@ -2,7 +2,7 @@
 \section{10D Quadrotor RRT Example \label{sec:results}}
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.9\textwidth]{fig/quad10D_example_cost}
+	\includegraphics[width=0.8\textwidth]{fig/quad10D_example_cost}
 	\caption{On the left are visualizations of the cost and value functions over a 2D slice of the 10D relative state space, with contour lines showing three level sets of these functions. The three images on the right show the 3D projections of these level sets at the same slice $(v_{xr},v_{yr},v_{zr})=[1, -1, 1]$ m/s, $(\theta_{xr},\omega_{xr},\theta_{yr},\omega_{yr})=[0,0,0,0]$. The solid boxes show the initial relative states, and the transparent boxes show the guaranteed tracking error bound around these relative states. In the online algorithm we will set the initial relative states to 0 to find the smallest invariant tracking error bound for the system.}
 	\label{fig:quad10D_example}
 	\end{figure*} 
@@ -117,30 +117,30 @@ To demonstrate the combination of fast planning and provably robust tracking, we
 
 Once an obstacle is sensed, the RRT planner replans while taking into account all obstacles that have been sensed so far. To ensure that the quadrotor does not collide with the obstacles despite error in tracking, planning is done with respect to augmented obstacles that are ``expanded'' from the sensed obstacles by $0.81$ m in the $x$, $y$, and $z$ directions.
 
-On an unoptimized Matlab implementation on a desktop computer with a Core i7-2600K CPU, each iteration took a total of approximately $25$ ms on average. Most of this time is spent on planning: obtaining the tracking controller took approximately $5$ ms per iteration on average. The frequency of control was once every $100$ ms. For simplicity, the hybrid tracking controller always uses the safety controller\footnote{Since the gradient of the value function is near zero inside the tracking error bound, this effectively means that the performance controller is a random controller.}. 
+On an unoptimized Matlab implementation on a desktop computer with a Core i7-2600K CPU, each iteration took a total of approximately $25$ ms on average. Most of this time is spent on planning: obtaining the tracking controller took approximately $5$ ms per iteration on average. The frequency of control was once every $100$ ms.
 
 Fig. \ref{fig:sim} shows the simulation results. Four time snapshots are shown. The starting point is $(-12, 0, 0)$, and the goal is marked by a circle. The gray planes are obstacles in the environment that have not yet been seen. The red color indicates the parts of the obstacles that have been seen. In all plots, a magenta star represents the position of the planning model; its movement is based on the paths planned by RRT, and is modeled by a 3D holonomic vehicle with a maximum speed. The blue box around the magenta star represents the tracking error bound.
 
 The position of the tracking model is shown in blue. Throughout the simulation, the tracking model's position is always inside the tracking error, in agreement with Proposition \ref{prop:main}. In addition, the tracking error bound never intersects with the obstacles, a consequence of the RRT planner planning with respect to a set of augmented obstacles (not shown). In the latter two subplots, one can see that the quadrotor appears to be exploring the environment briefly before reaching the goal. In this paper, we did not employ any exploration algorithm; this exploration behavior is simply emerging from replanning using RRT whenever a new part (a $3$ m$^2$ portion) of an obstacle is sensed.
 
-\begin{figure*}
+\begin{figure}
   \centering
-  \begin{subfigure}[t]{0.45\textwidth} \label{subfig:sim_1}
+  \begin{subfigure}[t]{0.45\columnwidth} \label{subfig:sim_1}
     \includegraphics[width=\columnwidth]{fig/224}
     \caption{}
   \end{subfigure}
-  \begin{subfigure}[t]{0.35\textwidth} \label{subfig:sim_2}
+  \begin{subfigure}[t]{0.35\columnwidth} \label{subfig:sim_2}
     \includegraphics[width=\columnwidth]{fig/763}
     \caption{}
   \end{subfigure}
   
-  \begin{subfigure}[t]{0.4\textwidth} \label{subfig:sim_3}
+  \begin{subfigure}[t]{0.4\columnwidth} \label{subfig:sim_3}
     \includegraphics[width=\columnwidth]{fig/1042}
     \caption{}
   \end{subfigure}
-  \begin{subfigure}[t]{0.4\textwidth} \label{subfig:sim_4}
+  \begin{subfigure}[t]{0.4\columnwidth} \label{subfig:sim_4}
     \includegraphics[width=\columnwidth]{fig/1173}
     \caption{}
-  \end{subfigure}   
+  \end{subfigure}
   \caption{A simulation showing how five vehicles initially in the Free mode can form a platoon. \label{fig:sim}}
-\end{figure*}
+\end{figure}

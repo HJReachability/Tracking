@@ -3,7 +3,7 @@
 In this paper we seek to simultaneously plan and track a path or trajectory online and in real-time. The planning is done using a kinematic or dynamic planning model. The tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known, or unknown with a limited sensing range on the system (as described in Section \ref{sec:online}). In this section we will define the tracking model and planning model, as well as the goals of the paper.
 
 \subsection{Tracking Model}
-The tracking model is a representation of the true autonomous system dynamics, and in general may be nonlinear or high-dimensional. Let $\tstate$ represent the state variables of the tracking model. The evolution of the dynamics satisfy the ordinary differential equation:
+The tracking model is a representation of the true autonomous system dynamics, and in general may be nonlinear or high-dimensional. Let $\tstate$ represent the state variables of the tracking model. The evolution of the dynamics satisfy the ordinary differential equation: \MCnote{I think the subscript $s$ and $p$ are confusing because they are function arguments. Consider using different letters for dynamics? This could be part of Somil's confusion}
 \begin{equation}
 \begin{aligned}
 \label{eq:tdyn}
@@ -11,7 +11,7 @@ The tracking model is a representation of the true autonomous system dynamics, a
 \tstate \in \tset, \tctrl \in \tcset, \dstb \in \dset
 \end{aligned}
 \end{equation}
-We assume that the system dynamics $\tdyn : \tset\ \times\ \tcset \rightarrow \tset$ are uniformly continuous, bounded, and Lipschitz continuous in $\tstate$ for fixed control $\tctrl$. The control function $\tctrl(\cdot)$ is drawn from the set of measurable functions\footnote{A function $f:X\to Y$ between two measurable spaces $(X,\Sigma_X)$ and $(Y,\Sigma_Y)$ is said to be measurable if the preimage of a measurable set in $Y$ is a measurable set in $X$, that is: $\forall V\in\Sigma_Y, f^{-1}(V)\in\Sigma_X$, with $\Sigma_X,\Sigma_Y$ $\sigma$-algebras on $X$,$Y$.}:
+We assume that the system dynamics $\tdyn : \tset\ \times\ \tcset \rightarrow \tset$ are uniformly continuous, bounded, and Lipschitz continuous in $\tstate$ for fixed control $\tctrl$. The control function $\tctrl(\cdot)$ is drawn from the set of measurable functions:
 \begin{equation}
 \begin{aligned}
 \tctrl(\cdot) \in \tcfset(0) = \{\phi: [0, \thor] \rightarrow \tcset: \phi(\cdot) \text{ is measurable}\}
@@ -34,10 +34,13 @@ The planning model is used by the path or trajectory planner to solve for the de
 \frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \pstate \in \pset, \ \underline{\pctrl} \leq \pctrl \leq \bar{\pctrl}
 \end{aligned}
 \end{equation}
+
+Note that the planning model does not involve a disturbance variable. This is one of the key features of FASTrackHD: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances.
+
 \subsection{Goals of This Paper}
-The goals of the paper are threefold:
+The goals of the paper are threefold: \MCnote{Perhaps this sort of short summary would be appropriate in the introduction. In the goals section we can be a bit more detailed (maybe even taking up to half a column)}
 \begin{enumerate}
-	\item To provide a tool for precomputing functions (or look-up tables) to determine a guaranteed tracking error bound and optimal safety controller for robust motion planning with nonlinear dynamic systems
+	\item To provide a tool for precomputing functions (or look-up tables) to determine a guaranteed tracking error bound between tracking and planning models, and optimal safety controller for robust motion planning with nonlinear dynamic systems
 	\item To develop a framework for easily implementing this tool with fast real-time path and trajectory planners.
-	\item To demonstrate the tool and framework by safely tracking a 3D RRT planner with a 10D near-hover quadrotor model in real time.
+	\item To demonstrate the tool and framework by safely tracking a 3D RRT planner with a 10D near-hover quadrotor model in real time. \MCnote{I wouldn't talk specifically about RRT here.}
 \end{enumerate}
