@@ -267,4 +267,11 @@ P.~Bouffard, ``On-board model predictive control of a quadrotor helicopter:
   Design, implementation, and experiments,'' Master's thesis, University of
   California, Berkeley, 2012.
 
+\bibitem{Gavin2013}
+\BIBentryALTinterwordspacing
+{Gavin (Matlab community Contributor)}, ``{Multiple Rapidly-exploring Random
+  Tree (RRT)},'' 2013. [Online]. Available:
+  \url{https://www.mathworks.com/matlabcentral/fileexchange/21443-multiple-rapidly-exploring-random-tree--rrt-}
+\BIBentrySTDinterwordspacing
+
 \end{thebibliography}
