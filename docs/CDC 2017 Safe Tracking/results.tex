@@ -121,29 +121,29 @@ Once an obstacle is sensed, the RRT planner replans while taking into account al
 
 On an unoptimized Matlab implementation on a desktop computer with a Core i7-2600K CPU, each iteration took a total of approximately $25$ ms on average. Most of this time is spent on planning: obtaining the tracking controller took approximately $5$ ms per iteration on average. The frequency of control was once every $100$ ms.
 
-Fig. \ref{fig:sim} shows the simulation results. Four time snapshots are shown. The starting point is $(-12, 0, 0)$, and the goal is marked by a circle. The gray planes are obstacles in the environment that have not yet been seen. The red color indicates the parts of the obstacles that have been seen. In all plots, a magenta star represents the position of the planning model; its movement is based on the paths planned by RRT, and is modeled by a 3D holonomic vehicle with a maximum speed. The blue box around the magenta star represents the tracking error bound.
+Fig. \ref{fig:sim} shows the simulation results. Four time snapshots are shown. The starting point is $(-12, 0, 0)$, and the goal is marked by the green circle in the top left subplot. In all plots, a magenta star represents the position of the planning model; its movement is based on the paths planned by RRT, and is modeled by a 3D holonomic vehicle with a maximum speed. The blue box around the magenta star represents the tracking error bound.
 
 The position of the tracking model is shown in blue. Throughout the simulation, the tracking model's position is always inside the tracking error, in agreement with Proposition \ref{prop:main}. In addition, the tracking error bound never intersects with the obstacles, a consequence of the RRT planner planning with respect to a set of augmented obstacles (not shown). In the latter two subplots, one can see that the quadrotor appears to be exploring the environment briefly before reaching the goal. In this paper, we did not employ any exploration algorithm; this exploration behavior is simply emerging from replanning using RRT whenever a new part (a $3$ m$^2$ portion) of an obstacle is sensed.
 
 \begin{figure}
   \centering
-  \begin{subfigure}[t]{0.45\columnwidth} \label{subfig:sim_1}
-    \includegraphics[width=\columnwidth]{fig/224}
-    \caption{}
+  \begin{subfigure}[t]{0.49\columnwidth} \label{subfig:sim_4}
+  \includegraphics[width=\columnwidth]{fig/1173}
+  \end{subfigure}  
+  \begin{subfigure}[t]{0.49\columnwidth} \label{subfig:sim_1}
+  \includegraphics[width=\columnwidth]{fig/224}
+  \caption{}
   \end{subfigure}
-  \begin{subfigure}[t]{0.35\columnwidth} \label{subfig:sim_2}
-    \includegraphics[width=\columnwidth]{fig/763}
-    \caption{}
-  \end{subfigure}
-  
-  \begin{subfigure}[t]{0.4\columnwidth} \label{subfig:sim_3}
+
+  \begin{subfigure}[t]{0.49\columnwidth} \label{subfig:sim_2}
+  \includegraphics[width=\columnwidth]{fig/763}
+  \caption{}
+  \end{subfigure}  
+  \begin{subfigure}[t]{0.49\columnwidth} \label{subfig:sim_3}
     \includegraphics[width=\columnwidth]{fig/1042}
     \caption{}
   \end{subfigure}
-  \begin{subfigure}[t]{0.4\columnwidth} \label{subfig:sim_4}
-    \includegraphics[width=\columnwidth]{fig/1173}
-    \caption{}
-  \end{subfigure}
-  \caption{\SHnote{I have some thoughts about this figure. I'll email you about it} \label{fig:sim}}
+
+  \caption{Numerical simulation. The tracking model trajectory is shown in blue, the planning model position in magenta, unseen obstacles in gray, and seen obstacles in red. The goal is marked by the green circle, and the translucent blue box around the planning model position represents the tracking error bound. The top left subplot shows the entire trajectory, while the other subplots zoom in on the positions marked in the top left subplot. The camera angle is also adjusted to illustrate our theoretical guarantees on tracking error and robustness in planning. A video of this simulation can be found at https://youtu.be/ZVvyeK-a62E \label{fig:sim}}
   	\vspace{-.2in}
 \end{figure}
