@@ -3,17 +3,18 @@
 
 Algorithm \ref{alg:algOnline} describes the online computation. The inputs are the tracking error function $\valfunc_\infty(\rstate)$ and the safety control look-up function $\deriv_\infty(\rstate)$. Note that when discretized on a computer these functions will be look-up tables, and that practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and is not the focus of our paper.
 
+Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the planning and tracking model states (and therefore the relative state) to zero. The tracking error bound in the planning frame of reference is computed using (\ref{eq:TEBp}). Note that by initializing the relative state to be zero we can use the smallest possible invariant $\TEB_\pstate$ for the entire online computation. 
 \begin{algorithm}	
 	\caption{Online Trajectory Planning}
 	\label{alg:algOnline}
 	\begin{algorithmic}[1]
-		\STATE Inputs: tracking error function $\valfunc$, safety control function $\deriv$
+		\STATE Inputs: tracking error function $\valfunc(\rstate)$, safety control function $\deriv(\rstate)$
 		\STATE \textbf{Initialization}: \label{ln:Istart}
 		\STATE $\pstate = \tstate = \rstate = 0$
 		\STATE $\TEB_\pstate(0) = \{\pstate: \valfunc_\infty(0) \le \underline\valfunc\}$ \label{ln:Iend}
 		
 		\WHILE{planning goal is not reached}
-		\STATE \textbf{Obstacles Block}: \label{ln:obsStart}
+		\STATE \textbf{Tracking Error Bound Block}: \label{ln:obsStart}
 		\STATE $\obsAug \leftarrow \obsSense + \TEB_\pstate(0)$ \label{ln:obsEnd}
 		
 		\STATE \textbf{Path Planner Block}:\label{ln:plannerStart}
@@ -37,11 +38,7 @@ Algorithm \ref{alg:algOnline} describes the online computation. The inputs are t
 		\ENDWHILE
 	\end{algorithmic}
 \end{algorithm}
-
-
-Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the planning and tracking model states (and therefore the relative state) to zero. The tracking error bound in the planning frame of reference is computed using (\ref{eq:TEBp}). Note that by initializing the relative state to be zero we can use the smallest possible invariant $\TEB_\pstate$ for the entire online computation. 
-
-The obstacle block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. The sensor detects obstacles $\obsSense$ within the sensing distance around the vehicle. Once sensed, the obstacles $\obsSense$ are augmented by $\TEB_\pstate(0)$ using the Minkowski sum. The returned obstacles $\obsAug$ are padded by the tracking error bound to ensure that no unsafe path can be generated. Note that the minimum allowable sensing distance to guarantee safety is $\senseDist = 2\TEB_\pstate(0) + \dx$, where $\dx$ is the largest possible step in space that the planner can make in one time step.
+The tracking error bound block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. The sensor detects obstacles $\obsSense$ within the sensing distance around the vehicle. Once sensed, the obstacles $\obsSense$ are augmented by $\TEB_\pstate(0)$ using the Minkowski sum. The returned obstacles $\obsAug$ are padded by the tracking error bound to ensure that no unsafe path can be generated \footnote{Note that the minimum allowable sensing distance to guarantee safety is $\senseDist = 2\TEB_\pstate(0) + \dx$, where $\dx$ is the largest possible step in space that the planner can make in one time step.}
 
 %\SHnote{The planning distance is the distance that the path planner (and thus the planning model) may take for each iteration of the online algorithm, and is chosen to be $0< \dx \leq \TEB$. This in turn determines the time step of each iteration (as shown on line \ref{ln:dt}): , where $v_{max}$ is the maximum speed of the planning model.}
 

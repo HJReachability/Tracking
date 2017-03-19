@@ -3,7 +3,7 @@
 The offline computation begins with setting up a capture-avoid game \cite{Huang11, Chen17} between the tracking system and the planning system, which we then analyze using HJ reachability. In this game, the tracking system will try to ``capture" the planning system, while the planning system is doing everything it can to avoid capture. In reality the planner is typically not actively trying to avoid the tracking system, but this allows us to account for worst-case scenarios. If both systems are acting optimally in this way, we want to determine the largest relative distance that may occur over time. This distance is the maximum possible tracking error between the two systems.
 
 \subsection{Relative Dynamics}
-To determine the relative distance that may occur over time we must first define the relative states and dynamics between the tracking and planning models. The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). The relative system is found by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model, as shown below. \MCnote{In response to Somil's comment, perhaps we can write out $Q$ in the numerical example section, and refer to that here.}
+To determine the relative distance that may occur over time we must first define the relative states and dynamics between the tracking and planning models. The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). The relative system is found by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model, as shown below.
 
 \begin{equation}
 \label{eq:rdyn}
@@ -12,7 +12,7 @@ To determine the relative distance that may occur over time we must first define
 \end{aligned}
 \end{equation}
 
-Matrix $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model. The relative states $\rstate$ now represent the tracking states relative to the planning states. A similar matrix $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. \MCnote{$W$ can just be $Q$ transpose (or pseudoinverse?) I think} This will be used to update the planning model in the online algorithm.
+where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}). The relative states $\rstate$ now represent the tracking states relative to the planning states. Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. This will be used to update the planning model in the online algorithm.
 
 \subsection{Formalizing the Capture-Avoid Game}
 Now that we have the relative dynamics between the two systems we must define a metric for the tracking error bound between these systems. We do this by defining an implicit surface function as a cost function $\errfunc(\rstate)$ in the new frame of reference. Because the metric we care about is distance to the origin (and thus distance to the planner), this cost function can be as simple as distance in position space to the origin. An example can be seen in Fig. \ref{fig:quad4D_example}-a, where $\errfunc(\rstate)$ is defined for a 4D quadrotor model tracking a 2D kinematic planning model. The contour rings beneath the function represent varying level sets of the cost function. The tracking system will try to minimize this cost to reduce the relative distance, while the planning system will do the opposite.
@@ -71,7 +71,7 @@ In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result
 \begin{equation} \label{eq:TEBp}
 \TEB_\pstate(\tstate) = \{\pstate: \valfunc_\infty(\tstate-\ptmat\pstate) \le \underline\valfunc\}
 \end{equation}
-This is the tracking error bound that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. We now prove Proposition \ref{prop:main}.
+This is the tracking error bound that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. Within this bound the tracking system may use any controller, but on the border of this bound the tracking system must use the safety optimal controller. We now prove Proposition \ref{prop:main}.
 
 \begin{proof}
 Without loss of generality, assume $\tvar_1=0$. By definition, we have
@@ -105,9 +105,6 @@ Now, \eqref{eq:valfunc_ineq} implies
 \end{aligned}
 \end{equation} 
 \end{proof} 
-
- 
- 
  \begin{rem} 
    Proposition \ref{prop:main} is very similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In our work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to perform solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
  \end{rem}
