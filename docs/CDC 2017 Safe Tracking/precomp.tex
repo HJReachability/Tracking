@@ -45,7 +45,6 @@ In the context of the online framework, the value function $\valfunc_\infty(\rst
       \label{eq:conv_valfunc}
       \valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty}\valfunc(\rstate, T)
       \end{equation}
- 
    Then $\forall \tvar_1, \tvar_2$ with $\tvar_2 \ge \tvar_1$,
    \begin{equation}
    \label{eq:invariant}
@@ -53,10 +52,23 @@ In the context of the online framework, the value function $\valfunc_\infty(\rst
    \end{equation}
    \begin{equation}
    \begin{aligned}
-   & \rtraj^*(\tvar;, \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \\
-   & \tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{ \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl(\cdot), \dstb(\cdot))) \big\}\\
+   \rtraj^*(\tvar;, \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \\
+   \end{aligned}
+   \end{equation}
+   \begin{equation}
+   \begin{aligned}
+   &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\\
+   & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl(\cdot), \dstb(\cdot))) \big\}\\
+    \end{aligned}
+   \end{equation}
+   \begin{equation}
+   \begin{aligned}
    & \pctrl^*(\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \\
    & \qquad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl(\cdot), \dstb(\cdot))) \big\} \\
+    \end{aligned}
+   \end{equation}
+   \begin{equation}
+   \begin{aligned}
    & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
    & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl(\cdot),  \dstb(\cdot))) \big\}
    \end{aligned}
@@ -97,9 +109,7 @@ By time-invariance, for some $\tvar_2 > 0$,
 &= \rtraj^*(\tvar; \rtraj^*(\tvar_2; \rstate, 0), 0)
 \end{aligned}
 \end{equation}
-
 Now, \eqref{eq:valfunc_ineq} implies
-
 \begin{equation}
 \begin{aligned}
 \valfunc_\infty(\rstate) &\ge \lim_{\thor\rightarrow\infty}\max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rtraj^*(\tvar_2; \rstate, 0), 0)) \\

@@ -8,7 +8,7 @@ Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the pl
 	\caption{Online Trajectory Planning}
 	\label{alg:algOnline}
 	\begin{algorithmic}[1]
-		\STATE Inputs: tracking error function $\valfunc(\rstate)$, safety control function $\deriv(\rstate)$
+		%\STATE Inputs: tracking error function $\valfunc(\rstate)$, safety control function $\deriv(\rstate)$
 		\STATE \textbf{Initialization}: \label{ln:Istart}
 		\STATE $\pstate = \tstate = \rstate = 0$
 		\STATE $\TEB_\pstate(0) = \{\pstate: \valfunc_\infty(0) \le \underline\valfunc\}$ \label{ln:Iend}
@@ -38,11 +38,11 @@ Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the pl
 		\ENDWHILE
 	\end{algorithmic}
 \end{algorithm}
-The tracking error bound block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. The sensor detects obstacles $\obsSense$ within the sensing distance around the vehicle. Once sensed, the obstacles $\obsSense$ are augmented by $\TEB_\pstate(0)$ using the Minkowski sum. The returned obstacles $\obsAug$ are padded by the tracking error bound to ensure that no unsafe path can be generated \footnote{Note that the minimum allowable sensing distance to guarantee safety is $\senseDist = 2\TEB_\pstate(0) + \dx$, where $\dx$ is the largest possible step in space that the planner can make in one time step.}
+The tracking error bound block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. The sensor detects obstacles $\obsSense$ within the sensing distance around the vehicle. The sensed obstacles are augmented by $\TEB_\pstate(0)$ using the Minkowski sum. This is done to ensure that no unsafe path can be generated\footnote{Note that the minimum allowable sensing distance to guarantee safety is $\senseDist = 2\TEB_\pstate(0) + \dx$, where $\dx$ is the largest possible step in space that the planner can make in one time step.}.
 
 %\SHnote{The planning distance is the distance that the path planner (and thus the planning model) may take for each iteration of the online algorithm, and is chosen to be $0< \dx \leq \TEB$. This in turn determines the time step of each iteration (as shown on line \ref{ln:dt}): , where $v_{max}$ is the maximum speed of the planning model.}
 
- The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented obstacles $\obsAug$, and outputs the next state of the planning system $\pstate_{next}$. The hybrid tracking controller block (lines \ref{ln:controllerStart}-\ref{ln:controllerEnd}) first computes the updated relative state $\rstate_{next}$. If the relative state is on the tracking bound $\TEB_\pstate(0)$, the safety controller must be used to remain within the guaranteed safe bound. The safety control is given by
+ The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented obstacles $\obsAug$, and outputs the next state of the planning system $\pstate_{next}$. The hybrid tracking controller block (lines \ref{ln:controllerStart}-\ref{ln:controllerEnd}) first computes the updated relative state $\rstate_{next}$. If the $\rstate_{next}$ is on the tracking bound $\TEB_\pstate(0)$, the safety controller must be used to remain within the safe bound. The safety control is given by:
 \begin{equation}
 	\tctrl^* = \arg\min_{\tctrl} \nabla\valfunc(\rstate_{next}) \cdot \rdyn(\rstate_{next},\tctrl,\pctrl,\dstb)
 \end{equation}
