@@ -1,6 +1,5 @@
 % !TEX root = tracking.tex
 \section{Online Computation \label{sec:online}}
-
 Algorithm \ref{alg:algOnline} describes the online computation. The inputs are the tracking error function $\valfunc_\infty(\rstate)$ and the safety control look-up function $\deriv_\infty(\rstate)$. Note that when discretized on a computer these functions will be look-up tables; practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and are not the focus of our paper.
 
 Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the planning and tracking model states (and therefore the relative state) to zero. The tracking error bound in the planning frame of reference is computed using (\ref{eq:TEBp}). Note that by initializing the relative state to be zero we can use the smallest possible invariant $\TEB_\pstate$ for the entire online computation. 
