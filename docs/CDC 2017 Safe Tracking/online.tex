@@ -38,7 +38,7 @@ Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the pl
 		\ENDWHILE
 	\end{algorithmic}
 \end{algorithm}
-The tracking error bound block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. The sensor detects obstacles $\obsSense$ within the sensing distance around the vehicle. The sensed obstacles are augmented by $\TEB_\pstate(0)$ using the Minkowski sum. This is done to ensure that no unsafe path can be generated\footnote{Note that the minimum allowable sensing distance to guarantee safety is $\senseDist = 2\TEB_\pstate(0) + \dx$, where $\dx$ is the largest possible step in space that the planner can make in one time step.}.
+The tracking error bound block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. The sensor detects obstacles $\obsSense$ within the sensing distance around the vehicle. The sensed obstacles are augmented by $\TEB_\pstate(0)$ using the Minkowski sum. This is done to ensure that no unsafe path can be generated\footnote{The minimum allowable sensing distance is $\senseDist = 2\TEB_\pstate(0) + \dx$, where $\dx$ is the largest step in space that the planner can make in one time step.}.
 
 %\SHnote{The planning distance is the distance that the path planner (and thus the planning model) may take for each iteration of the online algorithm, and is chosen to be $0< \dx \leq \TEB$. This in turn determines the time step of each iteration (as shown on line \ref{ln:dt}): , where $v_{max}$ is the maximum speed of the planning model.}
 

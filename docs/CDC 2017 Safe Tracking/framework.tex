@@ -22,7 +22,7 @@ The tracking system is a model of the physical system (such as a quadrotor). The
 The hybrid tracking controller is expanded in Fig. \ref{fig:hybrid_ctrl} and consists of two controllers: a safety controller and a performance controller. In general, there may be multiple safety and performance controllers depending on various factors such as observed size of disturbances, but for simplicity we will just consider one safety and one performance controller in this paper. The safety controller consists of a function (or look-up table) computed offline via HJ reachability, and guarantees that the tracking error bound is not violated, \textit{despite the worst-case disturbance}. In addition, the table look-up operation is computationally inexpensive. When the system is close to violating the tracking error bound, the safety controller must be used to prevent the violation. On the other hand, when the system is far from violating the tracking error bound, any controller (such as one that minimizes fuel usage), can be used. This control is used to update the tracking system, which in turn updates the planning system, and the process repeats.
 \begin{figure}[h!]
   \centering
-	\includegraphics[width=0.95\columnwidth]{fig/hybrid_controller}
+	\includegraphics[width=0.9\columnwidth]{fig/hybrid_controller}
 	\caption{Hybrid controller}
 	\label{fig:hybrid_ctrl}
 	\vspace{-.1in}
@@ -31,7 +31,7 @@ The hybrid tracking controller is expanded in Fig. \ref{fig:hybrid_ctrl} and con
 To determine both the tracking error bound and safety controller functions/look-up tables, an offline framework is used as shown in Fig. \ref{fig:fw_offline}. The planning and tracking system dynamics are plugged into an HJ reachability computation, which computes a value function that acts as the tracking error bound function/look-up table. The spatial gradients of the value function comprise the safety controller function/look-up table. These functions are independent of the online computations---they depend only on the \textit{relative} states and dynamics between the planning and tracking systems, not on the absolute states along the trajectory at execution time.
 \begin{figure}[h!]
   \centering
-	\includegraphics[width=0.95\columnwidth]{fig/framework_offline}
+	\includegraphics[width=0.9\columnwidth]{fig/framework_offline}
 	\caption{Offline framework}
 	\label{fig:fw_offline}
 	%\vspace{-.1in}

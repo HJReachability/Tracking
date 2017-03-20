@@ -2,15 +2,15 @@
 \section{10D Quadrotor RRT Example \label{sec:results}}
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.8\textwidth]{fig/quad10D_example_cost}
+	\includegraphics[width=0.7\textwidth]{fig/quad10D_example_cost}
 	\caption{On the left are the cost and value functions over a 2D slice of the 10D relative state space, with contour lines showing three level sets of these functions. On the right are 3D projections of these level sets at the same slice $(v_{x},v_{y},v_{z})=[1, -1, 1]$ m/s, $(\theta_{x},\omega_{x},\theta_{y},\omega_{y})=0$. The solid boxes show initial relative states, and the transparent boxes show the corresponding tracking error bound. In practice we set the initial relative states to 0 to find the smallest invariant tracking error bound.}
 	\label{fig:quad10D_example}
 		\vspace{-.2in}
 	\end{figure*} 
 \begin{figure}
 	\centering
-	\includegraphics[width=0.3\textwidth]{fig/quad10D_slices}
-	\caption{Various 3D slices along different dimensions of the 10D relative states (solid) and the corresponding tracking error bound (transparent)}
+	\includegraphics[width=0.25\textwidth]{fig/quad10D_slices}
+	\caption{Various 3D slices of the 10D relative states (solid) and the corresponding tracking error bound (transparent)}
 	\label{fig:quad10D_example_slices}
 		\vspace{-.21in}
 \end{figure} 
@@ -140,9 +140,9 @@ Fig. \ref{fig:sim} shows the simulation results. Four time snapshots are shown. 
 		\includegraphics[width=\columnwidth]{fig/1042}
 		\caption{}
 	\end{subfigure}
-	
-	\caption{Numerical simulation. The tracking model trajectory is shown in blue, the planning model position in magenta, unseen obstacles in gray, and seen obstacles in red. The goal is marked by the green circle, and the translucent blue box around the planning model position represents the tracking error bound. The top left subplot shows the entire trajectory, while the other subplots zoom in on the positions marked in the top left subplot. The camera angle is also adjusted to illustrate our theoretical guarantees on tracking error and robustness in planning. A video of this simulation can be found at https://youtu.be/ZVvyeK-a62E \label{fig:sim}}
-	\vspace{-.3in}
+	\vspace{-.1in}
+	\caption{Numerical simulation. The tracking model trajectory is shown in blue, the planning model position in magenta, unseen obstacles in gray, and seen obstacles in red. The goal is marked by the green circle, and the translucent blue box represents the tracking error bound. The top left subplot shows the entire trajectory; the other subplots zoom in on the positions marked in the top left subplot. The camera angle is also adjusted to illustrate our theoretical guarantees on tracking error and robustness in planning. A video of this simulation can be found at https://youtu.be/ZVvyeK-a62E \label{fig:sim}}
+	\vspace{-.2in}
 \end{figure}
 
 The position of the tracking model is shown in blue. Throughout the simulation, the tracking model's position is always inside the tracking error, in agreement with Proposition \ref{prop:main}. In addition, the tracking error bound never intersects with the obstacles, a consequence of the RRT planner planning with respect to a set of augmented obstacles (not shown). In the latter two subplots, one can see that the quadrotor appears to be exploring the environment briefly before reaching the goal. In this paper, we did not employ any exploration algorithm; this exploration behavior is simply emerging from replanning using RRT whenever a new part (a $3$ m$^2$ portion) of an obstacle is sensed.
