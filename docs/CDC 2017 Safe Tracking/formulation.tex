@@ -1,6 +1,6 @@
 % !TEX root = tracking.tex
 \section{Problem Formulation \label{sec:formulation}}
-In this paper we seek to simultaneously plan and track a trajectory (or a path converted to a trajectory) online and in real time. The planning is done using a kinematic or dynamic planning model. The tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known a priori or can be observed by the system within a limited sensing range (as described in Section \ref{sec:online}). In this section we will define the tracking model and planning model, as well as the goals of the paper.
+In this paper we seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online and in real time. The planning is done using a kinematic or dynamic planning model. The tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known a priori or can be observed by the system within a limited sensing range (see Section \ref{sec:online}). In this section we will define the tracking and planning models, as well as the goals of the paper.
 
 \subsection{Tracking Model}
 The tracking model is a representation of the true autonomous system dynamics, and in general may be nonlinear and high-dimensional. Let $\tstate$ represent the state variables of the tracking model. The evolution of the dynamics satisfy the ordinary differential equation: 
@@ -35,8 +35,7 @@ The planning model is used by the path or trajectory planner to solve for the de
 \frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \pstate \in \pset, \ \underline{\pctrl} \leq \pctrl \leq \bar{\pctrl}
 \end{aligned}
 \end{equation}
-
-Note that the planning model does not involve a disturbance input. This is one of the key features of FASTrackHD: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances \footnote{If a desired planner \textit{does} account for disturbances this can be easily modified to incorporate disturbances}.
+Note that the planning model does not involve a disturbance input. This is a key feature of FASTrackHD: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances \footnote{If a desired planner \textit{does} account for disturbances this can be easily modified to incorporate disturbances}.
 
 \subsection{Goals of This Paper}
 The goals of the paper are threefold:

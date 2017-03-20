@@ -192,15 +192,15 @@ M.~Chen, Z.~Zhou, and C.~J. Tomlin, ``{Multiplayer Reach-Avoid Games via
   http://ieeexplore.ieee.org/document/7486004/}
 \BIBentrySTDinterwordspacing
 
-\bibitem{Akametalu2014}
-A.~K. Akametalu, J.~F. Fisac, J.~H. Gillula, S.~Kaynama, M.~N. Zeilinger, and
-  C.~J. Tomlin, ``{Reachability-based safe learning with Gaussian processes},''
-  in \emph{Proc. IEEE Conf. on Decision and Control}, Dec. 2014.
-
 \bibitem{Mitchell05}
 I.~Mitchell, A.~Bayen, and C.~Tomlin, ``A time-dependent {Hamilton-Jacobi}
   formulation of reachable sets for continuous dynamic games,'' \emph{IEEE
   Transactions on Automatic Control}, vol.~50, no.~7, pp. 947--957, July 2005.
+
+\bibitem{Akametalu2014}
+A.~K. Akametalu, J.~F. Fisac, J.~H. Gillula, S.~Kaynama, M.~N. Zeilinger, and
+  C.~J. Tomlin, ``{Reachability-based safe learning with Gaussian processes},''
+  in \emph{Proc. IEEE Conf. on Decision and Control}, Dec. 2014.
 
 \bibitem{Mitchell2012}
 I.~M. Mitchell, M.~Chen, and M.~Oishi, ``{Ensuring safety of nonlinear sampled
@@ -223,16 +223,15 @@ P.~Bouffard, ``On-board model predictive control of a quadrotor helicopter:
   Design, implementation, and experiments,'' Master's thesis, University of
   California, Berkeley, 2012.
 
-\bibitem{Chen2016b}
+\bibitem{Chen2016DecouplingExact}
+M.~Chen, S.~Herbert, and C.~J. Tomlin, ``Exact and efficient
+  hamilton-jacobi-based guaranteed safety analysis via system decomposition,''
+  \emph{arXiv preprint arXiv:1609.05248}, 2016.
+
+\bibitem{Chen2016DecouplingJournal}
 M.~Chen, S.~L. Herbert, M.~S. Vashishtha, S.~Bansal, and C.~J. Tomlin, ``A
   general system decomposition method for computing reachable sets and tubes,''
   \emph{arXiv preprint arXiv:1611.00122}, 2016.
-
-\bibitem{Chen2016a}
-M.~Chen, S.~Herbert, and C.~J. Tomlin, ``Fast reachable set approximations via
-  state decoupling disturbances,'' in \emph{Decision and Control (CDC), 2016
-  IEEE 55th Conference on}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE, 2016,
-  pp. 191--196.
 
 \bibitem{Gavin2013}
 \BIBentryALTinterwordspacing
