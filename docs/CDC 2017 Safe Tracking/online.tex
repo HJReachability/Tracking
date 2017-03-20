@@ -23,12 +23,12 @@ Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the pl
 		\STATE $\rstate_{next} = \tstate - \ptmat\pstate_{next}$
 		
 		\IF{$\rstate_{next}$ is on boundary $\TEB_\pstate(0)$} 
-		\STATE {use safety controller:}
-		\STATE {$\tctrl* = \arg\min_{\tctrl}<\rdyn(\rstate_{next},\tctrl,\pctrl,\dstb),\deriv\{\rstate_{next}\}>$}
-		\ELSE \STATE{use performance controller} \ENDIF \label{ln:controllerEnd}
+		\STATE {use safety controller: $\tctrl \leftarrow \tctrl^*$ in \eqref{eq:opt_ctrl}}
+		\ELSE \STATE{use performance controller: } 
+          \STATE{$\tctrl \leftarrow$ desired controller} \ENDIF \label{ln:controllerEnd}
 		
 		\STATE \textbf{Tracking Model Block}: \label{ln:trackingStart}
-		\STATE apply control $\tctrl*$ to vehicle for a time step of $\dt$, save next state as $\tstate_{next}$ \label{ln:trackingEnd}
+		\STATE apply control $\tctrl$ to vehicle for a time step of $\dt$, save next state as $\tstate_{next}$ \label{ln:trackingEnd}
 		
 		\STATE \textbf{Planning Model Block}:\label{ln:planningStart}
 		\STATE $\pstate = \tpmat\tstate_{next}$
@@ -43,7 +43,8 @@ The tracking error bound block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEn
 
  The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented obstacles $\obsAug$, and outputs the next state of the planning system $\pstate_{next}$. The hybrid tracking controller block (lines \ref{ln:controllerStart}-\ref{ln:controllerEnd}) first computes the updated relative state $\rstate_{next}$. If the $\rstate_{next}$ is on the tracking bound $\TEB_\pstate(0)$, the safety controller must be used to remain within the safe bound. The safety control is given by:
 \begin{equation}
-	\tctrl^* = \arg\min_{\tctrl} \nabla\valfunc(\rstate_{next}) \cdot \rdyn(\rstate_{next},\tctrl,\pctrl,\dstb)
+  \label{eq:opt_ctrl}
+	\tctrl^* = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate_{next}) \cdot \rdyn(\rstate_{next},\tctrl,\pctrl,\dstb)
 \end{equation}
 For many practical systems (such as control affine systems), this minimization can be found extremely quickly.
 
