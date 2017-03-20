@@ -35,7 +35,7 @@ The planning model is used by the path or trajectory planner to solve for the de
 \frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \pstate \in \pset, \ \underline{\pctrl} \leq \pctrl \leq \bar{\pctrl}
 \end{aligned}
 \end{equation}
-Note that the planning model does not involve a disturbance input. This is a key feature of FaSTrackHD: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances.
+Note that the planning model does not involve a disturbance input. This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances.
 
 \subsection{Goals of This Paper}
 The goals of the paper are threefold:
