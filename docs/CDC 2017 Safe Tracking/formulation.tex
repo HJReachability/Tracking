@@ -3,7 +3,7 @@
 In this paper we seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online and in real time. The planning is done using a kinematic or dynamic planning model. The tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known a priori or can be observed by the system within a limited sensing range (see Section \ref{sec:online}). In this section we will define the tracking and planning models, as well as the goals of the paper.
 
 \subsection{Tracking Model}
-The tracking model is a representation of the true autonomous system dynamics, and in general may be nonlinear and high-dimensional. Let $\tstate$ represent the state variables of the tracking model. The evolution of the dynamics satisfy the ordinary differential equation: 
+The tracking model is a representation of the autonomous system dynamics, and in general may be nonlinear and high-dimensional. Let $\tstate$ represent the state variables of the tracking model. The evolution of the dynamics satisfy the ordinary differential equation: 
 \begin{equation}
 \begin{aligned}
 \label{eq:tdyn}
@@ -28,11 +28,11 @@ where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under the
 \end{equation}
 
 \subsection{Planning Model}
-The planning model is used by the path or trajectory planner to solve for the desired path online. The dynamics of the system can be kinematic or dynamic depending on the requirements of the planner. Let $\pstate$ represent the state variables of the planning model, with control $\pctrl$. The planning states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$. The dynamics similarly satisfy the ordinary differential equation:
+The planning model is used by the path or trajectory planner to solve for the desired path online. Kinematics or low-dimensional dynamics are typically used depending on the requirements of the planner. Let $\pstate$ represent the state variables of the planning model, with control $\pctrl$. The planning states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$. The dynamics similarly satisfy the ordinary differential equation:
 \begin{equation}
 \begin{aligned}
 \label{eq:pdyn}
-\frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \pstate \in \pset, \ \underline{\pctrl} \leq \pctrl \leq \bar{\pctrl}
+\frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \pstate \in \pset, \ \underline{\pctrl} \leq \pctrl \leq \overline{\pctrl}
 \end{aligned}
 \end{equation}
 Note that the planning model does not involve a disturbance input. This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances.
