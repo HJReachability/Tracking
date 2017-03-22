@@ -36,7 +36,6 @@ To determine both the tracking error bound and safety controller functions/look-
 	\label{fig:fw_offline}
 	%\vspace{-.1in}
 \end{figure}
-
 In the following sections we will first explain the precomputation steps taken in the offline framework. We will then walk through the online framework and provide a complete example.
 %Besides the virtual state, the planner also takes into account any obstacles that must be avoided. In order to be robust to disturbances, planning must be done with a safety margin that accounts for disturbances. A safety margin that guarantees robustness despite the worst-case disturbance is given by a tracking error bound obtained in the offline HJ reachability computation, shown in Fig. \ref{fig:fw_offline} and explained in detail in \MCnote{Section \ref{}}. The virtual and real system dynamics are used to compute a value function, which simultaneously gives the tracking error bound and the safety controller look-up table used by the hybrid tracking controller.
 %
