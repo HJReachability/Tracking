@@ -1,12 +1,46 @@
 % !TEX root = tracking.tex
-\section{Problem Formulation}
-System dynamics, assumptions on dynamics
+\section{Problem Formulation \label{sec:formulation}}
+In this paper we seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online and in real time. The planning is done using a kinematic or dynamic planning model. The tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known a priori or can be observed by the system within a limited sensing range (see Section \ref{sec:online}). In this section we will define the tracking and planning models, as well as the goals of the paper.
 
-Uncertain and certain parts of the dynamics
+\subsection{Tracking Model}
+The tracking model is a representation of the autonomous system dynamics, and in general may be nonlinear and high-dimensional. Let $\tstate$ represent the state variables of the tracking model. The evolution of the dynamics satisfy the ordinary differential equation: 
+\begin{equation}
+\begin{aligned}
+\label{eq:tdyn}
+\frac{d\tstate}{d\tvar} = \dot{\tstate} = \tdyn(\tstate, \tctrl, \dstb), \tvar \in [0, \thor] \\
+\tstate \in \tset, \tctrl \in \tcset, \dstb \in \dset
+\end{aligned}
+\end{equation}
+We assume that the system dynamics $\tdyn : \tset\ \times\ \tcset \times \dset \rightarrow \tset$ are uniformly continuous, bounded, and Lipschitz continuous in $\tstate$ for fixed control $\tctrl$. The control function $\tctrl(\cdot)$ and disturbance function $\dstb(\cdot)$ are drawn from the following sets:
+\begin{equation}
+\begin{aligned}
+\tctrl(\cdot) \in \tcfset(t) = \{\phi: [0, \thor] \rightarrow \tcset: \phi(\cdot) \text{ is measurable}\}\\
+\dstb(\cdot) \in \dfset(t) = \{\phi: [0, \thor] \rightarrow \dset: \phi(\cdot) \text{ is measurable}\}
+\end{aligned}
+\end{equation}
+where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn}) for a given $\tctrl(\cdot) \in \tcset$ \cite{Coddington84}. The trajectories of (\ref{eq:tdyn}) that solve this ODE will be denoted as $\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot))$, where $\tvar_0,\tvar \in [0, \thor]$ and $\tvar_0 \leq \tvar$. These trajectories will satisfy the initial condition and the ODE (\ref{eq:tdyn}) almost everywhere:
+\begin{equation}
+\label{eq:fdyn_traj}
+\begin{aligned}
+\frac{d}{d\tvar}\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot)) &= \tdyn(\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot)), \tctrl(\tvar)) \\
+\ttraj(\tvar; \tstate, \tvar, \tctrl(\cdot)) &= \tstate
+\end{aligned}
+\end{equation}
 
-Goals:
-Plan a trajectory to reach goal despite worst-case disturbances
+\subsection{Planning Model}
+The planning model is used by the path or trajectory planner to solve for the desired path online. Kinematics or low-dimensional dynamics are typically used depending on the requirements of the planner. Let $\pstate$ represent the state variables of the planning model, with control $\pctrl$. The planning states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$. The dynamics similarly satisfy the ordinary differential equation:
+\begin{equation}
+\begin{aligned}
+\label{eq:pdyn}
+\frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \pstate \in \pset, \ \underline{\pctrl} \leq \pctrl \leq \overline{\pctrl}
+\end{aligned}
+\end{equation}
+Note that the planning model does not involve a disturbance input. This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances.
 
-Re-planning must be done in real-time when a new obstacle is found, to account for unknown environments
-
-Tracking must take advantage of realized disturbances (not worst-case)
+\subsection{Goals of This Paper}
+The goals of the paper are threefold:
+\begin{enumerate}
+	\item To provide a tool for precomputing functions (or look-up tables) to determine a guaranteed tracking error bound between tracking and planning models, and optimal safety controller for robust motion planning with nonlinear dynamic systems
+	\item To develop a framework for easily implementing this tool with fast real-time path and trajectory planners.
+	\item To demonstrate the tool and framework in an example using a high dimensional system
+\end{enumerate}

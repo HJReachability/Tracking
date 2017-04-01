@@ -2,65 +2,112 @@
 %2345678901234567890123456789012345678901234567890123456789012345678901234567890
 %        1         2         3         4         5         6         7         8
 
-%\documentclass[letterpaper, 10 pt, conference]{ieeeconf}  % Comment this line out
-                                                          % if you need a4paper
-\documentclass[letterpaper, 10pt, conference]{ieeeconf}      % Use this line for a4
-                                                          % paper
+%\documentclass[12pt, draftcls, onecolumn]{IEEEtran}
+\documentclass[journal]{IEEEtran}                                                   
 
  
 \IEEEoverridecommandlockouts                              % This command is only
                                                           % needed if you want to
                                                           % use the \thanks command
-\overrideIEEEmargins
-% See the \addtolength command later in the file to balance the column lengths
-% on the last page of the document
 
 \usepackage{amsmath}    % need for sub equations
 \usepackage{amsfonts}
 \usepackage{graphicx}   % need for figures
 \usepackage{subcaption}
 \usepackage{epsfig} 
+\usepackage{algorithmic}
 \usepackage{color}
 \usepackage[normalem]{ulem}
 \usepackage{cancel}
 \usepackage{amssymb}
 \usepackage{color}
-%\usepackage{my_macros}
+
 \usepackage[ruled,vlined,titlenotnumbered]{algorithm2e} 
+\usepackage{cite}
+\usepackage{float}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\xset}{\mathcal{X}}
+\newcommand{\yset}{\mathcal{Y}}
+\newcommand{\xfset}{\mathbb{X}}
+\newcommand{\yfset}{\mathbb{Y}}
+
+\newcommand{\reachset}{\mathcal{V}}
+\newcommand{\targetset}{\mathcal{L}}
+\newcommand{\traj}{\zeta} % trajectory
+
+
+\newcommand{\pcset}{\mathcal{U}_p} %planner control set
+\newcommand{\pcfset}{\mathbb{U}_p} %planner control function set
+\newcommand{\tcset}{\mathcal{U}_s} %tracker control set
+\newcommand{\tcfset}{\mathbb{U}_s} %tracker control funciton set
+\newcommand{\dset}{\mathcal{D}}
+\newcommand{\dfset}{\mathbb{D}}
+
+\newcommand{\pset}{\mathcal{P}} %planner set set
+\newcommand{\tset}{\mathcal{S}} %tracker set
+\newcommand{\rset}{\mathcal{R}}
 
 \newcommand{\tvar}{t}
 \newcommand{\thor}{T} % Time horizon
 
-\newcommand{\vstate}{x} % Vehicle state
-\newcommand{\tstate}{y} % Trajectory state
-\newcommand{\rstate}{z} % Relative state
+\newcommand{\tstate}{s} % Tracker state
+\newcommand{\pstate}{p} % Planner state
+\newcommand{\rstate}{r} % Relative state
 
-\newcommand{\vtraj}{\xi_\vdyn}
-\newcommand{\ttraj}{\xi_\tdyn}
+
+\newcommand{\ttraj}{\xi_{\tdyn}} % Tracker trajectory
+\newcommand{\ptraj}{\xi_{\pdyn}} %Planner trajectory
 \newcommand{\rtraj}{\xi_\rdyn}
 
-\newcommand{\vctrl}{u} % Vehicle control
+\newcommand{\senseDist}{m}
+
+
+\newcommand{\tctrl}{u_s} % Tracker control
 \newcommand{\dstb}{d} % Disturbance
-\newcommand{\tctrl}{w} % Trajectory control
+\newcommand{\pctrl}{u_p} % Planner control
 
-\newcommand{\vdyn}{f} % Vehicle dynamics
-\newcommand{\tdyn}{g} % Trajectory dynamics
-\newcommand{\rdyn}{r} % Relative dynamics
+\newcommand{\tdyn}{f} % Tracker dynamics
+\newcommand{\pdyn}{h} % Planner Dynamics
+\newcommand{\rdyn}{g} % Relative dynamics
 
-\newcommand{\tvind}{s} % Index of vehicle state corresponding to trajectory state
-\newcommand{\tvmat}{R} % Matrix for transforming trajectory state to the same length as vehicle state
+\newcommand{\plannerfunc}{j}
+
+\newcommand{\ptind}{i} % Index of vehicle state corresponding to planner state
+\newcommand{\ptmat}{Q} % Matrix for transforming planner state to the same length as tracker state
+\newcommand{\tpmat}{Q^T}
 
 \newcommand{\errfunc}{l} % Error function
 \newcommand{\valfunc}{V} % Value function
 
+\newcommand{\deriv}{\nabla\valfunc} %gradient look-up table
+
+\newcommand{\dx}{\Delta x} %distance allowed in a time step
+\newcommand{\dt}{\Delta t} %time step
+
+\newcommand{\obsSense}{\mathcal{O}_{sense}}
+\newcommand{\obsAug}{\mathcal{O}_{aug}}
+
+
+
+\newcommand{\TEB}{\mathcal B} % tracking error bound
+
 \newtheorem{thm}{Theorem}
+\newtheorem{claim}{Claim}
+\newtheorem{rem}{Remark}
 \newtheorem{prop}{Proposition}
+\newtheorem{proof}{IEEEproof}
 
-\title{\LARGE \bf Real-Time Provably Safe Planning Flexible/Modular Reachability Pursuit Evasion}
+\newcommand{\MCnote}{\textcolor{blue}}
+\newcommand{\SHnote}{\textcolor{red}}
 
-\author{authors
-\thanks{\color{red}This work has been supported in part by NSF under CPS:ActionWebs (CNS-931843), by ONR under the HUNT (N0014-08-0696) and SMARTS (N00014-09-1-1051) MURIs and by grant N00014-12-1-0609, by AFOSR under the CHASE MURI (FA9550-10-1-0567). The research of M. Chen has received funding from the ``NSERC PGS-D'' Program.}
-}
+\title{\LARGE \bf FaSTrack Journal Version}
+
+\author{}
+%\author{Sylvia L. Herbert*, Mo Chen*, SooJean Han, Somil Bansal, Jaime F. Fisac, and Claire J. Tomlin
+%\thanks{This research is supported by ONR under the Embedded Humans MURI (N00014-16-1-2206). The research of S. Herbert has received funding from the NSF GRFP and the UC Berkeley Chancellor's Fellowship Program.}
+%\thanks{* Both authors contributed equally to this work. All authors are with the Department of Electrical Engineering and Computer Sciences, University of California, Berkeley. \{sylvia.herbert, mochen72, soojean, somil, jfisac, tomlin\}@berkeley.edu}}
+
 
 \begin{document}
 \maketitle
@@ -69,7 +116,18 @@
 
 %%%
 \begin{abstract}
-Quadrotors have become very popular in research and industry for tasks that require exploration of unknown environments. However, there are limited techniques for fast, real-time path planning that ensure safety for the quadrotor. Simplified models of quadrotor dynamics are easy to plan, but do not capture nonlinear behavior. Guaranteed safe paths can be computed for more realistic and complicated dynamics of quadrotors, but these paths require heavy computational load. We propose a method that combines these two approaches. First we precompute a guaranteed tracking error bound for the realistic dynamics following a simplified dynamics model using reachability analysis. We then perform path planning in real-time using the simplified model. This results in a radius around the simplified model that our quadrotor is guaranteed to remain in.  \color{red} Path planning method, results, etc.
+
+Fast and safe navigation of dynamical systems through a priori unknown cluttered environments is vital to many applications of autonomous systems. However, trajectory planning for autonomous systems is computationally intensive, often requiring simplified dynamics that sacrifice safety and dynamic feasibility in order to plan efficiently. Conversely, safe trajectories can be computed using more sophisticated dynamic models, but this is typically too slow to be used for real-time planning. We propose a new algorithm FaSTrack: Fast and Safe Tracking for High Dimensional systems. A path or trajectory planner using simplified dynamics to plan quickly can be incorporated into the FaSTrack framework, which provides a safety controller for the vehicle along with a guaranteed tracking error bound. This bound captures all possible deviations due to high dimensional dynamics and external disturbances. Note that FaSTrack is modular and can be used with most current path or trajectory planners. We demonstrate this framework using a 10D nonlinear quadrotor model tracking a 3D path obtained from an RRT planner.
+%FaSTRackHD lets you take your favorite planning system and compute real-time trajectories based on simplified dynamics. FasSTRackHD then 
+%Our new algorithm uses nearly any simplified dynamics with planner based on simplified dynamics, while simultaneously tracking the trajectory using complex dynamics.
+
+%  FaSTRackHD is robust to external disturbances, guaranteed safe, and provides optimal control for the autonomous system.   of your favorite path or trajectory planner 
+
+%hat incorporates safety guarantees, even in the presence of external disturbances. 
+
+%which allows real-time path planning using simplified dynamics, yet maintains safety guarantees as well as providing optimal safety control for the autonomous system to track the planner. FaSTrackHD is modular and can be used to add robustness to most path or trajectory planners. 
+% This is done by an offline precomputation and an online planning computation. The offline computation consists of formulating a capture-avoid game between a simplified planning model and and more sophisticated tracking model. We then use Hamilton Jacobi reachability analysis to find the maximum possible tracking error bound between these two systems, as well as a safety control function mapping the current relative state between the systems to the optimal safety control for the tracking system. Online, path or trajectory planning can be performed in real-time using the planning model, where sensed obstacles are augmented by the tracking error bound. The tracking error bound captures all possible deviations that may occur due to nonlinearities or external disturbances. As the planning occurs, the autonomous system determines the relative state between itself and the next desired position, and uses the precomputed safety control function to find the optimal tracking control. 
+
 \end{abstract}
 
 \input{introduction.tex}
@@ -86,21 +144,25 @@ Quadrotors have become very popular in research and industry for tasks that requ
 %%how ours is different
 
 \input{formulation.tex}
+% formally introduce the problem
 
-\input{reachability.tex}
+\input{framework.tex}
+%framework of algorithm
+
+\input{precomp.tex}
 % Computing capture basin (~2.5p)
 %% HJ Reachability (~1p)
 %% Relative dynamics, setup, etc. (~1p)
 %% Capture basin computation (~0.5p)
 
-\input{rrt.tex}
+\input{online.tex}
+% online part of framework
 
-\input{mpc.tex}
-% Fast Path Planning using MPC (~1p)
-%% Potential methods to use (~.5p)
-%% Dealing with obstacles (~.5p)
+\input{reach_planner.tex}
 
-\input{results.tex}
+\input{rrt_planner.tex}
+
+\input{mpc_planner.tex}
 % Numerical Simulations (1-2p)
 %% demonstrate feasibility (~.5)
 %% real-time computation load (~.5)

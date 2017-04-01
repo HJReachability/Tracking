@@ -1,0 +1,53 @@
+% !TEX root = tracking.tex
+\section{Online Computation \label{sec:online}}
+Algorithm \ref{alg:algOnline} describes the online computation. The inputs are the tracking error function $\valfunc_\infty(\rstate)$ and the safety control look-up function $\deriv_\infty(\rstate)$. Note that when discretized on a computer these functions will be look-up tables; practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and are not the focus of our paper.
+
+Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the planning and tracking model states (and therefore the relative state) to zero. The tracking error bound in the planning frame of reference is computed using (\ref{eq:TEBp}). Note that by initializing the relative state to be zero we can use the smallest possible invariant $\TEB_\pstate$ for the entire online computation. 
+\begin{algorithm}	
+	\caption{Online Trajectory Planning}
+	\label{alg:algOnline}
+	\begin{algorithmic}[1]
+		%\STATE Inputs: tracking error function $\valfunc(\rstate)$, safety control function $\deriv(\rstate)$
+		\STATE \textbf{Initialization}: \label{ln:Istart}
+		\STATE $\pstate = \tstate = \rstate = 0$
+		\STATE $\TEB_\pstate(0) = \{\pstate: \valfunc_\infty(0) \le \underline\valfunc\}$ \label{ln:Iend}
+		
+		\WHILE{planning goal is not reached}
+		\STATE \textbf{Tracking Error Bound Block}: \label{ln:obsStart}
+		\STATE $\obsAug \leftarrow \obsSense + \TEB_\pstate(0)$ \label{ln:obsEnd}
+		
+		\STATE \textbf{Path Planner Block}:\label{ln:plannerStart}
+		\STATE $\pstate_{next} \leftarrow \plannerfunc(\pstate, \obsAug)$\label{ln:plannerEnd}
+		
+		\STATE \textbf{Hybrid Tracking Controller Block}:\label{ln:controllerStart}
+		\STATE $\rstate_{next} = \tstate - \ptmat\pstate_{next}$
+		
+		\IF{$\rstate_{next}$ is on boundary $\TEB_\pstate(0)$} 
+		\STATE {use safety controller: $\tctrl \leftarrow \tctrl^*$ in \eqref{eq:opt_ctrl}}
+		\ELSE \STATE{use performance controller: } 
+          \STATE{$\tctrl \leftarrow$ desired controller} \ENDIF \label{ln:controllerEnd}
+		
+		\STATE \textbf{Tracking Model Block}: \label{ln:trackingStart}
+		\STATE apply control $\tctrl$ to vehicle for a time step of $\dt$, save next state as $\tstate_{next}$ \label{ln:trackingEnd}
+		
+		\STATE \textbf{Planning Model Block}:\label{ln:planningStart}
+		\STATE $\pstate = \tpmat\tstate_{next}$
+		\STATE check if $\pstate$ is at planning goal
+		\STATE reset states $\tstate = \tstate_{next}, \rstate = 0$ \label{ln:planningEnd}
+		\ENDWHILE
+	\end{algorithmic}
+\end{algorithm}
+The tracking error bound block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. The sensor detects obstacles $\obsSense$ within the sensing distance around the vehicle. The sensed obstacles are augmented by $\TEB_\pstate(0)$ using the Minkowski sum. This is done to ensure that no unsafe path can be generated\footnote{The minimum allowable sensing distance is $\senseDist = 2\TEB_\pstate(0) + \dx$, where $\dx$ is the largest step in space that the planner can make in one time step.}.
+
+%\SHnote{The planning distance is the distance that the path planner (and thus the planning model) may take for each iteration of the online algorithm, and is chosen to be $0< \dx \leq \TEB$. This in turn determines the time step of each iteration (as shown on line \ref{ln:dt}): , where $v_{max}$ is the maximum speed of the planning model.}
+
+ The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented obstacles $\obsAug$, and outputs the next state of the planning system $\pstate_{next}$. The hybrid tracking controller block (lines \ref{ln:controllerStart}-\ref{ln:controllerEnd}) first computes the updated relative state $\rstate_{next}$. If the $\rstate_{next}$ is on the tracking bound $\TEB_\pstate(0)$, the safety controller must be used to remain within the safe bound. The safety control is given by:
+\begin{equation}
+  \label{eq:opt_ctrl}
+	\tctrl^* = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate_{next}) \cdot \rdyn(\rstate_{next},\tctrl,\pctrl,\dstb)
+\end{equation}
+For many practical systems (such as control affine systems), this minimization can be found extremely quickly.
+
+If the relative state is not on the tracking boundary, a performance controller may be used. For the example in Section \ref{sec:results} the safety and performance controllers are identical, but in general this performance controller can suit the needs of the individual applications.
+
+The control $\tctrl^*$ is then applied to the physical system in the tracking block (lines \ref{ln:trackingStart}-\ref{ln:trackingEnd}) for a time period of $\dt$. The next state is saved as $\tstate_{next}$. This then updates the planning model state in the planning model block (lines \ref{ln:planningStart}-\ref{ln:planningEnd}). We repeat this process until the planning goal has been reached.
