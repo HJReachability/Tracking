@@ -37,27 +37,23 @@ end
 function dx = dynamics_cell_helper(obj, x, u, d, dims, dim)
 switch dim
   case 1
-    dx = x{dims==2} - u{1} + d{1} ;
+    dx = x{dims==2}                                       + d{1};
   case 2
-    dx = obj.g * tan(x{dims==3});
+    dx = obj.g*tan(x{dims==3})                            - d{2};
   case 3
-    dx = -obj.d1 * x{dims==3} + x{dims==4};
+    dx = -obj.d1*x{dims==3} + x{dims==4};
   case 4
-    dx = -obj.d0 * x{dims==3} + obj.n0 * u{2};
+    dx = -obj.d0*x{dims==3}               + obj.n0*u{1};
   case 5
-    dx = x{dims==6} - u{3} + d{2} ;
+    dx = x{dims==6}                                      + d{3};
   case 6
-    dx = obj.g * tan(x{dims==7});
+    dx = obj.g*tan(x{dims==7})                           - d{4};
   case 7
-    dx = -obj.d1 * x{dims==7} + x{dims==8};
+    dx = -obj.d1*x{dims==7} + x{dims==8};
   case 8
-    dx = -obj.d0 * x{dims==7} + obj.n0 * u{4};
-  case 9
-    dx = x{dims==10} - u{5} + d{3};
-  case 10
-    dx = obj.kT * u{6} - obj.g;
+    dx = -obj.d0*x{dims==7}                + obj.n0*u{2};
     
   otherwise
-    error('Only dimension 1-10 are defined for dynamics of Quad10D!')
+    error('Only dimension 1-8 are defined for dynamics of %s!', class(obj))
 end
 end

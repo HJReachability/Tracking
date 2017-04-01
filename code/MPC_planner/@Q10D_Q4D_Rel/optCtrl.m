@@ -1,4 +1,4 @@
-function uOpt = optCtrl(obj, t, y, deriv, uMode, ~)
+function uOpt = optCtrl(obj, ~, ~, deriv, uMode, ~)
 % uOpt = optCtrl(obj, t, y, deriv, uMode, dims)
 
 %% Input processing
@@ -15,65 +15,21 @@ end
 dims = obj.dims;
 %% Optimal control
 if strcmp(uMode, 'max')
-  %simple system tried to min
-  if any(dims==1)
-    uOpt{1} = ((-deriv{dims==1})>=0)*obj.uMin(1) + ((-deriv{dims==1})<0)*obj.uMax(1);
-  end
-  
-  %real system tries to max
   if any(dims == 4)
-    uOpt{2} = (deriv{dims==4}>=0)*obj.uMax(2) + (deriv{dims==4}<0)*obj.uMin(2);
+    uOpt{1} = (deriv{dims==4}>=0)*obj.uMax(2) + (deriv{dims==4}<0)*obj.uMin(1);
   end
   
-    %simple system tried to min
-  if any(dims == 5)
-     uOpt{3} = ((-deriv{dims==5})>=0)*obj.uMin(3) + ((-deriv{dims==5})<0)*obj.uMax(3);
-  end
-  
-  %real system tries to max
   if any(dims == 8)
-    uOpt{4} = (deriv{dims==8}>=0)*obj.uMax(4) + (deriv{dims==8}<0)*obj.uMin(4);
-  end
-  
-    %simple system tried to min
-  if any(dims==9)
-     uOpt{5} = ((-deriv{dims==9})>=0)*obj.uMin(5) + ((-deriv{dims==9})<0)*obj.uMax(5);
-  end
-  
-  %real system tries to max
-  if any(dims == 10)
-    uOpt{6} = (deriv{dims==10}>=0)*obj.uMax(6) +(deriv{dims==10}<0)*obj.uMin(6);
+    uOpt{2} = (deriv{dims==8}>=0)*obj.uMax(4) + (deriv{dims==8}<0)*obj.uMin(2);
   end
   
 elseif strcmp(uMode, 'min')
-  %simple system tries to max
-  if any(dims==1)
-    uOpt{1} = ((-deriv{dims==1})>=0)*obj.uMax(1) + ((-deriv{dims==1})<0)*obj.uMin(1);
-  end
-  
-  %real system tries to min
   if any(dims == 4)
-    uOpt{2} = (deriv{dims==4}>=0)*obj.uMin(2) + (deriv{dims==4}<0)*obj.uMax(2);
+    uOpt{1} = (deriv{dims==4}<0)*obj.uMax(2) + (deriv{dims==4}>=0)*obj.uMin(1);
   end
   
-  %simple system tries to max
-  if any(dims == 5)
-     uOpt{3} = ((-deriv{dims==5})>=0)*obj.uMax(3) + ((-deriv{dims==5})<0)*obj.uMin(3);
-  end
-  
-  %real system tries to min
   if any(dims == 8)
-    uOpt{4} = (deriv{dims==8}>=0)*obj.uMin(4) + (deriv{dims==8}<0)*obj.uMax(4);
-  end
-  
-  %simple system tries to max
-  if any(dims==9)
-     uOpt{5} = ((-deriv{dims==9})>=0)*obj.uMax(5) + ((-deriv{dims==9})<0)*obj.uMin(5);
-  end
-  
-  %real system tries to min
-  if any(dims == 10)
-    uOpt{6} = (deriv{dims==10}>=0)*obj.uMin(6) +(deriv{dims==10}<0)*obj.uMax(6);
+    uOpt{2} = (deriv{dims==8}<0)*obj.uMax(4) + (deriv{dims==8}>=0)*obj.uMin(2);
   end
 else
   error('Unknown uMode!')

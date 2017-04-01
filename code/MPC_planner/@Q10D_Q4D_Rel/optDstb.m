@@ -15,28 +15,49 @@ end
 dims = obj.dims;
 %% Optimal control
 if strcmp(dMode, 'max')
+  % Planning control
+  if any(dims == 2)
+    dOpt{2} = ((-deriv{dims==2})>=0)*(obj.aMax(1)) + ...
+              ((-deriv{dims==2})<0)*(obj.aMin(1));
+  end
+  
+  if any(dims == 6)
+    dOpt{4} = ((-deriv{dims==6})>=0)*(obj.aMax(2)) + ...
+              ((-deriv{dims==6})<0)*(obj.aMin(2));
+  end  
+  
+  % Disturbances
   if any(dims == 1)
-  dOpt{1} = ((deriv{dims==1})>=0)*(obj.dMax(1)) + ((deriv{dims==1})<0)*(obj.dMin(1));
+    dOpt{1} = ((deriv{dims==1})>=0)*(obj.dMax(1)) + ...
+              ((deriv{dims==1})<0)*(obj.dMin(1));
   end
   
   if any(dims == 5)
-  dOpt{2} = ((deriv{dims==5})>=0)*(obj.dMax(2)) + ((deriv{dims==5})<0)*(obj.dMin(2));
+    dOpt{3} = ((deriv{dims==5})>=0)*(obj.dMax(2)) + ...
+              ((deriv{dims==5})<0)*(obj.dMin(2));
   end
   
-  if any(dims == 9)
-    dOpt{2} = ((deriv{dims==9})>=0)*(obj.dMax(3)) + ((deriv{dims==9})<0)*(obj.dMin(3));
-  end
 elseif strcmp(dMode, 'min')
+  % Planning control
+  if any(dims == 2)
+    dOpt{2} = ((-deriv{dims==2})>=0)*(obj.aMin(1)) + ...
+              ((-deriv{dims==2})<0)*(obj.aMax(1));
+  end
+  
+  if any(dims == 6)
+    dOpt{4} = ((-deriv{dims==6})>=0)*(obj.aMin(2)) + ...
+              ((-deriv{dims==6})<0)*(obj.aMax(2));
+  end  
+  
+  % Disturbances
   if any(dims == 1)
-  dOpt{1} = ((deriv{dims==1})>=0)*(obj.dMin(1)) + ((deriv{dims==1})<0)*(obj.dMax(1));
+    dOpt{1} = ((deriv{dims==1})>=0)*(obj.dMin(1)) + ...
+              ((deriv{dims==1})<0)*(obj.dMax(1));
   end
   
   if any(dims == 5)
-  dOpt{2} = ((deriv{dims==2})>=0)*(obj.dMin(2)) + ((deriv{dims==2})<0)*(obj.dMax(2));
-  end
-  
-  if any(dims == 9)
-    dOpt{3} = ((deriv{dims==9})>=0)*(obj.dMin(3)) + ((deriv{dims==9})<0)*(obj.dMax(3));
+    dOpt{3} = ((deriv{dims==5})>=0)*(obj.dMin(2)) + ...
+              ((deriv{dims==5})<0)*(obj.dMax(2));
   end
   
 else

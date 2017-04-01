@@ -2,6 +2,10 @@ classdef Q10D_Q4D_Rel < DynSys
   properties
     uMin        % Control bounds (3x1 vector)
     uMax
+    
+    aMin
+    aMax
+    
     dMin
     dMax        % virtual velocity bounds
     
@@ -13,7 +17,6 @@ classdef Q10D_Q4D_Rel < DynSys
     d1 = 8
     d0 = 10
     
-    kT = 0.91   % Thrust coefficient (vertical direction)
     g = 9.81    % Acceleration due to gravity (for convenience)
     m = 1.3     % Mass
     
@@ -22,62 +25,73 @@ classdef Q10D_Q4D_Rel < DynSys
   end
   
   methods
-    function obj = Q10D_Q4D_Rel(x, uMin, uMax, dMin, dMax, dims)
+    function obj = Q10D_Q4D_Rel(x, uMin, uMax, aMin, aMax, dMin, dMax, dims)
       % obj = Quad10D_Rel(x, uMin, uMax, dMin, dMax, dims)
       %     Constructor for a 10D quadrotor
       %
       % Dynamics:
-      %     \dot x_1 = x_2
-      %     \dot x_2 = g * tan(x_3)
-      %     \dot x_3 = -d1 * x_3 + x_4
-      %     \dot x_4 = -d0 x_3 + n0 * u1
-      %     \dot x_5 = x_6
-      %     \dot x_6 = g * tan(x_7)
-      %     \dot x_7 = -d1 * x_7 + x_8
-      %     \dot x_8 = -d0 x_7 + n0 * u2
-      %     \dot x_9 = x_10
-      %     \dot x_10 = kT * u3 - g
+      %     \dot x_1 = x_2                      + d{1}
+      %     \dot x_2 = g*tan(x_3)               - d{2}
+      %     \dot x_3 = -d1*x_3 + x_4
+      %     \dot x_4 = -d0*x_3       + n0*u{1}
+      %     \dot x_5 = x_6                      + d{3}
+      %     \dot x_6 = g*tan(x_7)               - d{4}
+      %     \dot x_7 = -d1*x_7 + x_8
+      %     \dot x_8 = -d0*x_7       + n0*u{2}
       %         uMin <= [u1; u2; u3] <= uMax
       
-      % u(1,3,5) = simple player
-      % u(2,4,6) = real player
+      % u       <- control of 8D quadrotor (tracker)
+      % d{2,4}  <- control of 4D quadrotor (planner)
+      % d{1,3}  <- disturbance
       
       if ~iscolumn(x)
         x = x';
       end
       
-      if nargin < 1
+      if nargin < 1 || isempty(x)
         x = zeros(obj.nx, 1);
       end
       
       if nargin < 2
-        uMax = [.5; 10/180*pi; .5; 10/180*pi; .25; 2*obj.g];
-        uMin = [-.5; -10/180*pi; -.5; -10/180*pi; -.25; 0];
+        uMin = [-10/180*pi; -10/180*pi];        
+        uMax = [10/180*pi; 10/180*pi];
       end
       
-      if nargin<4
-        dMax = [0.1; 0.1; 0.1];
-        dMin = [-0.1; -0.1; -0.1];
+      if nargin < 4
+        aMin = [-2; -2];
+        aMax = [2; 2];
       end
       
-      if nargin < 5
+      if nargin < 6
+        dMax = [0.1; 0.1];
+        dMin = [-0.1; -0.1];
+      end
+      
+      if nargin < 7
         dims = 1:4;
       end
       
       obj.x = x;
       obj.xhist = x;
       
-      obj.uMax = uMax;
       obj.uMin = uMin;
-      obj.dMax = dMax;
+      obj.uMax = uMax;
+
+      obj.aMin = aMin;
+      obj.aMax = aMax;      
+      
       obj.dMin = dMin;
+      obj.dMax = dMax;
+      
       
       obj.dims = dims;
       obj.nx = length(dims);
-      obj.nu = 6;
-      obj.nd = 3;
-      obj.pdim = [find(dims == 1) find(dims == 5) find(dims == 9)]; % Position dimensions
-      obj.vdim = [find(dims == 2) find(dims == 6) find(dims == 10)]; % Velocity dimensions   
+      
+      obj.nu = 2;
+      obj.nd = 4;
+      
+      obj.pdim = [find(dims == 1) find(dims == 5)]; % Position dimensions
+      obj.vdim = [find(dims == 2) find(dims == 6)]; % Velocity dimensions
     end
   end
 end
