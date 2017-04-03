@@ -1,5 +1,7 @@
 This folder is for the code containing a Hamilton-Jacobi reachability-based planner.
 The planner should run close to real time, allowing fast re-planning every time new
-information about the environment becomes available.
+information about the environment becomes available. The planner will use the 
+fast sweeping method by Osher on a Dubins Car.
+
 The current plan is to implement this planning using parallel computation with BEACLS.
 Application: 3-dimensional Dubins car [x,y,theta].

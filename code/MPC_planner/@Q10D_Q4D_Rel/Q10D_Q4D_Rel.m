@@ -44,13 +44,13 @@ classdef Q10D_Q4D_Rel < DynSys
       % d{2,4}  <- control of 4D quadrotor (planner)
       % d{1,3}  <- disturbance
       
-      if ~iscolumn(x)
-        x = x';
-      end
-      
       if nargin < 1 || isempty(x)
         x = zeros(obj.nx, 1);
       end
+      
+      if ~iscolumn(x)
+        x = x';
+      end      
       
       if nargin < 2
         uMin = [-10/180*pi; -10/180*pi];        
