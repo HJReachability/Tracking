@@ -1,15 +1,18 @@
-function Q10D_Q4D_RS(visualize)
+function Q8D_Q4D_RS(gN, visualize)
 %Q10D_Q4D_RS Summary of this function goes here
 %   Detailed explanation goes here
 
 if nargin < 1
+  gN = [25; 25; 15; 9];
+end
+
+if nargin < 2
   visualize = true;
 end
 
 %% Grid and cost
 gMin = [-5; -5; -35*pi/180; -1];
 gMax = [ 5;  5;  35*pi/180;  1];
-gN = [25; 25; 15; 9];
 sD.grid = createGrid(gMin, gMax, gN);
 
 extraArgs.targets = -sD.grid.xs{1}.^2;
@@ -26,7 +29,7 @@ dMin = [-0.1; -0.1];
 
 dims = 1:4;
 
-sD.dynSys = Q10D_Q4D_Rel([], uMin, uMax, aMin, aMax, dMin, dMax, dims);
+sD.dynSys = Q8D_Q4D_Rel([], uMin, uMax, aMin, aMax, dMin, dMax, dims);
 
 %% Otherparameters
 tMax = 5;

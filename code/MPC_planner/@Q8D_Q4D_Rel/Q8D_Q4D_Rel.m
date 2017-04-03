@@ -1,4 +1,4 @@
-classdef Q10D_Q4D_Rel < DynSys
+classdef Q8D_Q4D_Rel < DynSys
   properties
     uMin        % Control bounds (3x1 vector)
     uMax
@@ -26,8 +26,8 @@ classdef Q10D_Q4D_Rel < DynSys
   
   methods
     function obj = Q10D_Q4D_Rel(x, uMin, uMax, aMin, aMax, dMin, dMax, dims)
-      % obj = Quad10D_Rel(x, uMin, uMax, dMin, dMax, dims)
-      %     Constructor for a 10D quadrotor
+      % obj = Q10D_Q4D_Rel(x, uMin, uMax, aMin, aMax, dMin, dMax, dims)
+      %     Constructor for a 8D quadrotor relative to a 4D quadrotor
       %
       % Dynamics:
       %     \dot x_1 = x_2                      + d{1}
