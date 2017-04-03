@@ -49,6 +49,14 @@ end
 
 data = HJIPDE_solve(extraArgs.targets, tau, sD, 'none', extraArgs);
 
+%% Save and output worst value
+save(sprintf('%s_%f.mat', mfilename, now), 'sD', 'data', '-v7.3');
+
+for i = 1:size(data,5)
+  data_i = data(:,:,:,:,i);
+  max(data_i(:))
+end
+
 keyboard
 end
 

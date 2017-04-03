@@ -25,8 +25,8 @@ classdef Q8D_Q4D_Rel < DynSys
   end
   
   methods
-    function obj = Q10D_Q4D_Rel(x, uMin, uMax, aMin, aMax, dMin, dMax, dims)
-      % obj = Q10D_Q4D_Rel(x, uMin, uMax, aMin, aMax, dMin, dMax, dims)
+    function obj = Q8D_Q4D_Rel(x, uMin, uMax, aMin, aMax, dMin, dMax, dims)
+      % obj = Q8D_Q4D_Rel(x, uMin, uMax, aMin, aMax, dMin, dMax, dims)
       %     Constructor for a 8D quadrotor relative to a 4D quadrotor
       %
       % Dynamics:
