@@ -11,3 +11,4 @@ docs/CDC 2017 Safe Tracking/tracking.pdf
 *.m~
 code/pics/
 docs/CDC 2017 Safe Tracking.zip
+*.mexw64
