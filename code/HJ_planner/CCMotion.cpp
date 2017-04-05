@@ -1956,11 +1956,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	difference = numInfty;
 	
 	numIter = 0;
-	minIter = 10;
+	minIter = 5;
 	maxIter = numInfty;
 	// for (numIter = 0; numIter<10; numIter+=0) {
 	//while (difference > 0.01*Ni*Nj*Nk && numIter < maxIter) {
-	while (numIter < minIter || (difference > 1 && numIter < maxIter) ) {
+	while (numIter < minIter || (difference > 0.01 && numIter < maxIter) ) {
 		numIter++;
 		printf("numIter = %d\n", numIter);
 
