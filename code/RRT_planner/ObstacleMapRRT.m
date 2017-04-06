@@ -1,4 +1,4 @@
-classdef ObstacleMap < handle
+classdef ObstacleMapRRT < handle
   
   properties
     global_obs; % a three dimensional matrix of all the obstacles on the map. TODO: reformatting into cell etc...
@@ -21,7 +21,7 @@ classdef ObstacleMap < handle
   
   methods
     %% Constructor.
-    function self = ObstacleMap(obs)
+    function self = ObstacleMapRRT(obs)
       self.num_obs = size(obs, 3);
       self.global_obs = obs;
       self.local_obs = inf(size(self.global_obs));
