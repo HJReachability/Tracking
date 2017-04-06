@@ -4,19 +4,21 @@ classdef ObstacleMapLS < handle
   properties
     % 2D Obtacles
     g2D
-    global_obs;
-    local_obs;
-    padded_obs;
+    global_obs
+    local_obs
+    padded_obs
+    last_sense_region
     
     % handles for plots
     hG
     hL
     hP
+    hS
   end
   
   methods
     %% Constructor.
-    function obj = ObstacleMapRRT(g2D, obs2D)
+    function obj = ObstacleMapLS(g2D, obs2D)
       obj.g2D = g2D;
       obj.global_obs = obs2D;
       obj.local_obs = inf(g2D.N');
@@ -34,12 +36,20 @@ classdef ObstacleMapLS < handle
         point = point';
       end
       
-      % Migrate sensing region to global grid and sense
+      % Migrate sensing region to global grid
       sDataRot = rotateData(sense_region.g, sense_region.data, point(3), ...
         [1 2], []);
       sGridShift = shiftGrid(sense_region.g, point(1:2));
-      global_sRegion = migrateGrid(sGridShift, sDataRot, obj.g2D);
-      new_local_obs = min(obj.local_obs, global_sRegion);
+      obj.last_sense_region = migrateGrid(sGridShift, sDataRot, obj.g2D);
+      
+      % Sense (take intersection of sensing region and local obs)
+      dx = max(obj.g2D.dx);
+      aug_sense_region = addCRadius(obj.g2D, obj.last_sense_region, 0);
+      new_region = max(obj.global_obs, aug_sense_region);
+      
+      % (take union of new_region and local_obs)
+      new_local_obs = min(obj.local_obs, new_region);
+      
       
       % Check if new obstacles have been sensed
       if nnz(new_local_obs < 0) > nnz(obj.local_obs < 0)
@@ -51,7 +61,7 @@ classdef ObstacleMapLS < handle
         new_sensed = false;
         
       else
-        error('Something is terribly wrong!)
+        error('Something is terribly wrong!')
         
       end
       
@@ -110,6 +120,24 @@ classdef ObstacleMapLS < handle
       
       extraArgs.LineStyle = linestyle;
       obj.hP = visSetIm(obj.g2D, obj.padded_obs, color, 0, extraArgs);
+    end
+    
+    function plotSenseRegion(obj)
+      if nargin < 2
+        color = 'g';
+      end
+      
+      if nargin < 3
+        linestyle = '-';
+      end
+      
+      % Local obstacles
+      if ~isempty(obj.hS)
+        delete(obj.hS)
+      end
+      
+      extraArgs.LineStyle = linestyle;
+      obj.hS = visSetIm(obj.g2D, obj.last_sense_region, color, 0, extraArgs);      
     end
   % END OF METHODS
   end
