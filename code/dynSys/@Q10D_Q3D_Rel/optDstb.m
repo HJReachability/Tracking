@@ -26,7 +26,7 @@ if strcmp(dMode, 'max')
   end
   
   if any(dims == 9)
-    dOpt{2} = ((deriv{dims==9})>=0)*(obj.dMax(3)) + ...
+    dOpt{3} = ((deriv{dims==9})>=0)*(obj.dMax(3)) + ...
       ((deriv{dims==9})<0)*(obj.dMin(3));
   end
 elseif strcmp(dMode, 'min')

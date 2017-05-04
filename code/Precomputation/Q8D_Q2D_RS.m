@@ -3,7 +3,7 @@ function [data,tau,sD,teb]=Q8D_Q2D_RS(gN, visualize)
 %   Detailed explanation goes here
 
 if nargin < 1
-  gN = [25; 25; 15; 9];
+  gN = [25; 25; 15];
 end
 
 if nargin < 2
@@ -11,9 +11,9 @@ if nargin < 2
 end
 
 %% Grid and cost
-gMin = [-5; -5; -35*pi/180; -1];
-gMax = [ 5;  5;  35*pi/180;  1];
-sD.grid = createGrid(gMin, gMax, gN);
+gMin = [-5; -5; -pi];
+gMax = [ 5;  5;  pi];
+sD.grid = createGrid(gMin, gMax, gN,3);
 
 data0 = sD.grid.xs{1}.^2;
 extraArgs.obstacles = -data0;
