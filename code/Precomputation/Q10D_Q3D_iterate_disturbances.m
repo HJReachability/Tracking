@@ -1,11 +1,23 @@
+function [TEB_tot,dMax_tot]=Q10D_Q3D_iterate_disturbances(gN,dt,tMax,extraArgs)
+if nargin <1
 gN = 100;
+end
+
+if nargin <2
 dt = 0.01;
+end
+
+if nargin<3
 tMax = 50;
+end
+
+if nargin<4
 extraArgs.visualize = 0;
 extraArgs.targetType = 'quadratic';
 extraArgs.accuracy = 'veryHigh';
 extraArgs.stopConverge = 1;
 extraArgs.convergeThreshold = .05;
+end
 
 iterations = 10;
 TEB_tot = zeros(1,iterations);
@@ -26,3 +38,4 @@ for i = 1:iterations
 end
 
 save('TEB_vs_dMax.mat','TEB_tot','dMax_tot')
+end
