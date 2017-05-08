@@ -8,7 +8,7 @@ function [sD_X, sD_Z, dataX, dataZ, dataX0, dataZ0, tauX, tauZ, TEB] = ...
 %     methods
 
 if nargin < 1
-  gN = 20;
+  gN = 101;
 end
 
 if nargin < 2
@@ -58,8 +58,18 @@ sD_Z.grid = createGrid(gMinZ, gMaxZ, gN*ones(2,1));
 
 %% Parameters
 gravity = 9.81;
+if isfield(extraArgs,'uMax')
+  uMax = extraArgs.uMax;
+else
 uMax = [.5; 20/180*pi; .5; 20/180*pi; 0.5; 1.5*gravity];
-uMin = [-.5; -20/180*pi; -.5; -20/180*pi; -0.5; 0];
+end
+
+if isfield(extraArgs,'uMin')
+  uMin = extraArgs.uMin;
+else
+  uMin = [-.5; -20/180*pi; -.5; -20/180*pi; -0.5; 0];
+end
+
 
 if isfield(extraArgs,'dMax')
   dMax = extraArgs.dMax;
@@ -118,14 +128,19 @@ sD_Z.dynSys = Q10D_Q3D_Rel(zeros(10,1), uMin, uMax, dMin, dMax, Zdims);
 
 
 %% Additional solver parameters
-HJIextraArgs.obstacles = -dataZ0;
+
 
 if isfield(extraArgs,'stopConverge')
   HJIextraArgs.stopConverge = extraArgs.stopConverge;
   if isfield(extraArgs,'convergeThreshold')
     HJIextraArgs.convergeThreshold = extraArgs.convergeThreshold;
   end
+else
+  HJIextraArgs.stopConverge = 1;
+  HJIextraArgs.convergeThreshold = .1;
 end
+
+HJIextraArgs.obstacles = -dataZ0;
 HJIextraArgs.keepLast = 1;
 
 if visualize
@@ -150,12 +165,6 @@ if visualize
 end
 
 HJIextraArgs.obstacles = -dataX0;
-if isfield(extraArgs,'stopConverge')
-  HJIextraArgs.stopConverge = extraArgs.stopConverge;
-  if isfield(extraArgs,'convergeThreshold')
-    HJIextraArgs.convergeThreshold = extraArgs.convergeThreshold;
-  end
-end
 HJIextraArgs.keepLast = 1;
 
 [dataX, tauX] = HJIPDE_solve(dataX0, tau, sD_X, 'none', HJIextraArgs);

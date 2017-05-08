@@ -17,14 +17,14 @@ obs_large = cat(3, obs1_large, obs2_large);
 obs_large = cat(3, obs_large, obs3_large);
 obs_large = cat(3, obs_large, obs4_large);
 
-obsMap_large_piece = ObstacleMap(obs_large);
+obsMap_large_piece = ObstacleMapRRT(obs_large);
 
 figure
 obsMap_large_piece.plotGlobal
 
 max_size_out = 3;
 obs = break_down_obs(obs_large, max_size_out);
-obsMap = ObstacleMap(obs);
+obsMap = ObstacleMapRRT(obs);
 
 figure
 obsMap.plotGlobal;
