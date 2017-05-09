@@ -1,5 +1,5 @@
 function [sD_X, sD_Z, dataX, dataZ, dataX0, dataZ0, tauX, tauZ, TEB] = ...
-  Q10D_Q3D_RS(gN, dt, tMax, extraArgs)
+  Q10D_Q3D_RS(gNX, gNZ, dt, tMax, extraArgs)
 % extraArgs.visualize
 % extraArgs.dMax
 % extraArgs.targetType
@@ -8,7 +8,8 @@ function [sD_X, sD_Z, dataX, dataZ, dataX0, dataZ0, tauX, tauZ, TEB] = ...
 %     methods
 
 if nargin < 1
-  gN = 101;
+  gNX = [101 101 ceil(101/8) ceil(101/5)];
+  gNZ = [101 101];
 end
 
 if nargin < 2
@@ -51,8 +52,8 @@ gMaxX = [ 5;  5;  35*pi/180;  1];
 gMinZ = [-5; -5];
 gMaxZ = [ 5;  5];
 
-sD_X.grid = createGrid(gMinX, gMaxX, gN*ones(4,1));
-sD_Z.grid = createGrid(gMinZ, gMaxZ, gN*ones(2,1));
+sD_X.grid = createGrid(gMinX, gMaxX, gNX);
+sD_Z.grid = createGrid(gMinZ, gMaxZ, gNZ);
 
 
 
