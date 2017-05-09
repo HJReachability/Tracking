@@ -58,6 +58,8 @@ end
 
 if ~isfield(extraArgs, 'visualize')
   vis = false;
+else
+  vis = true;
 end
 
 %% Before Looping
@@ -229,7 +231,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
     boxShape = cat(3, boxShape, top_surf);
     
     if iter == 1
-      boxMap = ObstacleMap(boxShape);
+      boxMap = ObstacleMapRRT(boxShape);
     else
       boxMap.global_obs = boxShape;
     end
