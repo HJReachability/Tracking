@@ -1,0 +1,9 @@
+<launch>
+
+  <node name="meta_planner"
+        pkg="meta_planner"
+        type="meta_planner_node"
+        output="screen">
+  </node>
+
+</launch>
