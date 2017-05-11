@@ -36,60 +36,23 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the MetaPlanner class.
+// Custom types.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/meta_planner.h>
+#ifndef META_PLANNER_TYPES_H
+#define META_PLANNER_TYPES_H
 
-MetaPlanner::MetaPlanner()
-  : initialized_(false) {}
+#include <Eigen/Dense>
 
-MetaPlanner::~MetaPlanner() {}
+// ------------------------ THIRD PARTY TYPEDEFS ---------------------------- //
 
-// Initialize this class with all parameters and callbacks.
-bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "meta_planner");
+typedef Eigen::Matrix<double, 3, 4> Matrix34d;
+using Eigen::Matrix3d;
+using Eigen::Vector3d;
+using Eigen::Matrix4d;
+using Eigen::VectorXd;
+using Eigen::MatrixXd;
+using Eigen::Quaterniond;
 
-  if (!LoadParameters(n)) {
-    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
-    return false;
-  }
-
-  if (!RegisterCallbacks(n)) {
-    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
-    return false;
-  }
-
-  return true;
-}
-
-// Load all parameters from config files.
-bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
-  std::string key;
-
-  // Topics and frame ids.
-  if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
-  if (!ros::param::get(key, sensor_topic_)) return false;
-
-  if (!ros::param::search("meta_planner/topics/vis", key)) return false;
-  if (!ros::param::get(key, vis_topic_)) return false;
-
-  if (!ros::param::search("meta_planner/frames/fixed", key)) return false;
-  if (!ros::param::get(key, fixed_frame_id_)) return false;
-
-  if (!ros::param::search("meta_planner/frames/tracker", key)) return false;
-  if (!ros::param::get(key, tracker_frame_id_)) return false;
-
-  return true;
-}
-
-// Register all callbacks and publishers.
-bool MetaPlanner::RegisterCallbacks(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
-
-  // pub = nl.advertise<geometry_msgs::WHATEVER>("topic_name", "topic_hz",
-  // false);
-
-  return true;
-}
+#endif

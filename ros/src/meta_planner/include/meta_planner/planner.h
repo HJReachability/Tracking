@@ -36,60 +36,29 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the MetaPlanner class.
+// Defines the Planner abstract class interface.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/meta_planner.h>
+#ifndef META_PLANNER_PLANNER_H
+#define META_PLANNER_PLANNER_H
 
-MetaPlanner::MetaPlanner()
-  : initialized_(false) {}
+#include <meta_planner/trajectory.h>
+#include <meta_planner/types.h>
 
-MetaPlanner::~MetaPlanner() {}
+#include <ros/ros.h>
 
-// Initialize this class with all parameters and callbacks.
-bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "meta_planner");
+class Planner {
+public:
+  virtual ~Planner() {}
 
-  if (!LoadParameters(n)) {
-    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
-    return false;
-  }
+  // Derived classes must plan trajectories between two points.
+  // Return whether or not planner was successful.
+  virtual bool Plan(const VectorXd& start, const VectorXd& stop,
+                    Trajectory& traj) const = 0;
 
-  if (!RegisterCallbacks(n)) {
-    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
-    return false;
-  }
+protected:
+  explicit Planner() {}
+};
 
-  return true;
-}
-
-// Load all parameters from config files.
-bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
-  std::string key;
-
-  // Topics and frame ids.
-  if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
-  if (!ros::param::get(key, sensor_topic_)) return false;
-
-  if (!ros::param::search("meta_planner/topics/vis", key)) return false;
-  if (!ros::param::get(key, vis_topic_)) return false;
-
-  if (!ros::param::search("meta_planner/frames/fixed", key)) return false;
-  if (!ros::param::get(key, fixed_frame_id_)) return false;
-
-  if (!ros::param::search("meta_planner/frames/tracker", key)) return false;
-  if (!ros::param::get(key, tracker_frame_id_)) return false;
-
-  return true;
-}
-
-// Register all callbacks and publishers.
-bool MetaPlanner::RegisterCallbacks(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
-
-  // pub = nl.advertise<geometry_msgs::WHATEVER>("topic_name", "topic_hz",
-  // false);
-
-  return true;
-}
+#endif

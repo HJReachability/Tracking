@@ -9,6 +9,7 @@ endif()
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  cmake_modules
 )
 
 catkin_package(
@@ -16,32 +17,81 @@ catkin_package(
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
     roscpp
+    cmake_modules
+  DEPENDS
+    EIGEN
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+option(ENABLE_DEBUG_MESSAGES "Turn on to enable bound checking and debug messages" ON)
+if(ENABLE_DEBUG_MESSAGES)
+  add_definitions(-DENABLE_DEBUG_MESSAGES=1)
+else()
+  add_definitions(-DENABLE_DEBUG_MESSAGES=0)
+endif()
+
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${EIGEN_INCLUDE_DIRS}
+)
+
 link_directories(
   ${catkin_LIBRARY_DIRS}
+  ${EIGEN_LIBRARY_DIRS}
 )
 
-add_library(${PROJECT_NAME} src/${PROJECT_NAME}.cpp)
+file(GLOB_RECURSE ${PROJECT_NAME}_srcs ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/*.cpp)
+add_library(${PROJECT_NAME} ${${PROJECT_NAME}_srcs})
 
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${EIGEN_LIBRARIES}
+  bayesopt
+  nlopt
 )
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-)
-
-add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
-target_link_libraries(${PROJECT_NAME}_node
-  ${PROJECT_NAME}
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${EIGEN_LIBRARIES}
 )
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+file(GLOB_RECURSE ${PROJECT_NAME}_execs exec/*.cpp)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+foreach(executable ${${PROJECT_NAME}_execs})
+  get_filename_component(exec_name ${executable} NAME_WE)
+  message(STATUS "Including executable   \"${BoldBlue}${exec_name}${ColorReset}\".")
+  add_executable(${exec_name} ${executable})
+  target_link_libraries(${exec_name}
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${EIGEN_LIBRARIES})
+endforeach()
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+foreach(executable ${${PROJECT_NAME}_execs})
+  get_filename_component(exec_name ${executable} NAME_WE)
+  message(STATUS "Including executable   \"${BoldBlue}${exec_name}${ColorReset}\".")
+  add_executable(${exec_name} ${executable})
+  target_link_libraries(${exec_name}
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${EIGEN_LIBRARIES}
+  )
+endforeach()
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+if(CATKIN_ENABLE_TESTING)
+  catkin_add_gtest(test_${PROJECT_NAME} test/test_meta_planner.cpp)
+  target_link_libraries(
+    test_${PROJECT_NAME}
+    ${PROJECT_NAME}
+    ${GTEST_LIBRARIES}
+    ${EIGEN_LIBRARIES}
+  )
+endif()
