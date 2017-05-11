@@ -29,5 +29,5 @@ source devel/setup.bash
 
 To run a demo, type:
 ```
-roslaunch [name-of-demo].launch
+roslaunch meta_planner [name-of-demo].launch
 ```
