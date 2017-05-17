@@ -40,8 +40,8 @@ load(obs_filename)
 %extraArgs
 if nargin <4
   extraArgs.vis = 1;
-  extraArgs.auto = 0;
-  extraArgs.human = 1;
+  extraArgs.auto = 1;
+  extraArgs.human = 0;
 end
 
 if isfield(extraArgs,'movie')&&extraArgs.movie
@@ -68,17 +68,18 @@ if nargin <2
   data_filenames{2} = 'Q10D_Q3D_Rel_u_10_tenth.mat';
   data_filenames{3} = 'Q10D_Q3D_Rel_u_5_tenth.mat';
   data_filenames{4} = 'Q10D_Q3D_Rel_u_1_tenth.mat';
+  modeNum = length(data_filenames);
 end
 
 %% Before Looping
 dt = 0.1;
 senseRange = 6;
 
-Mode = cell(1,length(data_filenames));
-obsMap = cell(1,length(data_filenames));
+Mode = cell(1,modeNum);
+obsMap = cell(1,modeNum);
 
 %get all the info about the different modes
-for i = 1:length(data_filenames)
+for i = 1:modeNum
   Mode{i} = load(data_filenames{i});
   Mode{i}.derivX = computeGradients(Mode{i}.sD_X.grid,Mode{i}.dataX);
   Mode{i}.derivZ = computeGradients(Mode{i}.sD_Z.grid,Mode{i}.dataZ);
@@ -123,7 +124,7 @@ start_x([1 5 9]) = start;
 
 % Create real quadrotor system
 rl_ui = [2 4 6];
-for i = 1:length(data_filenames)-1
+for i = 1:modeNum-1
   if Mode{i}.sD_X.dynSys.uMin(rl_ui) ~= Mode{i+1}.sD_X.dynSys.uMin(rl_ui)
     error('real system mismatch!')
   end
@@ -150,7 +151,7 @@ lookup_time = 0;
 
 %initialize stuff
 m = 1;
-sensed_new = cell(1,length(data_filenames));
+sensed_new = cell(1,modeNum);
 [sensed_new{:}] = deal(0);
 counter = 0;
 
@@ -160,126 +161,55 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   
   % 1. Sense your environment, locate obstacles
   % 2. Expand sensed obstacles by tracking error bound
-  for j = 1:length(data_filenames)
+  for j = 1:modeNum
     sensed_new{j} = obsMap{j}.sense_update(trueQuad.x([1 5 9]),...
       senseRange, Mode{j}.trackErr);
   end
   
   %% Path Planner Block
   % Replan if a new obstacle is seen
+  
   if isempty(newStates) || sensed_new{m} || counter > 50
+    
     % Update next virtual state
     mlast = m;
     
     % human switching
     if isfield(extraArgs,'human')&&extraArgs.human %if human switching
       
-      %pick which mode
-      m =input('which mode? ');
-      if m ~=1 && m ~=2 && m ~=3
-        m = input('which mode? ');
-      end
-      
-      %update virtual state
-      newStates_test = rrtNextState((virt_x), goal, ...
-        obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
-      
-      if ~isempty(newStates_test) && ...
-          (norm(newStates_test(1,:)'-trueQuad.x([1 5 9])) > Mode{m}.trackErr)
-        % if path but no feasible path
-        
-        m = mlast; %go back to previous mode
-        
-        newStates_test = rrtNextState((virt_x), goal, ...
-          obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
-      
-      elseif isempty(newStates_test) % if no path
-        
-        %move up a mode
-        while isempty(newStates_test) ||...
-          (norm(newStates_test(1,:)'-trueQuad.x([1 5 9])) > Mode{m}.trackErr)
-        % while no path or no feasible path
-        
-          m = m+1;
-          if m > length(data_filenames) %if we've run out of modes
-            error('no feasible path found!')
-          end
-          
-          newStates_test = rrtNextState(virt_x, goal, ...
-            obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
-        end
-        %stop when we have a non-empty feasible virtual state
-      end
-    
+      [m, newStates_test] = humanSwitch(mlast,virt_x,goal,trueQuad,...
+        Mode,obsMap,modeNum);
+
     % auto switching  
     elseif isfield(extraArgs,'auto')&&extraArgs.auto %if auto switching
       
-      %try going down a mode
-      m = max(1,m-1);
-      
-      %test for this mode and the next
-      newStates_test = rrtNextState((virt_x), goal, ...
-        obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
-      newStates_test2 = rrtNextState((virt_x),goal, ...
-        obsMap{m+1}.padded_obs,Mode{m+1}.delta_x, [], false);
-      
-      if isempty(newStates_test) && isempty(newStates_test2)
-        %if both are empty, move up a mode
-        
-        while isempty(newStates_test) %&& isempty(newStates_test2)
-          m = m+1;
-          if m > length(data_filenames)
-            error('no path found!')
-          end
-          newStates_test = rrtNextState(virt_x, goal, ...
-            obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
-        end
-        
-      elseif ~isempty(newStates_test) && ~isempty(newStates_test2)
-        %if neither are empty, pick the mode that is closest to the goal
-        
-        goaldist1 = norm(newStates_test(end,:)'-goal);
-        goaldist2 = norm(newStates_test2(end,:)'-goal);
-        
-        val = goaldist2-goaldist1; %which mode thinks it'll get you closest to the goal?
-        
-        if val > 0.05 && ... % if this value is high enough
-            (norm(newStates_test2(1,:)'-trueQuad.x([1 5 9])) < Mode{m+1}.trackErr) 
-          %and switching won't violate new TEB
-          
-          %then move up a mode
-          m = m+1;
-          newStates_test = newStates_test2;
-        end
-        
-      elseif isempty(newStates_test) && ~isempty(newStates_test2)
-        %if only the first mode is empty, pick mode m+1
-        if (norm(newStates_test2(1,:)'-trueQuad.x([1 5 9])) < Mode{m}.trackErr)
-        m = m+1;
-        newStates_test = newStates_test2;
-        else
-          error('no path feasible!')
-        end
-      else
-        error('no path found!')
-      end
+      [m, newStates_test] = autoSwitch(mlast,virt_x,goal,trueQuad,...
+         Mode,obsMap,modeNum);
+
     else
       error('auto or human?')
     end
-    if counter <= 300 && ...
-        ~sensed_new{m} && ...
-        ~isempty(newStates) &&...
-        mlast == m && ...
-        norm(trueQuad.x([1 5 9]) - goal) > .5
-      %if we haven't reached 300 counts and we didn't sense any new obstacles
-      %and we haven't changed modes and we aren't near the goal and we still have places to be,
-      %stick tothe current plan
+    
+    if counter <= 300 && ... %if we haven't reached 300 counts
+        ~sensed_new{m} && ... %and we didn't sense anything new
+        ~isempty(newStates) &&... %and we aren't out of places to go
+        mlast == m && ... %and we're staying in the same mode
+        norm(trueQuad.x([1 5 9]) - goal) > .5 %and we're not near the goal
+      
+      %then stick with the current plan
       newStates_test = newStates;
+      
     end
-    counter = 0;
-    newStates= newStates_test;
+    
+    counter = 0; %reset counter
+    newStates= newStates_test; %set next states
+    
   end
   
+  if isempty(newStates)
+    keyboard
+  end
+    
   title(['Mode ' num2str(m)])
   virt_x = newStates(1,:)';
   newStates(1,:) = [];
@@ -444,4 +374,101 @@ if isfield(extraArgs,'movie')&&extraArgs.movie
   end
      close(v);
 end
+end
+
+function [m,newStates_test]= humanSwitch(mlast,virt_x,goal,trueQuad,...
+        Mode,obsMap,modeNum)
+      
+      %pick which mode
+      m =input('which mode? ');
+      if ~(1<=m<=modeNum)
+        m = input('which mode? ');
+      end
+      
+      %update virtual state
+      newStates_test = rrtNextState((virt_x), goal, ...
+        obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
+      
+      if ~isempty(newStates_test) && ...
+          (norm(newStates_test(1,:)'-trueQuad.x([1 5 9])) > Mode{m}.trackErr)
+        % if path but no feasible path
+        
+        m = mlast; %go back to previous mode
+        
+        newStates_test = rrtNextState((virt_x), goal, ...
+          obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
+      
+      elseif isempty(newStates_test) % if no path
+        
+        %move up a mode
+        while isempty(newStates_test) ||...
+          (norm(newStates_test(1,:)'-trueQuad.x([1 5 9])) > Mode{m}.trackErr)
+        % while no path or no feasible path
+        
+          m = m+1;
+          if m > modeNum %if we've run out of modes
+            error('no feasible path found!')
+          end
+          
+          newStates_test = rrtNextState(virt_x, goal, ...
+            obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
+        end
+        %stop when we have a non-empty feasible virtual state
+      end
+end
+
+
+function [m, newStates_test] = autoSwitch(mlast,virt_x,goal,trueQuad,...
+        Mode,obsMap,modeNum)
+      
+      %try going down a mode
+      m = max(1,mlast-1);
+      
+      %test for this mode and the next
+      newStates_test = rrtNextState((virt_x), goal, ...
+        obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
+      
+      newStates_test2 = rrtNextState((virt_x),goal, ...
+        obsMap{m+1}.padded_obs,Mode{m+1}.delta_x, [], false);
+      
+      if isempty(newStates_test) && isempty(newStates_test2)
+        %if both are empty, move up a mode
+        
+        while isempty(newStates_test) %&& isempty(newStates_test2)
+          m = m+1;
+          if m > modeNum
+            error('no path found!')
+          end
+          newStates_test = rrtNextState(virt_x, goal, ...
+            obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
+        end
+        
+      elseif ~isempty(newStates_test) && ~isempty(newStates_test2)
+        %if neither are empty, pick the mode that is closest to the goal
+        
+        goaldist1 = norm(newStates_test(end,:)'-goal);
+        goaldist2 = norm(newStates_test2(end,:)'-goal);
+        
+        val = goaldist2-goaldist1; %which mode thinks it'll get you closest to the goal?
+        
+        if val > 0.05 && ... % if this value is high enough
+            (norm(newStates_test2(1,:)'-trueQuad.x([1 5 9])) < Mode{m+1}.trackErr) 
+          %and switching won't violate new TEB
+          
+          %then move up a mode
+          m = m+1;
+          newStates_test = newStates_test2;
+        end
+        
+      elseif isempty(newStates_test) && ~isempty(newStates_test2)
+        %if only the first mode is empty, pick mode m+1
+        if (norm(newStates_test2(1,:)'-trueQuad.x([1 5 9])) < Mode{m}.trackErr)
+        m = m+1;
+        newStates_test = newStates_test2;
+        else
+          error('no path feasible!')
+        end
+      else
+        error('no path found!')
+      end
 end
