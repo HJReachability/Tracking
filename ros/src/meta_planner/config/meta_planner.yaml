@@ -1,0 +1,16 @@
+meta_planner:
+  topics:
+    # Sensor publication topic.
+    sensor: sensor
+
+    # Visualization topic.
+    vis: visualization
+
+  frames:
+    # Fixed frame.
+    fixed: fixed
+
+    # Tracker frame.
+    tracker: tracker
+
+    # Planners can go here.
