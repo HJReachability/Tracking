@@ -80,7 +80,7 @@ classdef RrtPlanner < handle
     %  ************************************************************************
     
     % Iterations                        => Maximum number of search iterations
-    maxIterations=2000;
+    maxIterations=100;
     
     % Maximum number of search trees    => Maximum number of search iterations
     treesMax = 30;

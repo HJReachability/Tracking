@@ -1,17 +1,36 @@
 function generate_example_obstacles()
 
 % Plane 1
-x1 = -9;
-obs1_large = [x1 -10 -10; x1 -10 5; x1 5 5; x1 5 -10];
+x1 = -8;
+obs1_large = [x1 -10 -10; ... %yz bottom right
+              x1 -10   5;... %yz top right
+              x1   3   5; ... %yz top left
+              x1   3 -10]; %yz bottom left
 
-x2 = -3;
-obs2_large = [x2 -5 -10; x2 -5 5; x2 10 5; x2 10 -10];
+x2 = 0;
+obs2_large = [x2 3 -10;...
+              x2 3   10; ...
+              x2 10   10;...
+              x2 10 -10];
+            
+x3 = 0;
+obs3_large = [x2 -10 -10;...
+              x2 -10   10; ...
+              x2 -1   10;...
+              x2 -1 -10];
+            
+            
+% x3 = 3;
+% obs3_large = [x3 -5 -5;...
+%               x3 -5 10; ...
+%               x3 10 10; ....
+%               x3 10 -5];
 
-x3 = 3;
-obs3_large = [x3 -5 -5; x3 -5 10; x3 10 10; x3 10 -5];
-
-x4 = 9;
-obs4_large = [x4 -10 -5; x4 -10 10; x4 5 10; x4 5 -5];
+x4 = 6;
+obs4_large = [x4 -10 -5;...
+              x4 -10 10; ...
+              x4 5 10; ...
+              x4 5 -5];
 
 obs_large = cat(3, obs1_large, obs2_large);
 obs_large = cat(3, obs_large, obs3_large);

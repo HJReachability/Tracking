@@ -49,7 +49,13 @@ p = rrt.smoothedPath;
 [~, ia] = uniquetol(p, 1e-3, 'ByRows', true);
 p = p(sort(ia), :);
 
-p(1,:) = [];
+if isempty(p)
+  newStates = [];
+  rrt = [];
+  return
+else
+  p(1,:) = [];
+end
 prev_point = start;
 newStates = start;
 while ~isempty(p)
