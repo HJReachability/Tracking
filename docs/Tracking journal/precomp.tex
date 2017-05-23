@@ -42,6 +42,38 @@ In the context of the online framework, the value function $\valfunc_\infty(\rst
 
 \MCnote{Lose convergence assumption}
 
+\begin{prop}
+  \label{prop:nonconv}
+  $\forall \tvar \ge 0$,
+  \begin{equation}
+  \label{eq:invariant_nonconv}
+  \valfunc(\rstate,\thor) \ge \valfunc\Big(\rtraj^*(\tvar; \rstate, 0), \thor - \tvar \Big), \text{where}
+  \end{equation}
+  \begin{equation}
+  \begin{aligned}
+  \rtraj^*(\tvar; \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \\
+  \end{aligned}
+  \end{equation}
+  \begin{equation}
+  \begin{aligned}
+  &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\\
+  & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \big\}\\
+  \end{aligned}
+  \end{equation}
+  \begin{equation}
+  \begin{aligned}
+  & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \\
+  & \qquad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \dstb^*(\cdot))) \big\} \\
+  \end{aligned}
+  \end{equation}
+  \begin{equation}
+  \begin{aligned}
+  & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
+  & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))) \big\}
+  \end{aligned}
+  \end{equation}
+\end{prop}
+
  \begin{prop}
    \label{prop:main}
    Suppose that the value function converges, and define
