@@ -40,8 +40,6 @@ In the context of the online framework, the value function $\valfunc_\infty(\rst
  
 \subsection{Invariance of Converged Value Function}
 
-\MCnote{Lose convergence assumption}
-
 \begin{prop}
   \label{prop:nonconv}
   $\forall \tvar \ge 0$,
@@ -73,6 +71,19 @@ In the context of the online framework, the value function $\valfunc_\infty(\rst
   \end{aligned}
   \end{equation}
 \end{prop}
+
+
+\begin{IEEEproof}
+By definition, we have
+  \begin{equation}
+    \begin{aligned}
+      \valfunc(\rstate,\thor) & = \max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0))\\
+      & = \max\{ \max_{\tau \in [0, \thor-\tvar]} \errfunc(\rtraj^*(\tau; \rstate, 0)),\max_{\tau \in [\thor-\tvar, \thor]} \errfunc(\rtraj^*(\tau; \rstate, 0)) \}\\
+      & \ge \max_{\tau \in [0, \thor-\tvar]} \errfunc(\rtraj^*(\tau; \rstate, 0))\\
+      & = \valfunc\Big(\rtraj^*(\tvar; \rstate, 0), \thor - \tvar \Big)
+    \end{aligned}
+  \end{equation}
+\end{IEEEproof} 
 
  \begin{prop}
    \label{prop:main}
@@ -123,7 +134,7 @@ In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result
 \end{equation}
 This is the tracking error bound that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. Within this bound the tracking system may use any controller, but on the border of this bound the tracking system must use the safety optimal controller. We now prove Proposition \ref{prop:main}.
 
-\begin{proof}
+\begin{IEEEproof}
 Without loss of generality, assume $\tvar_1=0$. By definition, we have
 \begin{equation}
 \begin{aligned}
@@ -152,7 +163,7 @@ Now, \eqref{eq:valfunc_ineq} implies
 &= \valfunc_\infty(\rtraj^*(\tvar_2; \rstate, 0))
 \end{aligned}
 \end{equation} 
-\end{proof} 
+\end{IEEEproof} 
  \begin{rem} 
    Proposition \ref{prop:main} is very similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In our work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to perform solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
  \end{rem}
