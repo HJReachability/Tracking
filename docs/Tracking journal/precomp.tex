@@ -15,7 +15,7 @@ To determine the relative distance that may occur over time we must first define
 where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}). The relative states $\rstate$ now represent the tracking states relative to the planning states. Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. This will be used to update the planning model in the online algorithm.
 
 \subsection{Formalizing the Pursuit-Evasion Game}
-Now that we have the relative dynamics between the two systems we must define a metric for the tracking error bound between these systems. We do this by defining an implicit surface function as a cost function $\errfunc(\rstate)$ in the new frame of reference. Because the metric we care about is distance to the origin (and thus distance to the planning system), this cost function can be as simple as distance in position space to the origin. An example can be seen in Fig. \ref{fig:quad4D_example}-a, where $\errfunc(\rstate)$ is defined for a 4D quadrotor model tracking a 2D kinematic planning model. The contour rings beneath the function represent varying level sets of the cost function. The tracking system will try to minimize this cost to reduce the relative distance, while the planning system will do the opposite.
+Given the relative dynamics between the tracking system and the planning system, we would like to compute a guaranteed tracking error bound between these systems. This is done by first defining a error function $\errfunc(\rstate)$ in the relative state space of the systems. One example of an error function is distance to the origin, which corresponds to the tracking error in terms of Euclidean distance between the tracking and planning systems. This error function is shown in Fig. \ref{fig:quad4D_example}-a, \MCnote{where $\errfunc(\rstate)$ is defined for a 4D quadrotor model tracking a 2D kinematic planning model}. The contour rings beneath the function represent varying level sets of the cost function. In our pursuit-evasion game formulation, the tracking system tries to minimize this cost to reduce the relative distance, while the planning system and any disturbances experienced by the tracking system try to do the opposite.
 \begin{figure}
 	\centering
 	\includegraphics[width=0.45\textwidth]{fig/quad4D_example}
@@ -74,7 +74,7 @@ In the context of the online framework, the value function $\valfunc_\infty(\rst
 
 
 \begin{IEEEproof}
-By definition, we have
+The result follows from the definition of value function.
   \begin{equation}
     \begin{aligned}
       \valfunc(\rstate,\thor) & = \max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0))\\

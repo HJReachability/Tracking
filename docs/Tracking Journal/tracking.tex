@@ -116,18 +116,7 @@
 
 %%%
 \begin{abstract}
-
-Fast and safe navigation of dynamical systems through a priori unknown cluttered environments is vital to many applications of autonomous systems. However, trajectory planning for autonomous systems is computationally intensive, often requiring simplified dynamics that sacrifice safety and dynamic feasibility in order to plan efficiently. Conversely, safe trajectories can be computed using more sophisticated dynamic models, but this is typically too slow to be used for real-time planning. We propose a new algorithm FaSTrack: Fast and Safe Tracking for High Dimensional systems. A path or trajectory planner using simplified dynamics to plan quickly can be incorporated into the FaSTrack framework, which provides a safety controller for the vehicle along with a guaranteed tracking error bound. This bound captures all possible deviations due to high dimensional dynamics and external disturbances. Note that FaSTrack is modular and can be used with most current path or trajectory planners. We demonstrate this framework using a 10D nonlinear quadrotor model tracking a 3D path obtained from an RRT planner.
-%FaSTRackHD lets you take your favorite planning system and compute real-time trajectories based on simplified dynamics. FasSTRackHD then 
-%Our new algorithm uses nearly any simplified dynamics with planner based on simplified dynamics, while simultaneously tracking the trajectory using complex dynamics.
-
-%  FaSTRackHD is robust to external disturbances, guaranteed safe, and provides optimal control for the autonomous system.   of your favorite path or trajectory planner 
-
-%hat incorporates safety guarantees, even in the presence of external disturbances. 
-
-%which allows real-time path planning using simplified dynamics, yet maintains safety guarantees as well as providing optimal safety control for the autonomous system to track the planner. FaSTrackHD is modular and can be used to add robustness to most path or trajectory planners. 
-% This is done by an offline precomputation and an online planning computation. The offline computation consists of formulating a capture-avoid game between a simplified planning model and and more sophisticated tracking model. We then use Hamilton Jacobi reachability analysis to find the maximum possible tracking error bound between these two systems, as well as a safety control function mapping the current relative state between the systems to the optimal safety control for the tracking system. Online, path or trajectory planning can be performed in real-time using the planning model, where sensed obstacles are augmented by the tracking error bound. The tracking error bound captures all possible deviations that may occur due to nonlinearities or external disturbances. As the planning occurs, the autonomous system determines the relative state between itself and the next desired position, and uses the precomputed safety control function to find the optimal tracking control. 
-
+Real-time and safe trajectory planning in unknown environments is vital to many applications of autonomous systems. Real-time trajectory planning typically requires simplified system dynamics planning at best, while safe trajectory planning tends to be computationally intensive. We propose FaSTrack, Fast and Safe Tracking, . A path or trajectory planner using simplified dynamics to plan quickly can be incorporated into the FaSTrack framework, which provides a safety controller for the vehicle along with a guaranteed tracking error bound. This bound captures all possible deviations due to high dimensional dynamics and external disturbances. Note that FaSTrack is modular and can be used with most current path or trajectory planners. We demonstrate this framework using a 10D nonlinear quadrotor model tracking a 3D path obtained from an RRT planner.
 \end{abstract}
 
 \input{introduction.tex}
