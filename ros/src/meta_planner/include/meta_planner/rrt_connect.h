@@ -36,29 +36,24 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Planner abstract class interface.
+// Defines the RrtConnect class, which wraps the OMPL class of the same name
+// and inherits from the Planner abstract class.
+//
+// We follow these ( http://ompl.kavrakilab.org/geometricPlanningSE3.html )
+// instructions for using OMPL geometric planners.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_PLANNER_H
-#define META_PLANNER_PLANNER_H
+#ifndef META_PLANNER_RRT_CONNECT_H
+#define META_PLANNER_RRT_CONNECT_H
 
-#include <meta_planner/trajectory.h>
-#include <meta_planner/environment.h>
-#include <meta_planner/types.h>
+#include <meta_planner/planner.h>
 
-#include <ros/ros.h>
+#include <ompl/geometric/planners/rrt/RRTConnect.h>
 
-class Planner {
+class RrtConnect : public Planner {
 public:
-  virtual ~Planner() {}
-
-  // Derived classes must plan trajectories between two points.
-  virtual Trajectory Plan(const VectorXd& start, const VectorXd& stop,
-                          const Environment& space) = 0;
-
-protected:
-  explicit Planner() {}
+  RrtConnect();
 };
 
 #endif

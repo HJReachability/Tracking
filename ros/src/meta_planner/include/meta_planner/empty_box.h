@@ -36,29 +36,36 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Planner abstract class interface.
+// Defines an empty n-dimensional box which inherits from Environment.
+// Defaults to the unit box.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_PLANNER_H
-#define META_PLANNER_PLANNER_H
+#ifndef META_PLANNER_EMPTY_BOX_H
+#define META_PLANNER_EMPTY_BOX_H
 
-#include <meta_planner/trajectory.h>
 #include <meta_planner/environment.h>
-#include <meta_planner/types.h>
 
-#include <ros/ros.h>
-
-class Planner {
+class EmptyBox : public Environment {
 public:
-  virtual ~Planner() {}
+  EmptyBox(size_t dimension);
+  ~EmptyBox() {}
 
-  // Derived classes must plan trajectories between two points.
-  virtual Trajectory Plan(const VectorXd& start, const VectorXd& stop,
-                          const Environment& space) = 0;
+  // Derived classes must be able to sample uniformly from the state space.
+  VectorXd Sample() const;
 
-protected:
-  explicit Planner() {}
+  // Derived classes must provide a collision checker which returns true if
+  // and only if the provided state is a valid collision-free configuration.
+  bool IsValid(const VectorXd& state) const;
+
+  // Set bounds. For simplicity we assume that the min/max is the same
+  // in all dimensions.
+  void SetBounds(double min, double max);
+
+private:
+  const size_t dimension_;
+  double min_;
+  double max_;
 };
 
 #endif

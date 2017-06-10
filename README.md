@@ -10,12 +10,13 @@ Code in this repository is broken into two sections:
 ### MATLAB
 _Insert instructions here._
 
-### ROS
+### C++ / ROS
 First, make sure you have ROS installed on your system. The project was developed in Jade, but it should be compatible with anything past Hydro. Please let us know if you have any compatibility issues.
 
 Other dependencies:
 * (Eigen)[https://eigen.tuxfamily.org] -- a header-only linear algebra library for C++
 * Gtest -- Google's C++ unit testing library
+* (OMPL)[http://ompl.kavrakilab.org] -- an open C++ library for motion planning
 
 To build, open a terminal window and navigate to the `ros/` directory. Then run:
 ```

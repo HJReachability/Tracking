@@ -20,6 +20,7 @@ catkin_package(
     cmake_modules
   DEPENDS
     EIGEN
+    OMPL
 )
 
 option(ENABLE_DEBUG_MESSAGES "Turn on to enable bound checking and debug messages" ON)
@@ -33,23 +34,23 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN_INCLUDE_DIRS}
+  ${OMPL_INCLUDE_DIRS}
 )
 
 link_directories(
   ${catkin_LIBRARY_DIRS}
   ${EIGEN_LIBRARY_DIRS}
+  ${OMPL_INCLUDE_DIRS}
 )
 
 file(GLOB_RECURSE ${PROJECT_NAME}_srcs ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/*.cpp)
 add_library(${PROJECT_NAME} ${${PROJECT_NAME}_srcs})
 
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${EIGEN_LIBRARIES}
-  bayesopt
-  nlopt
+  ${OMPL_LIBRARIES}
 )
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
@@ -57,6 +58,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${EIGEN_LIBRARIES}
+  ${OMPL_LIBRARIES}
 )
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
@@ -69,7 +71,9 @@ foreach(executable ${${PROJECT_NAME}_execs})
   target_link_libraries(${exec_name}
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
-    ${EIGEN_LIBRARIES})
+    ${EIGEN_LIBRARIES}
+    ${OMPL_LIBRARIES}
+  )
 endforeach()
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
@@ -82,6 +86,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${EIGEN_LIBRARIES}
+    ${OMPL_LIBRARIES}
   )
 endforeach()
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -93,5 +98,6 @@ if(CATKIN_ENABLE_TESTING)
     ${PROJECT_NAME}
     ${GTEST_LIBRARIES}
     ${EIGEN_LIBRARIES}
+    ${OMPL_LIBRARIES}
   )
 endif()
