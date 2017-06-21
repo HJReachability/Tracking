@@ -52,7 +52,7 @@ public:
   ~EmptyBox() {}
 
   // Derived classes must be able to sample uniformly from the state space.
-  VectorXd Sample() const;
+  VectorXd Sample();
 
   // Derived classes must provide a collision checker which returns true if
   // and only if the provided state is a valid collision-free configuration.

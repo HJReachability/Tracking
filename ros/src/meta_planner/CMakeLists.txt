@@ -7,9 +7,15 @@ if (COMPILER_SUPPORTS_CXX11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/meta_planner/modules)
+message("Cmake module path: ${CMAKE_MODULE_PATH}")
+
+find_package(Eigen3 REQUIRED)
+find_package(ompl REQUIRED)
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  cmake_modules
+#  cmake_modules
 )
 
 catkin_package(
@@ -17,9 +23,9 @@ catkin_package(
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
     roscpp
-    cmake_modules
+#    cmake_modules
   DEPENDS
-    EIGEN
+    EIGEN3
     OMPL
 )
 
@@ -33,13 +39,13 @@ endif()
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
   ${OMPL_INCLUDE_DIRS}
 )
 
 link_directories(
   ${catkin_LIBRARY_DIRS}
-  ${EIGEN_LIBRARY_DIRS}
+  ${EIGEN3_LIBRARY_DIRS}
   ${OMPL_INCLUDE_DIRS}
 )
 
@@ -49,7 +55,7 @@ add_library(${PROJECT_NAME} ${${PROJECT_NAME}_srcs})
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${EIGEN_LIBRARIES}
+  ${EIGEN3_LIBRARIES}
   ${OMPL_LIBRARIES}
 )
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -57,7 +63,7 @@ endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${EIGEN_LIBRARIES}
+  ${EIGEN3_LIBRARIES}
   ${OMPL_LIBRARIES}
 )
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -71,7 +77,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
   target_link_libraries(${exec_name}
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
-    ${EIGEN_LIBRARIES}
+    ${EIGEN3_LIBRARIES}
     ${OMPL_LIBRARIES}
   )
 endforeach()
@@ -85,7 +91,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
   target_link_libraries(${exec_name}
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
-    ${EIGEN_LIBRARIES}
+    ${EIGEN3_LIBRARIES}
     ${OMPL_LIBRARIES}
   )
 endforeach()
@@ -97,7 +103,7 @@ if(CATKIN_ENABLE_TESTING)
     test_${PROJECT_NAME}
     ${PROJECT_NAME}
     ${GTEST_LIBRARIES}
-    ${EIGEN_LIBRARIES}
+    ${EIGEN3_LIBRARIES}
     ${OMPL_LIBRARIES}
   )
 endif()

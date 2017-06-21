@@ -43,6 +43,8 @@
 
 #include <meta_planner/empty_box.h>
 
+#include <ros/ros.h>
+
 EmptyBox::EmptyBox(size_t dimension)
   : Environment(),
     dimension_(dimension),
@@ -50,7 +52,7 @@ EmptyBox::EmptyBox(size_t dimension)
     max_(1.0) {}
 
 // Derived classes must be able to sample uniformly from the state space.
-VectorXd EmptyBox::Sample() const {
+VectorXd EmptyBox::Sample() {
   // Create a uniform distribution on the proper support for each dimension.
   std::uniform_real_distribution<double> unif(min_, max_);
 
