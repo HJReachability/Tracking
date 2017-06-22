@@ -37,35 +37,21 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Defines the RrtConnect class, which wraps the OMPL class of the same name
-// and inherits from the Planner abstract class. For simplicity, we assume that
-// the state space is a real-valued vector space with box constraints, i.e.
-// an instance of the Box subclass of Environment.
+// and inherits from the Planner abstract class.
 //
 // We follow these ( http://ompl.kavrakilab.org/geometricPlanningSE3.html )
 // instructions for using OMPL geometric planners.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_RRT_CONNECT_H
-#define META_PLANNER_RRT_CONNECT_H
+#include <meta_planner/rrt_connect.h>
 
-#include <meta_planner/planner.h>
+RrtConnect::RrtConnect()
+  : Planner() {}
 
-#include <ompl/geometric/planners/rrt/RRTConnect.h>
-#include <ompl/geometric/SimpleSetup.h>
-#include <ompl/base/spaces/RealVectorStateSpace.h>
-
-namespace ob = ompl::base;
-namespace og = ompl::geometric;
-
-class RrtConnect : public Planner {
-public:
-  ~RrtConnect() {}
-  explicit RrtConnect();
-
-  // Derived classes must plan trajectories between two points.
-  Trajectory Plan(const VectorXd& start, const VectorXd& stop,
-                  const Box& space);
-};
-
-#endif
+// Derived classes must plan trajectories between two points.
+Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
+                            const Box& space) {
+  // Create the OMPL state space corresponding to this environment.
+  auto space(std::make_shared<ob::RealVectorStateSpace>());
+}

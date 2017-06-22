@@ -60,6 +60,9 @@ struct Trajectory {
     points_.push_back(point);
     times_.push_back(time);
   }
+
+  // Check if this trajectory is empty.
+  bool IsEmpty() const { return points_.size() == 0; }
 };
 
 #endif

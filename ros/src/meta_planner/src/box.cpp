@@ -36,54 +36,63 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines an empty n-dimensional box which inherits from Environment.
-// Defaults to the unit box.
+// Defines an n-dimensional box which inherits from Environment. Defaults to
+// the unit box.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/empty_box.h>
+#include <meta_planner/box.h>
 
-#include <ros/ros.h>
-
-EmptyBox::EmptyBox(size_t dimension)
+Box::Box(size_t dimension)
   : Environment(),
     dimension_(dimension),
-    min_(0.0),
-    max_(1.0) {}
+    lower_(VectorXd::Zero(dimension)),
+    upper_(VectorXd::Constant(dimension, 1.0)) {}
 
-// Derived classes must be able to sample uniformly from the state space.
-VectorXd EmptyBox::Sample() {
-  // Create a uniform distribution on the proper support for each dimension.
-  std::uniform_real_distribution<double> unif(min_, max_);
+// Inherited from Environment, but can be overriden by child classes.
+VectorXd Box::Sample() {
+  VectorXd sample(dimension_);
 
   // Sample each dimension from this distribution.
-  VectorXd sample(dimension_);
-  for (size_t ii = 0; ii < dimension_; ii++)
+  for (size_t ii = 0; ii < dimension_; ii++) {
+    std::uniform_real_distribution<double> unif(lower_(ii), upper_(ii));
     sample(ii) = unif(rng_);
+  }
 
   return sample;
 }
 
-// Derived classes must provide a collision checker which returns true if
-// and only if the provided state is a valid collision-free configuration.
-bool EmptyBox::IsValid(const VectorXd& state) const {
+// Inherited from Environment, but can be overriden by child classes.
+// Returns true if the state is a valid configuration.
+bool Box::IsValid(const VectorXd& state) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (state.size() != dimension_)
-    ROS_ERROR("Improperly-sized state vector (%zu vs. %zu).",
+    ROS_ERROR("Improperly sized state vector (%zu vs. %zu).",
               state.size(), dimension_);
 #endif
 
   // No obstacles. Just check bounds.
   for (size_t ii = 0; ii < state.size(); ii++)
-    if (state(ii) < min_ || state(ii) > max_)
+    if (state(ii) < lower_(ii) || state(ii) > upper_(ii))
       return false;
 
   return true;
 }
 
-// Set bounds. For simplicity we assume that the min/max is the same
-// in all dimensions.
-void EmptyBox::SetBounds(double min, double max) {
-  min_ = min;
-  max_ = max;
+// Set bounds in each dimension.
+void Box::SetBounds(const VectorXd& lower, const VectorXd& upper) {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (lower.size() != dimension_ || upper.size() != dimension_) {
+    ROS_ERROR("Improperly sized lower/upper bounds. Did not set.");
+    return;
+  }
+#endif
+
+  lower_ = lower;
+  upper_ = upper;
+}
+
+// Get the dimension.
+size_t Box::Dimension() const {
+  return dimension_;
 }

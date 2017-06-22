@@ -14,9 +14,9 @@ _Insert instructions here._
 First, make sure you have ROS installed on your system. The project was developed in Jade, but it should be compatible with anything past Hydro. Please let us know if you have any compatibility issues.
 
 Other dependencies:
-* (Eigen)[https://eigen.tuxfamily.org] -- a header-only linear algebra library for C++
-* Gtest -- Google's C++ unit testing library
-* (OMPL)[http://ompl.kavrakilab.org] -- an open C++ library for motion planning
+* [Gtest](https://github.com/google/googletest) -- Google's C++ unit testing library
+* [Eigen](https://eigen.tuxfamily.org) -- a header-only linear algebra library for C++
+* [OMPL](http://ompl.kavrakilab.org) -- an open C++ library for motion planning
 
 To build, open a terminal window and navigate to the `ros/` directory. Then run:
 ```
@@ -32,3 +32,6 @@ To run a demo, type:
 ```
 roslaunch meta_planner [name-of-demo].launch
 ```
+
+## C++ reference materials
+We attempt to adhere to the philosophy put forward in the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html). Our code is written _for the reader, not the writer_. We write comments liberally, and we use inheritance whenever it makes sense.

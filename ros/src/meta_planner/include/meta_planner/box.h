@@ -36,36 +36,38 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines an empty n-dimensional box which inherits from Environment.
-// Defaults to the unit box.
+// Defines an n-dimensional box which inherits from Environment. Defaults to
+// the unit box.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_EMPTY_BOX_H
-#define META_PLANNER_EMPTY_BOX_H
+#ifndef META_PLANNER_BOX_H
+#define META_PLANNER_BOX_H
 
 #include <meta_planner/environment.h>
 
-class EmptyBox : public Environment {
+class Box : public Environment {
 public:
-  EmptyBox(size_t dimension);
-  ~EmptyBox() {}
+  virtual Box(size_t dimension);
+  virtual ~Box() {}
 
-  // Derived classes must be able to sample uniformly from the state space.
-  VectorXd Sample();
+  // Inherited from Environment, but can be overriden by child classes.
+  virtual VectorXd Sample();
 
-  // Derived classes must provide a collision checker which returns true if
-  // and only if the provided state is a valid collision-free configuration.
-  bool IsValid(const VectorXd& state) const;
+  // Inherited from Environment, but can be overriden by child classes.
+  // Returns true if the state is a valid configuration.
+  virtual bool IsValid(const VectorXd& state) const;
 
-  // Set bounds. For simplicity we assume that the min/max is the same
-  // in all dimensions.
-  void SetBounds(double min, double max);
+  // Set bounds in each dimension.
+  void SetBounds(const VectorXd& lower, const VectorXd& upper);
+
+  // Get the dimension.
+  size_t Dimension() const;
 
 private:
   const size_t dimension_;
-  double min_;
-  double max_;
+  VectorXd lower_;
+  VectorXd upper_;
 };
 
 #endif
