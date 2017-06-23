@@ -56,7 +56,7 @@ RrtConnect::RrtConnect()
 
 // Derived classes must plan trajectories between two points.
 Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
-                            const Box& space) {
+                            const Box& space) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (start.size() != stop.size() || start.size() != space.Dimension()) {
     ROS_ERROR("Start/stop state dimensions inconsistent with space dimension.");

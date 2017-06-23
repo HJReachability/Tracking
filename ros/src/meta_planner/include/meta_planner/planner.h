@@ -55,7 +55,7 @@ public:
 
   // Derived classes must plan trajectories between two points.
   virtual Trajectory Plan(const VectorXd& start, const VectorXd& stop,
-                          const Environment& space) = 0;
+                          const Environment& space) const = 0;
 
 protected:
   explicit Planner() {}

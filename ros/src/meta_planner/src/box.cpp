@@ -50,7 +50,7 @@ Box::Box(size_t dimension)
     upper_(VectorXd::Constant(dimension, 1.0)) {}
 
 // Inherited from Environment, but can be overriden by child classes.
-VectorXd Box::Sample() {
+VectorXd Box::Sample() const {
   VectorXd sample(dimension_);
 
   // Sample each dimension from this distribution.

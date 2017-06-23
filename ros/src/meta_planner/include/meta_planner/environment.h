@@ -52,7 +52,7 @@ public:
   virtual ~Environment() {}
 
   // Derived classes must be able to sample uniformly from the state space.
-  virtual VectorXd Sample() = 0;
+  virtual VectorXd Sample() const = 0;
 
   // Derived classes must provide a collision checker which returns true if
   // and only if the provided state is a valid collision-free configuration.
@@ -64,7 +64,7 @@ protected:
 
   // Random number generation.
   std::random_device rd_;
-  std::default_random_engine rng_;
+  mutable std::default_random_engine rng_;
 };
 
 #endif

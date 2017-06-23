@@ -54,7 +54,7 @@ public:
   Box(size_t dimension);
 
   // Inherited from Environment, but can be overriden by child classes.
-  virtual VectorXd Sample();
+  virtual VectorXd Sample() const;
 
   // Inherited from Environment, but can be overriden by child classes.
   // Returns true if the state is a valid configuration.
