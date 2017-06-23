@@ -97,10 +97,9 @@ Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
   // Set the planner.
   // TODO: This is the only part that would need to change to make this
   // class a more general OMPL geometric planner wrapper.
-  auto ompl_space_info(std::make_shared<ob::TypedSpaceInformation>(
-    ob::TypedSpaceInformation<ob::RealVectorStateSpace>(ompl_space)));
-  ompl_setup.setPlanner(std::make_shared<og::RRTConnect>(
-    og::RRTConnect(ompl_space_info)));
+  ob::SpaceInformationPtr ompl_space_info(new ob::SpaceInformation(ompl_space));
+  ob::PlannerPtr ompl_planner(new og::RRTConnect(ompl_space_info));
+  ompl_setup.setPlanner(ompl_planner);
 
   // Solve. Parameter is the amount of time (in seconds) used by the solver.
   ob::PlannerStatus solved = ompl_setup.solve(1.0);
