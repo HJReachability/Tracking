@@ -72,8 +72,8 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/topics/vis", key)) return false;
-  if (!ros::param::get(key, vis_topic_)) return false;
+  if (!ros::param::search("meta_planner/topics/rrt_connect", key)) return false;
+  if (!ros::param::get(key, rrt_connect_vis_topic_)) return false;
 
   if (!ros::param::search("meta_planner/frames/fixed", key)) return false;
   if (!ros::param::get(key, fixed_frame_id_)) return false;
@@ -88,8 +88,12 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
 bool MetaPlanner::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
-  // pub = nl.advertise<geometry_msgs::WHATEVER>("topic_name", "topic_hz",
-  // false);
+  // Sensor subscriber.
+  // sensor_sub_ = nl.subscribe(sensor_topic_.c_str(), 10, &this->SensorCallback())
+
+  // Visualization publisher(s).
+  rrt_connect_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
+    rrt_connect_vis_topic_.c_str(), 10, false);
 
   return true;
 }

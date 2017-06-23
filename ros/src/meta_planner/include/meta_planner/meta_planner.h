@@ -44,6 +44,7 @@
 #define META_PLANNER_META_PLANNER_H
 
 #include <ros/ros.h>
+#include <visualization_msgs/Marker.h>
 #include <string>
 
 class MetaPlanner {
@@ -62,10 +63,10 @@ private:
   //  void SensorCallback(const SomeMessageType::ConstPtr& msg);
 
   // Publishers/subscribers and related topics.
-  ros::Publisher vis_pub_;
+  ros::Publisher rrt_connect_vis_pub_;
   ros::Subscriber sensor_sub_;
 
-  std::string vis_topic_;
+  std::string rrt_connect_vis_topic_;
   std::string sensor_topic_;
 
   // Frames of reference for reading current pose from tf tree.
