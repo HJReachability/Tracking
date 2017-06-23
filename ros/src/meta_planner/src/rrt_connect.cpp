@@ -37,10 +37,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Defines the RrtConnect class, which wraps the OMPL class of the same name
-// and inherits from the Planner abstract class.
+// and inherits from the Planner abstract class. For simplicity, we assume that
+// the state space is a real-valued vector space with box constraints, i.e.
+// an instance of the Box subclass of Environment.
 //
 // We follow these ( http://ompl.kavrakilab.org/geometricPlanningSE3.html )
 // instructions for using OMPL geometric planners.
+//
+// TODO: This can easily be turned into a generic wrapper for any OMPL
+// geometric planner.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -52,6 +57,100 @@ RrtConnect::RrtConnect()
 // Derived classes must plan trajectories between two points.
 Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
                             const Box& space) {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (start.size() != stop.size() || start.size() != space.Dimension()) {
+    ROS_ERROR("Start/stop state dimensions inconsistent with space dimension.");
+    return Trajectory();
+  }
+#endif
+
   // Create the OMPL state space corresponding to this environment.
-  auto space(std::make_shared<ob::RealVectorStateSpace>());
+  auto ompl_space(std::make_shared<ob::RealVectorStateSpace>());
+
+  // Set bounds for the environment.
+  const VectorXd& lower = space.LowerBounds();
+  const VectorXd& upper = space.UpperBounds();
+  ob::RealVectorBounds ompl_bounds(space.Dimension());
+
+  for (size_t ii = 0; ii < space.Dimension(); ii++) {
+    ompl_bounds.setLow(ii, lower(ii));
+    ompl_bounds.setHigh(ii, upper(ii));
+  }
+
+  ompl_space->setBounds(ompl_bounds);
+
+  // Create a SimpleSetup instance and set the state validity checker function.
+  og::SimpleSetup ompl_setup(ompl_space);
+  ompl_setup.setStateValidityChecker([&](const ob::State* state) {
+      return space.IsValid(FromOmplState(state, space.Dimension())); });
+
+  // Set the start and stop states.
+  ob::ScopedState<ob::RealVectorStateSpace> ompl_start(ompl_space);
+  ob::ScopedState<ob::RealVectorStateSpace> ompl_stop(ompl_space);
+  for (size_t ii = 0; ii < space.Dimension(); ii++) {
+    ompl_start[ii] = start(ii);
+    ompl_stop[ii] = stop(ii);
+  }
+
+  ompl_setup.setStartAndGoalStates(ompl_start, ompl_stop);
+
+  // Set the planner.
+  // TODO: This is the only part that would need to change to make this
+  // class a more general OMPL geometric planner wrapper.
+  auto ompl_space_info(std::make_shared<ob::TypedSpaceInformation>(
+    ob::TypedSpaceInformation<ob::RealVectorStateSpace>(ompl_space)));
+  ompl_setup.setPlanner(std::make_shared<og::RRTConnect>(
+    og::RRTConnect(ompl_space_info)));
+
+  // Solve. Parameter is the amount of time (in seconds) used by the solver.
+  ob::PlannerStatus solved = ompl_setup.solve(1.0);
+
+  if (solved) {
+    const og::PathGeometric& solution = ompl_setup.getSolutionPath();
+
+    // Populate the Trajectory with states and time stamps.
+    // TODO: Make sure this includes the start/stop states.
+    Trajectory traj;
+    for (size_t ii = 0; ii < solution.getStateCount(); ii++) {
+      const VectorXd state =
+        FromOmplState(solution.getState(ii), space.Dimension());
+
+      // Catch first state.
+      if (ii == 0)
+        traj.Add(state, 0.0);
+
+      // Handle all other states.
+      // TODO: Currently assuming velocity of 1.0. Fix this.
+      else {
+        const double time =
+          traj.times_.back() + (state - traj.points_.back()).norm() / 1.0;
+        traj.Add(state, time);
+      }
+    }
+
+    return traj;
+  }
+
+  ROS_WARN("RRT Connect could not compute a solution.");
+  return Trajectory();
+}
+
+// Convert between OMPL states and VectorXds.
+VectorXd RrtConnect::FromOmplState(const ob::State* state,
+                                   size_t dimension) const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (!state) {
+    ROS_ERROR("State pointer was null.");
+    return VectorXd::Zero(1);
+  }
+#endif
+
+  const ob::RealVectorStateSpace::StateType* cast_state =
+    static_cast<const ob::RealVectorStateSpace::StateType*>(state);
+
+  VectorXd converted(dimension);
+  for (size_t ii = 0; ii < converted.size(); ii++)
+    converted(ii) = cast_state->values[ii];
+
+  return converted;
 }

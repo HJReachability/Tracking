@@ -3,9 +3,9 @@ project(meta_planner)
 
 #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-if (COMPILER_SUPPORTS_CXX11)
+#if (COMPILER_SUPPORTS_CXX11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif()
+#endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/meta_planner/modules)
 message("Cmake module path: ${CMAKE_MODULE_PATH}")

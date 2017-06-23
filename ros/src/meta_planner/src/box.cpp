@@ -91,8 +91,3 @@ void Box::SetBounds(const VectorXd& lower, const VectorXd& upper) {
   lower_ = lower;
   upper_ = upper;
 }
-
-// Get the dimension.
-size_t Box::Dimension() const {
-  return dimension_;
-}

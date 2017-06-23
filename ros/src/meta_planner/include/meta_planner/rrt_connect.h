@@ -44,16 +44,22 @@
 // We follow these ( http://ompl.kavrakilab.org/geometricPlanningSE3.html )
 // instructions for using OMPL geometric planners.
 //
+// TODO: This can easily be turned into a generic wrapper for any OMPL
+// geometric planner.
+//
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef META_PLANNER_RRT_CONNECT_H
 #define META_PLANNER_RRT_CONNECT_H
 
 #include <meta_planner/planner.h>
+#include <meta_planner/box.h>
 
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/SimpleSetup.h>
+#include <ompl/base/TypedSpaceInformation.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <memory>
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
@@ -66,6 +72,10 @@ public:
   // Derived classes must plan trajectories between two points.
   Trajectory Plan(const VectorXd& start, const VectorXd& stop,
                   const Box& space);
+
+private:
+  // Convert between OMPL states and VectorXds.
+  VectorXd FromOmplState(const ob::State* state, size_t dimension) const;
 };
 
 #endif

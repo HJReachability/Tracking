@@ -46,10 +46,12 @@
 
 #include <meta_planner/environment.h>
 
+#include <ros/ros.h>
+
 class Box : public Environment {
 public:
-  virtual Box(size_t dimension);
   virtual ~Box() {}
+  Box(size_t dimension);
 
   // Inherited from Environment, but can be overriden by child classes.
   virtual VectorXd Sample();
@@ -61,8 +63,10 @@ public:
   // Set bounds in each dimension.
   void SetBounds(const VectorXd& lower, const VectorXd& upper);
 
-  // Get the dimension.
-  size_t Dimension() const;
+  // Get the dimension and upper/lower bounds as const references.
+  size_t Dimension() const { return dimension_; }
+  const VectorXd& LowerBounds() const { return lower_; }
+  const VectorXd& UpperBounds() const { return upper_; }
 
 private:
   const size_t dimension_;
