@@ -15,7 +15,8 @@ find_package(ompl REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-#  cmake_modules
+  visualization_msgs
+  std_msgs
 )
 
 catkin_package(
@@ -23,7 +24,8 @@ catkin_package(
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
     roscpp
-#    cmake_modules
+    visualization_msgs
+    std_msgs
   DEPENDS
     EIGEN3
     OMPL
