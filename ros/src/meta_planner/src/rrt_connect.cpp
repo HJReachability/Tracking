@@ -51,8 +51,14 @@
 
 #include <meta_planner/rrt_connect.h>
 
-RrtConnect::RrtConnect()
-  : Planner() {}
+RrtConnect::RrtConnect(double velocity)
+  : Planner(),
+    velocity_((velocity <= 0.0) ? 1.0 : velocity) {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (velocity_ <= 0.0)
+    ROS_ERROR("Velocity was negative. Setting to unity.");
+#endif
+}
 
 // Derived classes must plan trajectories between two points.
 Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
@@ -110,19 +116,18 @@ Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
     // Populate the Trajectory with states and time stamps.
     // TODO: Make sure this includes the start/stop states.
     Trajectory traj;
+    double time = 0.0;
     for (size_t ii = 0; ii < solution.getStateCount(); ii++) {
       const VectorXd state =
         FromOmplState(solution.getState(ii), space.Dimension());
 
       // Catch first state.
       if (ii == 0)
-        traj.Add(state, 0.0);
+        traj.Add(state, time);
 
       // Handle all other states.
-      // TODO: Currently assuming velocity of 1.0. Fix this.
       else {
-        const double time =
-          traj.times_.back() + (state - traj.points_.back()).norm() / 1.0;
+        time += (state - traj.LastState()).norm() / velocity_;
         traj.Add(state, time);
       }
     }

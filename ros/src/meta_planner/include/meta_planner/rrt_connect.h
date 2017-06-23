@@ -68,7 +68,7 @@ namespace og = ompl::geometric;
 class RrtConnect : public Planner {
 public:
   ~RrtConnect() {}
-  explicit RrtConnect();
+  explicit RrtConnect(double velocity);
 
   // Derived classes must plan trajectories between two points.
   Trajectory Plan(const VectorXd& start, const VectorXd& stop,
@@ -77,6 +77,9 @@ public:
 private:
   // Convert between OMPL states and VectorXds.
   VectorXd FromOmplState(const ob::State* state, size_t dimension) const;
+
+  // Robot velocity.
+  const double velocity_;
 };
 
 #endif

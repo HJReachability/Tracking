@@ -45,24 +45,56 @@
 
 #include <meta_planner/types.h>
 
+#include <ros/ros.h>
+#include <std_msgs/ColorRGBA.h>
+#include <visualization_msgs/Marker.h>
 #include <vector>
 
-struct Trajectory {
-  // List of points and corresponding times.
-  std::vector<VectorXd> points_;
-  std::vector<double> times_;
-
+class Trajectory {
+public:
   // Clear out this Trajectory.
-  void Clear() { points_.clear(); times_.clear(); }
+  inline void Clear() {
+    states_.clear();
+    times_.clear();
+  }
 
   // Add a (point, time) tuple to this Trajectory.
-  void Add(const VectorXd& point, double time) {
-    points_.push_back(point);
+  inline void Add(const VectorXd& point, double time) {
+    states_.push_back(point);
     times_.push_back(time);
   }
 
   // Check if this trajectory is empty.
-  bool IsEmpty() const { return points_.size() == 0; }
+  inline bool IsEmpty() const {
+    return states_.size() == 0;
+  }
+
+  // Number of waypoints.
+  inline size_t Size() const {
+    return states_.size();
+  }
+
+  // Total time length of the trajectory.
+  inline double Time() const {
+    return times_.back() - times_.front();
+  }
+
+  // Accessors.
+  inline const VectorXd& LastState() const { return states_.back(); }
+  inline const VectorXd& FirstState() const { return states_.front(); }
+  inline double LastTime() const { return times_.back(); }
+  inline double FirstTime() const { return times_.front(); }
+
+  // Visualize this trajectory in RVIZ.
+  void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
+
+private:
+  // Compute the color (on a red-blue colormap) at a particular index.
+  std_msgs::ColorRGBA Colormap(size_t index) const;
+
+  // List of states and corresponding times.
+  std::vector<VectorXd> states_;
+  std::vector<double> times_;
 };
 
 #endif

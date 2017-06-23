@@ -34,9 +34,11 @@ roslaunch meta_planner [name-of-demo].launch
 ```
 
 ## C++ reference materials
-We attempt to adhere to the philosophy put forward in the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html). Our code is written _for the reader, not the writer_. We write comments liberally, and we use inheritance whenever it makes sense.
+We attempt to adhere to the philosophy put forward in the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html). Our code is written _for the reader, not the writer_. We write comments liberally and use inheritance whenever it makes sense.
 
 A few tips, tricks, and customs that you'll find throughout our code:
 * Lines of code are no longer than 80 characters.
+* The names of all member variables of a class end with an underscore, e.g. `foo_`.
 * When iterating through a vector, we name the index something like `ii` instead of just `i`. This makes it super easy to find and replace the iterator later.
+* We use the `const` specifier whenever possible.
 * We try to include optional guard statements with meaningful debug messages wherever possible. These may be toggled on/off with the `ENABLE_DEBUG_MESSAGES` cmake option.
