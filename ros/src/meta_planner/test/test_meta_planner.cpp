@@ -71,6 +71,8 @@ TEST(RrtConnect, TestUnitBox) {
   EXPECT_LE((start - traj.FirstState()).norm(), kSmallNumber);
   EXPECT_LE((stop - traj.LastState()).norm(), kSmallNumber);
 
+  traj.Print("Computed trajectory:");
+
   // Check that the time spent on the trajectory is at least the minimum
   // time to go along a straight line.
   EXPECT_GE(traj.Time(), (start - stop).norm() / kVelocity);

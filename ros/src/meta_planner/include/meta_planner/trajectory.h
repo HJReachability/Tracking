@@ -49,6 +49,8 @@
 #include <std_msgs/ColorRGBA.h>
 #include <visualization_msgs/Marker.h>
 #include <vector>
+#include <string>
+#include <iostream>
 
 class Trajectory {
 public:
@@ -87,6 +89,9 @@ public:
 
   // Visualize this trajectory in RVIZ.
   void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
+
+  // Print this trajectory to stdout.
+  void Print(const std::string& prefix) const;
 
 private:
   // Compute the color (on a red-blue colormap) at a particular index.

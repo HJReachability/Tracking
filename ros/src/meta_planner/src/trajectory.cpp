@@ -143,3 +143,10 @@ std_msgs::ColorRGBA Trajectory::Colormap(size_t index) const {
 
   return color;
 }
+
+// Print this trajectory to stdout.
+void Trajectory::Print(const std::string& prefix) const {
+  std::cout << prefix << std::endl;
+  for (size_t ii = 0; ii < Size(); ii++)
+    std::cout << times_[ii] << " -- " << states_[ii].transpose() << std::endl;
+}

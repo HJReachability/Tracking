@@ -114,7 +114,6 @@ Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();
 
     // Populate the Trajectory with states and time stamps.
-    // TODO: Make sure this includes the start/stop states.
     Trajectory traj;
     double time = 0.0;
     for (size_t ii = 0; ii < solution.getStateCount(); ii++) {
