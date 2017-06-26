@@ -50,13 +50,14 @@
 
 #include <ros/ros.h>
 
+template<typename StateSpace>
 class Planner {
 public:
   virtual ~Planner() {}
 
   // Derived classes must plan trajectories between two points.
   virtual Trajectory Plan(const VectorXd& start, const VectorXd& stop,
-                          const Box& space) const = 0;
+                          const StateSpace& space) const = 0;
 
 protected:
   explicit Planner() {}

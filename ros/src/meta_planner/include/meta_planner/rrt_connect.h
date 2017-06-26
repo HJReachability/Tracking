@@ -65,7 +65,7 @@
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
-class RrtConnect : public Planner {
+class RrtConnect : public Planner<Box> {
 public:
   ~RrtConnect() {}
   explicit RrtConnect(double velocity);

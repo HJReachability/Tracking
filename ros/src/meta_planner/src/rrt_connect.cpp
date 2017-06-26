@@ -52,7 +52,7 @@
 #include <meta_planner/rrt_connect.h>
 
 RrtConnect::RrtConnect(double velocity)
-  : Planner(),
+  : Planner<Box>(),
     velocity_((velocity <= 0.0) ? 1.0 : velocity) {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (velocity_ <= 0.0)
