@@ -71,8 +71,7 @@ public:
   explicit RrtConnect(double velocity);
 
   // Derived classes must plan trajectories between two points.
-  Trajectory Plan(const VectorXd& start, const VectorXd& stop,
-                  const Box& space) const;
+  Trajectory Plan(const VectorXd& start, const VectorXd& stop, const Box& space) const;
 
 private:
   // Convert between OMPL states and VectorXds.

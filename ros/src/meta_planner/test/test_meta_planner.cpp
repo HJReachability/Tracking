@@ -40,7 +40,41 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <meta_planner/box.h>
+#include <meta_planner/trajectory.h>
+#include <meta_planner/rrt_connect.h>
+#include <meta_planner/types.h>
+
 #include <gtest/gtest.h>
+
+// Test the RrtConnect class. Make sure it can plan a trajectory in an empty
+// unit box betweeen the two corners.
+TEST(RrtConnect, TestUnitBox) {
+  const double kVelocity = 1.0;
+  const size_t kAmbientDimension = 3;
+
+  // Pick start and stop states.
+  const VectorXd start = VectorXd::Zero(kAmbientDimension);
+  const VectorXd stop = VectorXd::Ones(kAmbientDimension);
+
+  // Create unit box environment.
+  Box box(kAmbientDimension);
+  box.SetBounds(VectorXd::Zero(kAmbientDimension),
+                VectorXd::Ones(kAmbientDimension));
+
+  // Plan.
+  const RrtConnect planner(kVelocity);
+  const Trajectory traj = planner.Plan(start, stop, box);
+
+  // Check that start and stop states match.
+  const double kSmallNumber = 1e-8;
+  EXPECT_LE((start - traj.FirstState()).norm(), kSmallNumber);
+  EXPECT_LE((stop - traj.LastState()).norm(), kSmallNumber);
+
+  // Check that the time spent on the trajectory is at least the minimum
+  // time to go along a straight line.
+  EXPECT_GE(traj.Time(), (start - stop).norm() / kVelocity);
+}
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

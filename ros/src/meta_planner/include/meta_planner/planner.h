@@ -45,6 +45,7 @@
 
 #include <meta_planner/trajectory.h>
 #include <meta_planner/environment.h>
+#include <meta_planner/box.h>
 #include <meta_planner/types.h>
 
 #include <ros/ros.h>
@@ -55,7 +56,7 @@ public:
 
   // Derived classes must plan trajectories between two points.
   virtual Trajectory Plan(const VectorXd& start, const VectorXd& stop,
-                          const Environment& space) const = 0;
+                          const Box& space) const = 0;
 
 protected:
   explicit Planner() {}

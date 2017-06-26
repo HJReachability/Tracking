@@ -71,7 +71,7 @@ Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
 #endif
 
   // Create the OMPL state space corresponding to this environment.
-  auto ompl_space(std::make_shared<ob::RealVectorStateSpace>());
+  auto ompl_space(std::make_shared<ob::RealVectorStateSpace>(space.Dimension()));
 
   // Set bounds for the environment.
   const VectorXd& lower = space.LowerBounds();
@@ -103,8 +103,8 @@ Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
   // Set the planner.
   // TODO: This is the only part that would need to change to make this
   // class a more general OMPL geometric planner wrapper.
-  ob::SpaceInformationPtr ompl_space_info(new ob::SpaceInformation(ompl_space));
-  ob::PlannerPtr ompl_planner(new og::RRTConnect(ompl_space_info));
+  ob::PlannerPtr ompl_planner(
+    new og::RRTConnect(ompl_setup.getSpaceInformation()));
   ompl_setup.setPlanner(ompl_planner);
 
   // Solve. Parameter is the amount of time (in seconds) used by the solver.
