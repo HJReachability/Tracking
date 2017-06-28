@@ -42,14 +42,14 @@
 
 #include <meta_planner/box.h>
 #include <meta_planner/trajectory.h>
-#include <meta_planner/rrt_connect.h>
+#include <meta_planner/ompl_planner.h>
 #include <meta_planner/types.h>
 
 #include <gtest/gtest.h>
 
-// Test the RrtConnect class. Make sure it can plan a trajectory in an empty
+// Test the OmplPlanner class. Make sure it can plan a trajectory in an empty
 // unit box betweeen the two corners.
-TEST(RrtConnect, TestUnitBox) {
+TEST(OmplPlanner, TestUnitBox) {
   const double kVelocity = 1.0;
   const size_t kAmbientDimension = 3;
 
@@ -63,7 +63,7 @@ TEST(RrtConnect, TestUnitBox) {
                 VectorXd::Ones(kAmbientDimension));
 
   // Plan.
-  const RrtConnect planner(kVelocity);
+  const OmplPlanner<og::RRTConnect> planner(kVelocity);
   const Trajectory traj = planner.Plan(start, stop, box);
 
   // Check that start and stop states match.

@@ -36,7 +36,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the RrtConnect class, which wraps the OMPL class of the same name
+// Defines the OmplPlanner class, which wraps the OMPL geometric planners
 // and inherits from the Planner abstract class. For simplicity, we assume that
 // the state space is a real-valued vector space with box constraints, i.e.
 // an instance of the Box subclass of Environment.
@@ -44,14 +44,49 @@
 // We follow these ( http://ompl.kavrakilab.org/geometricPlanningSE3.html )
 // instructions for using OMPL geometric planners.
 //
-// TODO: This can easily be turned into a generic wrapper for any OMPL
-// geometric planner.
-//
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/rrt_connect.h>
+#ifndef META_PLANNER_OMPL_PLANNER_H
+#define META_PLANNER_OMPL_PLANNER_H
 
-RrtConnect::RrtConnect(double velocity)
+#include <meta_planner/planner.h>
+#include <meta_planner/box.h>
+#include <meta_planner/types.h>
+
+#include <ompl/geometric/planners/rrt/RRTConnect.h>
+#include <ompl/geometric/planners/bitstar/BITstar.h>
+
+#include <ompl/geometric/SimpleSetup.h>
+#include <ompl/base/TypedSpaceInformation.h>
+#include <ompl/base/SpaceInformation.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <memory>
+
+namespace ob = ompl::base;
+namespace og = ompl::geometric;
+
+template<typename PlannerType>
+class OmplPlanner : public Planner<Box> {
+public:
+  ~OmplPlanner() {}
+  explicit OmplPlanner(double velocity);
+
+  // Derived classes must plan trajectories between two points.
+  Trajectory Plan(const VectorXd& start, const VectorXd& stop,
+                  const Box& space) const;
+
+private:
+  // Convert between OMPL states and VectorXds.
+  VectorXd FromOmplState(const ob::State* state, size_t dimension) const;
+
+  // Robot velocity.
+  const double velocity_;
+};
+
+// ------------------------------- IMPLEMENTATION --------------------------- //
+
+template<typename PlannerType>
+OmplPlanner<PlannerType>::OmplPlanner(double velocity)
   : Planner<Box>(),
     velocity_((velocity <= 0.0) ? 1.0 : velocity) {
 #ifdef ENABLE_DEBUG_MESSAGES
@@ -61,8 +96,9 @@ RrtConnect::RrtConnect(double velocity)
 }
 
 // Derived classes must plan trajectories between two points.
-Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
-                            const Box& space) const {
+template<typename PlannerType>
+Trajectory OmplPlanner<PlannerType>::Plan(
+  const VectorXd& start, const VectorXd& stop, const Box& space) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (start.size() != stop.size() || start.size() != space.Dimension()) {
     ROS_ERROR("Start/stop state dimensions inconsistent with space dimension.");
@@ -71,7 +107,8 @@ Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
 #endif
 
   // Create the OMPL state space corresponding to this environment.
-  auto ompl_space(std::make_shared<ob::RealVectorStateSpace>(space.Dimension()));
+  auto ompl_space(
+    std::make_shared<ob::RealVectorStateSpace>(space.Dimension()));
 
   // Set bounds for the environment.
   const VectorXd& lower = space.LowerBounds();
@@ -104,11 +141,11 @@ Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
   // TODO: This is the only part that would need to change to make this
   // class a more general OMPL geometric planner wrapper.
   ob::PlannerPtr ompl_planner(
-    new og::RRTConnect(ompl_setup.getSpaceInformation()));
+    new PlannerType(ompl_setup.getSpaceInformation()));
   ompl_setup.setPlanner(ompl_planner);
 
   // Solve. Parameter is the amount of time (in seconds) used by the solver.
-  ob::PlannerStatus solved = ompl_setup.solve(1.0);
+  const ob::PlannerStatus solved = ompl_setup.solve(1.0);
 
   if (solved) {
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();
@@ -139,8 +176,9 @@ Trajectory RrtConnect::Plan(const VectorXd& start, const VectorXd& stop,
 }
 
 // Convert between OMPL states and VectorXds.
-VectorXd RrtConnect::FromOmplState(const ob::State* state,
-                                   size_t dimension) const {
+template<typename PlannerType>
+VectorXd OmplPlanner<PlannerType>::FromOmplState(
+  const ob::State* state, size_t dimension) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (!state) {
     ROS_ERROR("State pointer was null.");
@@ -157,3 +195,6 @@ VectorXd RrtConnect::FromOmplState(const ob::State* state,
 
   return converted;
 }
+
+
+#endif
