@@ -69,7 +69,7 @@ template<typename PlannerType>
 class OmplPlanner : public Planner<Box> {
 public:
   ~OmplPlanner() {}
-  explicit OmplPlanner(double velocity);
+  explicit OmplPlanner(double speed);
 
   // Derived classes must plan trajectories between two points.
   Trajectory Plan(const VectorXd& start, const VectorXd& stop,
@@ -79,19 +79,19 @@ private:
   // Convert between OMPL states and VectorXds.
   VectorXd FromOmplState(const ob::State* state, size_t dimension) const;
 
-  // Robot velocity.
-  const double velocity_;
+  // Robot speed.
+  const double speed_;
 };
 
 // ------------------------------- IMPLEMENTATION --------------------------- //
 
 template<typename PlannerType>
-OmplPlanner<PlannerType>::OmplPlanner(double velocity)
+OmplPlanner<PlannerType>::OmplPlanner(double speed)
   : Planner<Box>(),
-    velocity_((velocity <= 0.0) ? 1.0 : velocity) {
+    speed_((speed <= 0.0) ? 1.0 : speed) {
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (velocity_ <= 0.0)
-    ROS_ERROR("Velocity was negative. Setting to unity.");
+  if (speed_ <= 0.0)
+    ROS_ERROR("Speed was negative. Setting to unity.");
 #endif
 }
 
@@ -138,8 +138,6 @@ Trajectory OmplPlanner<PlannerType>::Plan(
   ompl_setup.setStartAndGoalStates(ompl_start, ompl_stop);
 
   // Set the planner.
-  // TODO: This is the only part that would need to change to make this
-  // class a more general OMPL geometric planner wrapper.
   ob::PlannerPtr ompl_planner(
     new PlannerType(ompl_setup.getSpaceInformation()));
   ompl_setup.setPlanner(ompl_planner);
@@ -162,8 +160,9 @@ Trajectory OmplPlanner<PlannerType>::Plan(
         traj.Add(state, time);
 
       // Handle all other states.
+      // Assuming speed is isotropic.
       else {
-        time += (state - traj.LastState()).norm() / velocity_;
+        time += (state - traj.LastState()).norm() / speed_;
         traj.Add(state, time);
       }
     }
@@ -171,7 +170,7 @@ Trajectory OmplPlanner<PlannerType>::Plan(
     return traj;
   }
 
-  ROS_WARN("RRT Connect could not compute a solution.");
+  ROS_WARN("OMPL Planner could not compute a solution.");
   return Trajectory();
 }
 
