@@ -65,6 +65,13 @@ private:
   // Callback for processing sensor measurements.
   //  void SensorCallback(const SomeMessageType::ConstPtr& msg);
 
+  // Callback for applying tracking controller.
+  void TimerCallback(const ros::TimerEvent& e);
+
+  // Set a recurring timer for a discrete-time controller.
+  ros::Timer timer_;
+  double time_step_;
+
   // Publishers/subscribers and related topics.
   ros::Publisher rrt_connect_vis_pub_;
   ros::Subscriber sensor_sub_;

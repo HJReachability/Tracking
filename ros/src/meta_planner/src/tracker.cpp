@@ -69,6 +69,10 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
 
+  // Control update time step.
+  if (!ros::param::search("meta_planner/control/time_step", key)) return false;
+  if (!ros::param::get(key, time_step_)) return false;
+
   // Topics and frame ids.
   if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
@@ -96,18 +100,22 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   rrt_connect_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
     rrt_connect_vis_topic_.c_str(), 10, false);
 
+  // Timer.
+  timer_ =
+    nl.createTimer(ros::Duration(time_step_), &Tracker::TimerCallback, this);
+
   return true;
 }
 
 
-// Callback for processing sensor measurements. 
-// void SensorCallback(const SomeMessageType::ConstPtr& msg);
-//   Replan trajectory
+// Callback for processing sensor measurements.
+// void Tracker::SensorCallback(const SomeMessageType::ConstPtr& msg);
+//   Replan trajectory.
 
-// void TimerCallback(const ros::TimerEvent& e);
-// 1) Compute relative state
-// 2) Get corresponding planner
-// 3) Interpolate gradient to get optimal control
-// 4) Apply optimal control
-
-
+// Callback for applying tracking controller.
+void Tracker::TimerCallback(const ros::TimerEvent& e) {
+  // 1) Compute relative state.
+  // 2) Get corresponding planner.
+  // 3) Interpolate gradient to get optimal control.
+  // 4) Apply optimal control.
+}
