@@ -43,41 +43,34 @@
 #ifndef META_PLANNER_META_PLANNER_H
 #define META_PLANNER_META_PLANNER_H
 
-#include <ros/ros.h>
-#include <visualization_msgs/Marker.h>
-#include <string>
+#include <meta_planner/planner.h>
+#include <meta_planner/environment.h>
+#include <meta_planner/trajectory.h>
+#include <meta_planner/types.h>
 
+#include <ros/ros.h>
+#include <vector>
+
+template<typename StateSpace>
 class MetaPlanner {
 public:
-  explicit MetaPlanner();
-  ~MetaPlanner();
+  explicit MetaPlanner() {}
+  ~MetaPlanner() {}
 
-  // Initialize this class with all parameters and callbacks.
-  bool Initialize(const ros::NodeHandle& n);
-
-private:
-  bool LoadParameters(const ros::NodeHandle& n);
-  bool RegisterCallbacks(const ros::NodeHandle& n);
-
-  // Callback for processing sensor measurements.
-  //  void SensorCallback(const SomeMessageType::ConstPtr& msg);
-
-  // Publishers/subscribers and related topics.
-  ros::Publisher rrt_connect_vis_pub_;
-  ros::Subscriber sensor_sub_;
-
-  std::string rrt_connect_vis_topic_;
-  std::string sensor_topic_;
-
-  // Frames of reference for reading current pose from tf tree.
-  std::string fixed_frame_id_;
-  std::string tracker_frame_id_;
-
-  // Is this class initialized?
-  bool initialized_;
-
-  // Name of this class, for use in debug messages.
-  std::string name_;
+  // Plan a trajectory using the given (ordered) list of Planners.
+  Trajectory Plan(const VectorXd& start, const VectorXd& stop,
+                  const StateSpace& space,
+                  const std::vector< Planner<StateSpace> >& planners) const;
 };
+
+// ------------------------------- IMPLEMENTATION --------------------------- //
+
+template<typename StateSpace>
+Trajectory MetaPlanner<StateSpace>::Plan(
+  const VectorXd& start, const VectorXd& stop, const StateSpace& space,
+  const std::vector< Planner<StateSpace> >& planners) const {
+  // TODO!
+  return Trajectory();
+}
 
 #endif
