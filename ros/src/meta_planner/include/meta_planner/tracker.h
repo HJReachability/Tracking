@@ -48,6 +48,7 @@
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
+#include <geometry_msgs/Vector3.h>
 #include <string>
 
 class Tracker {
@@ -73,9 +74,11 @@ private:
   double time_step_;
 
   // Publishers/subscribers and related topics.
+  ros::Publisher control_pub_;
   ros::Publisher rrt_connect_vis_pub_;
   ros::Subscriber sensor_sub_;
 
+  std::string control_topic_;
   std::string rrt_connect_vis_topic_;
   std::string sensor_topic_;
 
@@ -88,6 +91,10 @@ private:
 
   // Name of this class, for use in debug messages.
   std::string name_;
+
+  //Current trajectory
+  Trajectory ctraj_;
+
 };
 
 #endif

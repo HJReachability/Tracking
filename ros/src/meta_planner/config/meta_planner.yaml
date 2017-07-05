@@ -10,6 +10,9 @@ meta_planner:
     # Visualization topics.
     rrt_connect: rrt_connect
 
+    #Control topic
+    control: control
+
   frames:
     # Fixed frame.
     fixed: fixed

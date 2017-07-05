@@ -74,6 +74,9 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::get(key, time_step_)) return false;
 
   // Topics and frame ids.
+  if (!ros::param::search("meta_planner/topics/control", key)) return false;
+  if (!ros::param::get(key, control_topic_)) return false;
+
   if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
@@ -100,6 +103,9 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   rrt_connect_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
     rrt_connect_vis_topic_.c_str(), 10, false);
 
+  control_pub_ = nl.advertise<geometry_msgs::Vector3>(
+    control_topic_.c_str(), 10, false);
+
   // Timer.
   timer_ =
     nl.createTimer(ros::Duration(time_step_), &Tracker::TimerCallback, this);
@@ -114,8 +120,18 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
+#if 0
+  // 0) Get current TF.
+  const VectorXd state = getCurrentState();
   // 1) Compute relative state.
+  planner_state = ctraj_.Interpolate(current_time);
+  rel_state = state - planner.lift(planner_state); 
   // 2) Get corresponding planner.
+  planner = ctraj_.getPlanner(current_time);
   // 3) Interpolate gradient to get optimal control.
+  opt_control = planner.getOptimalControl(rel_state);
   // 4) Apply optimal control.
+  control_pub_.publish(opt_control);
+#endif
+
 }
