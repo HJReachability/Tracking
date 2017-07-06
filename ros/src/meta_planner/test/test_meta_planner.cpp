@@ -45,7 +45,42 @@
 #include <meta_planner/ompl_planner.h>
 #include <meta_planner/types.h>
 
+#include <matio.h>
+#include <stdio.h>
 #include <gtest/gtest.h>
+
+// Test that MATIO can read in a small file correctly.
+TEST(Matio, TestRead) {
+  const std::string file_name =
+    std::string(PRECOMPUTATION_DIR) + std::string("test.mat");
+  const std::string var_name = "x";
+
+  // Open a file pointer to this file.
+  mat_t* matfp = Mat_Open(file_name.c_str(), MAT_ACC_RDONLY);
+  ASSERT_TRUE(matfp != NULL);
+
+  // Read the specified variable from this file.
+  matvar_t* matvar = Mat_VarRead(matfp, var_name.c_str());
+  ASSERT_TRUE(matvar != NULL);
+
+  // Check content.
+  ASSERT_EQ(matvar->rank, 2);
+  ASSERT_EQ(matvar->dims[0], 1);
+  ASSERT_EQ(matvar->dims[1], 3);
+  ASSERT_EQ(matvar->isComplex, 0);
+  ASSERT_EQ(matvar->data_type, MAT_T_DOUBLE);
+  ASSERT_EQ(matvar->class_type, MAT_C_DOUBLE);
+
+  const size_t num_elements = matvar->nbytes / matvar->data_size;
+  const double* data = static_cast<const double*>(matvar->data);
+
+  for (size_t jj = 0; jj < 3; jj++)
+    EXPECT_EQ(data[jj], static_cast<double>(jj + 1));
+
+  // Free memory and close the file.
+  Mat_VarFree(matvar);
+  Mat_Close(matfp);
+}
 
 // Test the OmplPlanner class. Make sure it can plan a trajectory in an empty
 // unit box betweeen the two corners.

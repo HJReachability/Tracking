@@ -40,6 +40,8 @@ else()
   add_definitions(-DENABLE_DEBUG_MESSAGES=0)
 endif()
 
+add_definitions(-DPRECOMPUTATION_DIR="${CMAKE_SOURCE_DIR}/meta_planner/precomputation/")
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
