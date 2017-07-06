@@ -72,10 +72,11 @@ TEST(Matio, TestRead) {
   ASSERT_EQ(matvar->class_type, MAT_C_DOUBLE);
 
   const size_t num_elements = matvar->nbytes / matvar->data_size;
-  const double* data = static_cast<const double*>(matvar->data);
+  const double (&data)[1][3] =
+    *static_cast<const double (*)[1][3]>(matvar->data);
 
   for (size_t jj = 0; jj < 3; jj++)
-    EXPECT_EQ(data[jj], static_cast<double>(jj + 1));
+    EXPECT_EQ(data[0][jj], static_cast<double>(jj + 1));
 
   // Free memory and close the file.
   Mat_VarFree(matvar);
