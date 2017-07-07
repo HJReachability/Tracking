@@ -17,6 +17,7 @@ Other dependencies:
 * [Gtest](https://github.com/google/googletest) -- Google's C++ unit testing library
 * [Eigen](https://eigen.tuxfamily.org) -- a header-only linear algebra library for C++
 * [OMPL](http://ompl.kavrakilab.org) -- an open C++ library for motion planning
+* [MATIO](https://github.com/tbeu/matio) -- an open C library for MATLAB MAT file I/O
 
 To build, open a terminal window and navigate to the `ros/` directory. Then run:
 ```

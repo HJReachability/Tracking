@@ -36,47 +36,51 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Planner abstract class interface. For now, all Planners must
-// operate within a Box. This is because of the way in which subspaces are
-// specified in the constructor.
+// Defines the ValueFunction class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_PLANNER_H
-#define META_PLANNER_PLANNER_H
+#ifndef META_PLANNER_VALUE_FUNCTION_H
+#define META_PLANNER_VALUE_FUNCTION_H
 
-#include <meta_planner/value_function.h>
-#include <meta_planner/trajectory.h>
-#include <meta_planner/environment.h>
-#include <meta_planner/box.h>
 #include <meta_planner/types.h>
 
 #include <ros/ros.h>
+#include <matio.h>
+#include <memory>
 
-class Planner {
+class ValueFunction {
 public:
-  virtual ~Planner() {}
+  typedef std::shared_ptr<const ValueFunction> ConstPtr;
 
-  // Derived classes must plan trajectories between two points.
-  virtual Trajectory Plan(
-    const VectorXd& start, const VectorXd& stop) const = 0;
+  // Destructor.
+  ~ValueFunction() {}
 
-protected:
-  explicit Planner(const ValueFunction::ConstPtr& value,
-                   const Box::ConstPtr& space,
-                   const std::vector<size_t>& dimensions)
-    : value_(value),
-      space_(space),
-      dimensions_(dimensions) {}
+  // Factory method. Use this instead of the constructor.
+  // Note that this class is const-only, which means that once it is
+  // instantiated it can never be changed.
+  static ConstPtr Create(const std::string& file_name);
 
-  // Value function.
-  const ValueFunction::ConstPtr value_;
+  // Linearly interpolate to get the value/gradient at a particular state.
+  double Value(const VectorXd& state) const;
+  VectorXd Gradient(const VectorXd& state) const;
 
-  // State space (with collision checking).
-  const Box::ConstPtr space_;
+private:
+  explicit ValueFunction(const std::string& file_name);
 
-  // Dimensions within the overall state space in which this Planner operates.
-  const std::vector<size_t> dimensions_;
+  // Load from file. Returns whether or not it was successful.
+  bool Load(const std::string& file_name);
+
+  // Number of voxels and upper/lower bounds in each dimension.
+  std::vector<size_t> num_voxels_;
+  std::vector<double> lower_;
+  std::vector<double> upper_;
+
+  // Data is stored in row-major order.
+  std::vector<double> data_;
+
+  // Was this value function initialized/loaded properly?
+  bool initialized_;
 };
 
 #endif

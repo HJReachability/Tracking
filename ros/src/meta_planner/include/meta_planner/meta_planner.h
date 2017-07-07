@@ -36,48 +36,45 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the MetaPlanner class.
+// Defines the MetaPlanner class. The MetaPlanner samples random points in
+// the state space and then spawns off different Planners to plan Trajectories
+// between these points (RRT-style).
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef META_PLANNER_META_PLANNER_H
 #define META_PLANNER_META_PLANNER_H
 
+#include <meta_planner/planner.h>
+#include <meta_planner/environment.h>
+#include <meta_planner/trajectory.h>
+#include <meta_planner/types.h>
+
 #include <ros/ros.h>
-#include <visualization_msgs/Marker.h>
-#include <string>
+#include <vector>
 
 class MetaPlanner {
 public:
-  explicit MetaPlanner();
-  ~MetaPlanner();
+  explicit MetaPlanner(const Box::ConstPtr& space)
+    : space_(space) {}
+  ~MetaPlanner() {}
 
-  // Initialize this class with all parameters and callbacks.
-  bool Initialize(const ros::NodeHandle& n);
+  // Plan a trajectory using the given (ordered) list of Planners.
+  Trajectory Plan(const VectorXd& start, const VectorXd& stop,
+                  const std::vector<Planner>& planners) const;
 
 private:
-  bool LoadParameters(const ros::NodeHandle& n);
-  bool RegisterCallbacks(const ros::NodeHandle& n);
-
-  // Callback for processing sensor measurements.
-  //  void SensorCallback(const SomeMessageType::ConstPtr& msg);
-
-  // Publishers/subscribers and related topics.
-  ros::Publisher rrt_connect_vis_pub_;
-  ros::Subscriber sensor_sub_;
-
-  std::string rrt_connect_vis_topic_;
-  std::string sensor_topic_;
-
-  // Frames of reference for reading current pose from tf tree.
-  std::string fixed_frame_id_;
-  std::string tracker_frame_id_;
-
-  // Is this class initialized?
-  bool initialized_;
-
-  // Name of this class, for use in debug messages.
-  std::string name_;
+  // State space (with collision checker).
+  const Box::ConstPtr space_;
 };
+
+// ------------------------------- IMPLEMENTATION --------------------------- //
+
+// Plan a trajectory using the given (ordered) list of Planners.
+Trajectory MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
+                             const std::vector<Planner>& planners) const {
+  // TODO!
+  return Trajectory();
+}
 
 #endif

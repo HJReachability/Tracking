@@ -47,11 +47,19 @@
 #include <meta_planner/environment.h>
 
 #include <ros/ros.h>
+#include <memory>
+#include <algorithm>
 
 class Box : public Environment {
 public:
+  typedef std::shared_ptr<Box> Ptr;
+  typedef std::shared_ptr<const Box> ConstPtr;
+
+  // Factory method. Use this instead of the constructor.
+  static Ptr Create(size_t dimension);
+
+  // Destructor.
   virtual ~Box() {}
-  Box(size_t dimension);
 
   // Inherited from Environment, but can be overriden by child classes.
   virtual VectorXd Sample() const;
@@ -67,8 +75,13 @@ public:
   size_t Dimension() const { return dimension_; }
   const VectorXd& LowerBounds() const { return lower_; }
   const VectorXd& UpperBounds() const { return upper_; }
+  VectorXd LowerBounds(const std::vector<size_t>& dimensions) const;
+  VectorXd UpperBounds(const std::vector<size_t>& dimensions) const;
 
 private:
+  Box(size_t dimension);
+
+  // Dimension and bounds.
   const size_t dimension_;
   VectorXd lower_;
   VectorXd upper_;

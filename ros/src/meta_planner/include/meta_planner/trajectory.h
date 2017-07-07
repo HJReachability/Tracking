@@ -43,49 +43,49 @@
 #ifndef META_PLANNER_TRAJECTORY_H
 #define META_PLANNER_TRAJECTORY_H
 
+#include <meta_planner/value_function.h>
 #include <meta_planner/types.h>
 
 #include <ros/ros.h>
 #include <std_msgs/ColorRGBA.h>
 #include <visualization_msgs/Marker.h>
 #include <vector>
+#include <utility>
+#include <map>
 #include <string>
 #include <iostream>
+#include <exception>
 
 class Trajectory {
 public:
   // Clear out this Trajectory.
-  inline void Clear() {
-    states_.clear();
-    times_.clear();
-  }
+  void Clear();
 
-  // Add a (point, time) tuple to this Trajectory.
-  inline void Add(const VectorXd& point, double time) {
-    states_.push_back(point);
-    times_.push_back(time);
-  }
+  // Add a (state, time) tuple to this Trajectory.
+  void Add(double time,
+           const VectorXd& state,
+           const ValueFunction::ConstPtr& value);
 
   // Check if this trajectory is empty.
-  inline bool IsEmpty() const {
-    return states_.size() == 0;
-  }
+  bool IsEmpty() const;
 
   // Number of waypoints.
-  inline size_t Size() const {
-    return states_.size();
-  }
+  size_t Size() const;
 
   // Total time length of the trajectory.
-  inline double Time() const {
-    return times_.back() - times_.front();
-  }
+  double Time() const;
 
   // Accessors.
-  inline const VectorXd& LastState() const { return states_.back(); }
-  inline const VectorXd& FirstState() const { return states_.front(); }
-  inline double LastTime() const { return times_.back(); }
-  inline double FirstTime() const { return times_.front(); }
+  const VectorXd& LastState() const;
+  const VectorXd& FirstState() const;
+  double LastTime() const;
+  double FirstTime() const;
+
+  // Find the state corresponding to a particular time via linear interpolation.
+  VectorXd State(double time) const;
+
+  // Return a pointer to the value function being used at this time.
+  const ValueFunction::ConstPtr& ValueFunction(double time) const;
 
   // Visualize this trajectory in RVIZ.
   void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
@@ -94,12 +94,103 @@ public:
   void Print(const std::string& prefix) const;
 
 private:
-  // Compute the color (on a red-blue colormap) at a particular index.
-  std_msgs::ColorRGBA Colormap(size_t index) const;
+  // Compute the color (on a red-blue colormap) at a particular time.
+  std_msgs::ColorRGBA Colormap(double time) const;
 
-  // List of states and corresponding times.
-  std::vector<VectorXd> states_;
-  std::vector<double> times_;
+  // Private struct to hold a state and a value function.
+  struct StateValue {
+    VectorXd state_;
+    ValueFunction::ConstPtr value_;
+
+    StateValue(const VectorXd& state, const ValueFunction::ConstPtr& value)
+      : state_(state),
+        value_(value) {}
+    ~StateValue() {}
+  };
+
+  // Map from time stamp to corresponding state/value function.
+  std::map<double, StateValue> map_;
 };
+
+// ---------------------- IMPLEMENT INLINE FUNCTIONS ------------------------ //
+
+// Clear out this Trajectory.
+inline void Trajectory::Clear() {
+  map_.clear();
+}
+
+// Add a (state, time) tuple to this Trajectory.
+inline void Trajectory::Add(double time,
+                            const VectorXd& state,
+                            const ValueFunction::ConstPtr& value) {
+  map_.insert({time, StateValue(state, value)});
+}
+
+// Check if this trajectory is empty.
+inline bool Trajectory::IsEmpty() const {
+  return map_.empty();
+}
+
+// Number of waypoints.
+inline size_t Trajectory::Size() const {
+  return map_.size();
+}
+
+// Total time length of the trajectory.
+inline double Trajectory::Time() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to get time length of empty trajectory.");
+    return 0.0;
+  }
+#endif
+
+  return LastTime() - FirstTime();
+}
+
+// Accessors.
+inline const VectorXd& Trajectory::LastState() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to get last state of empty trajectory.");
+    throw std::underflow_error("Attempted last state of empty trajectory.");
+  }
+#endif
+
+  return (--map_.end())->second.state_;
+}
+
+inline const VectorXd& Trajectory::FirstState() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to get first state of empty trajectory.");
+    throw std::underflow_error("Attempted first state of empty trajectory.");
+  }
+#endif
+
+  return map_.begin()->second.state_;
+}
+
+inline double Trajectory::LastTime() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to get last time of empty trajectory.");
+    throw std::underflow_error("Attempted last time of empty trajectory.");
+  }
+#endif
+
+  return (--map_.end())->first;
+}
+
+inline double Trajectory::FirstTime() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to get first time of empty trajectory.");
+    throw std::underflow_error("Attempted first time of empty trajectory.");
+  }
+#endif
+
+  return map_.begin()->first;
+}
 
 #endif

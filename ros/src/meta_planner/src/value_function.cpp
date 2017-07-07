@@ -36,47 +36,57 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Planner abstract class interface. For now, all Planners must
-// operate within a Box. This is because of the way in which subspaces are
-// specified in the constructor.
+// Defines the ValueFunction class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_PLANNER_H
-#define META_PLANNER_PLANNER_H
-
 #include <meta_planner/value_function.h>
-#include <meta_planner/trajectory.h>
-#include <meta_planner/environment.h>
-#include <meta_planner/box.h>
-#include <meta_planner/types.h>
 
-#include <ros/ros.h>
+// Factory method. Use this instead of the constructor.
+// Note that this class is const-only, which means that once it is
+// instantiated it can never be changed.
+ValueFunction::ConstPtr ValueFunction::Create(const std::string& file_name) {
+  ValueFunction::ConstPtr ptr(new ValueFunction(file_name));
+  return ptr;
+}
 
-class Planner {
-public:
-  virtual ~Planner() {}
+// Constructor. Don't use this. Use the factory method instead.
+ValueFunction::ValueFunction(const std::string& file_name) {
+  initialized_ = Load(file_name);
+}
 
-  // Derived classes must plan trajectories between two points.
-  virtual Trajectory Plan(
-    const VectorXd& start, const VectorXd& stop) const = 0;
+// Linearly interpolate to get the value at a particular state.
+double ValueFunction::Value(const VectorXd& state) const {
+  // TODO!
+  return 0.0;
+}
 
-protected:
-  explicit Planner(const ValueFunction::ConstPtr& value,
-                   const Box::ConstPtr& space,
-                   const std::vector<size_t>& dimensions)
-    : value_(value),
-      space_(space),
-      dimensions_(dimensions) {}
+// Linearly interpolate to get the gradient at a particular state.
+VectorXd ValueFunction::Gradient(const VectorXd& state) const {
+  // TODO!
+  return VectorXd::Zero(1);
+}
 
-  // Value function.
-  const ValueFunction::ConstPtr value_;
+// Load from file. Returns whether or not it was successful.
+bool ValueFunction::Load(const std::string& file_name) {
+  // Open the file.
+  mat_t* matfp = Mat_Open(file_name.c_str(), MAT_ACC_RDONLY);
+  if (matfp == NULL) {
+    ROS_ERROR("Could not open file: %s.", file_name);
+    return false;
+  }
 
-  // State space (with collision checking).
-  const Box::ConstPtr space_;
+  // Read the specified variable from this file.
+  // TODO: fix variable name.
+  const std::string var_name = "g";
+  matvar_t* matvar = Mat_VarRead(matfp, var_name.c_str());
+  if (matvar == NULL) {
+    ROS_ERROR("Could not read variable: %s.", var_name);
+    return false;
+  }
 
-  // Dimensions within the overall state space in which this Planner operates.
-  const std::vector<size_t> dimensions_;
-};
+  // Populate class variables.
+  // TODO!
 
-#endif
+  return true;
+}

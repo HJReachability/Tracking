@@ -43,6 +43,13 @@
 
 #include <meta_planner/box.h>
 
+// Factory method. Use this instead of the constructor.
+Box::Ptr Box::Create(size_t dimension) {
+  Box::Ptr ptr(new Box(dimension));
+  return ptr;
+}
+
+// Constructor. Don't use this. Use the factory method instead.
 Box::Box(size_t dimension)
   : Environment(),
     dimension_(dimension),
@@ -90,4 +97,42 @@ void Box::SetBounds(const VectorXd& lower, const VectorXd& upper) {
 
   lower_ = lower;
   upper_ = upper;
+}
+
+// Get the lower bounds at the specified dimensions.
+VectorXd Box::LowerBounds(const std::vector<size_t>& dimensions) const {
+  VectorXd punctured = VectorXd::Zero(dimensions.size());
+
+  for (size_t ii = 0; ii < dimensions.size(); ii++) {
+#ifdef ENABLE_DEBUG_MESSAGES
+    if (dimensions[ii] >= dimension_) {
+      ROS_ERROR("Tried to access bound for a non-existent dimension: %zu.",
+                dimensions[ii]);
+      continue;
+    }
+#endif
+
+    punctured[ii] = lower_[dimensions[ii]];
+  }
+
+  return punctured;
+}
+
+// Get the upper bounds at the specified dimensions.
+VectorXd Box::UpperBounds(const std::vector<size_t>& dimensions) const {
+  VectorXd punctured = VectorXd::Zero(dimensions.size());
+
+  for (size_t ii = 0; ii < dimensions.size(); ii++) {
+#ifdef ENABLE_DEBUG_MESSAGES
+    if (dimensions[ii] >= dimension_) {
+      ROS_ERROR("Tried to access bound for a non-existent dimension: %zu.",
+                dimensions[ii]);
+      continue;
+    }
+#endif
+
+    punctured[ii] = upper_[dimensions[ii]];
+  }
+
+  return punctured;
 }

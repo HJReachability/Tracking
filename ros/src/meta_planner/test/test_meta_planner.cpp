@@ -40,12 +40,49 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <meta_planner/value_function.h>
 #include <meta_planner/box.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/ompl_planner.h>
 #include <meta_planner/types.h>
 
+#include <matio.h>
+#include <stdio.h>
+#include <algorithm>
 #include <gtest/gtest.h>
+
+// Test that MATIO can read in a small file correctly.
+TEST(Matio, TestRead) {
+  const std::string file_name =
+    std::string(PRECOMPUTATION_DIR) + std::string("test.mat");
+  const std::string var_name = "x";
+
+  // Open a file pointer to this file.
+  mat_t* matfp = Mat_Open(file_name.c_str(), MAT_ACC_RDONLY);
+  ASSERT_TRUE(matfp != NULL);
+
+  // Read the specified variable from this file.
+  matvar_t* matvar = Mat_VarRead(matfp, var_name.c_str());
+  ASSERT_TRUE(matvar != NULL);
+
+  // Check content.
+  ASSERT_EQ(matvar->rank, 2);
+  ASSERT_EQ(matvar->dims[0], 1);
+  ASSERT_EQ(matvar->dims[1], 3);
+  ASSERT_EQ(matvar->isComplex, 0);
+  ASSERT_EQ(matvar->data_type, MAT_T_DOUBLE);
+  ASSERT_EQ(matvar->class_type, MAT_C_DOUBLE);
+
+  const double (&data)[1][3] =
+    *static_cast<const double (*)[1][3]>(matvar->data);
+
+  for (size_t jj = 0; jj < 3; jj++)
+    EXPECT_EQ(data[0][jj], static_cast<double>(jj + 1));
+
+  // Free memory and close the file.
+  Mat_VarFree(matvar);
+  Mat_Close(matfp);
+}
 
 // Test the OmplPlanner class. Make sure it can plan a trajectory in an empty
 // unit box betweeen the two corners.
@@ -58,13 +95,20 @@ TEST(OmplPlanner, TestUnitBox) {
   const VectorXd stop = VectorXd::Ones(kAmbientDimension);
 
   // Create unit box environment.
-  Box box(kAmbientDimension);
-  box.SetBounds(VectorXd::Zero(kAmbientDimension),
-                VectorXd::Ones(kAmbientDimension));
+  const Box::Ptr box = Box::Create(kAmbientDimension);
+  box->SetBounds(VectorXd::Zero(kAmbientDimension),
+                 VectorXd::Ones(kAmbientDimension));
+
+  std::vector<size_t> dimensions(kAmbientDimension);
+  std::iota(dimensions.begin(), dimensions.end(), 0);
+
+  // Create a nullptr for the ValueFunction.
+  const ValueFunction::ConstPtr null_value(NULL);
 
   // Plan.
-  const OmplPlanner<og::RRTConnect> planner(kVelocity);
-  const Trajectory traj = planner.Plan(start, stop, box);
+  const OmplPlanner<og::RRTConnect> planner(
+    null_value, box, dimensions, kVelocity);
+  const Trajectory traj = planner.Plan(start, stop);
 
   // Check that start and stop states match.
   const double kSmallNumber = 1e-8;

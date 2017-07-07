@@ -42,6 +42,75 @@
 
 #include <meta_planner/trajectory.h>
 
+// Find the state corresponding to a particular time via linear interpolation.
+VectorXd Trajectory::State(double time) const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to interpolate an empty trajectory.");
+    throw std::underflow_error("Tried to interpolate an empty trajectory.");
+  }
+#endif
+
+  // Get a const iterator to a time not less than this one.
+  std::map<double, StateValue>::const_iterator iter = map_.lower_bound(time);
+
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (iter == map_.end() || iter == map_.begin()) {
+    ROS_WARN("Could not interpolate. Time was out of range.");
+    throw std::out_of_range("Could not interpolate. Time was out of range.");
+  }
+#endif
+
+  // Get the state with time not later than this time.
+  const double upper_time = iter->first;
+  const VectorXd& upper_state = iter->second.state_;
+
+  if (upper_time == time)
+    return upper_state;
+
+  // Get the state with time earlier than this time.
+  iter--;
+  const double lower_time = iter->first;
+  const VectorXd& lower_state = iter->second.state_;
+
+  // Linear interpolation.
+  return lower_state + (upper_state - lower_state) *
+    (time - lower_time) / (upper_time - lower_time);
+}
+
+// Return a pointer to the value function being used at this time.
+const ValueFunction::ConstPtr& Trajectory::ValueFunction(double time) const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to interpolate an empty trajectory.");
+    throw std::underflow_error("Tried to interpolate an empty trajectory.");
+  }
+#endif
+
+  // Get a const iterator to a time not less than this one.
+  std::map<double, StateValue>::const_iterator iter = map_.lower_bound(time);
+
+  // Catch end.
+  if (iter == map_.end()) {
+    ROS_WARN("This time occurred after the trajectory.");
+    return (--iter)->second.value_;
+  }
+
+  // Catch equality.
+  if (iter->first == time)
+    return iter->second.value_;
+
+  // Catch beginning. Note this occurs after equality check, so if this is
+  // true then the specified time must occur before the start of the trajectory.
+  if (iter == map_.begin()) {
+    ROS_WARN("This time occurred before the trajectory.");
+    return iter->second.value_;
+  }
+
+  // Regular case: iter is after the specified time.
+  return (--iter)->second.value_;
+}
+
 // Visualize this trajectory in RVIZ.
 void Trajectory::Visualize(const ros::Publisher& pub,
                            const std::string& frame_id) const {
@@ -87,13 +156,13 @@ void Trajectory::Visualize(const ros::Publisher& pub,
 #endif
 
   // Iterate through the trajectory and append to markers.
-  for (size_t ii = 0; ii < Size(); ii++) {
+  for (const auto& pair : map_) {
     geometry_msgs::Point p;
-    p.x = states_[ii](0);
-    p.y = states_[ii](1);
-    p.z = states_[ii](2);
+    p.x = pair.second.state_(0);
+    p.y = pair.second.state_(1);
+    p.z = pair.second.state_(2);
 
-    const std_msgs::ColorRGBA c = Colormap(ii);
+    const std_msgs::ColorRGBA c = Colormap(pair.first);
 
     // Handle 'spheres' marker.
     spheres.points.push_back(p);
@@ -112,11 +181,11 @@ void Trajectory::Visualize(const ros::Publisher& pub,
 }
 
 // Compute the color (on a red-blue colormap) at a particular index.
-std_msgs::ColorRGBA Trajectory::Colormap(size_t index) const {
+std_msgs::ColorRGBA Trajectory::Colormap(double time) const {
   std_msgs::ColorRGBA color;
 
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (index >= Size()) {
+  if (time < FirstTime() || time > LastTime()) {
     ROS_ERROR("Tried to compute colormap for out-of-bounds index.");
 
     color.r = 0.0;
@@ -136,7 +205,7 @@ std_msgs::ColorRGBA Trajectory::Colormap(size_t index) const {
     total_time = kSmallNumber;
   }
 
-  color.r = times_[index] / total_time;
+  color.r = (time - FirstTime()) / total_time;
   color.g = 0.0;
   color.b = 1.0 - color.r;
   color.a = 0.6;
@@ -147,6 +216,7 @@ std_msgs::ColorRGBA Trajectory::Colormap(size_t index) const {
 // Print this trajectory to stdout.
 void Trajectory::Print(const std::string& prefix) const {
   std::cout << prefix << std::endl;
-  for (size_t ii = 0; ii < Size(); ii++)
-    std::cout << times_[ii] << " -- " << states_[ii].transpose() << std::endl;
+  for (const auto& pair : map_)
+    std::cout << pair.first << " -- "
+              << pair.second.state_.transpose() << std::endl;
 }

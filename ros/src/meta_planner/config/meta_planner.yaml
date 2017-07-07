@@ -1,10 +1,17 @@
 meta_planner:
+  control:
+    # Interval (seconds) of the discrete-time control update.
+    time_step: 0.01
+
   topics:
     # Sensor publication topic.
     sensor: sensor
 
-    # Visualization topics.
+    # Visualization topic.
     rrt_connect: rrt_connect
+
+    # Control topic.
+    control: control
 
   frames:
     # Fixed frame.

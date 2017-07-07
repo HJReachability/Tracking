@@ -36,64 +36,64 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the MetaPlanner class.
+// Defines the Tracker class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef META_PLANNER_TRACKER_H
+#define META_PLANNER_TRACKER_H
+
 #include <meta_planner/meta_planner.h>
+#include <meta_planner/trajectory.h>
 
-MetaPlanner::MetaPlanner()
-  : initialized_(false) {}
+#include <ros/ros.h>
+#include <visualization_msgs/Marker.h>
+#include <geometry_msgs/Vector3.h>
+#include <string>
 
-MetaPlanner::~MetaPlanner() {}
+class Tracker {
+public:
+  explicit Tracker();
+  ~Tracker();
 
-// Initialize this class with all parameters and callbacks.
-bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "meta_planner");
+  // Initialize this class with all parameters and callbacks.
+  bool Initialize(const ros::NodeHandle& n);
 
-  if (!LoadParameters(n)) {
-    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
-    return false;
-  }
+private:
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  if (!RegisterCallbacks(n)) {
-    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
-    return false;
-  }
+  // Callback for processing sensor measurements.
+  //  void SensorCallback(const SomeMessageType::ConstPtr& msg);
 
-  return true;
-}
+  // Callback for applying tracking controller.
+  void TimerCallback(const ros::TimerEvent& e);
 
-// Load all parameters from config files.
-bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
-  std::string key;
+  // Set a recurring timer for a discrete-time controller.
+  ros::Timer timer_;
+  double time_step_;
 
-  // Topics and frame ids.
-  if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
-  if (!ros::param::get(key, sensor_topic_)) return false;
+  // Publishers/subscribers and related topics.
+  ros::Publisher control_pub_;
+  ros::Publisher rrt_connect_vis_pub_;
+  ros::Subscriber sensor_sub_;
 
-  if (!ros::param::search("meta_planner/topics/rrt_connect", key)) return false;
-  if (!ros::param::get(key, rrt_connect_vis_topic_)) return false;
+  std::string control_topic_;
+  std::string rrt_connect_vis_topic_;
+  std::string sensor_topic_;
 
-  if (!ros::param::search("meta_planner/frames/fixed", key)) return false;
-  if (!ros::param::get(key, fixed_frame_id_)) return false;
+  // Frames of reference for reading current pose from tf tree.
+  std::string fixed_frame_id_;
+  std::string tracker_frame_id_;
 
-  if (!ros::param::search("meta_planner/frames/tracker", key)) return false;
-  if (!ros::param::get(key, tracker_frame_id_)) return false;
+  // Is this class initialized?
+  bool initialized_;
 
-  return true;
-}
+  // Name of this class, for use in debug messages.
+  std::string name_;
 
-// Register all callbacks and publishers.
-bool MetaPlanner::RegisterCallbacks(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
+  // Current trajectory.
+  Trajectory traj_;
+};
 
-  // Sensor subscriber.
-  // sensor_sub_ = nl.subscribe(sensor_topic_.c_str(), 10, &this->SensorCallback())
-
-  // Visualization publisher(s).
-  rrt_connect_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
-    rrt_connect_vis_topic_.c_str(), 10, false);
-
-  return true;
-}
+#endif
