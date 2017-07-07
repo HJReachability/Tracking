@@ -36,7 +36,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the MetaPlanner class.
+// Defines the MetaPlanner class. The MetaPlanner samples random points in
+// the state space and then spawns off different Planners to plan Trajectories
+// between these points (RRT-style).
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -51,24 +53,26 @@
 #include <ros/ros.h>
 #include <vector>
 
-template<typename StateSpace>
 class MetaPlanner {
 public:
-  explicit MetaPlanner() {}
+  explicit MetaPlanner(const Box::ConstPtr& space)
+    : space_(space) {}
   ~MetaPlanner() {}
 
   // Plan a trajectory using the given (ordered) list of Planners.
   Trajectory Plan(const VectorXd& start, const VectorXd& stop,
-                  const StateSpace& space,
-                  const std::vector< Planner<StateSpace> >& planners) const;
+                  const std::vector<Planner>& planners) const;
+
+private:
+  // State space (with collision checker).
+  const Box::ConstPtr space_;
 };
 
 // ------------------------------- IMPLEMENTATION --------------------------- //
 
-template<typename StateSpace>
-Trajectory MetaPlanner<StateSpace>::Plan(
-  const VectorXd& start, const VectorXd& stop, const StateSpace& space,
-  const std::vector< Planner<StateSpace> >& planners) const {
+// Plan a trajectory using the given (ordered) list of Planners.
+Trajectory MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
+                             const std::vector<Planner>& planners) const {
   // TODO!
   return Trajectory();
 }

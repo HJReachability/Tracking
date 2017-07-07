@@ -7,10 +7,10 @@ meta_planner:
     # Sensor publication topic.
     sensor: sensor
 
-    # Visualization topics.
+    # Visualization topic.
     rrt_connect: rrt_connect
 
-    #Control topic
+    # Control topic.
     control: control
 
   frames:

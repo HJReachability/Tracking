@@ -92,9 +92,8 @@ private:
   // Name of this class, for use in debug messages.
   std::string name_;
 
-  //Current trajectory
-  Trajectory ctraj_;
-
+  // Current trajectory.
+  Trajectory traj_;
 };
 
 #endif

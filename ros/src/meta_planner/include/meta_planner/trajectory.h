@@ -43,12 +43,14 @@
 #ifndef META_PLANNER_TRAJECTORY_H
 #define META_PLANNER_TRAJECTORY_H
 
+#include <meta_planner/value_function.h>
 #include <meta_planner/types.h>
 
 #include <ros/ros.h>
 #include <std_msgs/ColorRGBA.h>
 #include <visualization_msgs/Marker.h>
 #include <vector>
+#include <utility>
 #include <map>
 #include <string>
 #include <iostream>
@@ -60,7 +62,9 @@ public:
   void Clear();
 
   // Add a (state, time) tuple to this Trajectory.
-  void Add(const VectorXd& state, double time);
+  void Add(double time,
+           const VectorXd& state,
+           const ValueFunction::ConstPtr& value);
 
   // Check if this trajectory is empty.
   bool IsEmpty() const;
@@ -78,7 +82,10 @@ public:
   double FirstTime() const;
 
   // Find the state corresponding to a particular time via linear interpolation.
-  VectorXd Interpolate(double time) const;
+  VectorXd State(double time) const;
+
+  // Return a pointer to the value function being used at this time.
+  const ValueFunction::ConstPtr& ValueFunction(double time) const;
 
   // Visualize this trajectory in RVIZ.
   void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
@@ -90,8 +97,19 @@ private:
   // Compute the color (on a red-blue colormap) at a particular time.
   std_msgs::ColorRGBA Colormap(double time) const;
 
-  // Map from time stamp to corresponding state.
-  std::map<double, VectorXd> map_;
+  // Private struct to hold a state and a value function.
+  struct StateValue {
+    VectorXd state_;
+    ValueFunction::ConstPtr value_;
+
+    StateValue(const VectorXd& state, const ValueFunction::ConstPtr& value)
+      : state_(state),
+        value_(value) {}
+    ~StateValue() {}
+  };
+
+  // Map from time stamp to corresponding state/value function.
+  std::map<double, StateValue> map_;
 };
 
 // ---------------------- IMPLEMENT INLINE FUNCTIONS ------------------------ //
@@ -102,8 +120,10 @@ inline void Trajectory::Clear() {
 }
 
 // Add a (state, time) tuple to this Trajectory.
-inline void Trajectory::Add(const VectorXd& state, double time) {
-  map_.insert({time, state});
+inline void Trajectory::Add(double time,
+                            const VectorXd& state,
+                            const ValueFunction::ConstPtr& value) {
+  map_.insert({time, StateValue(state, value)});
 }
 
 // Check if this trajectory is empty.
@@ -137,7 +157,7 @@ inline const VectorXd& Trajectory::LastState() const {
   }
 #endif
 
-  return (--map_.end())->second;
+  return (--map_.end())->second.state_;
 }
 
 inline const VectorXd& Trajectory::FirstState() const {
@@ -148,7 +168,7 @@ inline const VectorXd& Trajectory::FirstState() const {
   }
 #endif
 
-  return map_.begin()->second;
+  return map_.begin()->second.state_;
 }
 
 inline double Trajectory::LastTime() const {
@@ -172,6 +192,5 @@ inline double Trajectory::FirstTime() const {
 
   return map_.begin()->first;
 }
-
 
 #endif

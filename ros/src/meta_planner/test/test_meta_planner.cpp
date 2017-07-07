@@ -40,6 +40,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <meta_planner/value_function.h>
 #include <meta_planner/box.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/ompl_planner.h>
@@ -47,6 +48,7 @@
 
 #include <matio.h>
 #include <stdio.h>
+#include <algorithm>
 #include <gtest/gtest.h>
 
 // Test that MATIO can read in a small file correctly.
@@ -71,7 +73,6 @@ TEST(Matio, TestRead) {
   ASSERT_EQ(matvar->data_type, MAT_T_DOUBLE);
   ASSERT_EQ(matvar->class_type, MAT_C_DOUBLE);
 
-  const size_t num_elements = matvar->nbytes / matvar->data_size;
   const double (&data)[1][3] =
     *static_cast<const double (*)[1][3]>(matvar->data);
 
@@ -94,13 +95,20 @@ TEST(OmplPlanner, TestUnitBox) {
   const VectorXd stop = VectorXd::Ones(kAmbientDimension);
 
   // Create unit box environment.
-  Box box(kAmbientDimension);
-  box.SetBounds(VectorXd::Zero(kAmbientDimension),
-                VectorXd::Ones(kAmbientDimension));
+  const Box::Ptr box = Box::Create(kAmbientDimension);
+  box->SetBounds(VectorXd::Zero(kAmbientDimension),
+                 VectorXd::Ones(kAmbientDimension));
+
+  std::vector<size_t> dimensions(kAmbientDimension);
+  std::iota(dimensions.begin(), dimensions.end(), 0);
+
+  // Create a nullptr for the ValueFunction.
+  const ValueFunction::ConstPtr null_value(NULL);
 
   // Plan.
-  const OmplPlanner<og::RRTConnect> planner(kVelocity);
-  const Trajectory traj = planner.Plan(start, stop, box);
+  const OmplPlanner<og::RRTConnect> planner(
+    null_value, box, dimensions, kVelocity);
+  const Trajectory traj = planner.Plan(start, stop);
 
   // Check that start and stop states match.
   const double kSmallNumber = 1e-8;

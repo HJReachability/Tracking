@@ -43,7 +43,7 @@
 #include <meta_planner/trajectory.h>
 
 // Find the state corresponding to a particular time via linear interpolation.
-VectorXd Trajectory::Interpolate(double time) const {
+VectorXd Trajectory::State(double time) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (IsEmpty()) {
     ROS_WARN("Tried to interpolate an empty trajectory.");
@@ -52,7 +52,7 @@ VectorXd Trajectory::Interpolate(double time) const {
 #endif
 
   // Get a const iterator to a time not less than this one.
-  std::map<double, VectorXd>::const_iterator iter = map_.lower_bound(time);
+  std::map<double, StateValue>::const_iterator iter = map_.lower_bound(time);
 
 #ifdef ENABLE_DEBUG_MESSAGES
   if (iter == map_.end() || iter == map_.begin()) {
@@ -63,7 +63,7 @@ VectorXd Trajectory::Interpolate(double time) const {
 
   // Get the state with time not later than this time.
   const double upper_time = iter->first;
-  const VectorXd& upper_state = iter->second;
+  const VectorXd& upper_state = iter->second.state_;
 
   if (upper_time == time)
     return upper_state;
@@ -71,11 +71,44 @@ VectorXd Trajectory::Interpolate(double time) const {
   // Get the state with time earlier than this time.
   iter--;
   const double lower_time = iter->first;
-  const VectorXd& lower_state = iter->second;
+  const VectorXd& lower_state = iter->second.state_;
 
   // Linear interpolation.
   return lower_state + (upper_state - lower_state) *
     (time - lower_time) / (upper_time - lower_time);
+}
+
+// Return a pointer to the value function being used at this time.
+const ValueFunction::ConstPtr& Trajectory::ValueFunction(double time) const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to interpolate an empty trajectory.");
+    throw std::underflow_error("Tried to interpolate an empty trajectory.");
+  }
+#endif
+
+  // Get a const iterator to a time not less than this one.
+  std::map<double, StateValue>::const_iterator iter = map_.lower_bound(time);
+
+  // Catch end.
+  if (iter == map_.end()) {
+    ROS_WARN("This time occurred after the trajectory.");
+    return (--iter)->second.value_;
+  }
+
+  // Catch equality.
+  if (iter->first == time)
+    return iter->second.value_;
+
+  // Catch beginning. Note this occurs after equality check, so if this is
+  // true then the specified time must occur before the start of the trajectory.
+  if (iter == map_.begin()) {
+    ROS_WARN("This time occurred before the trajectory.");
+    return iter->second.value_;
+  }
+
+  // Regular case: iter is after the specified time.
+  return (--iter)->second.value_;
 }
 
 // Visualize this trajectory in RVIZ.
@@ -125,9 +158,9 @@ void Trajectory::Visualize(const ros::Publisher& pub,
   // Iterate through the trajectory and append to markers.
   for (const auto& pair : map_) {
     geometry_msgs::Point p;
-    p.x = pair.second(0);
-    p.y = pair.second(1);
-    p.z = pair.second(2);
+    p.x = pair.second.state_(0);
+    p.y = pair.second.state_(1);
+    p.z = pair.second.state_(2);
 
     const std_msgs::ColorRGBA c = Colormap(pair.first);
 
@@ -184,5 +217,6 @@ std_msgs::ColorRGBA Trajectory::Colormap(double time) const {
 void Trajectory::Print(const std::string& prefix) const {
   std::cout << prefix << std::endl;
   for (const auto& pair : map_)
-    std::cout << pair.first << " -- " << pair.second.transpose() << std::endl;
+    std::cout << pair.first << " -- "
+              << pair.second.state_.transpose() << std::endl;
 }

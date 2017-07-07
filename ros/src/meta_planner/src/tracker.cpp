@@ -123,15 +123,18 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 #if 0
   // 0) Get current TF.
   const VectorXd state = getCurrentState();
+
   // 1) Compute relative state.
-  planner_state = ctraj_.Interpolate(current_time);
-  rel_state = state - planner.lift(planner_state); 
-  // 2) Get corresponding planner.
-  planner = ctraj_.getPlanner(current_time);
+  planner_state = ctraj_.State(current_time);
+  rel_state = state - planner_state;
+
+  // 2) Get corresponding value function.
+  const ValueFunction::ConstPtr value = ctraj_.ValueFunction(current_time);
+
   // 3) Interpolate gradient to get optimal control.
-  opt_control = planner.getOptimalControl(rel_state);
+  opt_control = value->OptimalControl(rel_state);
+
   // 4) Apply optimal control.
   control_pub_.publish(opt_control);
 #endif
-
 }
