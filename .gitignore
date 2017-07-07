@@ -5,8 +5,11 @@ docs/Tracking Journal/tracking.pdf
 *.gz
 ~*
 *.png
-*.asv
+
 *.mat
+!ros/src/meta_planner/precomputation/*.mat
+
+*.asv
 docs/CDC 2017 Safe Tracking/tracking.pdf
 *.m~
 code/pics/
