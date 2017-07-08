@@ -77,16 +77,89 @@ bool ValueFunction::Load(const std::string& file_name) {
   }
 
   // Read the specified variable from this file.
-  // TODO: fix variable name.
-  const std::string var_name = "g";
-  matvar_t* matvar = Mat_VarRead(matfp, var_name.c_str());
-  if (matvar == NULL) {
-    ROS_ERROR("Could not read variable: %s.", var_name);
+  const std::string grid_min = "grid_min";
+  matvar_t* grid_min_mat = Mat_VarRead(matfp, grid_min.c_str());
+  if (grid_min_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", grid_min);
     return false;
   }
 
+  const std::string grid_max = "grid_max";
+  matvar_t* grid_max_mat = Mat_VarRead(matfp, grid_max.c_str());
+  if (grid_max_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", grid_max);
+    return false;
+  }
+
+  const std::string grid_N = "grid_N";
+  matvar_t* grid_N_mat = Mat_VarRead(matfp, grid_N.c_str());
+  if (grid_N_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", grid_N);
+    return false;
+  }
+
+  const std::string data = "data";
+  matvar_t* data_mat = Mat_VarRead(matfp, data.c_str());
+  if (data_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", data);
+    return false;
+  }
+
+
   // Populate class variables.
-  // TODO!
+  if (grid_min_mat->data_type != MAT_T_DOUBLE) {
+    ROS_ERROR("%s: Wrong type of data.",grid_min);
+    return false;
+  }
+
+  size_t num_elements = grid_min_mat->nbytes/grid_min_mat->data_size; 
+  for (size_t ii = 0; ii < num_elements; ii++){
+    lower_.push_back(static_cast<double*>(grid_min_mat->data)[ii]);
+  }
+
+
+
+  if (grid_max_mat->data_type != MAT_T_DOUBLE) {
+    ROS_ERROR("%s: Wrong type of data.",grid_max);
+    return false;
+  }
+
+  num_elements = grid_max_mat->nbytes/grid_max_mat->data_size; 
+  for (size_t ii = 0; ii < num_elements; ii++){
+    upper_.push_back(static_cast<double*>(grid_max_mat->data)[ii]);
+  }
+
+
+
+  if (grid_N_mat->data_type != MAT_T_UINT64) {
+    ROS_ERROR("%s: Wrong type of data.",grid_N);
+    return false;
+  }
+
+  num_elements = grid_N_mat->nbytes/grid_N_mat->data_size; 
+  for (size_t ii = 0; ii < num_elements; ii++){
+    num_voxels_.push_back(static_cast<size_t*>(grid_N_mat->data)[ii]);
+  }
+
+
+
+  if (data_mat->data_type != MAT_T_DOUBLE) {
+    ROS_ERROR("%s: Wrong type of data.",data);
+    return false;
+  }
+
+  num_elements = data_mat->nbytes/data_mat->data_size; 
+  for (size_t ii = 0; ii < num_elements; ii++){
+    num_voxels_.push_back(static_cast<double*>(data_mat->data)[ii]);
+  }
+
+
+  //Free memory and close file
+  Mat_VarFree(grid_min_mat);
+  Mat_VarFree(grid_max_mat);
+  Mat_VarFree(grid_N_mat);
+  Mat_VarFree(data_mat);
+  Mat_Close(matfp);
 
   return true;
 }

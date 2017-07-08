@@ -84,6 +84,18 @@ TEST(Matio, TestRead) {
   Mat_Close(matfp);
 }
 
+
+// Test that ValueFunction initializes correctly.
+TEST(ValueFunction, TestInitialize) {
+  const std::string file_name =
+    std::string(PRECOMPUTATION_DIR) + std::string("test_value_function.mat");
+
+  ValueFunction::ConstPtr value = ValueFunction::Create(file_name);
+  EXPECT_TRUE(value->IsInitialized());
+}
+
+
+
 // Test the OmplPlanner class. Make sure it can plan a trajectory in an empty
 // unit box betweeen the two corners.
 TEST(OmplPlanner, TestUnitBox) {
