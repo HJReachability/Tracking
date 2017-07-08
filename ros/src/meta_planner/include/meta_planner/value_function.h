@@ -64,7 +64,7 @@ public:
   // Linearly interpolate to get the value/gradient at a particular state.
   double Value(const VectorXd& state) const;
   VectorXd Gradient(const VectorXd& state) const;
-  
+
   //Was this ValueFunction properly initialized?
   inline bool IsInitialized() const {return initialized_;}
 

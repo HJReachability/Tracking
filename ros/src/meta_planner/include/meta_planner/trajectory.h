@@ -82,10 +82,10 @@ public:
   double FirstTime() const;
 
   // Find the state corresponding to a particular time via linear interpolation.
-  VectorXd State(double time) const;
+  VectorXd GetState(double time) const;
 
   // Return a pointer to the value function being used at this time.
-  const ValueFunction::ConstPtr& ValueFunction(double time) const;
+  const ValueFunction::ConstPtr& GetValueFunction(double time) const;
 
   // Visualize this trajectory in RVIZ.
   void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
