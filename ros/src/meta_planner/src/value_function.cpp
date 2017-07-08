@@ -72,7 +72,7 @@ bool ValueFunction::Load(const std::string& file_name) {
   // Open the file.
   mat_t* matfp = Mat_Open(file_name.c_str(), MAT_ACC_RDONLY);
   if (matfp == NULL) {
-    ROS_ERROR("Could not open file: %s.", file_name);
+    ROS_ERROR("Could not open file: %s.", file_name.c_str());
     return false;
   }
 
@@ -80,76 +80,76 @@ bool ValueFunction::Load(const std::string& file_name) {
   const std::string grid_min = "grid_min";
   matvar_t* grid_min_mat = Mat_VarRead(matfp, grid_min.c_str());
   if (grid_min_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", grid_min);
+    ROS_ERROR("Could not read variable: %s.", grid_min.c_str());
     return false;
   }
 
   const std::string grid_max = "grid_max";
   matvar_t* grid_max_mat = Mat_VarRead(matfp, grid_max.c_str());
   if (grid_max_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", grid_max);
+    ROS_ERROR("Could not read variable: %s.", grid_max.c_str());
     return false;
   }
 
   const std::string grid_N = "grid_N";
   matvar_t* grid_N_mat = Mat_VarRead(matfp, grid_N.c_str());
   if (grid_N_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", grid_N);
+    ROS_ERROR("Could not read variable: %s.", grid_N.c_str());
     return false;
   }
 
   const std::string data = "data";
   matvar_t* data_mat = Mat_VarRead(matfp, data.c_str());
   if (data_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", data);
+    ROS_ERROR("Could not read variable: %s.", data.c_str());
     return false;
   }
 
 
   // Populate class variables.
   if (grid_min_mat->data_type != MAT_T_DOUBLE) {
-    ROS_ERROR("%s: Wrong type of data.",grid_min);
+    ROS_ERROR("%s: Wrong type of data.", grid_min.c_str());
     return false;
   }
 
-  size_t num_elements = grid_min_mat->nbytes/grid_min_mat->data_size; 
-  for (size_t ii = 0; ii < num_elements; ii++){
+  size_t num_elements = grid_min_mat->nbytes/grid_min_mat->data_size;
+  for (size_t ii = 0; ii < num_elements; ii++) {
     lower_.push_back(static_cast<double*>(grid_min_mat->data)[ii]);
   }
 
 
 
   if (grid_max_mat->data_type != MAT_T_DOUBLE) {
-    ROS_ERROR("%s: Wrong type of data.",grid_max);
+    ROS_ERROR("%s: Wrong type of data.", grid_max.c_str());
     return false;
   }
 
-  num_elements = grid_max_mat->nbytes/grid_max_mat->data_size; 
-  for (size_t ii = 0; ii < num_elements; ii++){
+  num_elements = grid_max_mat->nbytes/grid_max_mat->data_size;
+  for (size_t ii = 0; ii < num_elements; ii++) {
     upper_.push_back(static_cast<double*>(grid_max_mat->data)[ii]);
   }
 
 
 
   if (grid_N_mat->data_type != MAT_T_UINT64) {
-    ROS_ERROR("%s: Wrong type of data.",grid_N);
+    ROS_ERROR("%s: Wrong type of data.", grid_N.c_str());
     return false;
   }
 
-  num_elements = grid_N_mat->nbytes/grid_N_mat->data_size; 
-  for (size_t ii = 0; ii < num_elements; ii++){
+  num_elements = grid_N_mat->nbytes/grid_N_mat->data_size;
+  for (size_t ii = 0; ii < num_elements; ii++) {
     num_voxels_.push_back(static_cast<size_t*>(grid_N_mat->data)[ii]);
   }
 
 
 
   if (data_mat->data_type != MAT_T_DOUBLE) {
-    ROS_ERROR("%s: Wrong type of data.",data);
+    ROS_ERROR("%s: Wrong type of data.", data.c_str());
     return false;
   }
 
-  num_elements = data_mat->nbytes/data_mat->data_size; 
-  for (size_t ii = 0; ii < num_elements; ii++){
+  num_elements = data_mat->nbytes/data_mat->data_size;
+  for (size_t ii = 0; ii < num_elements; ii++) {
     num_voxels_.push_back(static_cast<double*>(data_mat->data)[ii]);
   }
 
