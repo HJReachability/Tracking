@@ -76,7 +76,7 @@ bool ValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-  // Read the specified variable from this file.
+  // Read variables from this file.
   const std::string grid_min = "grid_min";
   matvar_t* grid_min_mat = Mat_VarRead(matfp, grid_min.c_str());
   if (grid_min_mat == NULL) {
@@ -105,7 +105,6 @@ bool ValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-
   // Populate class variables.
   if (grid_min_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", grid_min.c_str());
@@ -117,8 +116,6 @@ bool ValueFunction::Load(const std::string& file_name) {
     lower_.push_back(static_cast<double*>(grid_min_mat->data)[ii]);
   }
 
-
-
   if (grid_max_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", grid_max.c_str());
     return false;
@@ -128,8 +125,6 @@ bool ValueFunction::Load(const std::string& file_name) {
   for (size_t ii = 0; ii < num_elements; ii++) {
     upper_.push_back(static_cast<double*>(grid_max_mat->data)[ii]);
   }
-
-
 
   if (grid_N_mat->data_type != MAT_T_UINT64) {
     ROS_ERROR("%s: Wrong type of data.", grid_N.c_str());
@@ -141,8 +136,6 @@ bool ValueFunction::Load(const std::string& file_name) {
     num_voxels_.push_back(static_cast<size_t*>(grid_N_mat->data)[ii]);
   }
 
-
-
   if (data_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", data.c_str());
     return false;
@@ -153,8 +146,7 @@ bool ValueFunction::Load(const std::string& file_name) {
     num_voxels_.push_back(static_cast<double*>(data_mat->data)[ii]);
   }
 
-
-  //Free memory and close file
+  // Free memory and close file.
   Mat_VarFree(grid_min_mat);
   Mat_VarFree(grid_max_mat);
   Mat_VarFree(grid_N_mat);

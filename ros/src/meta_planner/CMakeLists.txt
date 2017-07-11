@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   visualization_msgs
   std_msgs
+  tf2_ros
 )
 
 catkin_package(
@@ -27,6 +28,7 @@ catkin_package(
     roscpp
     visualization_msgs
     std_msgs
+    tf2_ros
   DEPENDS
     EIGEN3
     OMPL

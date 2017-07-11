@@ -43,7 +43,8 @@
 #include <meta_planner/tracker.h>
 
 Tracker::Tracker()
-  : initialized_(false) {}
+  : initialized_(false),
+    tf_listener_(tf_buffer_) {}
 
 Tracker::~Tracker() {}
 
@@ -60,8 +61,15 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
     return false;
   }
-  initialized_ = true;
 
+  // Initialize current state to zero.
+  state_ = VectorXd::Zero(dimension_);
+
+  // Initialize state space. For now, use an empty box.
+  // TODO: parameterize this somehow and integrate with occupancy grid.
+  space_ = Box::Create(dimension_);
+
+  initialized_ = true;
   return true;
 }
 
@@ -72,6 +80,12 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   // Control update time step.
   if (!ros::param::search("meta_planner/control/time_step", key)) return false;
   if (!ros::param::get(key, time_step_)) return false;
+
+  // State space parameters.
+  int dimension = 1;
+  if (!ros::param::search("meta_planner/state_space/dimension", key)) return false;
+  if (!ros::param::get(key, dimension)) return false;
+  dimension_ = static_cast<size_t>(dimension);
 
   // Topics and frame ids.
   if (!ros::param::search("meta_planner/topics/control", key)) return false;
@@ -120,16 +134,39 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
-#if 0
   // 0) Get current TF.
-  const VectorXd state = getCurrentState();
+  geometry_msgs::TransformStamped tf;
 
+  try {
+    tf = tf_buffer_.lookupTransform(
+      fixed_frame_id_.c_str(), tracker_frame_id_.c_str(), ros::Time::now());
+  } catch(tf2::TransformException &ex) {
+    ROS_WARN("%s: %s", name_.c_str(), ex.what());
+    ROS_WARN("%s: Could not determine current state.", name_.c_str());
+    ros::Duration(time_step_).sleep();
+    return;
+  }
+
+  // Transform point cloud into world frame.
+  const Eigen::Vector3d translation(tf.transform.translation.x,
+                                    tf.transform.translation.y,
+                                    tf.transform.translation.z);
+  const Eigen::Quaterniond quat(tf.transform.rotation.w,
+                                tf.transform.rotation.x,
+                                tf.transform.rotation.y,
+                                tf.transform.rotation.z);
+  const Eigen::Matrix3d rotation = quat.toRotationMatrix();
+
+  // Process pose to get other state dimensions, e.g. velocity.
+  // TODO!
+
+#if 0
   // 1) Compute relative state.
-  planner_state = ctraj_.State(current_time);
+  planner_state = traj_.State(current_time);
   rel_state = state - planner_state;
 
   // 2) Get corresponding value function.
-  const ValueFunction::ConstPtr value = ctraj_.ValueFunction(current_time);
+  const ValueFunction::ConstPtr value = traj_.ValueFunction(current_time);
 
   // 3) Interpolate gradient to get optimal control.
   opt_control = value->OptimalControl(rel_state);
