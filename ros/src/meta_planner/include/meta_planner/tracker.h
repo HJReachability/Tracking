@@ -45,10 +45,14 @@
 
 #include <meta_planner/meta_planner.h>
 #include <meta_planner/trajectory.h>
+#include <meta_planner/box.h>
+#include <meta_planner/types.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <tf2_ros/transform_listener.h>
 #include <string>
 
 class Tracker {
@@ -69,9 +73,21 @@ private:
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
 
+  // Current state and trajectory.
+  VectorXd state_;
+  Trajectory traj_;
+
+  // State space.
+  size_t dimension_;
+  Box::Ptr space_;
+
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;
+
+  // Buffer and listener to get current pose.
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
 
   // Publishers/subscribers and related topics.
   ros::Publisher control_pub_;
@@ -91,9 +107,6 @@ private:
 
   // Name of this class, for use in debug messages.
   std::string name_;
-
-  // Current trajectory.
-  Trajectory traj_;
 };
 
 #endif

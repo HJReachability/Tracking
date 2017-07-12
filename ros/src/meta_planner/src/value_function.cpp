@@ -45,14 +45,24 @@
 // Factory method. Use this instead of the constructor.
 // Note that this class is const-only, which means that once it is
 // instantiated it can never be changed.
-ValueFunction::ConstPtr ValueFunction::Create(const std::string& file_name) {
-  ValueFunction::ConstPtr ptr(new ValueFunction(file_name));
+ValueFunction::ConstPtr ValueFunction::Create(
+  const std::string& file_name, const Dynamics::ConstPtr& dynamics) {
+  ValueFunction::ConstPtr ptr(new ValueFunction(file_name, dynamics));
   return ptr;
 }
 
 // Constructor. Don't use this. Use the factory method instead.
-ValueFunction::ValueFunction(const std::string& file_name) {
+ValueFunction::ValueFunction(const std::string& file_name,
+                             const Dynamics::ConstPtr& dynamics)
+  : dynamics_(dynamics) {
+  // Load from file.
   initialized_ = Load(file_name);
+
+  // Make sure dynamics pointer is valid.
+  if (dynamics_.get() == NULL) {
+    ROS_ERROR("Dynamics pointer was null.");
+    initialized_ = false;
+  }
 }
 
 // Linearly interpolate to get the value at a particular state.
@@ -67,6 +77,11 @@ VectorXd ValueFunction::Gradient(const VectorXd& state) const {
   return VectorXd::Zero(1);
 }
 
+// Get the optimal control at a particular state.
+VectorXd ValueFunction::OptimalControl(const VectorXd& state) const {
+  return dynamics_->OptimalControl(state, Gradient(state));
+}
+
 // Load from file. Returns whether or not it was successful.
 bool ValueFunction::Load(const std::string& file_name) {
   // Open the file.
@@ -76,7 +91,7 @@ bool ValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-  // Read the specified variable from this file.
+  // Read variables from this file.
   const std::string grid_min = "grid_min";
   matvar_t* grid_min_mat = Mat_VarRead(matfp, grid_min.c_str());
   if (grid_min_mat == NULL) {
@@ -105,7 +120,6 @@ bool ValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-
   // Populate class variables.
   if (grid_min_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", grid_min.c_str());
@@ -117,8 +131,6 @@ bool ValueFunction::Load(const std::string& file_name) {
     lower_.push_back(static_cast<double*>(grid_min_mat->data)[ii]);
   }
 
-
-
   if (grid_max_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", grid_max.c_str());
     return false;
@@ -128,8 +140,6 @@ bool ValueFunction::Load(const std::string& file_name) {
   for (size_t ii = 0; ii < num_elements; ii++) {
     upper_.push_back(static_cast<double*>(grid_max_mat->data)[ii]);
   }
-
-
 
   if (grid_N_mat->data_type != MAT_T_UINT64) {
     ROS_ERROR("%s: Wrong type of data.", grid_N.c_str());
@@ -141,8 +151,6 @@ bool ValueFunction::Load(const std::string& file_name) {
     num_voxels_.push_back(static_cast<size_t*>(grid_N_mat->data)[ii]);
   }
 
-
-
   if (data_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", data.c_str());
     return false;
@@ -153,8 +161,7 @@ bool ValueFunction::Load(const std::string& file_name) {
     num_voxels_.push_back(static_cast<double*>(data_mat->data)[ii]);
   }
 
-
-  //Free memory and close file
+  // Free memory and close file.
   Mat_VarFree(grid_min_mat);
   Mat_VarFree(grid_max_mat);
   Mat_VarFree(grid_N_mat);

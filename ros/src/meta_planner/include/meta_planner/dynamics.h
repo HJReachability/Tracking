@@ -36,63 +36,53 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the ValueFunction class.
+// Defines the Dynamics class. All Dynamics will be constructed as ConstPtrs.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_VALUE_FUNCTION_H
-#define META_PLANNER_VALUE_FUNCTION_H
+#ifndef META_PLANNER_DYNAMICS_H
+#define META_PLANNER_DYNAMICS_H
 
-#include <meta_planner/dynamics.h>
 #include <meta_planner/types.h>
 
 #include <ros/ros.h>
-#include <matio.h>
 #include <memory>
 
-class ValueFunction {
+class Dynamics {
 public:
-  typedef std::shared_ptr<const ValueFunction> ConstPtr;
+  typedef std::shared_ptr<const Dynamics> ConstPtr;
 
   // Destructor.
-  ~ValueFunction() {}
+  virtual ~Dynamics() {}
 
-  // Factory method. Use this instead of the constructor.
-  // Note that this class is const-only, which means that once it is
-  // instantiated it can never be changed.
-  static ConstPtr Create(const std::string& file_name,
-                         const Dynamics::ConstPtr& dynamics);
+  // Derived classes must be able to give the time derivative of state
+  // as a function of current state and control.
+  virtual VectorXd operator()(const VectorXd& x, const VectorXd& u) const = 0;
 
-  // Get the optimal control at a particular state.
-  VectorXd OptimalControl(const VectorXd& state) const;
+  // Derived classes must be able to compute an optimal control given
+  // the gradient of the value function at the specified state.
+  virtual VectorXd OptimalControl(const VectorXd& x, const VectorXd& value_gradient) const = 0;
 
-  // Linearly interpolate to get the value/gradient at a particular state.
-  double Value(const VectorXd& state) const;
-  VectorXd Gradient(const VectorXd& state) const;
+protected:
+  // Protected constructor. Use the factory method instead.
+  explicit Dynamics(const VectorXd& lower_u, const VectorXd& upper_u)
+    : lower_u_(lower_u),
+      upper_u_(upper_u) {
+    // Check that dimensions match.
+    if (lower_u_.size() != upper_u_.size())
+      ROS_ERROR("Upper and lower control bounds have different dimensions.");
 
-  // Was this ValueFunction properly initialized?
-  inline bool IsInitialized() const { return initialized_; }
+    // Check that lower is never greater than upper.
+    for (size_t ii = 0; ii < lower_u_.size(); ii++) {
+      if (lower_u_(ii) > upper_u_(ii))
+        ROS_ERROR("Lower control bound was above upper bound: %f > %f.",
+                  lower_u_(ii), upper_u_(ii));
+    }
+  }
 
-private:
-  explicit ValueFunction(const std::string& file_name,
-                         const Dynamics::ConstPtr& dynamics);
-
-  // Load from file. Returns whether or not it was successful.
-  bool Load(const std::string& file_name);
-
-  // Dynamics.
-  const Dynamics::ConstPtr dynamics_;
-
-  // Number of voxels and upper/lower bounds in each dimension.
-  std::vector<size_t> num_voxels_;
-  std::vector<double> lower_;
-  std::vector<double> upper_;
-
-  // Data is stored in row-major order.
-  std::vector<double> data_;
-
-  // Was this value function initialized/loaded properly?
-  bool initialized_;
+  // Lower and upper bounds for control variable.
+  const VectorXd lower_u_;
+  const VectorXd upper_u_;
 };
 
 #endif

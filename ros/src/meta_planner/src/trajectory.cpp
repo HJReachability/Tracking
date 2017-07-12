@@ -43,7 +43,7 @@
 #include <meta_planner/trajectory.h>
 
 // Find the state corresponding to a particular time via linear interpolation.
-VectorXd Trajectory::State(double time) const {
+VectorXd Trajectory::GetState(double time) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (IsEmpty()) {
     ROS_WARN("Tried to interpolate an empty trajectory.");
@@ -79,7 +79,7 @@ VectorXd Trajectory::State(double time) const {
 }
 
 // Return a pointer to the value function being used at this time.
-const ValueFunction::ConstPtr& Trajectory::ValueFunction(double time) const {
+const ValueFunction::ConstPtr& Trajectory::GetValueFunction(double time) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (IsEmpty()) {
     ROS_WARN("Tried to interpolate an empty trajectory.");

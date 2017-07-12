@@ -40,6 +40,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <meta_planner/linear_dynamics.h>
 #include <meta_planner/value_function.h>
 #include <meta_planner/box.h>
 #include <meta_planner/trajectory.h>
@@ -84,13 +85,54 @@ TEST(Matio, TestRead) {
   Mat_Close(matfp);
 }
 
+// Test that linear dynamics can determine the optimal control in a
+// simple example.
+TEST(LinearDynamics, TestOptimalControl) {
+  const size_t kStateDimension = 10;
+  const size_t kControlDimension = 10;
+  const double kControlLower = -1.0;
+  const double kControlUpper = 1.0;
+
+  // Create identity dynamics.
+  const Dynamics::ConstPtr dynamics = LinearDynamics::Create(
+    MatrixXd::Identity(kStateDimension, kStateDimension),
+    MatrixXd::Identity(kStateDimension, kControlDimension),
+    VectorXd::Constant(kControlDimension, kControlLower),
+    VectorXd::Constant(kControlDimension, kControlUpper));
+
+  // Create unit value gradient.
+  const VectorXd value_gradient = VectorXd::Constant(kStateDimension, 1.0);
+
+  // Make sure optimal control is the upper bound in all dimensions.
+  const VectorXd state = VectorXd::Zero(kStateDimension);
+  const VectorXd optimal_control =
+    dynamics->OptimalControl(state, value_gradient);
+
+  for (size_t ii = 0; ii < kControlDimension; ii++)
+    EXPECT_EQ(optimal_control(ii), kControlUpper);
+}
 
 // Test that ValueFunction initializes correctly.
 TEST(ValueFunction, TestInitialize) {
+  const size_t kStateDimension = 10;
+  const size_t kControlDimension = 10;
+  const double kControlLower = -1.0;
+  const double kControlUpper = 1.0;
+
   const std::string file_name =
     std::string(PRECOMPUTATION_DIR) + std::string("test_value_function.mat");
 
-  ValueFunction::ConstPtr value = ValueFunction::Create(file_name);
+  // Create identity dynamics.
+  const Dynamics::ConstPtr dynamics = LinearDynamics::Create(
+    MatrixXd::Identity(kStateDimension, kStateDimension),
+    MatrixXd::Identity(kStateDimension, kControlDimension),
+    VectorXd::Constant(kControlDimension, kControlLower),
+    VectorXd::Constant(kControlDimension, kControlUpper));
+
+  // Create a value function.
+  ValueFunction::ConstPtr value = ValueFunction::Create(file_name, dynamics);
+
+  // Check initialization.
   EXPECT_TRUE(value->IsInitialized());
 }
 
