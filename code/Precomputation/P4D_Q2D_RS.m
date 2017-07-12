@@ -1,7 +1,7 @@
 function [data,tau,sD,teb]=P4D_Q2D_RS(gN, visualize)
 
 if nargin < 1
-  gN = [55; 55; 25];
+  gN = [55; 55; 25; 25];
 end
 
 if nargin < 2
@@ -11,21 +11,21 @@ end
 %% Grid and cost
 
 % Grid Bounds
-gMin = [-1.5; -1.5; -pi];
-gMax = [ 1.5;  1.5;  pi];
+gMin = [-1.5; -1.5; -pi; -5];
+gMax = [ 1.5;  1.5;  pi; 5];
 
 % createGrid takes in grid bounds, grid number, and periodic dimensions
 sD.grid = createGrid(gMin, gMax, gN,3);
 
 % Cost Function
-data0 = sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2;
+data0 = sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2; 
 
 % obstacles
-extraArgs.obstacles = -data0;
+extraArgs.obstacles = -data0;  %%%%%%%%%%%%%%%%%%%%
 
 if visualize
   % to visualize initial function over 2D grid, project onto 2D
-  [g2D, data02D] = proj(sD.grid,data0,[0 0 1],'max');
+  [g2D, data02D] = proj(sD.grid,data0,[0 0 1 1],[0 0]);
   
   figure(1)
   clf
@@ -38,25 +38,26 @@ end
 %% Dynamical system
 
 % min and max turn rate for tracker
-uMin = [-8];
-uMax = [8];
+uMin = -8;
+uMax = 8;
 
 % min and max velocities for planner (in x and y)
 pMin = [-.5; -.5];
 pMax = [.5; .5];
 
-% min and max disturbance for wind (in x and y)
+% min and max disturbance for wind (in x and y) 
 dMax = [0; 0];
 dMin = [0; 0];
 
-% fixed velocity of tracker
-vel = 3;
+% max and min acceleration of tracker
+aMin = -5;
+aMax = 5;
 
 % number of dimensions in the system
-dims = 1:3;
+dims = 1:4;
 
 % create dynamic system
-sD.dynSys = P3D_Q2D_Rel([], uMin, uMax, pMin, pMax, dMin, dMax, vel, dims);
+sD.dynSys = P4D_Q2D_Rel([], uMin, uMax, pMin, pMax, dMin, dMax, aMin, aMax, dims);
 
 %% Other Parameters
 
@@ -67,19 +68,19 @@ sD.uMode = 'min';
 sD.dMode = 'max';
 
 % how high accuracy?
-sD.accuracy = 'medium';
+sD.accuracy = 'low';
 
 if visualize
   % set visualize to true
   extraArgs.visualize = true;
   
   % set slice of function to visualize
-  extraArgs.RS_level = 5;
+  extraArgs.RS_level = 5; 
   
   % figure number
   extraArgs.fig_num = 2;
-  %extraArgs.plotData.plotDims = [0 0 1];
-  %extraArgs.plotData.projpt = 0;
+  extraArgs.plotData.plotDims = [1 1 0 0];
+  extraArgs.plotData.projpt = [0 0];
   % delete previous time step's plot
   extraArgs.deleteLastPlot = true;
 end
@@ -100,31 +101,31 @@ extraArgs.stopConverge = true;
 extraArgs.convergeThreshold = dt;
 
 % solve backwards reachable set
-[data, tau] = HJIPDE_solve(data0, tau, sD, 'none', extraArgs);
+[data, tau] = HJIPDE_solve(data0, tau, sD, 'none', extraArgs); %%%%%%%%%%%%%%%%%%%%%%
 
-% largest cost along all time (along the entire 4th dimension which is
+% largest cost along all time (along the entire 5th dimension which is
 % time)
-data = max(data,[],4);
+data = max(data,[],5); %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if visualize
   figure(1)
   subplot(1,2,2)
-  [g2D, data2D] = proj(sD.grid, data, [0 0 1], 'min');
-  data2D = sqrt(data2D);
-  surf(g2D.xs{1}, g2D.xs{2}, data2D)
+  [g2D, data2D] = proj(sD.grid, data, [0 0 1 1], [0 0]);
+  %data2D = sqrt(data2D);
+  surf(g2D.xs{1}, g2D.xs{2}, sqrt(data2D))
   
   figure(2)
   clf
-  alpha = .2;
+  %alpha = .2;
   small = .05;
   
-  levels = [.5, .75, 1];
+  levels = [.5, .75, 1];  
   
-  [g2D, data2D] = proj(sD.grid,data,[0 0 1],0);%'max');
+  %[g2D, data2D] = proj(sD.grid,data,[0 0 1 1], [0 0]);%'max');   
   
-  subplot(2,3,1)
+  subplot(2,3,1)     
   h0 = visSetIm(sD.grid, sqrt(data0), 'blue', levels(1)+small);
-  h0.FaceAlpha = alpha;
+  %h0.FaceAlpha = alpha;
   hold on
   h = visSetIm(sD.grid, sqrt(data), 'red', levels(1));
   axis([-levels(3)-small levels(3)+small ...
@@ -142,7 +143,7 @@ if visualize
   
   subplot(2,3,2)
   h0 = visSetIm(sD.grid, sqrt(data0), 'blue', levels(2)+small);
-  h0.FaceAlpha = alpha;
+  %h0.FaceAlpha = alpha;
   hold on
   h = visSetIm(sD.grid, sqrt(data), 'red', levels(2));
   axis([-levels(3)-small levels(3)+small ...
@@ -161,7 +162,7 @@ if visualize
   
   subplot(2,3,3)
   h0 = visSetIm(sD.grid, sqrt(data0), 'blue', levels(3)+small);
-  h0.FaceAlpha = alpha;
+  %h0.FaceAlpha = alpha;
   hold on
   h = visSetIm(sD.grid, sqrt(data), 'red', levels(3));
   axis([-levels(3)-small levels(3)+small ...
@@ -181,6 +182,6 @@ if visualize
 end
 
 %tracking error bound
-teb = sqrt(min(data(:)))
+teb = sqrt(min(data(:)));
 end
 
