@@ -36,63 +36,46 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the ValueFunction class.
+// Defines the LinearDynamics class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_VALUE_FUNCTION_H
-#define META_PLANNER_VALUE_FUNCTION_H
+#ifndef META_PLANNER_LINEAR_DYNAMICS_H
+#define META_PLANNER_LINEAR_DYNAMICS_H
 
 #include <meta_planner/dynamics.h>
-#include <meta_planner/types.h>
 
-#include <ros/ros.h>
-#include <matio.h>
-#include <memory>
-
-class ValueFunction {
+class LinearDynamics : public Dynamics {
 public:
-  typedef std::shared_ptr<const ValueFunction> ConstPtr;
-
-  // Destructor.
-  ~ValueFunction() {}
+  ~LinearDynamics() {}
 
   // Factory method. Use this instead of the constructor.
-  // Note that this class is const-only, which means that once it is
-  // instantiated it can never be changed.
-  static ConstPtr Create(const std::string& file_name,
-                         const Dynamics::ConstPtr& dynamics);
+  static Dynamics::ConstPtr Create(const MatrixXd& A,
+                                   const MatrixXd& B,
+                                   const VectorXd& lower_u,
+                                   const VectorXd& upper_u);
 
-  // Get the optimal control at a particular state.
-  VectorXd OptimalControl(const VectorXd& state) const;
+  // Derived classes must be able to give the time derivative of state
+  // as a function of current state and control.
+  inline VectorXd operator()(const VectorXd& x, const VectorXd& u) const {
+    return A_ * x + B_ * u;
+  }
 
-  // Linearly interpolate to get the value/gradient at a particular state.
-  double Value(const VectorXd& state) const;
-  VectorXd Gradient(const VectorXd& state) const;
-
-  // Was this ValueFunction properly initialized?
-  inline bool IsInitialized() const { return initialized_; }
+  // Derived classes must be able to compute an optimal control given
+  // the gradient of the value function at the specified state.
+  // In this case (linear dynamics), the state is irrelevant given the
+  // gradient of the value function at that state.
+  VectorXd OptimalControl(const VectorXd& x,
+                          const VectorXd& value_gradient) const;
 
 private:
-  explicit ValueFunction(const std::string& file_name,
-                         const Dynamics::ConstPtr& dynamics);
+  // Private constructor. Use the factory method instead.
+  explicit LinearDynamics(const MatrixXd& A, const MatrixXd& B,
+                          const VectorXd& lower_u, const VectorXd& upper_u);
 
-  // Load from file. Returns whether or not it was successful.
-  bool Load(const std::string& file_name);
-
-  // Dynamics.
-  const Dynamics::ConstPtr dynamics_;
-
-  // Number of voxels and upper/lower bounds in each dimension.
-  std::vector<size_t> num_voxels_;
-  std::vector<double> lower_;
-  std::vector<double> upper_;
-
-  // Data is stored in row-major order.
-  std::vector<double> data_;
-
-  // Was this value function initialized/loaded properly?
-  bool initialized_;
+  // A and B matrices for linear dynamics function.
+  const MatrixXd A_;
+  const MatrixXd B_;
 };
 
 #endif

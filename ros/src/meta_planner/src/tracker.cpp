@@ -148,14 +148,14 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   }
 
   // Transform point cloud into world frame.
-  const Eigen::Vector3d translation(tf.transform.translation.x,
-                                    tf.transform.translation.y,
-                                    tf.transform.translation.z);
-  const Eigen::Quaterniond quat(tf.transform.rotation.w,
-                                tf.transform.rotation.x,
-                                tf.transform.rotation.y,
-                                tf.transform.rotation.z);
-  const Eigen::Matrix3d rotation = quat.toRotationMatrix();
+  const Vector3d translation(tf.transform.translation.x,
+                             tf.transform.translation.y,
+                             tf.transform.translation.z);
+  const Quaterniond quat(tf.transform.rotation.w,
+                         tf.transform.rotation.x,
+                         tf.transform.rotation.y,
+                         tf.transform.rotation.z);
+  const Matrix3d rotation = quat.toRotationMatrix();
 
   // Process pose to get other state dimensions, e.g. velocity.
   // TODO!

@@ -45,14 +45,24 @@
 // Factory method. Use this instead of the constructor.
 // Note that this class is const-only, which means that once it is
 // instantiated it can never be changed.
-ValueFunction::ConstPtr ValueFunction::Create(const std::string& file_name) {
-  ValueFunction::ConstPtr ptr(new ValueFunction(file_name));
+ValueFunction::ConstPtr ValueFunction::Create(
+  const std::string& file_name, const Dynamics::ConstPtr& dynamics) {
+  ValueFunction::ConstPtr ptr(new ValueFunction(file_name, dynamics));
   return ptr;
 }
 
 // Constructor. Don't use this. Use the factory method instead.
-ValueFunction::ValueFunction(const std::string& file_name) {
+ValueFunction::ValueFunction(const std::string& file_name,
+                             const Dynamics::ConstPtr& dynamics)
+  : dynamics_(dynamics) {
+  // Load from file.
   initialized_ = Load(file_name);
+
+  // Make sure dynamics pointer is valid.
+  if (dynamics_.get() == NULL) {
+    ROS_ERROR("Dynamics pointer was null.");
+    initialized_ = false;
+  }
 }
 
 // Linearly interpolate to get the value at a particular state.
@@ -65,6 +75,11 @@ double ValueFunction::Value(const VectorXd& state) const {
 VectorXd ValueFunction::Gradient(const VectorXd& state) const {
   // TODO!
   return VectorXd::Zero(1);
+}
+
+// Get the optimal control at a particular state.
+VectorXd ValueFunction::OptimalControl(const VectorXd& state) const {
+  return dynamics_->OptimalControl(state, Gradient(state));
 }
 
 // Load from file. Returns whether or not it was successful.
