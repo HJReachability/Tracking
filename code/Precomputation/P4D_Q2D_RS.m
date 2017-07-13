@@ -75,14 +75,14 @@ if visualize
   extraArgs.visualize = true;
   
   % set slice of function to visualize
-  extraArgs.RS_level = 5; 
+  extraArgs.RS_level = 2; 
   
   % figure number
   extraArgs.fig_num = 2;
   extraArgs.plotData.plotDims = [1 1 0 0];
-  extraArgs.plotData.projpt = [0 0];
+  extraArgs.plotData.projpt = [0 2];
   % delete previous time step's plot
-  extraArgs.deleteLastPlot = true;
+  extraArgs.deleteLastPlot = false;
 end
 
 % time step
@@ -110,24 +110,25 @@ data = max(data,[],5); %%%%%%%%%%%%%%%%%%%%%%%%%%%
 if visualize
   figure(1)
   subplot(1,2,2)
-  [g2D, data2D] = proj(sD.grid, data, [0 0 1 1], [0 0]);
+  [g2D, data2D] = proj(sD.grid, data, [0 0 1 1], [0 2]);
   %data2D = sqrt(data2D);
   surf(g2D.xs{1}, g2D.xs{2}, sqrt(data2D))
   
   figure(2)
   clf
-  %alpha = .2;
+  alpha = .2;
   small = .05;
   
   levels = [.5, .75, 1];  
   
-  %[g2D, data2D] = proj(sD.grid,data,[0 0 1 1], [0 0]);%'max');   
+  [g3D, data3D] = proj(sD.grid,data,[0 0 0 1], [2]);%'max');   
+  [~, data03D] = proj(sD.grid,data0,[0 0 0 1], [2]);
   
   subplot(2,3,1)     
-  h0 = visSetIm(sD.grid, sqrt(data0), 'blue', levels(1)+small);
-  %h0.FaceAlpha = alpha;
+  h0 = visSetIm(g3D, sqrt(data03D), 'blue', levels(1)+small);
+  h0.FaceAlpha = alpha;
   hold on
-  h = visSetIm(sD.grid, sqrt(data), 'red', levels(1));
+  h = visSetIm(g3D, sqrt(data3D), 'red', levels(1));
   axis([-levels(3)-small levels(3)+small ...
     -levels(3)-small levels(3)+small -pi pi])
   axis square
@@ -142,10 +143,10 @@ if visualize
   axis square
   
   subplot(2,3,2)
-  h0 = visSetIm(sD.grid, sqrt(data0), 'blue', levels(2)+small);
+  h0 = visSetIm(g3D, sqrt(data03D), 'blue', levels(2)+small);
   %h0.FaceAlpha = alpha;
   hold on
-  h = visSetIm(sD.grid, sqrt(data), 'red', levels(2));
+  h = visSetIm(g3D, sqrt(data3D), 'red', levels(2));
   axis([-levels(3)-small levels(3)+small ...
     -levels(3)-small levels(3)+small -pi pi])
   title(['t = ' num2str(tau(end)) ' s'])
@@ -161,10 +162,10 @@ if visualize
   axis square
   
   subplot(2,3,3)
-  h0 = visSetIm(sD.grid, sqrt(data0), 'blue', levels(3)+small);
+  h0 = visSetIm(g3D, sqrt(data03D), 'blue', levels(3)+small);
   %h0.FaceAlpha = alpha;
   hold on
-  h = visSetIm(sD.grid, sqrt(data), 'red', levels(3));
+  h = visSetIm(g3D, sqrt(data3D), 'red', levels(3));
   axis([-levels(3)-small levels(3)+small ...
     -levels(3)-small levels(3)+small -pi pi])
   axis square
