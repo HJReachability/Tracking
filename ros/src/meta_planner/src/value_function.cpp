@@ -65,10 +65,79 @@ ValueFunction::ValueFunction(const std::string& file_name,
   }
 }
 
+// Return the voxel index corresponding to the given state.
+size_t ValueFunction::StateToIndex(const VectorXd& state) const {
+  // Quantize each dimension of the state.
+  std::vector<size_t> quantized;
+  for (size_t ii = 0; ii < state.size(); ii++) {
+    if (state(ii) < lower_[ii]) {
+      ROS_WARN("State is below the ValueFunction grid in dimension %zu.", ii);
+      quantized.push_back(0);
+    } else if (state(ii) > upper_[ii]) {
+      ROS_WARN("State is above the ValueFunction grid in dimension %zu.", ii);
+      quantized.push_back(num_voxels_[ii] - 1);
+    }
+
+    quantized.push_back(
+      static_cast<size_t>((state(ii) - lower_[ii]) / voxel_size_[ii]));
+  }
+
+  // Convert to row-major order.
+  size_t index = 0;
+  size_t coefficient = 1;
+  for (size_t ii = 1; ii <= quantized.size(); ii++) {
+    const size_t jj = quantized.size() - ii;
+
+    index += coefficient * quantized[jj];
+    coefficient *= num_voxels_[jj];
+  }
+
+  return index;
+}
+
 // Linearly interpolate to get the value at a particular state.
 double ValueFunction::Value(const VectorXd& state) const {
-  // TODO!
-  return 0.0;
+  // (1) Get distance from voxel center in each dimension.
+  VectorXd center_distance(state.size());
+  for (size_t ii = 0; ii < state.size(); ii++) {
+    const double center =
+      std::floor((state(ii) - lower_[ii]) / voxel_size_[ii]) +
+      0.5 * voxel_size_[ii];
+
+    center_distance(ii) = state(ii) - center;
+  }
+
+  // (2) Get index.
+  const size_t index = StateToIndex(state);
+
+  // (3) Interpolate.
+  double approx_val = data_[index];
+  VectorXd neighbor = state;
+  for (size_t ii = 0; ii < state.size(); ii++) {
+    // Get neighboring value.
+    double neighbor_index = index;
+    if (center_distance(ii) >= 0.0) {
+      neighbor(ii) += voxel_size_[ii];
+      neighbor_index = StateToIndex(neighbor);
+      neighbor(ii) -= voxel_size_[ii];
+    } else {
+      neighbor(ii) -= voxel_size_[ii];
+      neighbor_index = StateToIndex(neighbor);
+      neighbor(ii) += voxel_size_[ii];
+    }
+
+    const double neighbor_val = data_[neighbor_index];
+
+    // Compute forward difference.
+    const double slope = (center_distance(ii) >= 0.0) ?
+      (neighbor_val - data_[index]) / voxel_size_[ii] :
+      (data_[index] - neighbor_val) / voxel_size_[ii];
+
+    // Add to the Taylor approximation.
+    approx_val += slope * center_distance(ii);
+  }
+
+  return approx_val;
 }
 
 // Linearly interpolate to get the gradient at a particular state.
@@ -160,6 +229,11 @@ bool ValueFunction::Load(const std::string& file_name) {
   for (size_t ii = 0; ii < num_elements; ii++) {
     num_voxels_.push_back(static_cast<double*>(data_mat->data)[ii]);
   }
+
+  // Determine voxel size.
+  for (size_t ii = 0; ii < num_voxels_.size(); ii++)
+    voxel_size_.push_back((upper_[ii] - lower_[ii]) /
+                          static_cast<double>(num_voxels_[ii]));
 
   // Free memory and close file.
   Mat_VarFree(grid_min_mat);

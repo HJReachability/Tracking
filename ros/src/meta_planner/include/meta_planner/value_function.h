@@ -48,6 +48,7 @@
 
 #include <ros/ros.h>
 #include <matio.h>
+#include <math.h>
 #include <memory>
 
 class ValueFunction {
@@ -77,6 +78,9 @@ private:
   explicit ValueFunction(const std::string& file_name,
                          const Dynamics::ConstPtr& dynamics);
 
+  // Return the 1D voxel index corresponding to the given state.
+  size_t StateToIndex(const VectorXd& state) const;
+
   // Load from file. Returns whether or not it was successful.
   bool Load(const std::string& file_name);
 
@@ -85,6 +89,7 @@ private:
 
   // Number of voxels and upper/lower bounds in each dimension.
   std::vector<size_t> num_voxels_;
+  std::vector<double> voxel_size_;
   std::vector<double> lower_;
   std::vector<double> upper_;
 
