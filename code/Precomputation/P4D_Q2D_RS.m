@@ -15,17 +15,17 @@ gMin = [-1.5; -1.5; -pi; -5];
 gMax = [ 1.5;  1.5;  pi; 5];
 
 % createGrid takes in grid bounds, grid number, and periodic dimensions
-sD.grid = createGrid(gMin, gMax, gN,3);
+sD.grid = createGrid(gMin, gMax, gN, 3);
 
 % Cost Function
-data0 = sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2; 
+data0 = sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2;
 
 % obstacles
 extraArgs.obstacles = -data0;  %%%%%%%%%%%%%%%%%%%%
 
 if visualize
   % to visualize initial function over 2D grid, project onto 2D
-  [g2D, data02D] = proj(sD.grid,data0,[0 0 1 1],[0 0]);
+  [g2D, data02D] = proj(sD.grid,data0,[0 0 1 1],[0 2]);
   
   figure(1)
   clf
@@ -79,8 +79,11 @@ if visualize
   
   % figure number
   extraArgs.fig_num = 2;
+  f = figure(2);
+  set(f, 'Position', [400 400 450 400]);
   extraArgs.plotData.plotDims = [1 1 0 0];
   extraArgs.plotData.projpt = [0 2];
+  
   % delete previous time step's plot
   extraArgs.deleteLastPlot = false;
 end
@@ -111,78 +114,65 @@ if visualize
   figure(1)
   subplot(1,2,2)
   [g2D, data2D] = proj(sD.grid, data, [0 0 1 1], [0 2]);
-  surf(g2D.xs{1}, g2D.xs{2}, sqrt(data2D))
+  s = surf(g2D.xs{1}, g2D.xs{2}, sqrt(data2D));
   
-  figure(2)
+  %Level set for tracking error bound
+  lev = min(min(s.ZData));
+  
+  f = figure(2);
   clf
+  set(f, 'Position', [360 278 560 420]);
   alpha = .2;
   small = .05;
   
   levels = [.5, .75, 1];  
   
-  [g3D, data3D] = proj(sD.grid,data,[0 0 0 1], [2]);%'max');
-  [~, data03D] = proj(sD.grid,data0,[0 0 0 1], [2]);
+  [g3D, data3D] = proj(sD.grid,data,[0 0 0 1], 2);%'max');
+  [~, data03D] = proj(sD.grid,data0,[0 0 0 1], 2);
   
   
-  subplot(2,3,1)     
-  h0 = visSetIm(g3D, sqrt(data03D), 'blue', levels(1)+small);
-  h0.FaceAlpha = alpha;
-  hold on
-  h = visSetIm(g3D, sqrt(data3D), 'red', levels(1));
-  axis([-levels(3)-small levels(3)+small ...
-    -levels(3)-small levels(3)+small -pi pi])
-  axis square
+  for i = 1:3
+      subplot(2,3,i)
+      h0 = visSetIm(g3D, sqrt(data03D), 'blue', levels(i)+small);
+      h0.FaceAlpha = alpha;
+      hold on
+      h = visSetIm(g3D, sqrt(data3D), 'red', levels(i));
+      axis([-levels(3)-small levels(3)+small ...
+        -levels(3)-small levels(3)+small -pi pi])
+    if i == 2
+      title(['t = ' num2str(tau(end)) ' s'])
+    end
+      axis square
+  end
   
-  subplot(2,3,4)
-  h0 = visSetIm(g2D, sqrt(data02D), 'blue', levels(1)+small);
-  hold on
-  h = visSetIm(g2D, sqrt(data2D), 'red', levels(1));
-  axis([-levels(3)-small levels(3)+small ...
-    -levels(3)-small levels(3)+small])
-  title(['R = ' num2str(levels(1))])
-  axis square
-  
-  subplot(2,3,2)
-  h0 = visSetIm(g3D, sqrt(data03D), 'blue', levels(2)+small);
-  h0.FaceAlpha = alpha;
-  hold on
-  h = visSetIm(g3D, sqrt(data3D), 'red', levels(2));
-  axis([-levels(3)-small levels(3)+small ...
-    -levels(3)-small levels(3)+small -pi pi])
-  title(['t = ' num2str(tau(end)) ' s'])
-  axis square
-  
-  subplot(2,3,5)
-  h0 = visSetIm(g2D, sqrt(data02D), 'blue', levels(2)+small);
-  hold on
-  h = visSetIm(g2D, sqrt(data2D), 'red', levels(2));
-  axis([-levels(3)-small levels(3)+small ...
-    -levels(3)-small levels(3)+small])
-  title(['R = ' num2str(levels(2))])
-  axis square
-  
-  subplot(2,3,3)
-  h0 = visSetIm(g3D, sqrt(data03D), 'blue', levels(3)+small);
-  h0.FaceAlpha = alpha;
-  hold on
-  h = visSetIm(g3D, sqrt(data3D), 'red', levels(3));
-  axis([-levels(3)-small levels(3)+small ...
-    -levels(3)-small levels(3)+small -pi pi])
-  axis square
-  
-  subplot(2,3,6)
-  h0 = visSetIm(g2D, sqrt(data02D), 'blue', levels(3)+small);
-  hold on
-  h = visSetIm(g2D, sqrt(data2D), 'red', levels(3));
-  axis([-levels(3)-small levels(3)+small ...
-    -levels(3)-small levels(3)+small])
-  title(['R = ' num2str(levels(3))])
-  axis square
-  
+  for i = 4:6
+      subplot(2,3,i)
+      h0 = visSetIm(g2D, sqrt(data02D), 'blue', levels(i-3)+small);
+      hold on
+      h = visSetIm(g2D, sqrt(data2D), 'red', levels(i-3));
+      axis([-levels(3)-small levels(3)+small ...
+        -levels(3)-small levels(3)+small])
+      title(['R = ' num2str(levels(i-3))])
+      axis square
+          
   set(gcf,'Color','white')
 end
 
 %tracking error bound
-teb = sqrt(min(data(:)));
+teb = sqrt(min(data(:))) + 0.05;
+
+%lev = 0.4408;
+lev = lev + 0.03;
+
+if visualize
+    figure(3)
+    clf
+    h0 = visSetIm(g2D, sqrt(data02D), 'blue', lev+small);
+    hold on
+    h = visSetIm(g2D, sqrt(data2D), 'red', lev);
+    title(['Tracking Error Bound R = ' num2str(lev)])
+    axis square
+end
+
 end
 
