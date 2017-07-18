@@ -64,12 +64,14 @@ public:
   static ConstPtr Create(const std::string& file_name,
                          const Dynamics::ConstPtr& dynamics);
 
-  // Get the optimal control at a particular state.
-  VectorXd OptimalControl(const VectorXd& state) const;
-
   // Linearly interpolate to get the value/gradient at a particular state.
   double Value(const VectorXd& state) const;
   VectorXd Gradient(const VectorXd& state) const;
+
+  // Get the optimal control at a particular state.
+  inline VectorXd OptimalControl(const VectorXd& state) const {
+    return dynamics_->OptimalControl(state, Gradient(state));
+  }
 
   // Was this ValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
@@ -80,6 +82,13 @@ private:
 
   // Return the 1D voxel index corresponding to the given state.
   size_t StateToIndex(const VectorXd& state) const;
+
+  // Compute the distance (vector) from this state to the center
+  // of the nearest voxel.
+  VectorXd DistanceToCenter(const VectorXd& state) const;
+
+  // Compute a central difference at the voxel containing this state.
+  VectorXd CentralDifference(const VectorXd& state) const;
 
   // Load from file. Returns whether or not it was successful.
   bool Load(const std::string& file_name);
