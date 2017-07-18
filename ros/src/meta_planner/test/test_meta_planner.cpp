@@ -166,7 +166,7 @@ TEST(ValueFunction, TestValue) {
   state(2) = -2.5761;
 
   const double interpolated = value->Value(state);
-  EXPECT_NEAR(interpolated, 4.9596, 1e-8);
+  EXPECT_NEAR(interpolated, 4.9596, 0.001);
 }
 
 // Test the OmplPlanner class. Make sure it can plan a trajectory in an empty

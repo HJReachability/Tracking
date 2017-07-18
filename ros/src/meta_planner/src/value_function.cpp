@@ -102,23 +102,17 @@ double ValueFunction::Value(const VectorXd& state) const {
   for (size_t ii = 0; ii < state.size(); ii++) {
     const double center =
       std::floor((state(ii) - lower_[ii]) / voxel_size_[ii]) * voxel_size_[ii] +
-      0.5 * voxel_size_[ii];
+      0.5 * voxel_size_[ii] + lower_[ii];
 
     center_distance(ii) = state(ii) - center;
   }
 
-  std::cout << "center dist: " << center_distance.transpose() << std::endl;
-
   // (2) Get index.
   const size_t index = StateToIndex(state);
 
-  std::cout << "index: " << index << std::endl;
-  std::cout << "data size: " << data_.size() << std::endl;
-
   // (3) Interpolate.
-  double approx_val = data_[index];
-
-  std::cout << "nn val: " << approx_val << std::endl;
+  const double nn_val = data_[index];
+  double approx_val = nn_val;
 
   VectorXd neighbor = state;
   for (size_t ii = 0; ii < state.size(); ii++) {
@@ -136,18 +130,14 @@ double ValueFunction::Value(const VectorXd& state) const {
 
     const double neighbor_val = data_[neighbor_index];
 
-    std::cout << "neighbor val: " << neighbor_val << std::endl;
-
     // Compute forward difference.
     const double slope = (center_distance(ii) >= 0.0) ?
-      (neighbor_val - data_[index]) / voxel_size_[ii] :
-      (data_[index] - neighbor_val) / voxel_size_[ii];
+      (neighbor_val - nn_val) / voxel_size_[ii] :
+      (nn_val - neighbor_val) / voxel_size_[ii];
 
     // Add to the Taylor approximation.
     approx_val += slope * center_distance(ii);
   }
-
-  std::cout << "approx val: " << approx_val << std::endl;
 
   return approx_val;
 }
