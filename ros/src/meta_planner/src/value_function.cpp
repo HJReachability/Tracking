@@ -144,8 +144,56 @@ double ValueFunction::Value(const VectorXd& state) const {
 
 // Linearly interpolate to get the gradient at a particular state.
 VectorXd ValueFunction::Gradient(const VectorXd& state) const {
-  // TODO!
-  return VectorXd::Zero(1);
+  // (1) Get distance from voxel center in each dimension.
+  VectorXd center_distance(state.size());
+  for (size_t ii = 0; ii < state.size(); ii++) {
+    const double center =
+      std::floor((state(ii) - lower_[ii]) / voxel_size_[ii]) * voxel_size_[ii] +
+      0.5 * voxel_size_[ii] + lower_[ii];
+
+    std::cout << state(ii) << ", " << lower_[ii] << ", " << voxel_size_[ii] << std::endl;
+    std::cout << "index in dim " << ii << ": "
+              << std::floor((state(ii) - lower_[ii]) / voxel_size_[ii]) << std::endl;
+
+    center_distance(ii) = state(ii) - center;
+  }
+
+  std::cout << center_distance.transpose() << std::endl;
+
+  // (2) Get index.
+  const size_t index = StateToIndex(state);
+
+  // (3) Get slope in each dimension.
+  const double nn_val = data_[index];
+
+  std::cout << "nn = " << nn_val << std::endl;
+
+  VectorXd gradient(VectorXd::Zero(state.size()));
+  VectorXd neighbor = state;
+  for (size_t ii = 0; ii < state.size(); ii++) {
+    // Get neighboring value.
+    double neighbor_index = index;
+    if (center_distance(ii) >= 0.0) {
+      neighbor(ii) += voxel_size_[ii];
+      neighbor_index = StateToIndex(neighbor);
+      neighbor(ii) -= voxel_size_[ii];
+    } else {
+      neighbor(ii) -= voxel_size_[ii];
+      neighbor_index = StateToIndex(neighbor);
+      neighbor(ii) += voxel_size_[ii];
+    }
+
+    const double neighbor_val = data_[neighbor_index];
+
+    std::cout << "dimension " << ii << ", neighbor = " << neighbor_val << std::endl;
+
+    // Compute forward difference.
+    gradient(ii) = (center_distance(ii) >= 0.0) ?
+      (neighbor_val - nn_val) / voxel_size_[ii] :
+      (nn_val - neighbor_val) / voxel_size_[ii];
+  }
+
+  return gradient;
 }
 
 // Get the optimal control at a particular state.

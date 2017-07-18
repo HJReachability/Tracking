@@ -169,6 +169,41 @@ TEST(ValueFunction, TestValue) {
   EXPECT_NEAR(interpolated, 4.9596, 0.001);
 }
 
+// Test that we can interpolate the value function properly.
+TEST(ValueFunction, TestGradient) {
+  const size_t kStateDimension = 3;
+  const size_t kControlDimension = 1;
+  const double kControlLower = -1.0;
+  const double kControlUpper = 1.0;
+
+  const std::string file_name =
+    std::string(PRECOMPUTATION_DIR) + std::string("test_value_function.mat");
+
+  // Create identity dynamics.
+  const Dynamics::ConstPtr dynamics = LinearDynamics::Create(
+    MatrixXd::Identity(kStateDimension, kStateDimension),
+    MatrixXd::Identity(kStateDimension, kControlDimension),
+    VectorXd::Constant(kControlDimension, kControlLower),
+    VectorXd::Constant(kControlDimension, kControlUpper));
+
+  // Create a value function.
+  ValueFunction::ConstPtr value = ValueFunction::Create(file_name, dynamics);
+
+  // Check initialization.
+  EXPECT_TRUE(value->IsInitialized());
+
+  // Access at a specific state with known value.
+  VectorXd state(VectorXd::Zero(kStateDimension));
+  state(0) = 1.3;
+  state(1) = 0.76;
+  state(2) = 1.1;
+
+  const VectorXd gradient = value->Gradient(state);
+  EXPECT_NEAR(gradient(0), 2.9797, 0.001);
+  EXPECT_NEAR(gradient(1), 1.5466, 0.001);
+  EXPECT_NEAR(gradient(2), -0.8561, 0.001);
+}
+
 // Test the OmplPlanner class. Make sure it can plan a trajectory in an empty
 // unit box betweeen the two corners.
 TEST(OmplPlanner, TestUnitBox) {
