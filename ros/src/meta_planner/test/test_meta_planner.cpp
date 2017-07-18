@@ -194,14 +194,15 @@ TEST(ValueFunction, TestGradient) {
 
   // Access at a specific state with known value.
   VectorXd state(VectorXd::Zero(kStateDimension));
-  state(0) = 1.3;
-  state(1) = 0.76;
-  state(2) = 1.1;
+  state(0) = 0.1;
+  state(1) = 0.1;
+  state(2) = 0.1;
 
+  // Make sure gradient matches what MATLAB computes.
   const VectorXd gradient = value->Gradient(state);
-  EXPECT_NEAR(gradient(0), 2.9797, 0.001);
-  EXPECT_NEAR(gradient(1), 1.5466, 0.001);
-  EXPECT_NEAR(gradient(2), -0.8561, 0.001);
+  EXPECT_NEAR(gradient(0), -0.2736, 0.001);
+  EXPECT_NEAR(gradient(1), 0.4917, 0.001);
+  EXPECT_NEAR(gradient(2), 0.0200, 0.001);
 }
 
 // Test the OmplPlanner class. Make sure it can plan a trajectory in an empty
