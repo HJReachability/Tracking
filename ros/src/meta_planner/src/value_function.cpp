@@ -101,7 +101,7 @@ double ValueFunction::Value(const VectorXd& state) const {
   VectorXd center_distance(state.size());
   for (size_t ii = 0; ii < state.size(); ii++) {
     const double center =
-      std::floor((state(ii) - lower_[ii]) / voxel_size_[ii]) +
+      std::floor((state(ii) - lower_[ii]) / voxel_size_[ii]) * voxel_size_[ii] +
       0.5 * voxel_size_[ii];
 
     center_distance(ii) = state(ii) - center;
