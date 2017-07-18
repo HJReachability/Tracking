@@ -107,11 +107,19 @@ double ValueFunction::Value(const VectorXd& state) const {
     center_distance(ii) = state(ii) - center;
   }
 
+  std::cout << "center dist: " << center_distance.transpose() << std::endl;
+
   // (2) Get index.
   const size_t index = StateToIndex(state);
 
+  std::cout << "index: " << index << std::endl;
+  std::cout << "data size: " << data_.size() << std::endl;
+
   // (3) Interpolate.
   double approx_val = data_[index];
+
+  std::cout << "nn val: " << approx_val << std::endl;
+
   VectorXd neighbor = state;
   for (size_t ii = 0; ii < state.size(); ii++) {
     // Get neighboring value.
@@ -128,6 +136,8 @@ double ValueFunction::Value(const VectorXd& state) const {
 
     const double neighbor_val = data_[neighbor_index];
 
+    std::cout << "neighbor val: " << neighbor_val << std::endl;
+
     // Compute forward difference.
     const double slope = (center_distance(ii) >= 0.0) ?
       (neighbor_val - data_[index]) / voxel_size_[ii] :
@@ -136,6 +146,8 @@ double ValueFunction::Value(const VectorXd& state) const {
     // Add to the Taylor approximation.
     approx_val += slope * center_distance(ii);
   }
+
+  std::cout << "approx val: " << approx_val << std::endl;
 
   return approx_val;
 }
@@ -189,13 +201,18 @@ bool ValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
+  size_t num_elements = data_mat->nbytes/data_mat->data_size;
+  for (size_t ii = 0; ii < num_elements; ii++) {
+    data_.push_back(static_cast<double*>(data_mat->data)[ii]);
+  }
+
   // Populate class variables.
   if (grid_min_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", grid_min.c_str());
     return false;
   }
 
-  size_t num_elements = grid_min_mat->nbytes/grid_min_mat->data_size;
+  num_elements = grid_min_mat->nbytes/grid_min_mat->data_size;
   for (size_t ii = 0; ii < num_elements; ii++) {
     lower_.push_back(static_cast<double*>(grid_min_mat->data)[ii]);
   }

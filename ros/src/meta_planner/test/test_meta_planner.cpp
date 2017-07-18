@@ -114,8 +114,8 @@ TEST(LinearDynamics, TestOptimalControl) {
 
 // Test that ValueFunction initializes correctly.
 TEST(ValueFunction, TestInitialize) {
-  const size_t kStateDimension = 10;
-  const size_t kControlDimension = 10;
+  const size_t kStateDimension = 3;
+  const size_t kControlDimension = 1;
   const double kControlLower = -1.0;
   const double kControlUpper = 1.0;
 
@@ -136,7 +136,38 @@ TEST(ValueFunction, TestInitialize) {
   EXPECT_TRUE(value->IsInitialized());
 }
 
+// Test that we can interpolate the value function properly.
+TEST(ValueFunction, TestValue) {
+  const size_t kStateDimension = 3;
+  const size_t kControlDimension = 1;
+  const double kControlLower = -1.0;
+  const double kControlUpper = 1.0;
 
+  const std::string file_name =
+    std::string(PRECOMPUTATION_DIR) + std::string("test_value_function.mat");
+
+  // Create identity dynamics.
+  const Dynamics::ConstPtr dynamics = LinearDynamics::Create(
+    MatrixXd::Identity(kStateDimension, kStateDimension),
+    MatrixXd::Identity(kStateDimension, kControlDimension),
+    VectorXd::Constant(kControlDimension, kControlLower),
+    VectorXd::Constant(kControlDimension, kControlUpper));
+
+  // Create a value function.
+  ValueFunction::ConstPtr value = ValueFunction::Create(file_name, dynamics);
+
+  // Check initialization.
+  EXPECT_TRUE(value->IsInitialized());
+
+  // Access at a specific state with known value.
+  VectorXd state(VectorXd::Zero(kStateDimension));
+  state(0) = -1.2;
+  state(1) = -1.2;
+  state(2) = -2.5761;
+
+  const double interpolated = value->Value(state);
+  EXPECT_NEAR(interpolated, 4.9596, 1e-8);
+}
 
 // Test the OmplPlanner class. Make sure it can plan a trajectory in an empty
 // unit box betweeen the two corners.
