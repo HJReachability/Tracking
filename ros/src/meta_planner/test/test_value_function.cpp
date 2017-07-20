@@ -36,81 +36,16 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Unit tests for the meta_planner package.
+// Unit tests for the ValueFunction class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <meta_planner/linear_dynamics.h>
 #include <meta_planner/value_function.h>
-#include <meta_planner/box.h>
-#include <meta_planner/trajectory.h>
-#include <meta_planner/ompl_planner.h>
 #include <meta_planner/types.h>
 
-#include <matio.h>
 #include <stdio.h>
-#include <algorithm>
 #include <gtest/gtest.h>
-
-// Test that MATIO can read in a small file correctly.
-TEST(Matio, TestRead) {
-  const std::string file_name =
-    std::string(PRECOMPUTATION_DIR) + std::string("test.mat");
-  const std::string var_name = "x";
-
-  // Open a file pointer to this file.
-  mat_t* matfp = Mat_Open(file_name.c_str(), MAT_ACC_RDONLY);
-  ASSERT_TRUE(matfp != NULL);
-
-  // Read the specified variable from this file.
-  matvar_t* matvar = Mat_VarRead(matfp, var_name.c_str());
-  ASSERT_TRUE(matvar != NULL);
-
-  // Check content.
-  ASSERT_EQ(matvar->rank, 2);
-  ASSERT_EQ(matvar->dims[0], 1);
-  ASSERT_EQ(matvar->dims[1], 3);
-  ASSERT_EQ(matvar->isComplex, 0);
-  ASSERT_EQ(matvar->data_type, MAT_T_DOUBLE);
-  ASSERT_EQ(matvar->class_type, MAT_C_DOUBLE);
-
-  const double (&data)[1][3] =
-    *static_cast<const double (*)[1][3]>(matvar->data);
-
-  for (size_t jj = 0; jj < 3; jj++)
-    EXPECT_EQ(data[0][jj], static_cast<double>(jj + 1));
-
-  // Free memory and close the file.
-  Mat_VarFree(matvar);
-  Mat_Close(matfp);
-}
-
-// Test that linear dynamics can determine the optimal control in a
-// simple example.
-TEST(LinearDynamics, TestOptimalControl) {
-  const size_t kStateDimension = 10;
-  const size_t kControlDimension = 10;
-  const double kControlLower = -1.0;
-  const double kControlUpper = 1.0;
-
-  // Create identity dynamics.
-  const Dynamics::ConstPtr dynamics = LinearDynamics::Create(
-    MatrixXd::Identity(kStateDimension, kStateDimension),
-    MatrixXd::Identity(kStateDimension, kControlDimension),
-    VectorXd::Constant(kControlDimension, kControlLower),
-    VectorXd::Constant(kControlDimension, kControlUpper));
-
-  // Create unit value gradient.
-  const VectorXd value_gradient = VectorXd::Constant(kStateDimension, 1.0);
-
-  // Make sure optimal control is the upper bound in all dimensions.
-  const VectorXd state = VectorXd::Zero(kStateDimension);
-  const VectorXd optimal_control =
-    dynamics->OptimalControl(state, value_gradient);
-
-  for (size_t ii = 0; ii < kControlDimension; ii++)
-    EXPECT_EQ(optimal_control(ii), kControlUpper);
-}
 
 // Test that ValueFunction initializes correctly.
 TEST(ValueFunction, TestInitialize) {
@@ -203,47 +138,4 @@ TEST(ValueFunction, TestGradient) {
   EXPECT_NEAR(gradient(0), -0.2736, 0.001);
   EXPECT_NEAR(gradient(1), 0.4917, 0.001);
   EXPECT_NEAR(gradient(2), 0.0200, 0.001);
-}
-
-// Test the OmplPlanner class. Make sure it can plan a trajectory in an empty
-// unit box betweeen the two corners.
-TEST(OmplPlanner, TestUnitBox) {
-  const double kVelocity = 1.0;
-  const size_t kAmbientDimension = 3;
-
-  // Pick start and stop states.
-  const VectorXd start = VectorXd::Zero(kAmbientDimension);
-  const VectorXd stop = VectorXd::Ones(kAmbientDimension);
-
-  // Create unit box environment.
-  const Box::Ptr box = Box::Create(kAmbientDimension);
-  box->SetBounds(VectorXd::Zero(kAmbientDimension),
-                 VectorXd::Ones(kAmbientDimension));
-
-  std::vector<size_t> dimensions(kAmbientDimension);
-  std::iota(dimensions.begin(), dimensions.end(), 0);
-
-  // Create a nullptr for the ValueFunction.
-  const ValueFunction::ConstPtr null_value(NULL);
-
-  // Plan.
-  const OmplPlanner<og::RRTConnect> planner(
-    null_value, box, dimensions, kVelocity);
-  const Trajectory traj = planner.Plan(start, stop);
-
-  // Check that start and stop states match.
-  const double kSmallNumber = 1e-8;
-  EXPECT_LE((start - traj.FirstState()).norm(), kSmallNumber);
-  EXPECT_LE((stop - traj.LastState()).norm(), kSmallNumber);
-
-  traj.Print("Computed trajectory:");
-
-  // Check that the time spent on the trajectory is at least the minimum
-  // time to go along a straight line.
-  EXPECT_GE(traj.Time(), (start - stop).norm() / kVelocity);
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }
