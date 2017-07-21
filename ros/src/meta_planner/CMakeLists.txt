@@ -112,7 +112,13 @@ endforeach()
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 if(CATKIN_ENABLE_TESTING)
-  catkin_add_gtest(test_${PROJECT_NAME} test/test_meta_planner.cpp)
+  file(GLOB test_srcs test/*.cpp)
+  foreach(test ${test_srcs})
+    get_filename_component(test_no_ext ${test} NAME_WE)
+    message("Including test   \"${BoldBlue}${test_no_ext}${ColorReset}\".")
+  endforeach()
+
+  catkin_add_gtest(test_${PROJECT_NAME} ${test_srcs})
   target_link_libraries(
     test_${PROJECT_NAME}
     ${PROJECT_NAME}
@@ -120,5 +126,5 @@ if(CATKIN_ENABLE_TESTING)
     ${EIGEN3_LIBRARIES}
     ${OMPL_LIBRARIES}
     ${MATIO_LIBRARIES}
-  )
+    )
 endif()
