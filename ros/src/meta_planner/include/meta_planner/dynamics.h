@@ -44,11 +44,12 @@
 #define META_PLANNER_DYNAMICS_H
 
 #include <meta_planner/types.h>
+#include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
 #include <memory>
 
-class Dynamics {
+class Dynamics : private Uncopyable {
 public:
   typedef std::shared_ptr<const Dynamics> ConstPtr;
 

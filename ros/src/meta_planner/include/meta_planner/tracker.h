@@ -47,6 +47,7 @@
 #include <meta_planner/trajectory.h>
 #include <meta_planner/box.h>
 #include <meta_planner/types.h>
+#include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
@@ -55,7 +56,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <string>
 
-class Tracker {
+class Tracker : private Uncopyable {
 public:
   explicit Tracker();
   ~Tracker();

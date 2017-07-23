@@ -50,10 +50,11 @@
 #include <meta_planner/environment.h>
 #include <meta_planner/box.h>
 #include <meta_planner/types.h>
+#include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
 
-class Planner {
+class Planner : private Uncopyable {
 public:
   virtual ~Planner() {}
 

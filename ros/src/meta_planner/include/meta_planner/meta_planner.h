@@ -49,11 +49,12 @@
 #include <meta_planner/environment.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/types.h>
+#include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
 #include <vector>
 
-class MetaPlanner {
+class MetaPlanner : private Uncopyable {
 public:
   explicit MetaPlanner(const Box::ConstPtr& space)
     : space_(space) {}

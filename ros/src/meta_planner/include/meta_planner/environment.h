@@ -44,10 +44,11 @@
 #define META_PLANNER_ENVIRONMENT_H
 
 #include <meta_planner/types.h>
+#include <meta_planner/uncopyable.h>
 
 #include <random>
 
-class Environment {
+class Environment : private Uncopyable {
 public:
   virtual ~Environment() {}
 

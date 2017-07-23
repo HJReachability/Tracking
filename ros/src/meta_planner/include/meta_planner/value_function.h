@@ -45,13 +45,14 @@
 
 #include <meta_planner/dynamics.h>
 #include <meta_planner/types.h>
+#include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
 #include <matio.h>
 #include <math.h>
 #include <memory>
 
-class ValueFunction {
+class ValueFunction : private Uncopyable {
 public:
   typedef std::shared_ptr<const ValueFunction> ConstPtr;
 
