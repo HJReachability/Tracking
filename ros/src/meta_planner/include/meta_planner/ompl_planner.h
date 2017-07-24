@@ -75,7 +75,7 @@ public:
                        double speed);
 
   // Derived classes must plan trajectories between two points.
-  Trajectory Plan(const VectorXd& start, const VectorXd& stop) const;
+  Trajectory::Ptr Plan(const VectorXd& start, const VectorXd& stop) const;
 
 private:
   // Convert between OMPL states and VectorXds.
@@ -102,12 +102,12 @@ OmplPlanner<PlannerType>::OmplPlanner(const ValueFunction::ConstPtr& value,
 
 // Derived classes must plan trajectories between two points.
 template<typename PlannerType>
-Trajectory OmplPlanner<PlannerType>::Plan(
+Trajectory::Ptr OmplPlanner<PlannerType>::Plan(
   const VectorXd& start, const VectorXd& stop) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (start.size() != stop.size() || start.size() != space_->Dimension()) {
     ROS_ERROR("Start/stop state dimensions inconsistent with space dimension.");
-    return Trajectory();
+    return nullptr;
   }
 #endif
 
@@ -154,21 +154,21 @@ Trajectory OmplPlanner<PlannerType>::Plan(
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();
 
     // Populate the Trajectory with states and time stamps.
-    Trajectory traj;
+    Trajectory::Ptr traj = Trajectory::Create();
     double time = 0.0;
     for (size_t ii = 0; ii < solution.getStateCount(); ii++) {
       const VectorXd state = FromOmplState(solution.getState(ii));
 
       // Catch first state.
       if (ii == 0)
-        traj.Add(time, state, value_);
+        traj->Add(time, state, value_);
 
       // Handle all other states.
       // Assuming speed is isotropic.
       // TODO: make this more general.
       else {
-        time += (state - traj.LastState()).norm() / speed_;
-        traj.Add(time, state, value_);
+        time += (state - traj->LastState()).norm() / speed_;
+        traj->Add(time, state, value_);
       }
     }
 
@@ -176,7 +176,7 @@ Trajectory OmplPlanner<PlannerType>::Plan(
   }
 
   ROS_WARN("OMPL Planner could not compute a solution.");
-  return Trajectory();
+  return nullptr;
 }
 
 // Convert between OMPL states and VectorXds.

@@ -36,48 +36,48 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Planner abstract class interface. For now, all Planners must
-// operate within a Box. This is because of the way in which subspaces are
-// specified in the constructor.
+// Defines the Waypoint struct. Each Waypoint is just a node in a WaypointTree.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_PLANNER_H
-#define META_PLANNER_PLANNER_H
+#ifndef META_PLANNER_WAYPOINT_H
+#define META_PLANNER_WAYPOINT_H
 
-#include <meta_planner/value_function.h>
 #include <meta_planner/trajectory.h>
-#include <meta_planner/environment.h>
-#include <meta_planner/box.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
-#include <ros/ros.h>
+#include <memory>
 
-class Planner : private Uncopyable {
+struct Waypoint : private Uncopyable {
 public:
-  virtual ~Planner() {}
+  typedef std::shared_ptr<const Waypoint> ConstPtr;
 
-  // Derived classes must plan trajectories between two points.
-  virtual Trajectory::Ptr Plan(
-    const VectorXd& start, const VectorXd& stop) const = 0;
+  // Member variables.
+  VectorXd point_;
+  double time_;
+  Trajectory::ConstPtr traj_;
+  ConstPtr parent_;
 
-protected:
-  explicit Planner(const ValueFunction::ConstPtr& value,
-                   const Box::ConstPtr& space,
-                   const std::vector<size_t>& dimensions)
-    : value_(value),
-      space_(space),
-      dimensions_(dimensions) {}
+  // Factory method. Use this instead of the constructor.
+  static inline ConstPtr Create(const VectorXd& point, double time,
+                           const Trajectory::ConstPtr& traj,
+                           const ConstPtr& parent) {
+    ConstPtr ptr(new Waypoint(point, time, traj, parent));
+    return ptr;
+  }
 
-  // Value function.
-  const ValueFunction::ConstPtr value_;
+  // Destructor.
+  ~Waypoint() {}
 
-  // State space (with collision checking).
-  const Box::ConstPtr space_;
-
-  // Dimensions within the overall state space in which this Planner operates.
-  const std::vector<size_t> dimensions_;
+private:
+  explicit Waypoint(const VectorXd& point, double time,
+                    const Trajectory::ConstPtr& traj,
+                    const ConstPtr& parent)
+    : point_(point),
+      traj_(traj),
+      parent_(parent),
+      time_(time) {}
 };
 
 #endif

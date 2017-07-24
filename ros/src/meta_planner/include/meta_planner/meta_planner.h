@@ -45,6 +45,8 @@
 #ifndef META_PLANNER_META_PLANNER_H
 #define META_PLANNER_META_PLANNER_H
 
+#include <meta_planner/waypoint_tree.h>
+#include <meta_planner/waypoint.h>
 #include <meta_planner/planner.h>
 #include <meta_planner/environment.h>
 #include <meta_planner/trajectory.h>
@@ -61,21 +63,12 @@ public:
   ~MetaPlanner() {}
 
   // Plan a trajectory using the given (ordered) list of Planners.
-  Trajectory Plan(const VectorXd& start, const VectorXd& stop,
-                  const std::vector<Planner>& planners) const;
+  Trajectory::Ptr Plan(const VectorXd& start, const VectorXd& stop,
+                       const std::vector<Planner>& planners) const;
 
 private:
   // State space (with collision checker).
   const Box::ConstPtr space_;
 };
-
-// ------------------------------- IMPLEMENTATION --------------------------- //
-
-// Plan a trajectory using the given (ordered) list of Planners.
-Trajectory MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
-                             const std::vector<Planner>& planners) const {
-  // TODO!
-  return Trajectory();
-}
 
 #endif

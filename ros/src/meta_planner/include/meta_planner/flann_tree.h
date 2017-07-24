@@ -36,48 +36,44 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Planner abstract class interface. For now, all Planners must
-// operate within a Box. This is because of the way in which subspaces are
-// specified in the constructor.
+// Defines the FlannTree class, which is a wrapper around the FLANN library's
+// fast kdtree index.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_PLANNER_H
-#define META_PLANNER_PLANNER_H
+#ifndef META_PLANNER_FLANN_TREE_H
+#define META_PLANNER_FLANN_TREE_H
 
-#include <meta_planner/value_function.h>
-#include <meta_planner/trajectory.h>
-#include <meta_planner/environment.h>
-#include <meta_planner/box.h>
+#include <meta_planner/waypoint.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
+#include <flann/flann.h>
+#include <memory>
+#include <vector>
+#include <math.h>
 
-class Planner : private Uncopyable {
+class FlannTree : private Uncopyable {
 public:
-  virtual ~Planner() {}
+  explicit FlannTree() {}
+  ~FlannTree();
 
-  // Derived classes must plan trajectories between two points.
-  virtual Trajectory::Ptr Plan(
-    const VectorXd& start, const VectorXd& stop) const = 0;
+  // Insert a new Waypoint into the tree.
+  bool Insert(const Waypoint::ConstPtr& waypoint);
 
-protected:
-  explicit Planner(const ValueFunction::ConstPtr& value,
-                   const Box::ConstPtr& space,
-                   const std::vector<size_t>& dimensions)
-    : value_(value),
-      space_(space),
-      dimensions_(dimensions) {}
+  // Nearest neighbor search.
+  std::vector<Waypoint::ConstPtr> KnnSearch(VectorXd& query, size_t k) const;
 
-  // Value function.
-  const ValueFunction::ConstPtr value_;
+  // Radius search.
+  std::vector<Waypoint::ConstPtr> RadiusSearch(VectorXd& query, double r) const;
 
-  // State space (with collision checking).
-  const Box::ConstPtr space_;
-
-  // Dimensions within the overall state space in which this Planner operates.
-  const std::vector<size_t> dimensions_;
+private:
+  // A Flann kdtree. Searches in this tree return indices, which are then mapped
+  // to Waypoint pointers in an array.
+  // TODO: fix the distance metric to be something more intelligent.
+  std::unique_ptr< flann::KDTreeIndex< flann::L2<double> > > index_;
+  std::vector<Waypoint::ConstPtr> registry_;
 };
 
 #endif

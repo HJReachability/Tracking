@@ -36,48 +36,23 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Planner abstract class interface. For now, all Planners must
-// operate within a Box. This is because of the way in which subspaces are
-// specified in the constructor.
+// Defines the WaypointTree class. The WaypointTree class handles queries like
+// finding the nearest k points, as well as the length (in time) of the
+// shortest path to the goal.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_PLANNER_H
-#define META_PLANNER_PLANNER_H
+#include <meta_planner/waypoint_tree.h>
 
-#include <meta_planner/value_function.h>
-#include <meta_planner/trajectory.h>
-#include <meta_planner/environment.h>
-#include <meta_planner/box.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+WaypointTree::WaypointTree(const VectorXd& start, const VectorXd& stop)
+  : root_(Waypoint::Create(start, 0.0, nullptr, nullptr)) {
+  kdtree_.Insert(root_);
+}
 
-#include <ros/ros.h>
+// Add Waypoint to tree.
+void WaypointTree::Insert(const Waypoint::ConstPtr& waypoint, bool is_terminal) {
+  kdtree_.Insert(waypoint);
 
-class Planner : private Uncopyable {
-public:
-  virtual ~Planner() {}
-
-  // Derived classes must plan trajectories between two points.
-  virtual Trajectory::Ptr Plan(
-    const VectorXd& start, const VectorXd& stop) const = 0;
-
-protected:
-  explicit Planner(const ValueFunction::ConstPtr& value,
-                   const Box::ConstPtr& space,
-                   const std::vector<size_t>& dimensions)
-    : value_(value),
-      space_(space),
-      dimensions_(dimensions) {}
-
-  // Value function.
-  const ValueFunction::ConstPtr value_;
-
-  // State space (with collision checking).
-  const Box::ConstPtr space_;
-
-  // Dimensions within the overall state space in which this Planner operates.
-  const std::vector<size_t> dimensions_;
-};
-
-#endif
+  if (is_terminal)
+    terminal_waypoints_.push_back(waypoint);
+}

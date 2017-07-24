@@ -13,6 +13,7 @@ message("Cmake module path: ${CMAKE_MODULE_PATH}")
 find_package(Eigen3 REQUIRED)
 find_package(ompl REQUIRED)
 find_package(Matio REQUIRED)
+find_package(Flann REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -33,6 +34,7 @@ catkin_package(
     EIGEN3
     OMPL
     MATIO
+    FLANN
 )
 
 option(ENABLE_DEBUG_MESSAGES "Turn on to enable bound checking and debug messages" ON)
@@ -50,6 +52,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
   ${OMPL_INCLUDE_DIRS}
   ${MATIO_INCLUDE_DIRS}
+  ${FLANN_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -57,6 +60,7 @@ link_directories(
   ${EIGEN3_LIBRARY_DIRS}
   ${OMPL_LIBRARY_DIRS}
   ${MATIO_LIBRARY_DIRS}
+  ${FLANN_LIBRARY_DIRS}
 )
 
 file(GLOB_RECURSE ${PROJECT_NAME}_srcs ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/*.cpp)
@@ -68,6 +72,7 @@ target_link_libraries(${PROJECT_NAME}
   ${EIGEN3_LIBRARIES}
   ${OMPL_LIBRARIES}
   ${MATIO_LIBRARIES}
+  ${FLANN_LIBRARIES}
 )
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
@@ -77,6 +82,7 @@ target_link_libraries(${PROJECT_NAME}
   ${EIGEN3_LIBRARIES}
   ${OMPL_LIBRARIES}
   ${MATIO_LIBRARIES}
+  ${FLANN_LIBRARIES}
 )
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
@@ -92,6 +98,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
     ${EIGEN3_LIBRARIES}
     ${OMPL_LIBRARIES}
     ${MATIO_LIBRARIES}
+    ${FLANN_LIBRARIES}
   )
 endforeach()
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -107,6 +114,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
     ${EIGEN3_LIBRARIES}
     ${OMPL_LIBRARIES}
     ${MATIO_LIBRARIES}
+    ${FLANN_LIBRARIES}
   )
 endforeach()
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -126,5 +134,6 @@ if(CATKIN_ENABLE_TESTING)
     ${EIGEN3_LIBRARIES}
     ${OMPL_LIBRARIES}
     ${MATIO_LIBRARIES}
-    )
+    ${FLANN_LIBRARIES}
+  )
 endif()

@@ -36,48 +36,50 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Planner abstract class interface. For now, all Planners must
-// operate within a Box. This is because of the way in which subspaces are
-// specified in the constructor.
+// Defines the WaypointTree class. The WaypointTree class handles queries like
+// finding the nearest k points, as well as the length (in time) of the
+// shortest path to the goal.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_PLANNER_H
-#define META_PLANNER_PLANNER_H
+#ifndef META_PLANNER_WAYPOINT_TREE_H
+#define META_PLANNER_WAYPOINT_TREE_H
 
-#include <meta_planner/value_function.h>
-#include <meta_planner/trajectory.h>
-#include <meta_planner/environment.h>
-#include <meta_planner/box.h>
+#include <meta_planner/waypoint.h>
+#include <meta_planner/flann_tree.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
-#include <ros/ros.h>
+#include <list>
 
-class Planner : private Uncopyable {
+class WaypointTree : private Uncopyable {
 public:
-  virtual ~Planner() {}
+  explicit WaypointTree(const VectorXd& start, const VectorXd& stop);
+  ~WaypointTree() {}
 
-  // Derived classes must plan trajectories between two points.
-  virtual Trajectory::Ptr Plan(
-    const VectorXd& start, const VectorXd& stop) const = 0;
+  // Find nearest neighbors in the tree.
+  inline std::vector<Waypoint::ConstPtr>
+  KnnSearch(VectorXd& query, size_t k) const {
+    return kdtree_.KnnSearch(query, k);
+  }
 
-protected:
-  explicit Planner(const ValueFunction::ConstPtr& value,
-                   const Box::ConstPtr& space,
-                   const std::vector<size_t>& dimensions)
-    : value_(value),
-      space_(space),
-      dimensions_(dimensions) {}
+  inline std::vector<Waypoint::ConstPtr>
+  RadiusSearch(VectorXd& query, double r) const {
+    return kdtree_.RadiusSearch(query, r);
+  }
 
-  // Value function.
-  const ValueFunction::ConstPtr value_;
+  // Add Waypoint to tree.
+  void Insert(const Waypoint::ConstPtr& waypoint, bool is_terminal);
 
-  // State space (with collision checking).
-  const Box::ConstPtr space_;
+private:
+  // Root of the tree.
+  const Waypoint::ConstPtr root_;
 
-  // Dimensions within the overall state space in which this Planner operates.
-  const std::vector<size_t> dimensions_;
+  // List of terminal Waypoints.
+  std::list<Waypoint::ConstPtr> terminal_waypoints_;
+
+  // KdTree storing all waypoints for easy nearest neighbor searching.
+  FlannTree kdtree_;
 };
 
 #endif

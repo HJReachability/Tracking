@@ -36,48 +36,17 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Planner abstract class interface. For now, all Planners must
-// operate within a Box. This is because of the way in which subspaces are
-// specified in the constructor.
+// Defines the MetaPlanner class. The MetaPlanner samples random points in
+// the state space and then spawns off different Planners to plan Trajectories
+// between these points (RRT-style).
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_PLANNER_H
-#define META_PLANNER_PLANNER_H
+#include <meta_planner/meta_planner.h>
 
-#include <meta_planner/value_function.h>
-#include <meta_planner/trajectory.h>
-#include <meta_planner/environment.h>
-#include <meta_planner/box.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
-
-#include <ros/ros.h>
-
-class Planner : private Uncopyable {
-public:
-  virtual ~Planner() {}
-
-  // Derived classes must plan trajectories between two points.
-  virtual Trajectory::Ptr Plan(
-    const VectorXd& start, const VectorXd& stop) const = 0;
-
-protected:
-  explicit Planner(const ValueFunction::ConstPtr& value,
-                   const Box::ConstPtr& space,
-                   const std::vector<size_t>& dimensions)
-    : value_(value),
-      space_(space),
-      dimensions_(dimensions) {}
-
-  // Value function.
-  const ValueFunction::ConstPtr value_;
-
-  // State space (with collision checking).
-  const Box::ConstPtr space_;
-
-  // Dimensions within the overall state space in which this Planner operates.
-  const std::vector<size_t> dimensions_;
-};
-
-#endif
+// Plan a trajectory using the given (ordered) list of Planners.
+Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
+                                  const std::vector<Planner>& planners) const {
+  // TODO!
+  return nullptr;
+}

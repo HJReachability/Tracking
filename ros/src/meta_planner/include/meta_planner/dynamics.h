@@ -62,7 +62,8 @@ public:
 
   // Derived classes must be able to compute an optimal control given
   // the gradient of the value function at the specified state.
-  virtual VectorXd OptimalControl(const VectorXd& x, const VectorXd& value_gradient) const = 0;
+  virtual VectorXd OptimalControl(const VectorXd& x,
+                                  const VectorXd& value_gradient) const = 0;
 
 protected:
   // Protected constructor. Use the factory method instead.

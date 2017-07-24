@@ -72,16 +72,16 @@ TEST(OmplPlanner, TestUnitBox) {
   // Plan.
   const OmplPlanner<og::RRTConnect> planner(
     null_value, box, dimensions, kVelocity);
-  const Trajectory traj = planner.Plan(start, stop);
+  const Trajectory::ConstPtr traj = planner.Plan(start, stop);
 
   // Check that start and stop states match.
   const double kSmallNumber = 1e-8;
-  EXPECT_LE((start - traj.FirstState()).norm(), kSmallNumber);
-  EXPECT_LE((stop - traj.LastState()).norm(), kSmallNumber);
+  EXPECT_LE((start - traj->FirstState()).norm(), kSmallNumber);
+  EXPECT_LE((stop - traj->LastState()).norm(), kSmallNumber);
 
-  traj.Print("Computed trajectory:");
+  traj->Print("Computed trajectory:");
 
   // Check that the time spent on the trajectory is at least the minimum
   // time to go along a straight line.
-  EXPECT_GE(traj.Time(), (start - stop).norm() / kVelocity);
+  EXPECT_GE(traj->Time(), (start - stop).norm() / kVelocity);
 }

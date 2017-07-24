@@ -55,9 +55,19 @@
 #include <string>
 #include <iostream>
 #include <exception>
+#include <memory>
 
 class Trajectory {
 public:
+  typedef std::shared_ptr<Trajectory> Ptr;
+  typedef std::shared_ptr<const Trajectory> ConstPtr;
+
+  // Factory method. Use this instead of the constructor.
+  static inline Ptr Create() {
+    Ptr ptr(new Trajectory());
+    return ptr;
+  }
+
   // Clear out this Trajectory.
   void Clear();
 
@@ -94,6 +104,8 @@ public:
   void Print(const std::string& prefix) const;
 
 private:
+  Trajectory() {}
+
   // Compute the color (on a red-blue colormap) at a particular time.
   std_msgs::ColorRGBA Colormap(double time) const;
 
