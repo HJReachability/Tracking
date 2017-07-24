@@ -101,7 +101,8 @@ TEST(ValueFunction, TestValue) {
   state(2) = -2.5761;
 
   const double interpolated = value->Value(state);
-  EXPECT_NEAR(interpolated, 4.9596, 0.001);
+  const double kSmallNumber = 1e-3;
+  EXPECT_NEAR(interpolated, 4.9596, kSmallNumber);
 }
 
 // Test that we can interpolate the value function properly.
@@ -135,7 +136,8 @@ TEST(ValueFunction, TestGradient) {
 
   // Make sure gradient matches what MATLAB computes.
   const VectorXd gradient = value->Gradient(state);
-  EXPECT_NEAR(gradient(0), -0.2736, 0.001);
-  EXPECT_NEAR(gradient(1), 0.4917, 0.001);
-  EXPECT_NEAR(gradient(2), 0.0200, 0.001);
+  const double kSmallNumber = 1e-3;
+  EXPECT_NEAR(gradient(0), 0.4295, kSmallNumber);
+  EXPECT_NEAR(gradient(1), -0.24405, kSmallNumber);
+  EXPECT_NEAR(gradient(2), 0.019627, kSmallNumber);
 }
