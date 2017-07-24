@@ -75,7 +75,8 @@ public:
                        double speed);
 
   // Derived classes must plan trajectories between two points.
-  Trajectory::Ptr Plan(const VectorXd& start, const VectorXd& stop) const;
+  Trajectory::Ptr Plan(
+    const VectorXd& start, const VectorXd& stop, double start_time = 0.0) const;
 
 private:
   // Convert between OMPL states and VectorXds.
@@ -103,7 +104,7 @@ OmplPlanner<PlannerType>::OmplPlanner(const ValueFunction::ConstPtr& value,
 // Derived classes must plan trajectories between two points.
 template<typename PlannerType>
 Trajectory::Ptr OmplPlanner<PlannerType>::Plan(
-  const VectorXd& start, const VectorXd& stop) const {
+  const VectorXd& start, const VectorXd& stop, double start_time) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (start.size() != stop.size() || start.size() != space_->Dimension()) {
     ROS_ERROR("Start/stop state dimensions inconsistent with space dimension.");
@@ -155,7 +156,7 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(
 
     // Populate the Trajectory with states and time stamps.
     Trajectory::Ptr traj = Trajectory::Create();
-    double time = 0.0;
+    double time = start_time;
     for (size_t ii = 0; ii < solution.getStateCount(); ii++) {
       const VectorXd state = FromOmplState(solution.getState(ii));
 

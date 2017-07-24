@@ -54,15 +54,15 @@ public:
   typedef std::shared_ptr<const Waypoint> ConstPtr;
 
   // Member variables.
-  VectorXd point_;
-  double time_;
-  Trajectory::ConstPtr traj_;
-  ConstPtr parent_;
+  const VectorXd point_;
+  const double time_;
+  const Trajectory::ConstPtr traj_;
+  const ConstPtr parent_;
 
   // Factory method. Use this instead of the constructor.
   static inline ConstPtr Create(const VectorXd& point, double time,
-                           const Trajectory::ConstPtr& traj,
-                           const ConstPtr& parent) {
+                                const Trajectory::ConstPtr& traj,
+                                const ConstPtr& parent) {
     ConstPtr ptr(new Waypoint(point, time, traj, parent));
     return ptr;
   }

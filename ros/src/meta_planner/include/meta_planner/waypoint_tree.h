@@ -78,7 +78,7 @@ private:
   // List of terminal Waypoints.
   std::list<Waypoint::ConstPtr> terminal_waypoints_;
 
-  // KdTree storing all waypoints for easy nearest neighbor searching.
+  // Kdtree storing all waypoints for easy nearest neighbor searching.
   FlannTree kdtree_;
 };
 

@@ -45,8 +45,68 @@
 #include <meta_planner/meta_planner.h>
 
 // Plan a trajectory using the given (ordered) list of Planners.
+// (1) Set up a new RRT-like structure to hold the meta plan.
+// (2) Sample a new point in the state space.
+// (3) Find nearest neighbor.
+// (4) Plan a trajectory (starting with most aggressive planner).
+// (5) Try to connect to the goal point.
+// (6) Stop when we have a feasible trajectory. Otherwise go to (2).
 Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
                                   const std::vector<Planner>& planners) const {
-  // TODO!
+  // (1) Set up a new RRT-like structure to hold the meta plan.
+  WaypointTree tree(start, stop);
+
+  bool done = false;
+  while (!done) {
+    // (2) Sample a new point in the state space.
+    VectorXd sample = space_->Sample();
+
+    // (3) Find the nearest neighbor.
+    const size_t kNumNeighbors = 1;
+    const std::vector<Waypoint::ConstPtr> neighbors =
+      tree.KnnSearch(sample, kNumNeighbors);
+
+    if (neighbors.size() == 0 ||
+        (neighbors[0]->point_ - sample).norm() > max_connection_radius_)
+      continue;
+
+    // (4) Plan a trajectory (starting with most aggressive planner).
+    Trajectory::Ptr traj;
+    for (const auto& planner : planners) {
+      traj = planner.Plan(neighbors[0]->point_, sample, neighbors[0]->time_);
+
+      if (traj != nullptr)
+        break;
+    }
+
+    if (traj == nullptr)
+      continue;
+
+    // (5) Try to connect to the goal point.
+    Trajectory::Ptr goal_traj;
+    if ((sample - stop).norm() <= max_connection_radius_) {
+      for (const auto& planner : planners) {
+        goal_traj = planner.Plan(
+          neighbors[0]->point_, sample, neighbors[0]->time_);
+
+        if (goal_traj != nullptr)
+          break;
+      }
+    }
+
+    // (6) Stop when we have a feasible trajectory. Otherwise go to (2).
+    const Waypoint::ConstPtr waypoint = Waypoint::Create(
+      sample, traj->LastTime(), traj, neighbors[0]);
+    tree.Insert(waypoint, false);
+
+    if (goal_traj != nullptr) {
+      // Connect to the goal.
+      const Waypoint::ConstPtr goal = Waypoint::Create(
+        goal_traj->LastState(), goal_traj->LastTime(), goal_traj, waypoint);
+      tree.Insert(waypoint, true);
+    }
+  }
+
+
   return nullptr;
 }

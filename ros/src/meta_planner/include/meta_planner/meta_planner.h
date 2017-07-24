@@ -55,11 +55,14 @@
 
 #include <ros/ros.h>
 #include <vector>
+#include <limits>
 
 class MetaPlanner : private Uncopyable {
 public:
-  explicit MetaPlanner(const Box::ConstPtr& space)
-    : space_(space) {}
+  explicit MetaPlanner(const Box::ConstPtr& space, double max_connection_radius =
+                       std::numeric_limits<double>::infinity())
+    : space_(space),
+      max_connection_radius_(max_connection_radius) {}
   ~MetaPlanner() {}
 
   // Plan a trajectory using the given (ordered) list of Planners.
@@ -69,6 +72,9 @@ public:
 private:
   // State space (with collision checker).
   const Box::ConstPtr space_;
+
+  // Maximum distance between waypoints.
+  const double max_connection_radius_;
 };
 
 #endif

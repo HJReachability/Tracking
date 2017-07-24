@@ -49,6 +49,7 @@
 #include <ros/ros.h>
 #include <memory>
 #include <algorithm>
+#include <random>
 
 class Box : public Environment {
 public:
