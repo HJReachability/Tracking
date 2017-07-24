@@ -120,7 +120,7 @@ void Trajectory::Visualize(const ros::Publisher& pub,
   // Set up spheres marker.
   visualization_msgs::Marker spheres;
   spheres.ns = "spheres";
-  spheres.header.frame_id  = frame_id;
+  spheres.header.frame_id = frame_id;
   spheres.header.stamp = ros::Time::now();
   spheres.id = 0;
   spheres.type = visualization_msgs::Marker::SPHERE_LIST;
@@ -140,7 +140,7 @@ void Trajectory::Visualize(const ros::Publisher& pub,
   // Set up line strip marker.
   visualization_msgs::Marker lines;
   lines.ns = "lines";
-  lines.header.frame_id  = frame_id;
+  lines.header.frame_id = frame_id;
   lines.header.stamp = ros::Time::now();
   lines.id = 0;
   lines.type = visualization_msgs::Marker::LINE_STRIP;

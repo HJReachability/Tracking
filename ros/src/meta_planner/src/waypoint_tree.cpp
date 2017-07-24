@@ -53,6 +53,29 @@ WaypointTree::WaypointTree(const VectorXd& start, const VectorXd& stop)
 void WaypointTree::Insert(const Waypoint::ConstPtr& waypoint, bool is_terminal) {
   kdtree_.Insert(waypoint);
 
-  if (is_terminal)
-    terminal_waypoints_.push_back(waypoint);
+  if (is_terminal) {
+    if (terminus_ == nullptr)
+      terminus_ = waypoint;
+    else if (waypoint->time_ < terminus_->time_)
+      terminus_ = waypoint;
+  }
+}
+
+// Get best (fastest) trajectory (if it exists).
+Trajectory::Ptr WaypointTree::BestTrajectory() const {
+  if (terminus_ == nullptr) {
+    ROS_WARN("Tree did not reach to the terminus.");
+    return nullptr;
+  }
+
+  Trajectory::Ptr traj = Trajectory::Create();
+
+  // Walk back from the terminus, and append trajectories as we go.
+  Waypoint::ConstPtr waypoint = terminus_;
+  while (waypoint != nullptr) {
+    traj->Add(waypoint->traj_);
+    waypoint = waypoint->parent_;
+  }
+
+  return traj;
 }

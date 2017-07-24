@@ -104,9 +104,12 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
       const Waypoint::ConstPtr goal = Waypoint::Create(
         goal_traj->LastState(), goal_traj->LastTime(), goal_traj, waypoint);
       tree.Insert(waypoint, true);
+
+      // TODO: in future we could have some other stopping criteria.
+      done = true;
     }
   }
 
-
-  return nullptr;
+  // Get the best (fastest) trajectory out of the tree.
+  return tree.BestTrajectory();
 }

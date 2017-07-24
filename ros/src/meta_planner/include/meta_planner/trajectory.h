@@ -76,6 +76,9 @@ public:
            const VectorXd& state,
            const ValueFunction::ConstPtr& value);
 
+  // Add a whole other Trajectory to this one.
+  void Add(const ConstPtr& other);
+
   // Check if this trajectory is empty.
   bool IsEmpty() const;
 
@@ -136,6 +139,11 @@ inline void Trajectory::Add(double time,
                             const VectorXd& state,
                             const ValueFunction::ConstPtr& value) {
   map_.insert({time, StateValue(state, value)});
+}
+
+// Add a whole other Trajectory to this one.
+inline void Trajectory::Add(const ConstPtr& other) {
+  map_.insert(other->map_.begin(), other->map_.end());
 }
 
 // Check if this trajectory is empty.

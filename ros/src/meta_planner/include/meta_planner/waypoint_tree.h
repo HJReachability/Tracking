@@ -71,12 +71,15 @@ public:
   // Add Waypoint to tree.
   void Insert(const Waypoint::ConstPtr& waypoint, bool is_terminal);
 
+  // Get best (fastest) trajectory (if it exists).
+  Trajectory::Ptr BestTrajectory() const;
+
 private:
   // Root of the tree.
   const Waypoint::ConstPtr root_;
 
-  // List of terminal Waypoints.
-  std::list<Waypoint::ConstPtr> terminal_waypoints_;
+  // Best terminal waypoint.
+  Waypoint::ConstPtr terminus_;
 
   // Kdtree storing all waypoints for easy nearest neighbor searching.
   FlannTree kdtree_;
