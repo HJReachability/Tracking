@@ -36,61 +36,26 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines an n-dimensional box which inherits from Environment. Defaults to
-// the unit box.
+// The MetaPlanner simulator node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_BOX_H
-#define META_PLANNER_BOX_H
-
-#include <meta_planner/environment.h>
-
 #include <ros/ros.h>
-#include <memory>
-#include <algorithm>
-#include <random>
+#include <meta_planner/tracker.h>
 
-class Box : public Environment {
-public:
-  typedef std::shared_ptr<Box> Ptr;
-  typedef std::shared_ptr<const Box> ConstPtr;
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "simulator");
+  ros::NodeHandle n("~");
 
-  // Factory method. Use this instead of the constructor.
-  static Ptr Create(size_t dimension);
+  Simulator sim;
 
-  // Destructor.
-  virtual ~Box() {}
+  if (!sim.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize empty package.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
+  }
 
-  // Inherited from Environment, but can be overwritten by child classes.
-  virtual VectorXd Sample() const;
+  ros::spin();
 
-  // Inherited from Environment, but can be overwritten by child classes.
-  // Returns true if the state is a valid configuration.
-  virtual bool IsValid(const VectorXd& state) const;
-
-  // Inherited by Environment, but can be overwritten by child classes.
-  // Assumes that the first <=3 dimensions correspond to R^3.
-  virtual void Visualize(const ros::Publisher& pub,
-                         const std::string& frame_id) const;
-
-  // Set bounds in each dimension.
-  void SetBounds(const VectorXd& lower, const VectorXd& upper);
-
-  // Get the dimension and upper/lower bounds as const references.
-  size_t Dimension() const { return dimension_; }
-  const VectorXd& LowerBounds() const { return lower_; }
-  const VectorXd& UpperBounds() const { return upper_; }
-  VectorXd LowerBounds(const std::vector<size_t>& dimensions) const;
-  VectorXd UpperBounds(const std::vector<size_t>& dimensions) const;
-
-protected:
-  Box(size_t dimension);
-
-  // Dimension and bounds.
-  const size_t dimension_;
-  VectorXd lower_;
-  VectorXd upper_;
-};
-
-#endif
+  return EXIT_SUCCESS;
+}

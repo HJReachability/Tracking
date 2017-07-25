@@ -36,61 +36,49 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines an n-dimensional box which inherits from Environment. Defaults to
-// the unit box.
+// Defines a Box environment with spherical obstacles. For simplicity, this
+// does not bother with a kdtree index to speed up collision queries, since
+// it is only for a simulated demo.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_BOX_H
-#define META_PLANNER_BOX_H
+#ifndef DEMO_BALLS_IN_BOX_H
+#define DEMO_BALLS_IN_BOX_H
 
-#include <meta_planner/environment.h>
+#include <meta_planner/box.h>
+#include <meta_planner/types.h>
 
-#include <ros/ros.h>
-#include <memory>
-#include <algorithm>
-#include <random>
+#include <vector>
 
-class Box : public Environment {
+class BallsInBox : public Box {
 public:
-  typedef std::shared_ptr<Box> Ptr;
-  typedef std::shared_ptr<const Box> ConstPtr;
+  typedef std::shared_ptr<BallsInBox> Ptr;
+  typedef std::shared_ptr<const BallsInBox> ConstPtr;
 
   // Factory method. Use this instead of the constructor.
   static Ptr Create(size_t dimension);
 
   // Destructor.
-  virtual ~Box() {}
+  ~BallsInBox() {}
 
-  // Inherited from Environment, but can be overwritten by child classes.
-  virtual VectorXd Sample() const;
+  // Inherited sampler from Box needs to be overwritten.
+  VectorXd Sample() const;
 
-  // Inherited from Environment, but can be overwritten by child classes.
-  // Returns true if the state is a valid configuration.
-  virtual bool IsValid(const VectorXd& state) const;
+  // Inherited collision checker from Box needs to be overwritten.
+  bool IsValid(const VectorXd& state) const;
 
-  // Inherited by Environment, but can be overwritten by child classes.
-  // Assumes that the first <=3 dimensions correspond to R^3.
-  virtual void Visualize(const ros::Publisher& pub,
-                         const std::string& frame_id) const;
+  // Inherited visualizer from Box needs to be overwritten.
+  void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
 
-  // Set bounds in each dimension.
-  void SetBounds(const VectorXd& lower, const VectorXd& upper);
+  // Add a spherical obstacle of the given radius to the environment.
+  void AddObstacle(const VectorXd& point, double r);
 
-  // Get the dimension and upper/lower bounds as const references.
-  size_t Dimension() const { return dimension_; }
-  const VectorXd& LowerBounds() const { return lower_; }
-  const VectorXd& UpperBounds() const { return upper_; }
-  VectorXd LowerBounds(const std::vector<size_t>& dimensions) const;
-  VectorXd UpperBounds(const std::vector<size_t>& dimensions) const;
+private:
+  BallsInBox(size_t dimension);
 
-protected:
-  Box(size_t dimension);
-
-  // Dimension and bounds.
-  const size_t dimension_;
-  VectorXd lower_;
-  VectorXd upper_;
+  // List of obstacle locations and radii.
+  std::vector<VectorXd> points_;
+  std::vector<double> radii_;
 };
 
 #endif

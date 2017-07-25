@@ -9,6 +9,7 @@ meta_planner:
 
     # Visualization topic.
     rrt_connect: rrt_connect
+    vis: vis
 
     # Control topic.
     control: control

@@ -36,21 +36,22 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Tracker class.
+// Defines the Simulator class. Holds a BallsInBox environment and sends
+// simulated sensor measurements consisting of detected balls in range.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/tracker.h>
+#include <demo/simulator.h>
 
-Tracker::Tracker()
+Simulator::Simulator()
   : initialized_(false),
-    tf_listener_(tf_buffer_) {}
+    dimension_(3) {}
 
-Tracker::~Tracker() {}
+Simulator::~Simulator() {}
 
 // Initialize this class with all parameters and callbacks.
-bool Tracker::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "meta_planner");
+bool Simulator::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "simulator");
 
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
@@ -62,30 +63,25 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Initialize current state to zero.
+  // Initialize current state and control to zero.
   state_ = VectorXd::Zero(dimension_);
+  control_ = VectorXd::Zero(dimension_);
 
   // Initialize state space. For now, use an empty box.
-  // TODO: parameterize this somehow and integrate with occupancy grid.
-  space_ = Box::Create(dimension_);
+  // TODO: populate with obstacles.
+  space_ = BallsInBox::Create(dimension_);
 
   initialized_ = true;
   return true;
 }
 
 // Load all parameters from config files.
-bool Tracker::LoadParameters(const ros::NodeHandle& n) {
+bool Simulator::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
 
-  // Control update time step.
-  if (!ros::param::search("meta_planner/control/time_step", key)) return false;
+  // Control time step.
+  if (!ros::param::search("meta_planner/control", key)) return false;
   if (!ros::param::get(key, time_step_)) return false;
-
-  // State space parameters.
-  int dimension = 1;
-  if (!ros::param::search("meta_planner/state_space/dimension", key)) return false;
-  if (!ros::param::get(key, dimension)) return false;
-  dimension_ = static_cast<size_t>(dimension);
 
   // Topics and frame ids.
   if (!ros::param::search("meta_planner/topics/control", key)) return false;
@@ -94,84 +90,50 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/topics/rrt_connect", key)) return false;
-  if (!ros::param::get(key, rrt_connect_vis_topic_)) return false;
+  if (!ros::param::search("meta_planner/topics/vis", key)) return false;
+  if (!ros::param::get(key, vis_topic_)) return false;
 
   if (!ros::param::search("meta_planner/frames/fixed", key)) return false;
   if (!ros::param::get(key, fixed_frame_id_)) return false;
 
   if (!ros::param::search("meta_planner/frames/tracker", key)) return false;
-  if (!ros::param::get(key, tracker_frame_id_)) return false;
+  if (!ros::param::get(key, robot_frame_id_)) return false;
+
+  // TODO! Load environment parameters.
 
   return true;
 }
 
 // Register all callbacks and publishers.
-bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
+bool Simulator::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
-  // Sensor subscriber.
-  // sensor_sub_ = nl.subscribe(sensor_topic_.c_str(), 10, &Tracker::SensorCallback, this);
+  // Subscriber.
+  control_sub_ = nl.subscribe(
+    control_topic_.c_str(), 10, &Simulator::ControlCallback, this);
 
-  // Visualization publisher(s).
-  rrt_connect_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
-    rrt_connect_vis_topic_.c_str(), 10, false);
+  // Publishers.
+  vis_pub_ = nl.advertise<visualization_msgs::Marker>(
+    vis_topic_.c_str(), 10, false);
 
-  control_pub_ = nl.advertise<geometry_msgs::Vector3>(
-    control_topic_.c_str(), 10, false);
+  sensor_pub_ = nl.advertise<geometry_msgs::Vector3>(
+    sensor_topic_.c_str(), 10, false);
 
   // Timer.
-  timer_ =
-    nl.createTimer(ros::Duration(time_step_), &Tracker::TimerCallback, this);
+  timer_ = nl.createTimer(
+    ros::Duration(time_step_), &Simulator::TimerCallback, this);
 
   return true;
 }
 
 
-// Callback for processing sensor measurements.
-// void Tracker::SensorCallback(const SomeMessageType::ConstPtr& msg);
-//   Replan trajectory.
-
-// Callback for applying tracking controller.
-void Tracker::TimerCallback(const ros::TimerEvent& e) {
-  // 0) Get current TF.
-  geometry_msgs::TransformStamped tf;
-
-  try {
-    tf = tf_buffer_.lookupTransform(
-      fixed_frame_id_.c_str(), tracker_frame_id_.c_str(), ros::Time::now());
-  } catch(tf2::TransformException &ex) {
-    ROS_WARN("%s: %s", name_.c_str(), ex.what());
-    ROS_WARN("%s: Could not determine current state.", name_.c_str());
-    ros::Duration(time_step_).sleep();
-    return;
-  }
-
-  // Transform point cloud into world frame.
-  const Vector3d translation(tf.transform.translation.x,
-                             tf.transform.translation.y,
-                             tf.transform.translation.z);
-  const Quaterniond quat(tf.transform.rotation.w,
-                         tf.transform.rotation.x,
-                         tf.transform.rotation.y,
-                         tf.transform.rotation.z);
-  const Matrix3d rotation = quat.toRotationMatrix();
-
-  // Process pose to get other state dimensions, e.g. velocity.
+// Callback for processing control signals.
+void Simulator::ControlCallback(const geometry_msgs::Vector3::ConstPtr& msg) {
   // TODO!
+}
 
-#if 0
-  // 1) Compute relative state.
-  planner_state = traj_.State(current_time);
-  rel_state = state - planner_state;
-
-  // 2) Get corresponding value function.
-  const ValueFunction::ConstPtr value = traj_.ValueFunction(current_time);
-
-  // 3) Interpolate gradient to get optimal control.
-  opt_control = value->OptimalControl(rel_state);
-
-  // 4) Apply optimal control.
-  control_pub_.publish(opt_control);
-#endif
+// Timer callback for generating sensor measurements and updating
+// state based on last received control signal.
+void Simulator::TimerCallback(const ros::TimerEvent& e) {
+  // TODO!
 }

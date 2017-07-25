@@ -36,61 +36,73 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines an n-dimensional box which inherits from Environment. Defaults to
-// the unit box.
+// Defines the Simulator class. Holds a BallsInBox environment and sends
+// simulated sensor measurements consisting of detected balls in range.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_BOX_H
-#define META_PLANNER_BOX_H
+#ifndef DEMO_SIMULATOR_H
+#define DEMO_SIMULATOR_H
 
-#include <meta_planner/environment.h>
+#include <demo/balls_in_box.h>
+#include <meta_planner/types.h>
+#include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
-#include <memory>
-#include <algorithm>
-#include <random>
+#include <visualization_msgs/Marker.h>
+#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <string>
 
-class Box : public Environment {
+class Simulator : private Uncopyable {
 public:
-  typedef std::shared_ptr<Box> Ptr;
-  typedef std::shared_ptr<const Box> ConstPtr;
+  explicit Simulator();
+  ~Simulator();
 
-  // Factory method. Use this instead of the constructor.
-  static Ptr Create(size_t dimension);
+  // Initialize this class with all parameters and callbacks.
+  bool Initialize(const ros::NodeHandle& n);
 
-  // Destructor.
-  virtual ~Box() {}
+private:
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // Inherited from Environment, but can be overwritten by child classes.
-  virtual VectorXd Sample() const;
+  // Callback for processing control signals.
+  void ControlCallback(const geometry_msgs::Vector3::ConstPtr& msg);
 
-  // Inherited from Environment, but can be overwritten by child classes.
-  // Returns true if the state is a valid configuration.
-  virtual bool IsValid(const VectorXd& state) const;
+  // Timer callback for generating sensor measurements and updating
+  // state based on last received control signal.
+  void TimerCallback(const ros::TimerEvent& e);
 
-  // Inherited by Environment, but can be overwritten by child classes.
-  // Assumes that the first <=3 dimensions correspond to R^3.
-  virtual void Visualize(const ros::Publisher& pub,
-                         const std::string& frame_id) const;
+  // Current state and control.
+  VectorXd state_;
+  VectorXd control_;
 
-  // Set bounds in each dimension.
-  void SetBounds(const VectorXd& lower, const VectorXd& upper);
-
-  // Get the dimension and upper/lower bounds as const references.
-  size_t Dimension() const { return dimension_; }
-  const VectorXd& LowerBounds() const { return lower_; }
-  const VectorXd& UpperBounds() const { return upper_; }
-  VectorXd LowerBounds(const std::vector<size_t>& dimensions) const;
-  VectorXd UpperBounds(const std::vector<size_t>& dimensions) const;
-
-protected:
-  Box(size_t dimension);
-
-  // Dimension and bounds.
+  // State space.
+  BallsInBox::Ptr space_;
   const size_t dimension_;
-  VectorXd lower_;
-  VectorXd upper_;
+
+  // Set a recurring timer for a discrete-time controller.
+  ros::Timer timer_;
+  double time_step_;
+
+  // Publishers/subscribers and related topics.
+  ros::Subscriber control_sub_;
+  ros::Publisher vis_pub_;
+  ros::Publisher sensor_pub_;
+
+  std::string control_topic_;
+  std::string vis_topic_;
+  std::string sensor_topic_;
+
+  // Frames of reference for reading current pose from tf tree.
+  std::string fixed_frame_id_;
+  std::string robot_frame_id_;
+
+  // Is this class initialized?
+  bool initialized_;
+
+  // Name of this class, for use in debug messages.
+  std::string name_;
 };
 
 #endif

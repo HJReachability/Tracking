@@ -36,60 +36,67 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines an n-dimensional box which inherits from Environment. Defaults to
-// the unit box.
+// Defines a Box environment with spherical obstacles. For simplicity, this
+// does not bother with a kdtree index to speed up collision queries, since
+// it is only for a simulated demo.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/box.h>
+#include <demo/balls_in_box.h>
 
 // Factory method. Use this instead of the constructor.
-Box::Ptr Box::Create(size_t dimension) {
-  Box::Ptr ptr(new Box(dimension));
+BallsInBox::Ptr BallsInBox::Create(size_t dimension) {
+  BallsInBox::Ptr ptr(new BallsInBox(dimension));
   return ptr;
 }
 
 // Constructor. Don't use this. Use the factory method instead.
-Box::Box(size_t dimension)
-  : Environment(),
-    dimension_(dimension),
-    lower_(VectorXd::Zero(dimension)),
-    upper_(VectorXd::Constant(dimension, 1.0)) {}
+BallsInBox::BallsInBox(size_t dimension)
+  : Box(dimension) {}
 
-// Inherited from Environment, but can be overwritten by child classes.
-VectorXd Box::Sample() const {
+// Inherited sampler from Box needs to be overwritten.
+VectorXd BallsInBox::Sample() const {
   VectorXd sample(dimension_);
 
-  // Sample each dimension from this distribution.
-  for (size_t ii = 0; ii < dimension_; ii++) {
-    std::uniform_real_distribution<double> unif(lower_(ii), upper_(ii));
-    sample(ii) = unif(rng_);
+  bool done = false;
+  while (!done) {
+    // Sample each dimension from this distribution.
+    for (size_t ii = 0; ii < dimension_; ii++) {
+      std::uniform_real_distribution<double> unif(lower_(ii), upper_(ii));
+      sample(ii) = unif(rng_);
+    }
+
+    // Check if this sample is valid.
+    done = IsValid(sample);
   }
 
   return sample;
 }
 
-// Inherited from Environment, but can be overwritten by child classes.
-// Returns true if the state is a valid configuration.
-bool Box::IsValid(const VectorXd& state) const {
+// Inherited collision checker from Box needs to be overwritten.
+bool BallsInBox::IsValid(const VectorXd& state) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (state.size() != dimension_)
     ROS_ERROR("Improperly sized state vector (%zu vs. %zu).",
               state.size(), dimension_);
 #endif
 
-  // No obstacles. Just check bounds.
+  // Check bounds.
   for (size_t ii = 0; ii < state.size(); ii++)
     if (state(ii) < lower_(ii) || state(ii) > upper_(ii))
+      return false;
+
+  // Check against each obstacle.
+  for (size_t ii = 0; ii < points_.size(); ii++)
+    if ((state - points_[ii]).norm() <= radii_[ii])
       return false;
 
   return true;
 }
 
-// Inherited by Environment, but can be overwritten by child classes.
-// Assumes that the first <=3 dimensions correspond to R^3.
-void Box::Visualize(const ros::Publisher& pub,
-                    const std::string& frame_id) const {
+// Inherited visualizer from Box needs to be overwritten.
+void BallsInBox::Visualize(const ros::Publisher& pub,
+                           const std::string& frame_id) const {
   if (pub.getNumSubscribers() <= 0)
     return;
 
@@ -130,57 +137,25 @@ void Box::Visualize(const ros::Publisher& pub,
   cube.pose.orientation.z = 0.0;
   cube.pose.orientation.w = 1.0;
 
-  // Publish marker.
+  // Publish cube marker.
   pub.publish(cube);
+
+  // TODO: visualize obstacles as a SPHERE_LIST marker.
 }
 
-// Set bounds in each dimension.
-void Box::SetBounds(const VectorXd& lower, const VectorXd& upper) {
+// Add a spherical obstacle of the given radius to the environment.
+void BallsInBox::AddObstacle(const VectorXd& point, double r) {
+  const double kSmallNumber = 1e-8;
+
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (lower.size() != dimension_ || upper.size() != dimension_) {
-    ROS_ERROR("Improperly sized lower/upper bounds. Did not set.");
-    return;
-  }
+  if (point.size() != dimension_)
+    ROS_ERROR("Improperly sized point (%zu vs. %zu).",
+              point.size(), dimension_);
+
+  if (r < kSmallNumber)
+    ROS_ERROR("Radius was too small: %f.", r);
 #endif
 
-  lower_ = lower;
-  upper_ = upper;
-}
-
-// Get the lower bounds at the specified dimensions.
-VectorXd Box::LowerBounds(const std::vector<size_t>& dimensions) const {
-  VectorXd punctured = VectorXd::Zero(dimensions.size());
-
-  for (size_t ii = 0; ii < dimensions.size(); ii++) {
-#ifdef ENABLE_DEBUG_MESSAGES
-    if (dimensions[ii] >= dimension_) {
-      ROS_ERROR("Tried to access bound for a non-existent dimension: %zu.",
-                dimensions[ii]);
-      continue;
-    }
-#endif
-
-    punctured[ii] = lower_[dimensions[ii]];
-  }
-
-  return punctured;
-}
-
-// Get the upper bounds at the specified dimensions.
-VectorXd Box::UpperBounds(const std::vector<size_t>& dimensions) const {
-  VectorXd punctured = VectorXd::Zero(dimensions.size());
-
-  for (size_t ii = 0; ii < dimensions.size(); ii++) {
-#ifdef ENABLE_DEBUG_MESSAGES
-    if (dimensions[ii] >= dimension_) {
-      ROS_ERROR("Tried to access bound for a non-existent dimension: %zu.",
-                dimensions[ii]);
-      continue;
-    }
-#endif
-
-    punctured[ii] = upper_[dimensions[ii]];
-  }
-
-  return punctured;
+  points_.push_back(point);
+  radii_.push_back(std::max(r, kSmallNumber));
 }
