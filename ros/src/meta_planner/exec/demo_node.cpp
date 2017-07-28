@@ -40,8 +40,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <ros/ros.h>
 #include <meta_planner/tracker.h>
+#include <demo/simulator.h>
+
+#include <ros/ros.h>
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "simulator");
