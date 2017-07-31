@@ -20,3 +20,6 @@ meta_planner:
 
     # Tracker frame.
     tracker: tracker
+
+  state_space:
+    dimension: 3

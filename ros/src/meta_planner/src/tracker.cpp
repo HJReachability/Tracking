@@ -50,7 +50,7 @@ Tracker::~Tracker() {}
 
 // Initialize this class with all parameters and callbacks.
 bool Tracker::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "meta_planner");
+  name_ = ros::names::append(n.getNamespace(), "tracker");
 
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());

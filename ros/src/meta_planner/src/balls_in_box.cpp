@@ -139,8 +139,38 @@ void BallsInBox::Visualize(const ros::Publisher& pub,
 
   // Publish cube marker.
   pub.publish(cube);
+ 
 
   // TODO: visualize obstacles as a SPHERE_LIST marker.
+  for (size_t ii = 0; ii < points_.size(); ii++){
+    visualization_msgs::Marker sphere;
+    sphere.ns = "sphere";
+    sphere.header.frame_id = frame_id;
+    sphere.header.stamp = ros::Time::now();
+    sphere.id = static_cast<int>(ii);
+    sphere.type = visualization_msgs::Marker::SPHERE;
+    sphere.action = visualization_msgs::Marker::ADD;
+
+    sphere.scale.x = 2.0 * radii_[ii];
+
+    sphere.color.a = 0.9;
+    sphere.color.r = 0.7;
+    sphere.color.g = 0.3;
+    sphere.color.b = 0.3;
+
+    geometry_msgs::Point p;
+    const VectorXd point = points_[ii];
+    p.x = point(0);
+    p.y = point(1);
+    p.z = point(2);
+
+    sphere.pose.position = p;
+
+    // Publish sphere marker.
+    pub.publish(sphere);
+
+  }
+
 }
 
 // Add a spherical obstacle of the given radius to the environment.

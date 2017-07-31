@@ -4,6 +4,9 @@
         pkg="meta_planner"
         type="meta_planner_node"
         output="screen">
+
+	<!--Demo parameters -->
+	<rosparam file="$(find meta_planner)/config/meta_planner.yaml"/>
   </node>
 
 </launch>
