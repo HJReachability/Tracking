@@ -67,6 +67,12 @@ public:
   // Inherited collision checker from Box needs to be overwritten.
   bool IsValid(const VectorXd& state) const;
 
+  //Checks for obstacles within a sensing radius.
+  VectorXd ObstacleSensed(const VectorXd& state) const;
+
+  //Checks if a given obstacle is in the environment.
+  bool IsObstacle(const geometry_msgs::Quaternion::ConstPtr& msg) const;
+
   // Inherited visualizer from Box needs to be overwritten.
   void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
 

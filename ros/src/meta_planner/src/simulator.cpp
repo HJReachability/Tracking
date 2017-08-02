@@ -54,13 +54,11 @@ Simulator::~Simulator() {}
 bool Simulator::Initialize(const ros::NodeHandle& n) {
   name_ = ros::names::append(n.getNamespace(), "simulator");
 
-  std::cout << "Just initialized" << std::endl;
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
     return false;
   }
 
-  std::cout << "Loaded parameters" << std::endl;
   if (!RegisterCallbacks(n)) {
     ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
     return false;
@@ -69,33 +67,27 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
   // Initialize current state and control to zero.
   state_ = VectorXd::Zero(dimension_);
   control_ = VectorXd::Zero(dimension_);
-  std::cout << "Testing" << std::endl;
 
   // Initialize state space. For now, use an empty box.
   // TODO: populate with obstacles.
   space_ = BallsInBox::Create(dimension_); //Create returns a pointer to a BallsInBox object
   VectorXd lower(dimension_);
   VectorXd upper(dimension_);
+  //Box has corners at (0, 0, 0) and (1, 1, 1) for 3D
   for (size_t ii = 0; ii < dimension_; ii++){
     lower(ii) = 0;
     upper(ii) = 1;
   }
   space_->SetBounds(lower, upper);
-  std::cout << "Set bounds" << std::endl;
-  const size_t kNumObstacles = 5;
+  const size_t kNumObstacles = 5; 
 
   std::random_device r;
   std::default_random_engine engine(r()); 
   std::uniform_real_distribution<double> uniform_dist(0.05, 0.3);
-
+  //Add an obstacle with a random radius at a random location
   for (size_t ii = 0; ii < kNumObstacles; ii++){
     space_->AddObstacle(space_->Sample(), uniform_dist(engine));
   }
-  
-  std::cout << "Added obstacles" << std::endl;
-
-  space_->Visualize(vis_pub_, fixed_frame_id_);
-  std::cout << "Called visualize function" << std::endl;
 
   initialized_ = true;
   return true;
@@ -108,24 +100,19 @@ bool Simulator::LoadParameters(const ros::NodeHandle& n) {
   // Control time step.
   if (!ros::param::search("meta_planner/control/time_step", key)) return false;
   if (!ros::param::get(key, time_step_)) return false;
-  std::cout << "control/time_step" << std::endl;
 
   // Topics and frame ids.
   if (!ros::param::search("meta_planner/topics/control", key)) return false;
   if (!ros::param::get(key, control_topic_)) return false;
-  std::cout << "topics/control" << std::endl;
 
   if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
-  std::cout << "topics/sensor" << std::endl;
 
   if (!ros::param::search("meta_planner/topics/vis", key)) return false;
   if (!ros::param::get(key, vis_topic_)) return false;
-  std::cout << "topics/vis" << std::endl;
 
   if (!ros::param::search("meta_planner/frames/fixed", key)) return false;
   if (!ros::param::get(key, fixed_frame_id_)) return false;
-  std::cout << "frames/fixed" << std::endl;
 
   if (!ros::param::search("meta_planner/frames/tracker", key)) return false;
   if (!ros::param::get(key, robot_frame_id_)) return false;
@@ -162,15 +149,30 @@ bool Simulator::RegisterCallbacks(const ros::NodeHandle& n) {
 // Callback for processing control signals.
 void Simulator::ControlCallback(const geometry_msgs::Vector3::ConstPtr& msg) {
   // TODO!
-  // control_ = msg;
+  control_(0) = msg->x;
+  control_(1) = msg->y;
+  control_(2) = msg->z;
 }
 
 // Timer callback for generating sensor measurements and updating
 // state based on last received control signal.
 void Simulator::TimerCallback(const ros::TimerEvent& e) {
   // TODO!
-  // state_ += control_ * time_step_;
-  // if (abs(state_ - obstacle_state) <= delta){
-  // sensor_pub_.publish(obstacleSensed);
-  // }
+  //Update state
+  for (size_t ii = 0; ii < state_.size(); ii++)
+    state_(ii) += control_(ii) * time_step_;
+  
+  //Publish sensor message if obstacle is within range
+  VectorXd meas = space_->ObstacleSensed(state_);
+  if (meas(3) != 0) {
+    geometry_msgs::Quaternion q;
+    q.x = meas(0);
+    q.y = meas(1);
+    q.z = meas(2);
+    q.w = meas(3);
+    sensor_pub_.publish(q);
+  }
+
+  space_->Visualize(vis_pub_, fixed_frame_id_);
+ 
 }

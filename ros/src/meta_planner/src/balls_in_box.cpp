@@ -90,9 +90,59 @@ bool BallsInBox::IsValid(const VectorXd& state) const {
   for (size_t ii = 0; ii < points_.size(); ii++)
     if ((state - points_[ii]).norm() <= radii_[ii])
       return false;
-
+    
   return true;
 }
+
+
+//Checks for obstacles within a sensing radius.
+VectorXd BallsInBox::ObstacleSensed(const VectorXd& state) const{
+  VectorXd meas(4);
+  for (size_t ii = 0; ii < points_.size(); ii++){
+    if ((state - points_[ii]).norm() <= radii_[ii] + 0.05){
+      meas(0) = points_[ii](0);
+      meas(1) = points_[ii](1);
+      meas(2) = points_[ii](2);
+      meas(3) = radii_[ii];
+      break;
+    }else {
+      for (size_t jj = 0; jj < meas.size(); jj++){
+	meas(jj) = 0; //empty sensor measurement
+      }
+    }
+  }
+    
+  return meas;
+
+}
+
+
+//Checks if a given obstacle is in the environment.
+bool BallsInBox::IsObstacle(const geometry_msgs::Quaternion::ConstPtr& msg) const{
+  VectorXd meas(4);
+  meas(0) = msg->x;
+  meas(1) = msg->y;
+  meas(2) = msg->z;
+  meas(3) = msg->w;
+ 
+  for (size_t ii = 0; ii < points_.size(); ii++){
+    VectorXd point = points_[ii];
+    double radius = radii_[ii];
+    if (point(0) != meas(0))
+      continue;
+    else if (point(1) != meas(1))
+      continue;
+    else if (point(2) != meas(2))
+      continue;
+    else if (radius != meas(3))
+      continue;
+    else
+      return true;
+  }
+
+  return false;
+} 
+
 
 // Inherited visualizer from Box needs to be overwritten.
 void BallsInBox::Visualize(const ros::Publisher& pub,
@@ -141,7 +191,7 @@ void BallsInBox::Visualize(const ros::Publisher& pub,
   pub.publish(cube);
  
 
-  // TODO: visualize obstacles as a SPHERE_LIST marker.
+  // TODO: visualize obstacles as SPHERE markers.
   for (size_t ii = 0; ii < points_.size(); ii++){
     visualization_msgs::Marker sphere;
     sphere.ns = "sphere";
@@ -168,7 +218,6 @@ void BallsInBox::Visualize(const ros::Publisher& pub,
 
     // Publish sphere marker.
     pub.publish(sphere);
-
   }
 
 }

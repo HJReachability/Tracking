@@ -67,7 +67,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
   // Initialize state space. For now, use an empty box.
   // TODO: parameterize this somehow and integrate with occupancy grid.
-  space_ = Box::Create(dimension_);
+  space_ = BallsInBox::Create(dimension_);
 
   initialized_ = true;
   return true;
@@ -111,7 +111,7 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Sensor subscriber.
-  // sensor_sub_ = nl.subscribe(sensor_topic_.c_str(), 10, &Tracker::SensorCallback, this);
+  sensor_sub_ = nl.subscribe(sensor_topic_.c_str(), 10, &Tracker::SensorCallback, this);
 
   // Visualization publisher(s).
   rrt_connect_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
@@ -129,8 +129,21 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 
 
 // Callback for processing sensor measurements.
-// void Tracker::SensorCallback(const SomeMessageType::ConstPtr& msg);
-//   Replan trajectory.
+void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
+// Replan trajectory.
+  if (!(space_->IsObstacle(msg))) {  
+    //Add obstacle to the environment.
+    VectorXd point(2);
+    point(0) = msg->x;
+    point(1) = msg->y;
+    point(2) = msg->z;
+     
+    space_->AddObstacle(point, (msg->w));
+
+    //Run meta_planner
+  }
+}
+
 
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {

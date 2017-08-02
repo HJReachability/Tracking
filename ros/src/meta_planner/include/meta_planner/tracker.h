@@ -46,6 +46,7 @@
 #include <meta_planner/meta_planner.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/box.h>
+#include <demo/balls_in_box.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
@@ -69,7 +70,7 @@ private:
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
   // Callback for processing sensor measurements.
-  //  void SensorCallback(const SomeMessageType::ConstPtr& msg);
+  void SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg);
 
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
@@ -80,7 +81,7 @@ private:
 
   // State space.
   size_t dimension_;
-  Box::Ptr space_;
+  BallsInBox::Ptr space_;
 
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
