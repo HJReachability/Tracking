@@ -18,6 +18,7 @@ Other dependencies:
 * [Eigen](https://eigen.tuxfamily.org) -- a header-only linear algebra library for C++
 * [OMPL](http://ompl.kavrakilab.org) -- an open C++ library for motion planning
 * [MATIO](https://github.com/tbeu/matio) -- an open C library for MATLAB MAT file I/O
+* [FLANN](http://www.cs.ubc.ca/research/flann/) -- an open source library for fast (approximate) nearest neighbors
 
 To build, open a terminal window and navigate to the `ros/` directory. Then run:
 ```
