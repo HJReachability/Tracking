@@ -49,4 +49,4 @@ A few tips, tricks, and customs that you'll find throughout our code:
 * When iterating through a vector, we name the index something like `ii` instead of just `i`. This makes it super easy to find and replace the iterator later.
 * We use the `const` specifier whenever possible.
 * We try to include optional guard statements with meaningful debug messages wherever possible. These may be toggled on/off with the `ENABLE_DEBUG_MESSAGES` cmake option.
-* Whenever it makes sense, we write unit tests for self-contained functionality and integration tests for dependent functions and classes. Theese are stored in the `test/` directory.
+* Whenever it makes sense, we write unit tests for self-contained functionality and integration tests for dependent functions and classes. These are stored in the `test/` directory.
