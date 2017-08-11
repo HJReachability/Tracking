@@ -81,7 +81,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // Fill in the list of planners for the meta-planner to use.
   const Planner::ConstPtr planner = OmplPlanner<og::RRTConnect>::Create(
     null_value, space_, dimensions, kVelocity);
- 
+
   planners_.push_back(planner);
 
   initialized_ = true;
@@ -152,15 +152,15 @@ void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
   point(2) = msg->z;
 
   double radius = msg->w;
-   
-  if (!(space_->IsObstacle(point, radius))) {  
+
+  if (!(space_->IsObstacle(point, radius))) {
     //Add obstacle to the environment.
     space_->AddObstacle(point, radius);
     //Run meta_planner
     VectorXd goal(3);
     for (size_t ii = 0; ii < goal.size(); ii++)
       goal(ii) = 1;
-    
+
     const MetaPlanner this_meta_planner(space_);
     traj_ = this_meta_planner.Plan(state_, goal, planners_);
   }
@@ -169,19 +169,17 @@ void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
 
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
-  geometry_msgs::Vector3 control;
-  control.x = 1;
-  control.y = 1;
-  control.z = 1;
-  control_pub_.publish(control);
+  const ros::Time current_time = ros::Time::now();
 
-#if 0
+  // TODO! In a real (non-point mass) system, we will need to query some sort of
+  // state filter to get our current state. For now, we just query tf and get position.
+
   // 0) Get current TF.
   geometry_msgs::TransformStamped tf;
 
   try {
     tf = tf_buffer_.lookupTransform(
-      fixed_frame_id_.c_str(), tracker_frame_id_.c_str(), ros::Time::now());
+      fixed_frame_id_.c_str(), tracker_frame_id_.c_str(), current_time);
   } catch(tf2::TransformException &ex) {
     ROS_WARN("%s: %s", name_.c_str(), ex.what());
     ROS_WARN("%s: Could not determine current state.", name_.c_str());
@@ -189,30 +187,25 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
     return;
   }
 
-  // Transform point cloud into world frame.
-  const Vector3d translation(tf.transform.translation.x,
-                             tf.transform.translation.y,
-                             tf.transform.translation.z);
-  const Quaterniond quat(tf.transform.rotation.w,
-                         tf.transform.rotation.x,
-                         tf.transform.rotation.y,
-                         tf.transform.rotation.z);
-  const Matrix3d rotation = quat.toRotationMatrix();
-
-  // Process pose to get other state dimensions, e.g. velocity.
-  // TODO!
-
   // 1) Compute relative state.
-  planner_state = traj_.State(current_time);
-  rel_state = state - planner_state;
+  VectorXd state(3);
+  state(0) = tf.transform.translation.x;
+  state(1) = tf.transform.translation.y;
+  state(2) = tf.transform.translation.z;
+
+  const VectorXd planner_state = traj_->GetState(current_time.toSec());
+  const VectorXd relative_state = state - planner_state;
 
   // 2) Get corresponding value function.
-  const ValueFunction::ConstPtr value = traj_.ValueFunction(current_time);
+  const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
 
   // 3) Interpolate gradient to get optimal control.
-  opt_control = value->OptimalControl(rel_state);
+  const VectorXd optimal_control = value->OptimalControl(relative_state);
 
   // 4) Apply optimal control.
-  control_pub_.publish(opt_control);
-#endif
+  geometry_msgs::Vector3 control_msg;
+  control_msg.x = optimal_control(0);
+  control_msg.y = optimal_control(1);
+  control_msg.z = optimal_control(2);
+  control_pub_.publish(control_msg);
 }

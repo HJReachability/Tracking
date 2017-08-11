@@ -75,7 +75,7 @@ public:
                        const std::vector<size_t>& dimensions,
                        double speed);
 
-  
+
   // Derived classes must plan trajectories between two points.
   Trajectory::Ptr Plan(
     const VectorXd& start, const VectorXd& stop, double start_time = 0.0) const;
