@@ -68,10 +68,11 @@ public:
   bool IsValid(const VectorXd& state) const;
 
   //Checks for obstacles within a sensing radius.
-  VectorXd ObstacleSensed(const VectorXd& state) const;
+  bool SenseObstacle(const VectorXd& state, VectorXd& point, 
+			 double& radius, double sensingDist) const;
 
   //Checks if a given obstacle is in the environment.
-  bool IsObstacle(const geometry_msgs::Quaternion::ConstPtr& msg) const;
+  bool IsObstacle(const VectorXd& point, double radius) const;
 
   // Inherited visualizer from Box needs to be overwritten.
   void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;

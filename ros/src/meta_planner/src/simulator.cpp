@@ -75,8 +75,8 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
   VectorXd upper(dimension_);
   //Box has corners at (0, 0, 0) and (1, 1, 1) for 3D
   for (size_t ii = 0; ii < dimension_; ii++){
-    lower(ii) = 0;
-    upper(ii) = 1;
+    lower(ii) = 0.0;
+    upper(ii) = 1.0;
   }
   space_->SetBounds(lower, upper);
   const size_t kNumObstacles = 5; 
@@ -88,6 +88,8 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
   for (size_t ii = 0; ii < kNumObstacles; ii++){
     space_->AddObstacle(space_->Sample(), uniform_dist(engine));
   }
+
+  time_ = ros::WallTime::now();
 
   initialized_ = true;
   return true;
@@ -135,7 +137,7 @@ bool Simulator::RegisterCallbacks(const ros::NodeHandle& n) {
   vis_pub_ = nl.advertise<visualization_msgs::Marker>(
     vis_topic_.c_str(), 10, false);
 
-  sensor_pub_ = nl.advertise<geometry_msgs::Vector3>(
+  sensor_pub_ = nl.advertise<geometry_msgs::Quaternion>(
     sensor_topic_.c_str(), 10, false);
 
   // Timer.
@@ -159,17 +161,47 @@ void Simulator::ControlCallback(const geometry_msgs::Vector3::ConstPtr& msg) {
 void Simulator::TimerCallback(const ros::TimerEvent& e) {
   // TODO!
   //Update state
+  const ros::WallTime now = ros::WallTime::now();
+  const double dt = (now - time_).toSec();
+  time_ = now;
   for (size_t ii = 0; ii < state_.size(); ii++)
-    state_(ii) += control_(ii) * time_step_;
+    state_(ii) += control_(ii) * dt;
   
-  //Publish sensor message if obstacle is within range
-  VectorXd meas = space_->ObstacleSensed(state_);
-  if (meas(3) != 0) {
+
+  // Broadcast tf
+  geometry_msgs::TransformStamped transform_stamped;
+ 
+  transform_stamped.header.frame_id = fixed_frame_id_;
+  transform_stamped.header.stamp = ros::Time::now();
+  
+  transform_stamped.child_frame_id = robot_frame_id_;
+
+  transform_stamped.transform.translation.x = state_(0);
+  transform_stamped.transform.translation.y = state_(1);
+  transform_stamped.transform.translation.z = state_(2);
+ 
+  transform_stamped.transform.rotation.x = 0;
+  transform_stamped.transform.rotation.y = 0;
+  transform_stamped.transform.rotation.z = 0;
+  transform_stamped.transform.rotation.w = 1;
+  
+  br_.sendTransform(transform_stamped);
+
+
+  //Publish sensor message if an obstacle is within range
+  VectorXd point(3);
+  for (size_t ii = 0; ii < point.size(); ii++){
+    point(ii) = 0;
+  }
+  double radius = 0;
+  double sensingDist = 0.05;
+  bool obstacle_sensed = space_->SenseObstacle(state_, point, radius, sensingDist);
+  if (obstacle_sensed) {
     geometry_msgs::Quaternion q;
-    q.x = meas(0);
-    q.y = meas(1);
-    q.z = meas(2);
-    q.w = meas(3);
+    q.x = point(0);
+    q.y = point(1);
+    q.z = point(2);
+    q.w = radius;
     sensor_pub_.publish(q);
   }
 

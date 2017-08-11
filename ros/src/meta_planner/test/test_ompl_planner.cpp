@@ -70,9 +70,9 @@ TEST(OmplPlanner, TestUnitBox) {
   const ValueFunction::ConstPtr null_value(NULL);
 
   // Plan.
-  const OmplPlanner<og::RRTConnect> planner(
+  const Planner::ConstPtr planner = OmplPlanner<og::RRTConnect>::Create(
     null_value, box, dimensions, kVelocity);
-  const Trajectory::ConstPtr traj = planner.Plan(start, stop);
+  const Trajectory::ConstPtr traj = planner->Plan(start, stop);
 
   // Check that start and stop states match.
   const double kSmallNumber = 1e-8;

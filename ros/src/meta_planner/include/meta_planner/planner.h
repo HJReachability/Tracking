@@ -52,12 +52,15 @@
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
+#include <memory>
+
 #include <ros/ros.h>
 
 class Planner : private Uncopyable {
 public:
   virtual ~Planner() {}
 
+  typedef std::shared_ptr<const Planner> ConstPtr;
   // Derived classes must plan trajectories between two points.
   virtual Trajectory::Ptr Plan(const VectorXd& start,
                                const VectorXd& stop,

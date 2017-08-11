@@ -69,6 +69,21 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // TODO: parameterize this somehow and integrate with occupancy grid.
   space_ = BallsInBox::Create(dimension_);
 
+  // Create planner variable.
+  const size_t kAmbientDimension = 3;
+  const double kVelocity = 1.0;
+  std::vector<size_t> dimensions(kAmbientDimension);
+  std::iota(dimensions.begin(), dimensions.end(), 0);
+
+  // Create a nullptr for the ValueFunction.
+  const ValueFunction::ConstPtr null_value(NULL);
+
+  // Fill in the list of planners for the meta-planner to use.
+  const Planner::ConstPtr planner = OmplPlanner<og::RRTConnect>::Create(
+    null_value, space_, dimensions, kVelocity);
+ 
+  planners_.push_back(planner);
+
   initialized_ = true;
   return true;
 }
@@ -131,22 +146,36 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 // Callback for processing sensor measurements.
 void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
 // Replan trajectory.
-  if (!(space_->IsObstacle(msg))) {  
-    //Add obstacle to the environment.
-    VectorXd point(2);
-    point(0) = msg->x;
-    point(1) = msg->y;
-    point(2) = msg->z;
-     
-    space_->AddObstacle(point, (msg->w));
+  VectorXd point(3);
+  point(0) = msg->x;
+  point(1) = msg->y;
+  point(2) = msg->z;
 
+  double radius = msg->w;
+   
+  if (!(space_->IsObstacle(point, radius))) {  
+    //Add obstacle to the environment.
+    space_->AddObstacle(point, radius);
     //Run meta_planner
+    VectorXd goal(3);
+    for (size_t ii = 0; ii < goal.size(); ii++)
+      goal(ii) = 1;
+    
+    const MetaPlanner this_meta_planner(space_);
+    traj_ = this_meta_planner.Plan(state_, goal, planners_);
   }
 }
 
 
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
+  geometry_msgs::Vector3 control;
+  control.x = 1;
+  control.y = 1;
+  control.z = 1;
+  control_pub_.publish(control);
+
+#if 0
   // 0) Get current TF.
   geometry_msgs::TransformStamped tf;
 
@@ -173,7 +202,6 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   // Process pose to get other state dimensions, e.g. velocity.
   // TODO!
 
-#if 0
   // 1) Compute relative state.
   planner_state = traj_.State(current_time);
   rel_state = state - planner_state;

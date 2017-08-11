@@ -5,14 +5,14 @@ meta_planner:
 
   topics:
     # Sensor publication topic.
-    sensor: sensor
+    sensor: /sensor
 
     # Visualization topic.
-    rrt_connect: rrt_connect
-    vis: vis
+    rrt_connect: /rrt_connect
+    vis: /vis
 
     # Control topic.
-    control: control
+    control: /control
 
   frames:
     # Fixed frame.

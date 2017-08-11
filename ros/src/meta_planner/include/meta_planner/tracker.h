@@ -49,6 +49,7 @@
 #include <demo/balls_in_box.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
+#include <meta_planner/ompl_planner.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
@@ -86,6 +87,9 @@ private:
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;
+
+  // std::vector of planners for the meta_planner
+  std::vector<Planner::ConstPtr> planners_;
 
   // Buffer and listener to get current pose.
   tf2_ros::Buffer tf_buffer_;
