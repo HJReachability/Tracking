@@ -48,9 +48,11 @@
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
+#include <tf2_ros/transform_broadcaster.h>
+
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
-#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <string>
 
@@ -84,6 +86,10 @@ private:
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;
+
+  ros::WallTime time_;
+
+  tf2_ros::TransformBroadcaster br_;
 
   // Publishers/subscribers and related topics.
   ros::Subscriber control_sub_;

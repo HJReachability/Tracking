@@ -69,16 +69,23 @@ template<typename PlannerType>
 class OmplPlanner : public Planner {
 public:
   ~OmplPlanner() {}
-  explicit OmplPlanner(const ValueFunction::ConstPtr& value,
+
+  static Planner::ConstPtr Create(const ValueFunction::ConstPtr& value,
                        const Box::ConstPtr& space,
                        const std::vector<size_t>& dimensions,
                        double speed);
+
 
   // Derived classes must plan trajectories between two points.
   Trajectory::Ptr Plan(
     const VectorXd& start, const VectorXd& stop, double start_time = 0.0) const;
 
 private:
+  explicit OmplPlanner(const ValueFunction::ConstPtr& value,
+                       const Box::ConstPtr& space,
+                       const std::vector<size_t>& dimensions,
+                       double speed);
+
   // Convert between OMPL states and VectorXds.
   VectorXd FromOmplState(const ob::State* state) const;
 
@@ -100,6 +107,19 @@ OmplPlanner<PlannerType>::OmplPlanner(const ValueFunction::ConstPtr& value,
     ROS_ERROR("Speed was negative. Setting to unity.");
 #endif
 }
+
+
+// Create OmplPlanner pointer.
+template<typename PlannerType>
+inline Planner::ConstPtr OmplPlanner<PlannerType>::Create(const ValueFunction::ConstPtr& value,
+                                      const Box::ConstPtr& space,
+                                      const std::vector<size_t>& dimensions,
+							  double speed){
+ Planner::ConstPtr ptr(new OmplPlanner<PlannerType>(value, space, dimensions, speed));
+ return ptr;
+}
+
+
 
 // Derived classes must plan trajectories between two points.
 template<typename PlannerType>

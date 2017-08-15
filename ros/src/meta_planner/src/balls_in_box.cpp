@@ -90,9 +90,49 @@ bool BallsInBox::IsValid(const VectorXd& state) const {
   for (size_t ii = 0; ii < points_.size(); ii++)
     if ((state - points_[ii]).norm() <= radii_[ii])
       return false;
-
+    
   return true;
 }
+
+
+//Checks for obstacles within a sensing radius.
+bool BallsInBox::SenseObstacle(const VectorXd& state, VectorXd& center,
+			       double& radius, double sensingDist) const{
+  for (size_t ii = 0; ii < points_.size(); ii++){
+    if ((state - points_[ii]).norm() <= radii_[ii] + sensingDist){
+      center(0) = points_[ii](0);
+      center(1) = points_[ii](1);
+      center(2) = points_[ii](2);
+      radius = radii_[ii];
+      return true;
+    }
+  }
+
+  return false;
+  
+}
+
+
+//Checks if a given obstacle is in the environment.
+bool BallsInBox::IsObstacle(const VectorXd& point, double radius) const{
+  for (size_t ii = 0; ii < points_.size(); ii++){
+    VectorXd pt = points_[ii];
+    double rad = radii_[ii];
+    if (std::abs(pt(0) - point(0)) >= 1e-8)
+      continue;
+    else if (std::abs(pt(1) - point(1)) >= 1e-8)
+      continue;
+    else if (std::abs(pt(2) - point(2)) >= 1e-8)
+      continue;
+    else if (std::abs(rad - radius) >= 1e-8)
+      continue;
+    else
+      return true;
+  }
+
+  return false;
+} 
+
 
 // Inherited visualizer from Box needs to be overwritten.
 void BallsInBox::Visualize(const ros::Publisher& pub,
@@ -108,10 +148,10 @@ void BallsInBox::Visualize(const ros::Publisher& pub,
   cube.id = 0;
   cube.type = visualization_msgs::Marker::CUBE;
   cube.action = visualization_msgs::Marker::ADD;
-  cube.color.a = 0.25;
-  cube.color.r = 0.2;
-  cube.color.g = 0.2;
-  cube.color.b = 0.2;
+  cube.color.a = 0.5;
+  cube.color.r = 0.3;
+  cube.color.g = 0.7;
+  cube.color.b = 0.7;
 
   geometry_msgs::Point center;
 
@@ -139,8 +179,39 @@ void BallsInBox::Visualize(const ros::Publisher& pub,
 
   // Publish cube marker.
   pub.publish(cube);
+ 
 
-  // TODO: visualize obstacles as a SPHERE_LIST marker.
+  // TODO: visualize obstacles as SPHERE markers.
+  for (size_t ii = 0; ii < points_.size(); ii++){
+    visualization_msgs::Marker sphere;
+    sphere.ns = "sphere";
+    sphere.header.frame_id = frame_id;
+    sphere.header.stamp = ros::Time::now();
+    sphere.id = static_cast<int>(ii);
+    sphere.type = visualization_msgs::Marker::SPHERE;
+    sphere.action = visualization_msgs::Marker::ADD;
+
+    sphere.scale.x = 2.0 * radii_[ii];
+    sphere.scale.y = 2.0 * radii_[ii];
+    sphere.scale.z = 2.0 * radii_[ii];
+
+    sphere.color.a = 0.9;
+    sphere.color.r = 0.7;
+    sphere.color.g = 0.5;
+    sphere.color.b = 0.5;
+
+    geometry_msgs::Point p;
+    const VectorXd point = points_[ii];
+    p.x = point(0);
+    p.y = point(1);
+    p.z = point(2);
+
+    sphere.pose.position = p;
+
+    // Publish sphere marker.
+    pub.publish(sphere);
+  }
+
 }
 
 // Add a spherical obstacle of the given radius to the environment.

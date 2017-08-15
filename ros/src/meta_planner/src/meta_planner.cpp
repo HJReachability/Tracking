@@ -52,7 +52,7 @@
 // (5) Try to connect to the goal point.
 // (6) Stop when we have a feasible trajectory. Otherwise go to (2).
 Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
-                                  const std::vector<Planner>& planners) const {
+                                  const std::vector<Planner::ConstPtr>& planners) const {
   // (1) Set up a new RRT-like structure to hold the meta plan.
   WaypointTree tree(start, stop);
 
@@ -73,7 +73,7 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
     // (4) Plan a trajectory (starting with most aggressive planner).
     Trajectory::Ptr traj;
     for (const auto& planner : planners) {
-      traj = planner.Plan(neighbors[0]->point_, sample, neighbors[0]->time_);
+      traj = planner->Plan(neighbors[0]->point_, sample, neighbors[0]->time_);
 
       if (traj != nullptr)
         break;
@@ -86,7 +86,7 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
     Trajectory::Ptr goal_traj;
     if ((sample - stop).norm() <= max_connection_radius_) {
       for (const auto& planner : planners) {
-        goal_traj = planner.Plan(
+        goal_traj = planner->Plan(
           neighbors[0]->point_, sample, neighbors[0]->time_);
 
         if (goal_traj != nullptr)

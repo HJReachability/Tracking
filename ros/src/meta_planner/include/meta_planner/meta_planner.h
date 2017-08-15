@@ -67,7 +67,7 @@ public:
 
   // Plan a trajectory using the given (ordered) list of Planners.
   Trajectory::Ptr Plan(const VectorXd& start, const VectorXd& stop,
-                       const std::vector<Planner>& planners) const;
+                       const std::vector<Planner::ConstPtr>& planners) const;
 
 private:
   // State space (with collision checker).
