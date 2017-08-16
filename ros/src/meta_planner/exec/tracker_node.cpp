@@ -36,21 +36,22 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The MetaPlanner node.
+// The Tracker node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <ros/ros.h>
 #include <meta_planner/tracker.h>
 
+#include <ros/ros.h>
+
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "meta_planner");
+  ros::init(argc, argv, "tracker");
   ros::NodeHandle n("~");
 
   Tracker tracker;
 
   if (!tracker.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize empty package.",
+    ROS_ERROR("%s: Failed to initialize Tracker.",
               ros::this_node::getName().c_str());
     return EXIT_FAILURE;
   }
