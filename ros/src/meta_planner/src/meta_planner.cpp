@@ -54,7 +54,7 @@
 Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
                                   const std::vector<Planner::ConstPtr>& planners) const {
   // (1) Set up a new RRT-like structure to hold the meta plan.
-  WaypointTree tree(start, stop);
+  WaypointTree tree(start, stop, ros::Time::now().toSec());
 
   bool done = false;
   while (!done) {
@@ -82,12 +82,14 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
     if (traj == nullptr)
       continue;
 
+    std::cout << "Found a valid trajectory to this waypoint." << std::endl;
+    std::cout << "Trajectory was of length " << traj->Size() << std::endl;
+
     // (5) Try to connect to the goal point.
     Trajectory::Ptr goal_traj;
     if ((sample - stop).norm() <= max_connection_radius_) {
       for (const auto& planner : planners) {
-        goal_traj = planner->Plan(
-          neighbors[0]->point_, sample, neighbors[0]->time_);
+        goal_traj = planner->Plan(sample, stop, traj->LastTime());
 
         if (goal_traj != nullptr)
           break;
@@ -100,10 +102,15 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
     tree.Insert(waypoint, false);
 
     if (goal_traj != nullptr) {
-      // Connect to the goal.
+      std::cout << "Found a valid trajectory from this waypoint to the goal." << std::endl;
+      std::cout << "Trajectory was of length " << goal_traj->Size() << std::endl;
+
+      // Connect to the goal. NOTE: the first point in goal_traj coincides with
+      // the last point in traj, but when we merge the two trajectories the
+      // std::map insertion rules will prevent duplicates.
       const Waypoint::ConstPtr goal = Waypoint::Create(
         goal_traj->LastState(), goal_traj->LastTime(), goal_traj, waypoint);
-      tree.Insert(waypoint, true);
+      tree.Insert(goal, true);
 
       // TODO: in future we could have some other stopping criteria.
       done = true;
@@ -111,5 +118,9 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
   }
 
   // Get the best (fastest) trajectory out of the tree.
-  return tree.BestTrajectory();
+  const Trajectory::Ptr best = tree.BestTrajectory();
+
+  std::cout << "Got best trajectory from WaypointTree." << std::endl << std::flush;
+
+  return best;
 }

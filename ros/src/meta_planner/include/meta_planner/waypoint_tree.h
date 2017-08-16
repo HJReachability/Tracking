@@ -50,12 +50,14 @@
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
+#include <iostream>
 #include <list>
 
 class WaypointTree : private Uncopyable {
 public:
-  explicit WaypointTree(const VectorXd& start, const VectorXd& stop);
   ~WaypointTree() {}
+  explicit WaypointTree(const VectorXd& start, const VectorXd& stop,
+                        double start_time = 0.0);
 
   // Find nearest neighbors in the tree.
   inline std::vector<Waypoint::ConstPtr>

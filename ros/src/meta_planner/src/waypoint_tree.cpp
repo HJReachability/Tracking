@@ -44,8 +44,9 @@
 
 #include <meta_planner/waypoint_tree.h>
 
-WaypointTree::WaypointTree(const VectorXd& start, const VectorXd& stop)
-  : root_(Waypoint::Create(start, 0.0, nullptr, nullptr)) {
+WaypointTree::WaypointTree(const VectorXd& start, const VectorXd& stop,
+                           double start_time)
+  : root_(Waypoint::Create(start, start_time, nullptr, nullptr)) {
   kdtree_.Insert(root_);
 }
 
@@ -72,10 +73,15 @@ Trajectory::Ptr WaypointTree::BestTrajectory() const {
 
   // Walk back from the terminus, and append trajectories as we go.
   Waypoint::ConstPtr waypoint = terminus_;
-  while (waypoint != nullptr) {
+  while (waypoint != nullptr && waypoint->traj_ != nullptr) {
+    std::cout << "Trajectory size = " << traj->Size() << std::endl;
+    std::cout << "Waypoint trajectory size = " << waypoint->traj_->Size() << std::endl;
+
     traj->Add(waypoint->traj_);
     waypoint = waypoint->parent_;
   }
+
+  std::cout << "Final trajectory size = " << traj->Size() << std::endl;
 
   return traj;
 }

@@ -78,7 +78,7 @@ private:
 
   // Current state and trajectory.
   VectorXd state_;
-  Trajectory::ConstPtr traj_;
+  Trajectory::Ptr traj_;
 
   // State space.
   size_t dimension_;

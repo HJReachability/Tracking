@@ -84,6 +84,19 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
   planners_.push_back(planner);
 
+  // Generate an initial trajectory.
+  // TODO! Change the goal here to be something read from a topic.
+  VectorXd goal(3);
+  for (size_t ii = 0; ii < goal.size(); ii++)
+    goal(ii) = 1.0;
+
+  std::cout << "About to call meta planner." << std::endl;
+
+  const MetaPlanner meta(space_);
+  traj_ = meta.Plan(state_, goal, planners_);
+
+  std::cout << "Meta planner succeeded." << std::endl << std::flush;
+
   initialized_ = true;
   return true;
 }
@@ -143,9 +156,8 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 }
 
 
-// Callback for processing sensor measurements.
+// Callback for processing sensor measurements. Replan trajectory.
 void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
-// Replan trajectory.
   VectorXd point(3);
   point(0) = msg->x;
   point(1) = msg->y;
@@ -153,16 +165,22 @@ void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
 
   double radius = msg->w;
 
+  // Check if our version of the map has already seen this point.
   if (!(space_->IsObstacle(point, radius))) {
-    //Add obstacle to the environment.
     space_->AddObstacle(point, radius);
-    //Run meta_planner
+
+    // Run meta_planner.
+    // TODO! Change the goal here to be something read from a topic.
     VectorXd goal(3);
     for (size_t ii = 0; ii < goal.size(); ii++)
       goal(ii) = 1;
 
-    const MetaPlanner this_meta_planner(space_);
-    traj_ = this_meta_planner.Plan(state_, goal, planners_);
+    std::cout << "About to call meta planner." << std::endl;
+
+    const MetaPlanner meta(space_);
+    traj_ = meta.Plan(state_, goal, planners_);
+
+    std::cout << "Meta planner succeeded." << std::endl;
   }
 }
 
@@ -183,8 +201,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   } catch(tf2::TransformException &ex) {
     ROS_WARN("%s: %s", name_.c_str(), ex.what());
     ROS_WARN("%s: Could not determine current state.", name_.c_str());
-    ros::Duration(time_step_).sleep();
-    return;
+    //    return;
   }
 
   // 1) Compute relative state.
@@ -193,8 +210,12 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   state(1) = tf.transform.translation.y;
   state(2) = tf.transform.translation.z;
 
+  std::cout << "State is: " << state.transpose() << std::endl;
+
   const VectorXd planner_state = traj_->GetState(current_time.toSec());
   const VectorXd relative_state = state - planner_state;
+
+  std::cout << "Relative state is: " << relative_state.transpose() << std::endl;
 
   // 2) Get corresponding value function.
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
@@ -202,10 +223,13 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   // 3) Interpolate gradient to get optimal control.
   const VectorXd optimal_control = value->OptimalControl(relative_state);
 
+  std::cout << "Optimal control is: " << optimal_control.transpose() << std::endl;
+
   // 4) Apply optimal control.
   geometry_msgs::Vector3 control_msg;
   control_msg.x = optimal_control(0);
   control_msg.y = optimal_control(1);
   control_msg.z = optimal_control(2);
+
   control_pub_.publish(control_msg);
 }
