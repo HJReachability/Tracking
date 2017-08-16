@@ -284,10 +284,10 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   state_(1) = tf.transform.translation.y;
   state_(2) = tf.transform.translation.z;
 
-  std::cout << "State is: " << state.transpose() << std::endl;
+  std::cout << "State is: " << state_.transpose() << std::endl;
 
   const VectorXd planner_state = traj_->GetState(current_time.toSec());
-  const VectorXd relative_state = state - planner_state;
+  const VectorXd relative_state = state_ - planner_state;
 
   std::cout << "Relative state is: " << relative_state.transpose() << std::endl;
 
@@ -295,11 +295,11 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
 
   // 3) Interpolate gradient to get optimal control.
-#if 0
   const VectorXd optimal_control = value->OptimalControl(relative_state);
-#endif
 
+#if 0
   const VectorXd optimal_control = -max_speeds_[0] * relative_state / relative_state.norm();
+#endif
 
   std::cout << "Optimal control is: " << optimal_control.transpose() << std::endl;
 

@@ -61,15 +61,16 @@ VectorXd LinearDynamics::OptimalControl(const VectorXd& x,
   const VectorXd proj_gradient = B_.transpose() * value_gradient;
 
   // Set each dimension of optimal control to upper/lower bound depending
-  // on the sign of the gradient in that dimension.
+  // on the sign of the gradient in that dimension. We want to minimize the
+  // inner product between the projected gradient and control.
   // If the gradient is 0, then sets control to zero by default.
   VectorXd optimal_control(VectorXd::Zero(lower_u_.size()));
 
   for (size_t ii = 0; ii < lower_u_.size(); ii++) {
     if (proj_gradient(ii) < 0.0)
-      optimal_control(ii) = lower_u_(ii);
-    else if (proj_gradient(ii) > 0.0)
       optimal_control(ii) = upper_u_(ii);
+    else if (proj_gradient(ii) > 0.0)
+      optimal_control(ii) = lower_u_(ii);
   }
 
   return optimal_control;
