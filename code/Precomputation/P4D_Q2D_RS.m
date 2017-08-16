@@ -21,7 +21,7 @@ sD.grid = createGrid(gMin, gMax, gN, 3);
 data0 = sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2;
 
 % obstacles
-extraArgs.obstacles = -data0;  %%%%%%%%%%%%%%%%%%%%
+% extraArgs.obstacles = -data0;  
 
 if visualize
   % to visualize initial function over 2D grid, project onto 2D
@@ -104,11 +104,11 @@ extraArgs.stopConverge = true;
 extraArgs.convergeThreshold = dt;
 
 % solve backwards reachable set
-[data, tau] = HJIPDE_solve(data0, tau, sD, 'none', extraArgs); %%%%%%%%%%%%%%%%%%%%%%
+[data, tau] = HJIPDE_solve(data0, tau, sD, 'maxOverTime', extraArgs); 
 
 % largest cost along all time (along the entire 5th dimension which is
 % time)
-data = max(data,[],5); %%%%%%%%%%%%%%%%%%%%%%%%%%%
+% data = max(data,[],5); 
 
 if visualize
   figure(1)
@@ -159,7 +159,7 @@ if visualize
 end
 
 %tracking error bound
-teb = sqrt(min(data(:))) + 0.05;
+teb = sqrt(min(data(:))) + 0.03;
 
 %lev = 0.4408;
 lev = lev + 0.03;
