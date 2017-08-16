@@ -111,10 +111,11 @@ OmplPlanner<PlannerType>::OmplPlanner(const ValueFunction::ConstPtr& value,
 
 // Create OmplPlanner pointer.
 template<typename PlannerType>
-inline Planner::ConstPtr OmplPlanner<PlannerType>::Create(const ValueFunction::ConstPtr& value,
-                                      const Box::ConstPtr& space,
-                                      const std::vector<size_t>& dimensions,
-							  double speed){
+inline Planner::ConstPtr OmplPlanner<PlannerType>::
+Create(const ValueFunction::ConstPtr& value,
+       const Box::ConstPtr& space,
+       const std::vector<size_t>& dimensions,
+       double speed){
  Planner::ConstPtr ptr(new OmplPlanner<PlannerType>(value, space, dimensions, speed));
  return ptr;
 }
@@ -151,7 +152,7 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(
   // Create a SimpleSetup instance and set the state validity checker function.
   og::SimpleSetup ompl_setup(ompl_space);
   ompl_setup.setStateValidityChecker([&](const ob::State* state) {
-      return space_->IsValid(FromOmplState(state)); });
+      return space_->IsValid(FromOmplState(state), value_->TrackingBound()); });
 
   // Set the start and stop states.
   ob::ScopedState<ob::RealVectorStateSpace> ompl_start(ompl_space);

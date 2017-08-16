@@ -54,7 +54,8 @@ ValueFunction::ConstPtr ValueFunction::Create(
 // Constructor. Don't use this. Use the factory method instead.
 ValueFunction::ValueFunction(const std::string& file_name,
                              const Dynamics::ConstPtr& dynamics)
-  : dynamics_(dynamics) {
+  : dynamics_(dynamics),
+    tracking_bound_(0.0) {
   // Load from file.
   initialized_ = Load(file_name);
 
@@ -232,6 +233,13 @@ bool ValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
+  const std::string teb = "teb";
+  matvar_t* teb_mat = Mat_VarRead(matfp, teb.c_str());
+  if (teb_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", teb.c_str());
+    return false;
+  }
+
   const std::string data = "data";
   matvar_t* data_mat = Mat_VarRead(matfp, data.c_str());
   if (data_mat == NULL) {
@@ -245,7 +253,7 @@ bool ValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-  size_t num_elements = grid_min_mat->nbytes/grid_min_mat->data_size;
+  size_t num_elements = grid_min_mat->nbytes / grid_min_mat->data_size;
   for (size_t ii = 0; ii < num_elements; ii++) {
     lower_.push_back(static_cast<double*>(grid_min_mat->data)[ii]);
   }
@@ -255,7 +263,7 @@ bool ValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-  num_elements = grid_max_mat->nbytes/grid_max_mat->data_size;
+  num_elements = grid_max_mat->nbytes / grid_max_mat->data_size;
   for (size_t ii = 0; ii < num_elements; ii++) {
     upper_.push_back(static_cast<double*>(grid_max_mat->data)[ii]);
   }
@@ -265,17 +273,24 @@ bool ValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-  num_elements = grid_N_mat->nbytes/grid_N_mat->data_size;
+  num_elements = grid_N_mat->nbytes / grid_N_mat->data_size;
   for (size_t ii = 0; ii < num_elements; ii++) {
     num_voxels_.push_back(static_cast<size_t*>(grid_N_mat->data)[ii]);
   }
+
+  if (teb_mat->data_type != MAT_T_DOUBLE) {
+    ROS_ERROR("%s: Wrong type of data.", teb.c_str());
+    return false;
+  }
+
+  tracking_bound_ = *static_cast<double*>(teb_mat->data);
 
   if (data_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", data.c_str());
     return false;
   }
 
-  num_elements = data_mat->nbytes/data_mat->data_size;
+  num_elements = data_mat->nbytes / data_mat->data_size;
   for (size_t ii = 0; ii < num_elements; ii++) {
     data_.push_back(static_cast<double*>(data_mat->data)[ii]);
   }
@@ -289,6 +304,7 @@ bool ValueFunction::Load(const std::string& file_name) {
   Mat_VarFree(grid_min_mat);
   Mat_VarFree(grid_max_mat);
   Mat_VarFree(grid_N_mat);
+  Mat_VarFree(teb_mat);
   Mat_VarFree(data_mat);
   Mat_Close(matfp);
 

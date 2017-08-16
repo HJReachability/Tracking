@@ -67,7 +67,7 @@ public:
 
   // Inherited from Environment, but can be overwritten by child classes.
   // Returns true if the state is a valid configuration.
-  virtual bool IsValid(const VectorXd& state) const;
+  virtual bool IsValid(const VectorXd& state, double tracking_bound) const;
 
   // Inherited by Environment, but can be overwritten by child classes.
   // Assumes that the first <=3 dimensions correspond to R^3.

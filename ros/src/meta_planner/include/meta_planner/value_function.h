@@ -74,6 +74,9 @@ public:
     return dynamics_->OptimalControl(state, Gradient(state));
   }
 
+  // Get the tracking error bound.
+  inline double TrackingBound() const { return tracking_bound_; }
+
   // Was this ValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
 
@@ -105,6 +108,9 @@ private:
 
   // Data is stored in row-major order.
   std::vector<double> data_;
+
+  // Tracking error bound.
+  double tracking_bound_;
 
   // Was this value function initialized/loaded properly?
   bool initialized_;

@@ -54,27 +54,8 @@ BallsInBox::Ptr BallsInBox::Create(size_t dimension) {
 BallsInBox::BallsInBox(size_t dimension)
   : Box(dimension) {}
 
-// Inherited sampler from Box needs to be overwritten.
-VectorXd BallsInBox::Sample() const {
-  VectorXd sample(dimension_);
-
-  bool done = false;
-  while (!done) {
-    // Sample each dimension from this distribution.
-    for (size_t ii = 0; ii < dimension_; ii++) {
-      std::uniform_real_distribution<double> unif(lower_(ii), upper_(ii));
-      sample(ii) = unif(rng_);
-    }
-
-    // Check if this sample is valid.
-    done = IsValid(sample);
-  }
-
-  return sample;
-}
-
 // Inherited collision checker from Box needs to be overwritten.
-bool BallsInBox::IsValid(const VectorXd& state) const {
+bool BallsInBox::IsValid(const VectorXd& state, double tracking_bound) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (state.size() != dimension_)
     ROS_ERROR("Improperly sized state vector (%zu vs. %zu).",
@@ -88,7 +69,7 @@ bool BallsInBox::IsValid(const VectorXd& state) const {
 
   // Check against each obstacle.
   for (size_t ii = 0; ii < points_.size(); ii++)
-    if ((state - points_[ii]).norm() <= radii_[ii])
+    if ((state - points_[ii]).norm() <= radii_[ii] + tracking_bound)
       return false;
 
   return true;

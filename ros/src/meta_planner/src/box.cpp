@@ -71,7 +71,7 @@ VectorXd Box::Sample() const {
 
 // Inherited from Environment, but can be overwritten by child classes.
 // Returns true if the state is a valid configuration.
-bool Box::IsValid(const VectorXd& state) const {
+bool Box::IsValid(const VectorXd& state, double tracking_bound) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (state.size() != dimension_)
     ROS_ERROR("Improperly sized state vector (%zu vs. %zu).",

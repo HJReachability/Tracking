@@ -60,7 +60,7 @@ public:
 
   // Derived classes must provide a collision checker which returns true if
   // and only if the provided state is a valid collision-free configuration.
-  virtual bool IsValid(const VectorXd& state) const = 0;
+  virtual bool IsValid(const VectorXd& state, double tracking_bound) const = 0;
 
   // Derived classes must have some sort of visualization through RVIZ.
   virtual void Visualize(const ros::Publisher& pub,

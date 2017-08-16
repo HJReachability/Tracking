@@ -61,11 +61,8 @@ public:
   // Destructor.
   ~BallsInBox() {}
 
-  // Inherited sampler from Box needs to be overwritten.
-  VectorXd Sample() const;
-
   // Inherited collision checker from Box needs to be overwritten.
-  bool IsValid(const VectorXd& state) const;
+  bool IsValid(const VectorXd& state, double tracking_bound) const;
 
   // Checks for obstacles within a sensing radius.
   bool SenseObstacle(const VectorXd& state, double sensor_radius,
