@@ -125,17 +125,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   }
 
   // Generate an initial trajectory.
-  // TODO! Change the goal here to be something read from a topic.
-  VectorXd goal(3);
-  for (size_t ii = 0; ii < goal.size(); ii++)
-    goal(ii) = 1.0;
-
-  std::cout << "About to call meta planner." << std::endl;
-
-  const MetaPlanner meta(space_);
-  traj_ = meta.Plan(state_, goal, planners_);
-
-  std::cout << "Meta planner succeeded." << std::endl << std::flush;
+  RunMetaPlanner();
 
   initialized_ = true;
   return true;
@@ -290,10 +280,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   }
 
   // 1) Compute relative state.
-  VectorXd state(3);
-  state(0) = tf.transform.translation.x;
-  state(1) = tf.transform.translation.y;
-  state(2) = tf.transform.translation.z;
+  state_(0) = tf.transform.translation.x;
+  state_(1) = tf.transform.translation.y;
+  state_(2) = tf.transform.translation.z;
 
   std::cout << "State is: " << state.transpose() << std::endl;
 
