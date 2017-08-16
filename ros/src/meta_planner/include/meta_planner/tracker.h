@@ -57,6 +57,7 @@
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <string>
 
 class Tracker : private Uncopyable {
@@ -106,22 +107,26 @@ private:
   ros::Timer timer_;
   double time_step_;
 
-  // Buffer and listener to get current pose.
+  // TF interfacing.
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
+  tf2_ros::TransformBroadcaster br_;
 
   // Publishers/subscribers and related topics.
   ros::Publisher control_pub_;
   ros::Publisher traj_pub_;
+  ros::Publisher tracking_bound_pub_;
   ros::Subscriber sensor_sub_;
 
   std::string control_topic_;
   std::string traj_topic_;
+  std::string tracking_bound_topic_;
   std::string sensor_topic_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;
   std::string tracker_frame_id_;
+  std::string planner_frame_id_;
 
   // Is this class initialized?
   bool initialized_;

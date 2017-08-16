@@ -45,8 +45,7 @@
 #include <random>
 
 Simulator::Simulator()
-  : initialized_(false),
-    dimension_(3) {}
+  : initialized_(false) {}
 
 Simulator::~Simulator() {}
 
@@ -64,19 +63,20 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Initialize current state and control to zero.
-  state_ = VectorXd::Zero(dimension_);
-  control_ = VectorXd::Zero(dimension_);
+  // Initialize state space.
+  space_ = BallsInBox::Create(state_dim_);
 
-  // Initialize state space. For now, use an empty box.
-  // TODO: populate with obstacles.
-  space_ = BallsInBox::Create(dimension_);
+  // Set state space bounds.
+  VectorXd state_upper_vec(state_dim_);
+  VectorXd state_lower_vec(state_dim_);
+  for (size_t ii = 0; ii < state_dim_; ii++) {
+    state_upper_vec(ii) = state_upper_[ii];
+    state_lower_vec(ii) = state_lower_[ii];
+  }
 
-  // Box has corners at (0, 0, 0) and (10, 10, 10) for 3D.
-  const VectorXd lower(VectorXd::Constant(3, 0.0));
-  const VectorXd upper(VectorXd::Constant(3, 10.0));
+  space_->SetBounds(state_lower_vec, state_upper_vec);
 
-  space_->SetBounds(lower, upper);
+  // Add obstacles.
   const size_t kNumObstacles = 5;
 
   std::random_device rd;
@@ -86,6 +86,10 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
   // Add an obstacle with a random radius at a random location.
   for (size_t ii = 0; ii < kNumObstacles; ii++)
     space_->AddObstacle(space_->Sample(), uniform_radius(rng));
+
+  // Initialize current state and control.
+  state_ = state_lower_vec;
+  control_ = VectorXd::Zero(control_dim_);
 
   // Set the initial time.
   time_ = ros::Time::now();
@@ -98,9 +102,25 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
 bool Simulator::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
 
-  // Control time step.
+  // Control parameters.
   if (!ros::param::search("meta/simulator/time_step", key)) return false;
   if (!ros::param::get(key, time_step_)) return false;
+
+  int dimension = 1;
+  if (!ros::param::search("meta/control/dim", key)) return false;
+  if (!ros::param::get(key, dimension)) return false;
+  control_dim_ = static_cast<size_t>(dimension);
+
+  // State space parameters.
+  if (!ros::param::search("meta/state/dim", key)) return false;
+  if (!ros::param::get(key, dimension)) return false;
+  state_dim_ = static_cast<size_t>(dimension);
+
+  if (!ros::param::search("meta/state/upper", key)) return false;
+  if (!ros::param::get(key, state_upper_)) return false;
+
+  if (!ros::param::search("meta/state/lower", key)) return false;
+  if (!ros::param::get(key, state_lower_)) return false;
 
   // Topics and frame ids.
   if (!ros::param::search("meta/topics/control", key)) return false;
@@ -109,8 +129,11 @@ bool Simulator::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("meta/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
-  if (!ros::param::search("meta/topics/vis", key)) return false;
-  if (!ros::param::get(key, vis_topic_)) return false;
+  if (!ros::param::search("meta/topics/sensor_radius", key)) return false;
+  if (!ros::param::get(key, sensor_radius_topic_)) return false;
+
+  if (!ros::param::search("meta/topics/environment", key)) return false;
+  if (!ros::param::get(key, environment_topic_)) return false;
 
   if (!ros::param::search("meta/frames/fixed", key)) return false;
   if (!ros::param::get(key, fixed_frame_id_)) return false;
@@ -132,8 +155,11 @@ bool Simulator::RegisterCallbacks(const ros::NodeHandle& n) {
     control_topic_.c_str(), 10, &Simulator::ControlCallback, this);
 
   // Publishers.
-  vis_pub_ = nl.advertise<visualization_msgs::Marker>(
-    vis_topic_.c_str(), 10, false);
+  environment_pub_ = nl.advertise<visualization_msgs::Marker>(
+    environment_topic_.c_str(), 10, false);
+
+  sensor_radius_pub_ = nl.advertise<visualization_msgs::Marker>(
+    sensor_radius_topic_.c_str(), 10, false);
 
   sensor_pub_ = nl.advertise<geometry_msgs::Quaternion>(
     sensor_topic_.c_str(), 10, false);
@@ -165,7 +191,6 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
   time_ = now;
 
   // Broadcast tf.
-  // TODO! Publish a translucent sphere showing the sensor radius.
   geometry_msgs::TransformStamped transform_stamped;
 
   transform_stamped.header.frame_id = fixed_frame_id_;
@@ -201,5 +226,26 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
     sensor_pub_.publish(q);
   }
 
-  space_->Visualize(vis_pub_, fixed_frame_id_);
+  // Visualize the environment.
+  space_->Visualize(environment_pub_, fixed_frame_id_);
+
+   // Visualize the sensor radius.
+  visualization_msgs::Marker sensor_radius_marker;
+  sensor_radius_marker.ns = "sensor";
+  sensor_radius_marker.header.frame_id = robot_frame_id_;
+  sensor_radius_marker.header.stamp = now;
+  sensor_radius_marker.id = 0;
+  sensor_radius_marker.type = visualization_msgs::Marker::SPHERE;
+  sensor_radius_marker.action = visualization_msgs::Marker::ADD;
+
+  sensor_radius_marker.scale.x = 2.0 * sensor_radius;
+  sensor_radius_marker.scale.y = 2.0 * sensor_radius;
+  sensor_radius_marker.scale.z = 2.0 * sensor_radius;
+
+  sensor_radius_marker.color.a = 0.2;
+  sensor_radius_marker.color.r = 0.8;
+  sensor_radius_marker.color.g = 0.0;
+  sensor_radius_marker.color.b = 0.2;
+
+  sensor_radius_pub_.publish(sensor_radius_marker);
 }

@@ -112,10 +112,6 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     const ValueFunction::ConstPtr value =
       ValueFunction::Create(PRECOMPUTATION_DIR + value_files_[ii], dynamics);
 
-#if 0
-    const ValueFunction::ConstPtr value(NULL);
-#endif
-
     // Create the planner.
     const Planner::ConstPtr planner =
       OmplPlanner<og::RRTConnect>::Create(value, space_,
@@ -193,11 +189,17 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("meta/topics/traj", key)) return false;
   if (!ros::param::get(key, traj_topic_)) return false;
 
+  if (!ros::param::search("meta/topics/tracking_bound", key)) return false;
+  if (!ros::param::get(key, tracking_bound_topic_)) return false;
+
   if (!ros::param::search("meta/frames/fixed", key)) return false;
   if (!ros::param::get(key, fixed_frame_id_)) return false;
 
   if (!ros::param::search("meta/frames/tracker", key)) return false;
   if (!ros::param::get(key, tracker_frame_id_)) return false;
+
+  if (!ros::param::search("meta/frames/planner", key)) return false;
+  if (!ros::param::get(key, planner_frame_id_)) return false;
 
   return true;
 }
@@ -213,6 +215,9 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   // Visualization publisher(s).
   traj_pub_ = nl.advertise<visualization_msgs::Marker>(
     traj_topic_.c_str(), 10, false);
+
+  tracking_bound_pub_ = nl.advertise<visualization_msgs::Marker>(
+    tracking_bound_topic_.c_str(), 10, false);
 
   control_pub_ = nl.advertise<geometry_msgs::Vector3>(
     control_topic_.c_str(), 10, false);
@@ -248,8 +253,6 @@ void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
   ros::Time current_time = ros::Time::now();
 
-  std::cout << "Current time - traj end = " << current_time.toSec() - traj_->LastTime() << std::endl;
-
   // Rerun the meta planner if the current time is past the end of the
   // trajectory timeline.
   if (current_time.toSec() > traj_->LastTime()) {
@@ -260,7 +263,6 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
     RunMetaPlanner();
 
     current_time = ros::Time::now();
-    std::cout << "Current time - traj end = " << current_time.toSec() - traj_->LastTime() << std::endl;
   }
 
   // TODO! In a real (non-point mass) system, we will need to query some sort of
@@ -291,6 +293,46 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   std::cout << "Relative state is: " << relative_state.transpose() << std::endl;
 
+  // Publish planner state on tf.
+  geometry_msgs::TransformStamped transform_stamped;
+  transform_stamped.header.frame_id = fixed_frame_id_;
+  transform_stamped.header.stamp = current_time;
+
+  transform_stamped.child_frame_id = planner_frame_id_;
+
+  transform_stamped.transform.translation.x = planner_state(0);
+  transform_stamped.transform.translation.y = planner_state(1);
+  transform_stamped.transform.translation.z = planner_state(2);
+
+  transform_stamped.transform.rotation.x = 0;
+  transform_stamped.transform.rotation.y = 0;
+  transform_stamped.transform.rotation.z = 0;
+  transform_stamped.transform.rotation.w = 1;
+
+  br_.sendTransform(transform_stamped);
+
+  // Visualize the tracking bound.
+  visualization_msgs::Marker tracking_bound_marker;
+  tracking_bound_marker.ns = "bound";
+  tracking_bound_marker.header.frame_id = tracker_frame_id_;
+  tracking_bound_marker.header.stamp = current_time;
+  tracking_bound_marker.id = 0;
+  tracking_bound_marker.type = visualization_msgs::Marker::SPHERE;
+  tracking_bound_marker.action = visualization_msgs::Marker::ADD;
+
+  const double tracking_bound =
+    traj_->GetValueFunction(current_time.toSec())->TrackingBound();
+  tracking_bound_marker.scale.x = 2.0 * tracking_bound;
+  tracking_bound_marker.scale.y = 2.0 * tracking_bound;
+  tracking_bound_marker.scale.z = 2.0 * tracking_bound;
+
+  tracking_bound_marker.color.a = 0.3;
+  tracking_bound_marker.color.r = 0.9;
+  tracking_bound_marker.color.g = 0.9;
+  tracking_bound_marker.color.b = 0.9;
+
+  tracking_bound_pub_.publish(tracking_bound_marker);
+
   // 2) Get corresponding value function.
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
 
@@ -298,7 +340,8 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   const VectorXd optimal_control = value->OptimalControl(relative_state);
 
 #if 0
-  const VectorXd optimal_control = -max_speeds_[0] * relative_state / relative_state.norm();
+  const VectorXd optimal_control =
+    -1.1 * max_speeds_[0] * relative_state / relative_state.norm();
 #endif
 
   std::cout << "Optimal control is: " << optimal_control.transpose() << std::endl;

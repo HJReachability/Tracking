@@ -5,7 +5,7 @@ meta:
 
   control:
     # Interval (seconds) of the discrete-time control update.
-    time_step: 1.0
+    time_step: 0.02
 
     # Control dimension.
     dim: 3
@@ -34,8 +34,10 @@ meta:
     sensor: /sensor
 
     # Visualization topics.
-    traj: /traj
-    vis: /vis
+    traj: /vis/traj
+    environment: /vis/env
+    tracking_bound: /vis/bound
+    sensor_radius: /vis/sensor
 
     # Control topic.
     control: /control
@@ -46,3 +48,6 @@ meta:
 
     # Tracker frame.
     tracker: tracker
+
+    # Planner frame.
+    planner: planner

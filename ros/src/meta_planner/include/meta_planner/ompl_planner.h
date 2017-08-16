@@ -140,6 +140,18 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(
   // Set bounds for the environment.
   const VectorXd& lower = space_->LowerBounds(dimensions_);
   const VectorXd& upper = space_->UpperBounds(dimensions_);
+
+  // Check that both start and stop are in bounds.
+  for (size_t ii = 0; ii < dimensions_.size(); ii++) {
+    if (start(dimensions_[ii]) < lower(ii) ||
+        start(dimensions_[ii]) > upper(ii) ||
+        stop(dimensions_[ii]) < lower(ii) ||
+        stop(dimensions_[ii]) > upper(ii)) {
+      ROS_ERROR("Start or stop point was outside environment bounds.");
+      return nullptr;
+    }
+  }
+
   ob::RealVectorBounds ompl_bounds(dimensions_.size());
 
   for (size_t ii = 0; ii < dimensions_.size(); ii++) {

@@ -81,7 +81,11 @@ private:
 
   // State space.
   BallsInBox::Ptr space_;
-  const size_t dimension_;
+  size_t state_dim_;
+  size_t control_dim_;
+
+  std::vector<double> state_lower_;
+  std::vector<double> state_upper_;
 
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
@@ -93,11 +97,13 @@ private:
 
   // Publishers/subscribers and related topics.
   ros::Subscriber control_sub_;
-  ros::Publisher vis_pub_;
+  ros::Publisher sensor_radius_pub_;
+  ros::Publisher environment_pub_;
   ros::Publisher sensor_pub_;
 
   std::string control_topic_;
-  std::string vis_topic_;
+  std::string sensor_radius_topic_;
+  std::string environment_topic_;
   std::string sensor_topic_;
 
   // Frames of reference for reading current pose from tf tree.
