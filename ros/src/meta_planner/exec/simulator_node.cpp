@@ -36,11 +36,10 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The MetaPlanner simulator node.
+// The Simulator node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/tracker.h>
 #include <demo/simulator.h>
 
 #include <ros/ros.h>
@@ -52,7 +51,7 @@ int main(int argc, char** argv) {
   Simulator sim;
 
   if (!sim.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize empty package.",
+    ROS_ERROR("%s: Failed to initialize Simulator.",
               ros::this_node::getName().c_str());
     return EXIT_FAILURE;
   }

@@ -1,19 +1,20 @@
 <launch>
 
-<group ns = "simulator">
-  <rosparam file="$(find meta_planner)/config/meta_planner.yaml"/>	  
-  <node name="meta_planner"
+<group ns="demo">
+
+  <!-- Load parameters for the demo. -->
+  <rosparam file="$(find meta_planner)/config/meta_planner.yaml"/>
+
+  <node name="tracker"
         pkg="meta_planner"
-        type="meta_planner_node"
+        type="tracker_node"
         output="screen">
-	
   </node>
 
-  <node name="demo"
+  <node name="simulator"
         pkg="meta_planner"
         type="demo_node"
         output="screen">
-	
   </node>
 
 </group>

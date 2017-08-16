@@ -1,0 +1,13 @@
+<launch>
+
+  <node name="tracker"
+        pkg="meta_planner"
+        type="tracker_node"
+        output="screen">
+
+	  <!--Demo parameters -->
+	  <rosparam file="$(find meta_planner)/config/meta_planner.yaml"/>
+
+  </node>
+
+</launch>
