@@ -33,8 +33,8 @@ meta:
     # Sensor publication topic.
     sensor: /sensor
 
-    # Visualization topic.
-    rrt_connect: /rrt_connect
+    # Visualization topics.
+    traj: /traj
     vis: /vis
 
     # Control topic.

@@ -200,8 +200,8 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("meta/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
-  if (!ros::param::search("meta/topics/rrt_connect", key)) return false;
-  if (!ros::param::get(key, rrt_connect_vis_topic_)) return false;
+  if (!ros::param::search("meta/topics/traj", key)) return false;
+  if (!ros::param::get(key, traj_topic_)) return false;
 
   if (!ros::param::search("meta/frames/fixed", key)) return false;
   if (!ros::param::get(key, fixed_frame_id_)) return false;
@@ -217,11 +217,12 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Sensor subscriber.
-  sensor_sub_ = nl.subscribe(sensor_topic_.c_str(), 10, &Tracker::SensorCallback, this);
+  sensor_sub_ = nl.subscribe(
+    sensor_topic_.c_str(), 10, &Tracker::SensorCallback, this);
 
   // Visualization publisher(s).
-  rrt_connect_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
-    rrt_connect_vis_topic_.c_str(), 10, false);
+  traj_pub_ = nl.advertise<visualization_msgs::Marker>(
+    traj_topic_.c_str(), 10, false);
 
   control_pub_ = nl.advertise<geometry_msgs::Vector3>(
     control_topic_.c_str(), 10, false);
@@ -248,12 +249,7 @@ void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
     space_->AddObstacle(point, radius);
 
     // Run meta_planner.
-    std::cout << "About to call meta planner." << std::endl;
-
-    const MetaPlanner meta(space_);
-    traj_ = meta.Plan(state_, goal_, planners_);
-
-    std::cout << "Meta planner succeeded." << std::endl;
+    RunMetaPlanner();
   }
 }
 
@@ -270,13 +266,8 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
     ROS_WARN("%s: Current time is past the end of the planned trajectory.",
              name_.c_str());
 
-    // TODO! Change the goal here to be something read from a topic.
-    std::cout << "About to call meta planner." << std::endl;
-
-    const MetaPlanner meta(space_);
-    traj_ = meta.Plan(state_, goal_, planners_);
-
-    std::cout << "Meta planner succeeded." << std::endl;
+    // Run the meta planner.
+    RunMetaPlanner();
 
     current_time = ros::Time::now();
     std::cout << "Current time - traj end = " << current_time.toSec() - traj_->LastTime() << std::endl;
@@ -315,11 +306,11 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
 
   // 3) Interpolate gradient to get optimal control.
-  const VectorXd optimal_control = value->OptimalControl(relative_state);
-
 #if 0
-  const VectorXd optimal_control = -max_speeds_[0] * relative_state / relative_state.norm();
+  const VectorXd optimal_control = value->OptimalControl(relative_state);
 #endif
+
+  const VectorXd optimal_control = -max_speeds_[0] * relative_state / relative_state.norm();
 
   std::cout << "Optimal control is: " << optimal_control.transpose() << std::endl;
 
@@ -330,4 +321,13 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   control_msg.z = optimal_control(2);
 
   control_pub_.publish(control_msg);
+}
+
+// Run meta planner.
+void Tracker::RunMetaPlanner() {
+  const MetaPlanner meta(space_);
+  traj_ = meta.Plan(state_, goal_, planners_);
+
+  // Visualize the new trajectory.
+  traj_->Visualize(traj_pub_, fixed_frame_id_);
 }

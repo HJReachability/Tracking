@@ -77,6 +77,9 @@ private:
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
 
+  // Run the meta planner.
+  void RunMetaPlanner();
+
   // Current state and trajectory.
   VectorXd goal_;
   VectorXd state_;
@@ -109,11 +112,11 @@ private:
 
   // Publishers/subscribers and related topics.
   ros::Publisher control_pub_;
-  ros::Publisher rrt_connect_vis_pub_;
+  ros::Publisher traj_pub_;
   ros::Subscriber sensor_sub_;
 
   std::string control_topic_;
-  std::string rrt_connect_vis_topic_;
+  std::string traj_topic_;
   std::string sensor_topic_;
 
   // Frames of reference for reading current pose from tf tree.
