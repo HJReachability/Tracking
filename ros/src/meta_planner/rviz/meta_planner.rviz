@@ -68,10 +68,7 @@ Visualization Manager:
       Show Names: true
       Tree:
         fixed:
-          planner:
-            {}
-          tracker:
-            {}
+          {}
       Update Interval: 0
       Value: true
     - Class: rviz/Marker
@@ -79,8 +76,7 @@ Visualization Manager:
       Marker Topic: /vis/env
       Name: Map
       Namespaces:
-        cube: true
-        sphere: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -92,19 +88,19 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
-      Enabled: false
+      Enabled: true
       Marker Topic: /vis/bound
       Name: Tracking Bound
       Namespaces:
         {}
       Queue Size: 100
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /vis/sensor
       Name: Sensor Radius
       Namespaces:
-        sensor: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -131,22 +127,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 16.7889
+      Distance: 17.7607
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 7.08963
-        Y: 6.99674
-        Z: 4.62071
+        X: 8.3962
+        Y: 4.39229
+        Z: 6.36331
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.739796
+      Pitch: 0.924797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.70541
+      Yaw: 2.69043
     Saved: ~
 Window Geometry:
   Displays:
