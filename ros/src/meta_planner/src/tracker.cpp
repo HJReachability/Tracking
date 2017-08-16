@@ -62,27 +62,67 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Initialize current state to zero.
-  state_ = VectorXd::Zero(dimension_);
+  // TODO! Remove this assumption.
+  if (state_dim_ != control_dim_) {
+    ROS_ERROR("%s: State and control dimensions must be the same.",
+              name_.c_str());
+    return false;
+  }
 
   // Initialize state space. For now, use an empty box.
-  // TODO: parameterize this somehow and integrate with occupancy grid.
-  space_ = BallsInBox::Create(dimension_);
+  // TODO: Parameterize this somehow and integrate with occupancy grid.
+  space_ = BallsInBox::Create(state_dim_);
 
-  // Create planner variable.
-  const size_t kAmbientDimension = 3;
-  const double kVelocity = 1.0;
-  std::vector<size_t> dimensions(kAmbientDimension);
-  std::iota(dimensions.begin(), dimensions.end(), 0);
+  // Set state space bounds.
+  VectorXd state_upper_vec(control_dim_);
+  VectorXd state_lower_vec(control_dim_);
+  for (size_t ii = 0; ii < state_dim_; ii++) {
+    state_upper_vec(ii) = state_upper_[ii];
+    state_lower_vec(ii) = state_lower_[ii];
+  }
 
-  // Create a nullptr for the ValueFunction.
-  const ValueFunction::ConstPtr null_value(NULL);
+  space_->SetBounds(state_lower_vec, state_upper_vec);
 
-  // Fill in the list of planners for the meta-planner to use.
-  const Planner::ConstPtr planner = OmplPlanner<og::RRTConnect>::Create(
-    null_value, space_, dimensions, kVelocity);
+  // Set the initial state and goal.
+  state_ = state_lower_vec;
+  goal_ = state_upper_vec;
 
-  planners_.push_back(planner);
+  // Set control upper/lower bounds as Eigen::Vectors.
+  VectorXd control_upper_vec(control_dim_);
+  VectorXd control_lower_vec(control_dim_);
+  for (size_t ii = 0; ii < control_dim_; ii++) {
+    control_upper_vec(ii) = control_upper_[ii];
+    control_lower_vec(ii) = control_lower_[ii];
+  }
+
+  // Create planners.
+  for (size_t ii = 0; ii < value_files_.size(); ii++) {
+    // NOTE: Assuming that planners operate in full state space for now.
+    std::vector<size_t> dimensions(state_dim_);
+    std::iota(dimensions.begin(), dimensions.end(), 0);
+
+    // NOTE: Hardcoding dynamics for now. Assuming direct velocity control
+    // in each dimension.
+    const MatrixXd A(MatrixXd::Zero(state_dim_, state_dim_));
+    const MatrixXd B(MatrixXd::Identity(state_dim_, state_dim_));
+    const Dynamics::ConstPtr dynamics =
+      LinearDynamics::Create(A, B, control_lower_vec, control_upper_vec);
+
+    // Load up the value function.
+    const ValueFunction::ConstPtr value =
+      ValueFunction::Create(PRECOMPUTATION_DIR + value_files_[ii], dynamics);
+
+#if 0
+    const ValueFunction::ConstPtr value(NULL);
+#endif
+
+    // Create the planner.
+    const Planner::ConstPtr planner =
+      OmplPlanner<og::RRTConnect>::Create(value, space_,
+                                          dimensions, max_speeds_[ii]);
+
+    planners_.push_back(planner);
+  }
 
   // Generate an initial trajectory.
   // TODO! Change the goal here to be something read from a topic.
@@ -105,30 +145,68 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
 
-  // Control update time step.
-  if (!ros::param::search("meta_planner/control/time_step", key)) return false;
+  // Control parameters.
+  if (!ros::param::search("meta/control/time_step", key)) return false;
   if (!ros::param::get(key, time_step_)) return false;
 
-  // State space parameters.
   int dimension = 1;
-  if (!ros::param::search("meta_planner/state_space/dimension", key)) return false;
+  if (!ros::param::search("meta/control/dim", key)) return false;
   if (!ros::param::get(key, dimension)) return false;
-  dimension_ = static_cast<size_t>(dimension);
+  control_dim_ = static_cast<size_t>(dimension);
+
+  if (!ros::param::search("meta/control/upper", key)) return false;
+  if (!ros::param::get(key, control_upper_)) return false;
+
+  if (!ros::param::search("meta/control/lower", key)) return false;
+  if (!ros::param::get(key, control_lower_)) return false;
+  if (control_upper_.size() != control_dim_ ||
+      control_lower_.size() != control_dim_) {
+    ROS_ERROR("%s: Upper and/or lower bounds are in the wrong dimension.",
+              name_.c_str());
+    return false;
+  }
+
+  // Planner parameters.
+  if (!ros::param::search("meta/planners/values", key)) return false;
+  if (!ros::param::get(key, value_files_)) return false;
+  if (value_files_.size() == 0) {
+    ROS_ERROR("%s: Must specify at least one value function file.",
+              name_.c_str());
+    return false;
+  }
+
+  if (!ros::param::search("meta/planners/max_speeds", key)) return false;
+  if (!ros::param::get(key, max_speeds_)) return false;
+  if (max_speeds_.size() != value_files_.size()) {
+    ROS_ERROR("%s: Must specify a max speed for each planner.", name_.c_str());
+    return false;
+  }
+
+  // State space parameters.
+  if (!ros::param::search("meta/state/dim", key)) return false;
+  if (!ros::param::get(key, dimension)) return false;
+  state_dim_ = static_cast<size_t>(dimension);
+
+  if (!ros::param::search("meta/state/upper", key)) return false;
+  if (!ros::param::get(key, state_upper_)) return false;
+
+  if (!ros::param::search("meta/state/lower", key)) return false;
+  if (!ros::param::get(key, state_lower_)) return false;
 
   // Topics and frame ids.
-  if (!ros::param::search("meta_planner/topics/control", key)) return false;
+  if (!ros::param::search("meta/topics/control", key)) return false;
   if (!ros::param::get(key, control_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
+  if (!ros::param::search("meta/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/topics/rrt_connect", key)) return false;
+  if (!ros::param::search("meta/topics/rrt_connect", key)) return false;
   if (!ros::param::get(key, rrt_connect_vis_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/frames/fixed", key)) return false;
+  if (!ros::param::search("meta/frames/fixed", key)) return false;
   if (!ros::param::get(key, fixed_frame_id_)) return false;
 
-  if (!ros::param::search("meta_planner/frames/tracker", key)) return false;
+  if (!ros::param::search("meta/frames/tracker", key)) return false;
   if (!ros::param::get(key, tracker_frame_id_)) return false;
 
   return true;
@@ -170,15 +248,10 @@ void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
     space_->AddObstacle(point, radius);
 
     // Run meta_planner.
-    // TODO! Change the goal here to be something read from a topic.
-    VectorXd goal(3);
-    for (size_t ii = 0; ii < goal.size(); ii++)
-      goal(ii) = 1;
-
     std::cout << "About to call meta planner." << std::endl;
 
     const MetaPlanner meta(space_);
-    traj_ = meta.Plan(state_, goal, planners_);
+    traj_ = meta.Plan(state_, goal_, planners_);
 
     std::cout << "Meta planner succeeded." << std::endl;
   }
@@ -187,7 +260,27 @@ void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
 
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
-  const ros::Time current_time = ros::Time::now();
+  ros::Time current_time = ros::Time::now();
+
+  std::cout << "Current time - traj end = " << current_time.toSec() - traj_->LastTime() << std::endl;
+
+  // Rerun the meta planner if the current time is past the end of the
+  // trajectory timeline.
+  if (current_time.toSec() > traj_->LastTime()) {
+    ROS_WARN("%s: Current time is past the end of the planned trajectory.",
+             name_.c_str());
+
+    // TODO! Change the goal here to be something read from a topic.
+    std::cout << "About to call meta planner." << std::endl;
+
+    const MetaPlanner meta(space_);
+    traj_ = meta.Plan(state_, goal_, planners_);
+
+    std::cout << "Meta planner succeeded." << std::endl;
+
+    current_time = ros::Time::now();
+    std::cout << "Current time - traj end = " << current_time.toSec() - traj_->LastTime() << std::endl;
+  }
 
   // TODO! In a real (non-point mass) system, we will need to query some sort of
   // state filter to get our current state. For now, we just query tf and get position.
@@ -197,11 +290,12 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   try {
     tf = tf_buffer_.lookupTransform(
-      fixed_frame_id_.c_str(), tracker_frame_id_.c_str(), current_time);
+      fixed_frame_id_.c_str(), tracker_frame_id_.c_str(), ros::Time(0));
   } catch(tf2::TransformException &ex) {
     ROS_WARN("%s: %s", name_.c_str(), ex.what());
     ROS_WARN("%s: Could not determine current state.", name_.c_str());
-    //    return;
+    ros::Duration(time_step_).sleep();
+    return;
   }
 
   // 1) Compute relative state.
@@ -222,6 +316,10 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   // 3) Interpolate gradient to get optimal control.
   const VectorXd optimal_control = value->OptimalControl(relative_state);
+
+#if 0
+  const VectorXd optimal_control = -max_speeds_[0] * relative_state / relative_state.norm();
+#endif
 
   std::cout << "Optimal control is: " << optimal_control.transpose() << std::endl;
 

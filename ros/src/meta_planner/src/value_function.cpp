@@ -239,18 +239,13 @@ bool ValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-  size_t num_elements = data_mat->nbytes/data_mat->data_size;
-  for (size_t ii = 0; ii < num_elements; ii++) {
-    data_.push_back(static_cast<double*>(data_mat->data)[ii]);
-  }
-
   // Populate class variables.
   if (grid_min_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", grid_min.c_str());
     return false;
   }
 
-  num_elements = grid_min_mat->nbytes/grid_min_mat->data_size;
+  size_t num_elements = grid_min_mat->nbytes/grid_min_mat->data_size;
   for (size_t ii = 0; ii < num_elements; ii++) {
     lower_.push_back(static_cast<double*>(grid_min_mat->data)[ii]);
   }
@@ -282,7 +277,7 @@ bool ValueFunction::Load(const std::string& file_name) {
 
   num_elements = data_mat->nbytes/data_mat->data_size;
   for (size_t ii = 0; ii < num_elements; ii++) {
-    num_voxels_.push_back(static_cast<double*>(data_mat->data)[ii]);
+    data_.push_back(static_cast<double*>(data_mat->data)[ii]);
   }
 
   // Determine voxel size.

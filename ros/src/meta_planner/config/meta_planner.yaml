@@ -1,7 +1,33 @@
-meta_planner:
+meta:
+  simulator:
+    # Time step for simulator.
+    time_step: 0.01
+
   control:
     # Interval (seconds) of the discrete-time control update.
     time_step: 1.0
+
+    # Control dimension.
+    dim: 3
+
+    # Upper and lower bounds for control.
+    upper: [1.0, 1.0, 1.0]
+    lower: [-1.0, -1.0, -1.0]
+
+  state:
+    # Full (tracker) state space dimension.
+    dim: 3
+
+    # Upper and lower bounds for state space.
+    upper: [10.0, 10.0, 10.0]
+    lower: [0.0, 0.0, 0.0]
+
+  planners:
+    # Files in which value functions are stored.
+    values: [Point_3D_3D_RS.mat]
+
+    # Max speed for each planner.
+    max_speeds: [0.75]
 
   topics:
     # Sensor publication topic.
@@ -20,6 +46,3 @@ meta_planner:
 
     # Tracker frame.
     tracker: tracker
-
-  state_space:
-    dimension: 3

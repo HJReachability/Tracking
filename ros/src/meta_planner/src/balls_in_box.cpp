@@ -90,48 +90,40 @@ bool BallsInBox::IsValid(const VectorXd& state) const {
   for (size_t ii = 0; ii < points_.size(); ii++)
     if ((state - points_[ii]).norm() <= radii_[ii])
       return false;
-    
+
   return true;
 }
 
 
 //Checks for obstacles within a sensing radius.
-bool BallsInBox::SenseObstacle(const VectorXd& state, VectorXd& center,
-			       double& radius, double sensingDist) const{
+bool BallsInBox::SenseObstacle(const VectorXd& state, double sensor_radius,
+                               VectorXd& obstacle_position,
+                               double& obstacle_radius) const{
   for (size_t ii = 0; ii < points_.size(); ii++){
-    if ((state - points_[ii]).norm() <= radii_[ii] + sensingDist){
-      center(0) = points_[ii](0);
-      center(1) = points_[ii](1);
-      center(2) = points_[ii](2);
-      radius = radii_[ii];
+    if ((state - points_[ii]).norm() <= radii_[ii] + sensor_radius) {
+      obstacle_position(0) = points_[ii](0);
+      obstacle_position(1) = points_[ii](1);
+      obstacle_position(2) = points_[ii](2);
+
+      obstacle_radius = radii_[ii];
+
       return true;
     }
   }
 
   return false;
-  
 }
 
-
-//Checks if a given obstacle is in the environment.
-bool BallsInBox::IsObstacle(const VectorXd& point, double radius) const{
-  for (size_t ii = 0; ii < points_.size(); ii++){
-    VectorXd pt = points_[ii];
-    double rad = radii_[ii];
-    if (std::abs(pt(0) - point(0)) >= 1e-8)
-      continue;
-    else if (std::abs(pt(1) - point(1)) >= 1e-8)
-      continue;
-    else if (std::abs(pt(2) - point(2)) >= 1e-8)
-      continue;
-    else if (std::abs(rad - radius) >= 1e-8)
-      continue;
-    else
+// Checks if a given obstacle is in the environment.
+bool BallsInBox::IsObstacle(const VectorXd& obstacle_position,
+                            double obstacle_radius) const {
+  for (size_t ii = 0; ii < points_.size(); ii++)
+    if ((obstacle_position - points_[ii]).norm() < 1e-8 &&
+        std::abs(obstacle_radius - radii_[ii]) < 1e-8)
       return true;
-  }
 
   return false;
-} 
+}
 
 
 // Inherited visualizer from Box needs to be overwritten.
@@ -179,7 +171,7 @@ void BallsInBox::Visualize(const ros::Publisher& pub,
 
   // Publish cube marker.
   pub.publish(cube);
- 
+
 
   // TODO: visualize obstacles as SPHERE markers.
   for (size_t ii = 0; ii < points_.size(); ii++){

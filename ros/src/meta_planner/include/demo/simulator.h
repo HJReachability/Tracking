@@ -87,7 +87,7 @@ private:
   ros::Timer timer_;
   double time_step_;
 
-  ros::WallTime time_;
+  ros::Time time_;
 
   tf2_ros::TransformBroadcaster br_;
 

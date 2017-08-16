@@ -50,6 +50,7 @@
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 #include <meta_planner/ompl_planner.h>
+#include <meta_planner/linear_dynamics.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
@@ -77,19 +78,30 @@ private:
   void TimerCallback(const ros::TimerEvent& e);
 
   // Current state and trajectory.
+  VectorXd goal_;
   VectorXd state_;
-  Trajectory::Ptr traj_;
+  Trajectory::ConstPtr traj_;
 
-  // State space.
-  size_t dimension_;
+  // Spaces and dimensions.
+  size_t control_dim_;
+  size_t state_dim_;
   BallsInBox::Ptr space_;
+
+  std::vector<double> state_upper_;
+  std::vector<double> state_lower_;
+
+  // Control upper/lower bounds.
+  std::vector<double> control_upper_;
+  std::vector<double> control_lower_;
+
+  // Planners and related parameters.
+  std::vector<Planner::ConstPtr> planners_;
+  std::vector<std::string> value_files_;
+  std::vector<double> max_speeds_;
 
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;
-
-  // std::vector of planners for the meta_planner
-  std::vector<Planner::ConstPtr> planners_;
 
   // Buffer and listener to get current pose.
   tf2_ros::Buffer tf_buffer_;

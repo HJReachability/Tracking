@@ -70,26 +70,25 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
 
   // Initialize state space. For now, use an empty box.
   // TODO: populate with obstacles.
-  space_ = BallsInBox::Create(dimension_); //Create returns a pointer to a BallsInBox object
-  VectorXd lower(dimension_);
-  VectorXd upper(dimension_);
-  //Box has corners at (0, 0, 0) and (1, 1, 1) for 3D
-  for (size_t ii = 0; ii < dimension_; ii++){
-    lower(ii) = 0.0;
-    upper(ii) = 1.0;
-  }
+  space_ = BallsInBox::Create(dimension_);
+
+  // Box has corners at (0, 0, 0) and (10, 10, 10) for 3D.
+  const VectorXd lower(VectorXd::Constant(3, 0.0));
+  const VectorXd upper(VectorXd::Constant(3, 10.0));
+
   space_->SetBounds(lower, upper);
-  const size_t kNumObstacles = 5; 
+  const size_t kNumObstacles = 5;
 
-  std::random_device r;
-  std::default_random_engine engine(r()); 
-  std::uniform_real_distribution<double> uniform_dist(0.05, 0.3);
-  //Add an obstacle with a random radius at a random location
-  for (size_t ii = 0; ii < kNumObstacles; ii++){
-    space_->AddObstacle(space_->Sample(), uniform_dist(engine));
-  }
+  std::random_device rd;
+  std::default_random_engine rng(rd());
+  std::uniform_real_distribution<double> uniform_radius(0.3, 1.0);
 
-  time_ = ros::WallTime::now();
+  // Add an obstacle with a random radius at a random location.
+  for (size_t ii = 0; ii < kNumObstacles; ii++)
+    space_->AddObstacle(space_->Sample(), uniform_radius(rng));
+
+  // Set the initial time.
+  time_ = ros::Time::now();
 
   initialized_ = true;
   return true;
@@ -100,25 +99,24 @@ bool Simulator::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
 
   // Control time step.
-  if (!ros::param::search("meta_planner/control/time_step", key)) return false;
+  if (!ros::param::search("meta/simulator/time_step", key)) return false;
   if (!ros::param::get(key, time_step_)) return false;
 
   // Topics and frame ids.
-  if (!ros::param::search("meta_planner/topics/control", key)) return false;
+  if (!ros::param::search("meta/topics/control", key)) return false;
   if (!ros::param::get(key, control_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
+  if (!ros::param::search("meta/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/topics/vis", key)) return false;
+  if (!ros::param::search("meta/topics/vis", key)) return false;
   if (!ros::param::get(key, vis_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/frames/fixed", key)) return false;
+  if (!ros::param::search("meta/frames/fixed", key)) return false;
   if (!ros::param::get(key, fixed_frame_id_)) return false;
 
-  if (!ros::param::search("meta_planner/frames/tracker", key)) return false;
+  if (!ros::param::search("meta/frames/tracker", key)) return false;
   if (!ros::param::get(key, robot_frame_id_)) return false;
-  std::cout << "frames/tracker" << std::endl;
 
   // TODO! Load environment parameters.
 
@@ -150,7 +148,6 @@ bool Simulator::RegisterCallbacks(const ros::NodeHandle& n) {
 
 // Callback for processing control signals.
 void Simulator::ControlCallback(const geometry_msgs::Vector3::ConstPtr& msg) {
-  // TODO!
   control_(0) = msg->x;
   control_(1) = msg->y;
   control_(2) = msg->z;
@@ -159,52 +156,50 @@ void Simulator::ControlCallback(const geometry_msgs::Vector3::ConstPtr& msg) {
 // Timer callback for generating sensor measurements and updating
 // state based on last received control signal.
 void Simulator::TimerCallback(const ros::TimerEvent& e) {
-  // TODO!
-  //Update state
-  const ros::WallTime now = ros::WallTime::now();
+  // Update state.
+  const ros::Time now = ros::Time::now();
   const double dt = (now - time_).toSec();
-  time_ = now;
   for (size_t ii = 0; ii < state_.size(); ii++)
     state_(ii) += control_(ii) * dt;
-  
 
-  // Broadcast tf
+  time_ = now;
+
+  // Broadcast tf.
+  // TODO! Publish a translucent sphere showing the sensor radius.
   geometry_msgs::TransformStamped transform_stamped;
- 
+
   transform_stamped.header.frame_id = fixed_frame_id_;
-  transform_stamped.header.stamp = ros::Time::now();
-  
+  transform_stamped.header.stamp = now;
+
   transform_stamped.child_frame_id = robot_frame_id_;
 
   transform_stamped.transform.translation.x = state_(0);
   transform_stamped.transform.translation.y = state_(1);
   transform_stamped.transform.translation.z = state_(2);
- 
+
   transform_stamped.transform.rotation.x = 0;
   transform_stamped.transform.rotation.y = 0;
   transform_stamped.transform.rotation.z = 0;
   transform_stamped.transform.rotation.w = 1;
-  
+
   br_.sendTransform(transform_stamped);
 
+  // Publish sensor message if an obstacle is within range.
+  // TODO! Parameterize sensor radius.
+  VectorXd obstacle_position(3);
+  double obstacle_radius = -1.0;
+  double sensor_radius = 2.0;
 
-  //Publish sensor message if an obstacle is within range
-  VectorXd point(3);
-  for (size_t ii = 0; ii < point.size(); ii++){
-    point(ii) = 0;
-  }
-  double radius = 0;
-  double sensingDist = 0.05;
-  bool obstacle_sensed = space_->SenseObstacle(state_, point, radius, sensingDist);
-  if (obstacle_sensed) {
+  if (space_->SenseObstacle(state_.head(3), sensor_radius,
+                            obstacle_position, obstacle_radius)) {
     geometry_msgs::Quaternion q;
-    q.x = point(0);
-    q.y = point(1);
-    q.z = point(2);
-    q.w = radius;
+    q.x = obstacle_position(0);
+    q.y = obstacle_position(1);
+    q.z = obstacle_position(2);
+    q.w = obstacle_radius;
+
     sensor_pub_.publish(q);
   }
 
   space_->Visualize(vis_pub_, fixed_frame_id_);
- 
 }
