@@ -3,6 +3,12 @@ meta:
     # Time step for simulator.
     time_step: 0.01
 
+    # Sensor radius.
+    sensor_radius: 1.0
+
+    # Number of obstacles.
+    num_obstacles: 20
+
   control:
     # Interval (seconds) of the discrete-time control update.
     time_step: 0.02
@@ -35,7 +41,8 @@ meta:
 
     # Visualization topics.
     traj: /vis/traj
-    environment: /vis/env
+    true_environment: /vis/true_env
+    known_environment: /vis/known_env
     tracking_bound: /vis/bound
     sensor_radius: /vis/sensor
 

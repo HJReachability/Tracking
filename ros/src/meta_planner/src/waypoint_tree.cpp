@@ -74,14 +74,9 @@ Trajectory::Ptr WaypointTree::BestTrajectory() const {
   // Walk back from the terminus, and append trajectories as we go.
   Waypoint::ConstPtr waypoint = terminus_;
   while (waypoint != nullptr && waypoint->traj_ != nullptr) {
-    std::cout << "Trajectory size = " << traj->Size() << std::endl;
-    std::cout << "Waypoint trajectory size = " << waypoint->traj_->Size() << std::endl;
-
     traj->Add(waypoint->traj_);
     waypoint = waypoint->parent_;
   }
-
-  std::cout << "Final trajectory size = " << traj->Size() << std::endl;
 
   return traj;
 }

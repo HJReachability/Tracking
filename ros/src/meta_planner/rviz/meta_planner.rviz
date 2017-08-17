@@ -7,7 +7,8 @@ Panels:
         - /Global Options1
         - /Status1
         - /Grid1
-        - /TF1
+        - /TF1/Frames1
+        - /Known Map1
       Splitter Ratio: 0.5
     Tree Height: 869
   - Class: rviz/Selection
@@ -54,7 +55,7 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        All Enabled: true
+        All Enabled: false
         fixed:
           Value: true
         planner:
@@ -72,17 +73,17 @@ Visualization Manager:
       Update Interval: 0
       Value: true
     - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /vis/env
-      Name: Map
+      Enabled: false
+      Marker Topic: /vis/true_env
+      Name: True Map
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /vis/traj
-      Name: Trajectory
+      Marker Topic: /vis/known_env
+      Name: Known Map
       Namespaces:
         {}
       Queue Size: 100
@@ -91,6 +92,14 @@ Visualization Manager:
       Enabled: true
       Marker Topic: /vis/bound
       Name: Tracking Bound
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /vis/traj
+      Name: Trajectory
       Namespaces:
         {}
       Queue Size: 100
@@ -127,22 +136,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 17.7607
+      Distance: 29.1388
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 8.3962
-        Y: 4.39229
-        Z: 6.36331
+        X: 5.19542
+        Y: 9.13696
+        Z: 5.2679
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.924797
+      Pitch: 0.834796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.69043
+      Yaw: 6.04363
     Saved: ~
 Window Geometry:
   Displays:

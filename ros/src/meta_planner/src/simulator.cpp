@@ -77,14 +77,12 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
   space_->SetBounds(state_lower_vec, state_upper_vec);
 
   // Add obstacles.
-  const size_t kNumObstacles = 5;
-
   std::random_device rd;
   std::default_random_engine rng(rd());
-  std::uniform_real_distribution<double> uniform_radius(0.3, 1.0);
+  std::uniform_real_distribution<double> uniform_radius(0.5, 2.0);
 
   // Add an obstacle with a random radius at a random location.
-  for (size_t ii = 0; ii < kNumObstacles; ii++)
+  for (size_t ii = 0; ii < num_obstacles_; ii++)
     space_->AddObstacle(space_->Sample(), uniform_radius(rng));
 
   // Initialize current state and control.
@@ -101,6 +99,16 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
 // Load all parameters from config files.
 bool Simulator::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
+
+  // Sensor radius.
+  if (!ros::param::search("meta/simulator/sensor_radius", key)) return false;
+  if (!ros::param::get(key, sensor_radius_)) return false;
+
+  // Number of obstacles.
+  int num_obstacles = 1;
+  if (!ros::param::search("meta/simulator/num_obstacles", key)) return false;
+  if (!ros::param::get(key, num_obstacles)) return false;
+  num_obstacles_ = static_cast<size_t>(num_obstacles);
 
   // Control parameters.
   if (!ros::param::search("meta/simulator/time_step", key)) return false;
@@ -132,7 +140,7 @@ bool Simulator::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("meta/topics/sensor_radius", key)) return false;
   if (!ros::param::get(key, sensor_radius_topic_)) return false;
 
-  if (!ros::param::search("meta/topics/environment", key)) return false;
+  if (!ros::param::search("meta/topics/true_environment", key)) return false;
   if (!ros::param::get(key, environment_topic_)) return false;
 
   if (!ros::param::search("meta/frames/fixed", key)) return false;
@@ -213,9 +221,8 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
   // TODO! Parameterize sensor radius.
   VectorXd obstacle_position(3);
   double obstacle_radius = -1.0;
-  double sensor_radius = 2.0;
 
-  if (space_->SenseObstacle(state_.head(3), sensor_radius,
+  if (space_->SenseObstacle(state_.head(3), sensor_radius_,
                             obstacle_position, obstacle_radius)) {
     geometry_msgs::Quaternion q;
     q.x = obstacle_position(0);
@@ -238,9 +245,9 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
   sensor_radius_marker.type = visualization_msgs::Marker::SPHERE;
   sensor_radius_marker.action = visualization_msgs::Marker::ADD;
 
-  sensor_radius_marker.scale.x = 2.0 * sensor_radius;
-  sensor_radius_marker.scale.y = 2.0 * sensor_radius;
-  sensor_radius_marker.scale.z = 2.0 * sensor_radius;
+  sensor_radius_marker.scale.x = 2.0 * sensor_radius_;
+  sensor_radius_marker.scale.y = 2.0 * sensor_radius_;
+  sensor_radius_marker.scale.z = 2.0 * sensor_radius_;
 
   sensor_radius_marker.color.a = 0.2;
   sensor_radius_marker.color.r = 0.8;

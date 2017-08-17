@@ -123,6 +123,9 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // Generate an initial trajectory.
   RunMetaPlanner();
 
+  // Publish environment.
+  space_->Visualize(environment_pub_, fixed_frame_id_);
+
   initialized_ = true;
   return true;
 }
@@ -186,6 +189,9 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("meta/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
+  if (!ros::param::search("meta/topics/known_environment", key)) return false;
+  if (!ros::param::get(key, environment_topic_)) return false;
+
   if (!ros::param::search("meta/topics/traj", key)) return false;
   if (!ros::param::get(key, traj_topic_)) return false;
 
@@ -213,6 +219,9 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
     sensor_topic_.c_str(), 10, &Tracker::SensorCallback, this);
 
   // Visualization publisher(s).
+  environment_pub_ = nl.advertise<visualization_msgs::Marker>(
+    environment_topic_.c_str(), 10, false);
+
   traj_pub_ = nl.advertise<visualization_msgs::Marker>(
     traj_topic_.c_str(), 10, false);
 
@@ -245,6 +254,9 @@ void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
 
     // Run meta_planner.
     RunMetaPlanner();
+
+    // Publish environment.
+    space_->Visualize(environment_pub_, fixed_frame_id_);
   }
 }
 
@@ -286,12 +298,8 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   state_(1) = tf.transform.translation.y;
   state_(2) = tf.transform.translation.z;
 
-  std::cout << "State is: " << state_.transpose() << std::endl;
-
   const VectorXd planner_state = traj_->GetState(current_time.toSec());
   const VectorXd relative_state = state_ - planner_state;
-
-  std::cout << "Relative state is: " << relative_state.transpose() << std::endl;
 
   // Publish planner state on tf.
   geometry_msgs::TransformStamped transform_stamped;
@@ -328,7 +336,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   tracking_bound_marker.color.a = 0.3;
   tracking_bound_marker.color.r = 0.9;
-  tracking_bound_marker.color.g = 0.9;
+  tracking_bound_marker.color.g = 0.2;
   tracking_bound_marker.color.b = 0.9;
 
   tracking_bound_pub_.publish(tracking_bound_marker);
@@ -344,8 +352,6 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
     -1.1 * max_speeds_[0] * relative_state / relative_state.norm();
 #endif
 
-  std::cout << "Optimal control is: " << optimal_control.transpose() << std::endl;
-
   // 4) Apply optimal control.
   geometry_msgs::Vector3 control_msg;
   control_msg.x = optimal_control(0);
@@ -353,6 +359,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   control_msg.z = optimal_control(2);
 
   control_pub_.publish(control_msg);
+
+  // Publish environment.
+  space_->Visualize(environment_pub_, fixed_frame_id_);
 }
 
 // Run meta planner.

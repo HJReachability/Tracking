@@ -79,8 +79,12 @@ private:
   VectorXd state_;
   VectorXd control_;
 
+  // Sensor radius.
+  double sensor_radius_;
+
   // State space.
   BallsInBox::Ptr space_;
+  size_t num_obstacles_;
   size_t state_dim_;
   size_t control_dim_;
 
@@ -88,12 +92,9 @@ private:
   std::vector<double> state_upper_;
 
   // Set a recurring timer for a discrete-time controller.
+  ros::Time time_;
   ros::Timer timer_;
   double time_step_;
-
-  ros::Time time_;
-
-  tf2_ros::TransformBroadcaster br_;
 
   // Publishers/subscribers and related topics.
   ros::Subscriber control_sub_;
@@ -109,6 +110,8 @@ private:
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;
   std::string robot_frame_id_;
+
+  tf2_ros::TransformBroadcaster br_;
 
   // Is this class initialized?
   bool initialized_;

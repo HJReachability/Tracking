@@ -114,8 +114,6 @@ const ValueFunction::ConstPtr& Trajectory::GetValueFunction(double time) const {
 // Visualize this trajectory in RVIZ.
 void Trajectory::Visualize(const ros::Publisher& pub,
                            const std::string& frame_id) const {
-  ROS_INFO("Visualizing trajectory.");
-
   if (pub.getNumSubscribers() <= 0)
     return;
 
@@ -174,9 +172,6 @@ void Trajectory::Visualize(const ros::Publisher& pub,
     lines.points.push_back(p);
     lines.colors.push_back(c);
   }
-
-  ROS_INFO("Trajectory: num spheres = %zu, num lines = %zu",
-           spheres.points.size(), lines.points.size() - 1);
 
   // Publish markers. Only publish 'lines' if more than one point in trajectory.
   pub.publish(spheres);

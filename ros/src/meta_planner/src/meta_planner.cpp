@@ -82,9 +82,6 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
     if (traj == nullptr)
       continue;
 
-    std::cout << "Found a valid trajectory to this waypoint." << std::endl;
-    std::cout << "Trajectory was of length " << traj->Size() << std::endl;
-
     // (5) Try to connect to the goal point.
     Trajectory::Ptr goal_traj;
     if ((sample - stop).norm() <= max_connection_radius_) {
@@ -102,9 +99,6 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
     tree.Insert(waypoint, false);
 
     if (goal_traj != nullptr) {
-      std::cout << "Found a valid trajectory from this waypoint to the goal." << std::endl;
-      std::cout << "Trajectory was of length " << goal_traj->Size() << std::endl;
-
       // Connect to the goal. NOTE: the first point in goal_traj coincides with
       // the last point in traj, but when we merge the two trajectories the
       // std::map insertion rules will prevent duplicates.
@@ -119,8 +113,6 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
 
   // Get the best (fastest) trajectory out of the tree.
   const Trajectory::Ptr best = tree.BestTrajectory();
-
-  std::cout << "Got best trajectory from WaypointTree." << std::endl << std::flush;
 
   return best;
 }

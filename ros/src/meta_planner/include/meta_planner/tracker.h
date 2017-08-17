@@ -114,11 +114,13 @@ private:
 
   // Publishers/subscribers and related topics.
   ros::Publisher control_pub_;
+  ros::Publisher environment_pub_;
   ros::Publisher traj_pub_;
   ros::Publisher tracking_bound_pub_;
   ros::Subscriber sensor_sub_;
 
   std::string control_topic_;
+  std::string environment_topic_;
   std::string traj_topic_;
   std::string tracking_bound_topic_;
   std::string sensor_topic_;
