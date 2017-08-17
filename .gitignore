@@ -7,7 +7,7 @@ docs/Tracking Journal/tracking.pdf
 *.png
 
 *.mat
-!ros/src/meta_planner/precomputation/test*.mat
+!ros/src/meta_planner/precomputation/*.mat
 
 *.asv
 docs/CDC 2017 Safe Tracking/tracking.pdf
