@@ -29,8 +29,10 @@ meta:
     lower: [0.0, 0.0, 0.0]
 
   planners:
-    # Files in which value functions are stored.
-    values: [Point_3D_3D_RS.mat]
+    # Directories in which value functions are stored.
+    # These are assumed to be in the PRECOMPUTATION_DIR directory, and to
+    # end in a '/' so that raw filenames can be concatenated directly.
+    values: [Point_3D_3D_RS/]
 
     # Max speed for each planner.
     max_speeds: [0.75]

@@ -63,7 +63,7 @@ public:
   // Factory method. Use this instead of the constructor.
   // Note that this class is const-only, which means that once it is
   // instantiated it can never be changed.
-  static ConstPtr Create(const std::vector<std::string>& file_names,
+  static ConstPtr Create(const std::string& directory,
                          const Dynamics::ConstPtr& dynamics,
                          size_t x_dim, size_t u_dim);
 
@@ -83,7 +83,7 @@ public:
   inline bool IsInitialized() const { return initialized_; }
 
 private:
-  explicit ValueFunction(const std::string& file_name,
+  explicit ValueFunction(const std::string& directory,
                          const Dynamics::ConstPtr& dynamics,
                          size_t x_dim, size_t u_dim);
 

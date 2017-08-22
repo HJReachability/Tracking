@@ -98,7 +98,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   }
 
   // Create planners.
-  for (size_t ii = 0; ii < value_files_.size(); ii++) {
+  for (size_t ii = 0; ii < value_directories_.size(); ii++) {
     // NOTE: Assuming that planners operate in full state space for now.
     std::vector<size_t> dimensions(state_dim_);
     std::iota(dimensions.begin(), dimensions.end(), 0);
@@ -112,7 +112,8 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
     // Load up the value function.
     const ValueFunction::ConstPtr value =
-      ValueFunction::Create(PRECOMPUTATION_DIR + value_files_[ii], dynamics,);
+      ValueFunction::Create(value_directories_[ii], dynamics,
+                            state_dim_, control_dim_);
 
     // Create the planner.
     const Planner::ConstPtr planner =
@@ -159,16 +160,16 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
 
   // Planner parameters.
   if (!ros::param::search("meta/planners/values", key)) return false;
-  if (!ros::param::get(key, value_files_)) return false;
-  if (value_files_.size() == 0) {
-    ROS_ERROR("%s: Must specify at least one value function file.",
+  if (!ros::param::get(key, value_directories_)) return false;
+  if (value_directories_.size() == 0) {
+    ROS_ERROR("%s: Must specify at least one value function directory.",
               name_.c_str());
     return false;
   }
 
   if (!ros::param::search("meta/planners/max_speeds", key)) return false;
   if (!ros::param::get(key, max_speeds_)) return false;
-  if (max_speeds_.size() != value_files_.size()) {
+  if (max_speeds_.size() != value_directories_.size()) {
     ROS_ERROR("%s: Must specify a max speed for each planner.", name_.c_str());
     return false;
   }
@@ -321,6 +322,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   br_.sendTransform(transform_stamped);
 
+#if 0
   // Visualize the tracking bound.
   visualization_msgs::Marker tracking_bound_marker;
   tracking_bound_marker.ns = "bound";
@@ -342,6 +344,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.color.b = 0.9;
 
   tracking_bound_pub_.publish(tracking_bound_marker);
+#endif
 
   // 2) Get corresponding value function.
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());

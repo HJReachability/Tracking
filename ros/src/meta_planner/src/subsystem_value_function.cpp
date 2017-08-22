@@ -47,7 +47,7 @@ namespace meta {
 // Factory method. Use this instead of the constructor.
 // Note that this class is const-only, which means that once it is
 // instantiated it can never be changed.
-SubsystemValueFunction::ConstPtr ValueFunction::
+SubsystemValueFunction::ConstPtr SubsystemValueFunction::
 Create(const std::string& file_name) {
   SubsystemValueFunction::ConstPtr ptr(new SubsystemValueFunction(file_name));
   return ptr;

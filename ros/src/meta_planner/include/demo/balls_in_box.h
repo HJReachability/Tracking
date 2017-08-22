@@ -64,13 +64,14 @@ public:
   ~BallsInBox() {}
 
   // Inherited collision checker from Box needs to be overwritten.
-  bool IsValid(const VectorXd& state, double tracking_bound) const;
+  bool IsValid(const VectorXd& state,
+               const ValueFunction::ConstPtr& value) const;
 
-  // Checks for obstacles within a sensing radius.
+  // Check for obstacles within a sensing radius.
   bool SenseObstacle(const VectorXd& state, double sensor_radius,
                      VectorXd& obstacle_position, double& obstacle_radius) const;
 
-  // Checks if a given obstacle is in the environment.
+  // Check if a given obstacle is in the environment.
   bool IsObstacle(const VectorXd& obstacle_position,
                   double obstacle_radius) const;
 

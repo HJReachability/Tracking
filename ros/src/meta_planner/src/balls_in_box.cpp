@@ -57,22 +57,45 @@ BallsInBox::BallsInBox(size_t dimension)
   : Box(dimension) {}
 
 // Inherited collision checker from Box needs to be overwritten.
-bool BallsInBox::IsValid(const VectorXd& state, double tracking_bound) const {
+bool BallsInBox::IsValid(const VectorXd& state,
+                         const ValueFunction::ConstPtr& value) const {
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (state.size() != dimension_)
+  if (state.size() != dimension_) {
     ROS_ERROR("Improperly sized state vector (%zu vs. %zu).",
               state.size(), dimension_);
+    return false;
+  }
+
+  if (!value.get()) {
+    ROS_ERROR("Value function pointer was null.");
+    return false;
+  }
 #endif
 
   // Check bounds.
-  for (size_t ii = 0; ii < state.size(); ii++)
-    if (state(ii) < lower_(ii) || state(ii) > upper_(ii))
+  for (size_t ii = 0; ii < state.size(); ii++) {
+    const double bound = value->TrackingBound(ii);
+
+    if (state(ii) < lower_(ii) + bound ||
+        state(ii) > upper_(ii) - bound)
       return false;
+  }
 
   // Check against each obstacle.
-  for (size_t ii = 0; ii < points_.size(); ii++)
-    if ((state - points_[ii]).norm() <= radii_[ii] + tracking_bound)
+  // NOTE: assuming rectangular tracking bound.
+  for (size_t ii = 0; ii < points_.size(); ii++) {
+    const VectorXd& p = points_[ii];
+
+    // Find the corner of the tracking bound which is closest to this obstacle.
+    VectorXd corner(state.size());
+    for (size_t jj = 0; jj < corner.size(); jj++)
+      corner(jj) = (state(jj) - p(jj) > 0.0) ?
+        state(jj) - value->TrackingBound(jj) :
+        state(jj) + value->TrackingBound(jj);
+
+    if ((corner - p).norm() <= radii_[ii])
       return false;
+  }
 
   return true;
 }

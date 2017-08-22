@@ -102,7 +102,7 @@ private:
 
   // Planners and related parameters.
   std::vector<Planner::ConstPtr> planners_;
-  std::vector<std::string> value_files_;
+  std::vector<std::string> value_directories_;
   std::vector<double> max_speeds_;
 
   // Set a recurring timer for a discrete-time controller.

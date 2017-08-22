@@ -77,8 +77,7 @@ public:
   inline bool IsInitialized() const { return initialized_; }
 
 private:
-  explicit SubsystemValueFunction(const std::string& file_name,
-                                  const Dynamics::ConstPtr& dynamics);
+  explicit SubsystemValueFunction(const std::string& file_name);
 
   // Return the 1D voxel index corresponding to the given state.
   size_t StateToIndex(const VectorXd& state) const;

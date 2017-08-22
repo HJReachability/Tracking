@@ -42,31 +42,52 @@
 
 #include <meta_planner/value_function.h>
 
+#include <boost/filesystem.hpp>
+
 namespace meta {
+
+namespace fs = boost::filesystem;
 
 // Factory method. Use this instead of the constructor.
 // Note that this class is const-only, which means that once it is
 // instantiated it can never be changed.
 ValueFunction::ConstPtr ValueFunction::
-Create(const std::vector<std::string>& file_names,
+Create(const std::string& directory,
        const Dynamics::ConstPtr& dynamics,
        size_t x_dim, size_t u_dim) {
   ValueFunction::ConstPtr ptr(
-    new ValueFunction(file_names, dynamics, x_dim, u_dim));
+    new ValueFunction(directory, dynamics, x_dim, u_dim));
   return ptr;
 }
 
 // Constructor. Don't use this. Use the factory method instead.
-ValueFunction::ValueFunction(const std::vector<std::string>& file_names,
+ValueFunction::ValueFunction(const std::string& directory,
                              const Dynamics::ConstPtr& dynamics,
                              size_t x_dim, size_t u_dim)
   : x_dim_(x_dim),
     u_dim_(u_dim),
     dynamics_(dynamics),
     initialized_(true) {
+  // Extract a list of files from this directory.
+  std::vector<std::string> file_names;
+  const fs::path path(PRECOMPUTATION_DIR + directory);
+  for (auto iter = fs::directory_iterator(path);
+       iter != fs::directory_iterator();
+       iter++) {
+    if (fs::is_regular_file(*iter) && iter->path().extension() == ".mat")
+      file_names.push_back(iter->path().filename().string());
+  }
+
+  if (file_names.size() == 0) {
+    ROS_ERROR("No valid files in this directory: %s.",
+              std::string(PRECOMPUTATION_DIR + directory).c_str());
+    initialized_ = false;
+  }
+
   // Load each subsystem from file.
   for (const auto& file : file_names) {
-    subsystems_.push_back(SubsystemValueFunction::Create(file));
+    subsystems_.push_back(SubsystemValueFunction::Create(
+      PRECOMPUTATION_DIR + directory + file));
     initialized_ &= subsystems_.back()->IsInitialized();
   }
 

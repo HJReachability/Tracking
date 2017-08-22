@@ -73,17 +73,29 @@ VectorXd Box::Sample() const {
 
 // Inherited from Environment, but can be overwritten by child classes.
 // Returns true if the state is a valid configuration.
-bool Box::IsValid(const VectorXd& state, double tracking_bound) const {
+bool Box::IsValid(const VectorXd& state,
+                  const ValueFunction::ConstPtr& value) const {
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (state.size() != dimension_)
+  if (state.size() != dimension_) {
     ROS_ERROR("Improperly sized state vector (%zu vs. %zu).",
               state.size(), dimension_);
+    return false;
+  }
+
+  if (!value.get()) {
+    ROS_ERROR("Value function pointer was null.");
+    return false;
+  }
 #endif
 
   // No obstacles. Just check bounds.
-  for (size_t ii = 0; ii < state.size(); ii++)
-    if (state(ii) < lower_(ii) || state(ii) > upper_(ii))
+  for (size_t ii = 0; ii < state.size(); ii++) {
+    const double bound = value->TrackingBound(ii);
+
+    if (state(ii) < lower_(ii) + bound ||
+        state(ii) > upper_(ii) - bound)
       return false;
+  }
 
   return true;
 }
