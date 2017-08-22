@@ -47,19 +47,28 @@ namespace meta {
 // Factory method. Use this instead of the constructor.
 // Note that this class is const-only, which means that once it is
 // instantiated it can never be changed.
-ValueFunction::ConstPtr ValueFunction::Create(
-  const std::string& file_name, const Dynamics::ConstPtr& dynamics) {
-  ValueFunction::ConstPtr ptr(new ValueFunction(file_name, dynamics));
+ValueFunction::ConstPtr ValueFunction::
+Create(const std::vector<std::string>& file_names,
+       const Dynamics::ConstPtr& dynamics,
+       size_t x_dim, size_t u_dim) {
+  ValueFunction::ConstPtr ptr(
+    new ValueFunction(file_names, dynamics, x_dim, u_dim));
   return ptr;
 }
 
 // Constructor. Don't use this. Use the factory method instead.
-ValueFunction::ValueFunction(const std::string& file_name,
-                             const Dynamics::ConstPtr& dynamics)
-  : dynamics_(dynamics),
-    tracking_bound_(0.0) {
-  // Load from file.
-  initialized_ = Load(file_name);
+ValueFunction::ValueFunction(const std::vector<std::string>& file_names,
+                             const Dynamics::ConstPtr& dynamics,
+                             size_t x_dim, size_t u_dim)
+  : x_dim_(x_dim),
+    u_dim_(u_dim),
+    dynamics_(dynamics),
+    initialized_(true) {
+  // Load each subsystem from file.
+  for (const auto& file : file_names) {
+    subsystems_.push_back(SubsystemValueFunction::Create(file));
+    initialized_ &= subsystems_.back()->IsInitialized();
+  }
 
   // Make sure dynamics pointer is valid.
   if (dynamics_.get() == NULL) {
@@ -68,249 +77,22 @@ ValueFunction::ValueFunction(const std::string& file_name,
   }
 }
 
-// Return the voxel index corresponding to the given state.
-size_t ValueFunction::StateToIndex(const VectorXd& state) const {
-  // Quantize each dimension of the state.
-  std::vector<size_t> quantized;
-  for (size_t ii = 0; ii < state.size(); ii++) {
-    if (state(ii) < lower_[ii]) {
-      ROS_WARN("State is below the ValueFunction grid in dimension %zu.", ii);
-      quantized.push_back(0);
-    } else if (state(ii) > upper_[ii]) {
-      ROS_WARN("State is above the ValueFunction grid in dimension %zu.", ii);
-      quantized.push_back(num_voxels_[ii] - 1);
-    }
-
-    quantized.push_back(
-      static_cast<size_t>((state(ii) - lower_[ii]) / voxel_size_[ii]));
-  }
-
-  // Convert to row-major order.
-  size_t index = 0;
-  size_t coefficient = 1;
-  for (size_t ii = 1; ii <= quantized.size(); ii++) {
-    const size_t jj = quantized.size() - ii;
-
-    index += coefficient * quantized[jj];
-    coefficient *= num_voxels_[jj];
-  }
-
-  return index;
-}
-
-// Linearly interpolate to get the value at a particular state.
+// Combine values of different subsystems.
 double ValueFunction::Value(const VectorXd& state) const {
-  // Get distance from voxel center in each dimension.
-  const VectorXd center_distance = DistanceToCenter(state);
-
-  // Interpolate.
-  const double nn_value = data_[StateToIndex(state)];
-  double approx_value = nn_value;
-
-  VectorXd neighbor = state;
-  for (size_t ii = 0; ii < state.size(); ii++) {
-    // Get neighboring value.
-    if (center_distance(ii) >= 0.0)
-      neighbor(ii) += voxel_size_[ii];
-    else
-      neighbor(ii) -= voxel_size_[ii];
-
-    const double neighbor_value = data_[StateToIndex(neighbor)];
-    neighbor(ii) = state(ii);
-
-    // Compute forward difference.
-    const double slope = (center_distance(ii) >= 0.0) ?
-      (neighbor_value - nn_value) / voxel_size_[ii] :
-      (nn_value - neighbor_value) / voxel_size_[ii];
-
-    // Add to the Taylor approximation.
-    approx_value += slope * center_distance(ii);
-  }
-
-  return approx_value;
+  // TODO!
+  return 0.0;
 }
 
-// Linearly interpolate to get the gradient at a particular state.
+// Combine gradients from different subsystems.
 VectorXd ValueFunction::Gradient(const VectorXd& state) const {
-  // Get distance from voxel center in each dimension.
-  const VectorXd center_distance = DistanceToCenter(state);
-
-  // Compute gradient at the voxel containing this state.
-  const VectorXd nn_gradient = CentralDifference(state);
-  VectorXd gradient = nn_gradient;
-
-  // Interpolate gradients at each neighbor.
-  VectorXd neighbor = state;
-  for (size_t ii = 0; ii < state.size(); ii++) {
-    // Get neighboring voxel's gradient.
-    if (center_distance(ii) >= 0.0)
-      neighbor(ii) += voxel_size_[ii];
-    else
-      neighbor(ii) -= voxel_size_[ii];
-
-    const VectorXd neighbor_gradient = CentralDifference(neighbor);
-    neighbor(ii) = state(ii);
-
-    // Compute forward difference.
-    const VectorXd diff = (center_distance(ii) >= 0.0) ?
-      (neighbor_gradient - nn_gradient) / voxel_size_[ii] :
-      (nn_gradient - neighbor_gradient) / voxel_size_[ii];
-
-    // Add to Taylor approximation (separate in each dimension of the gradient).
-    gradient += diff * center_distance(ii);
-  }
-
-  return gradient;
+  // TODO!
+  return VectorXd::Zero(x_dim_);
 }
 
-// Compute a central difference at the voxel containing this state.
-VectorXd ValueFunction::CentralDifference(const VectorXd& state) const {
-  VectorXd gradient(VectorXd::Zero(state.size()));
-
-  // Get the value at the voxel containing this state.
-  const double nn_value = data_[StateToIndex(state)];
-
-  // Compute a central difference in each dimension.
-  VectorXd neighbor = state;
-  for (size_t ii = 0; ii < state.size(); ii++) {
-    neighbor(ii) += voxel_size_[ii];
-    const double forward = data_[StateToIndex(neighbor)];
-
-    neighbor(ii) -= 2.0 * voxel_size_[ii];
-    const double backward = data_[StateToIndex(neighbor)];
-
-    neighbor(ii) = state(ii);
-    gradient(ii) = 0.5 * (forward - backward) / voxel_size_[ii];
-  }
-
-  return gradient;
-}
-
-// Compute the distance (vector) from this state to the center
-// of the nearest voxel.
-VectorXd ValueFunction::DistanceToCenter(const VectorXd& state) const {
-  VectorXd center_distance(state.size());
-  for (size_t ii = 0; ii < state.size(); ii++) {
-    const double center =
-      std::floor((state(ii) - lower_[ii]) / voxel_size_[ii]) * voxel_size_[ii] +
-      0.5 * voxel_size_[ii] + lower_[ii];
-
-    center_distance(ii) = state(ii) - center;
-  }
-
-  return center_distance;
-}
-
-
-// Load from file. Returns whether or not it was successful.
-// TODO! Reserve enough space initially for each vector so it does
-// resize so much.
-bool ValueFunction::Load(const std::string& file_name) {
-  // Open the file.
-  mat_t* matfp = Mat_Open(file_name.c_str(), MAT_ACC_RDONLY);
-  if (matfp == NULL) {
-    ROS_ERROR("Could not open file: %s.", file_name.c_str());
-    return false;
-  }
-
-  // Read variables from this file.
-  const std::string grid_min = "grid_min";
-  matvar_t* grid_min_mat = Mat_VarRead(matfp, grid_min.c_str());
-  if (grid_min_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", grid_min.c_str());
-    return false;
-  }
-
-  const std::string grid_max = "grid_max";
-  matvar_t* grid_max_mat = Mat_VarRead(matfp, grid_max.c_str());
-  if (grid_max_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", grid_max.c_str());
-    return false;
-  }
-
-  const std::string grid_N = "grid_N";
-  matvar_t* grid_N_mat = Mat_VarRead(matfp, grid_N.c_str());
-  if (grid_N_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", grid_N.c_str());
-    return false;
-  }
-
-  const std::string teb = "teb";
-  matvar_t* teb_mat = Mat_VarRead(matfp, teb.c_str());
-  if (teb_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", teb.c_str());
-    return false;
-  }
-
-  const std::string data = "data";
-  matvar_t* data_mat = Mat_VarRead(matfp, data.c_str());
-  if (data_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", data.c_str());
-    return false;
-  }
-
-  // Populate class variables.
-  if (grid_min_mat->data_type != MAT_T_DOUBLE) {
-    ROS_ERROR("%s: Wrong type of data.", grid_min.c_str());
-    return false;
-  }
-
-  size_t num_elements = grid_min_mat->nbytes / grid_min_mat->data_size;
-  for (size_t ii = 0; ii < num_elements; ii++) {
-    lower_.push_back(static_cast<double*>(grid_min_mat->data)[ii]);
-  }
-
-  if (grid_max_mat->data_type != MAT_T_DOUBLE) {
-    ROS_ERROR("%s: Wrong type of data.", grid_max.c_str());
-    return false;
-  }
-
-  num_elements = grid_max_mat->nbytes / grid_max_mat->data_size;
-  for (size_t ii = 0; ii < num_elements; ii++) {
-    upper_.push_back(static_cast<double*>(grid_max_mat->data)[ii]);
-  }
-
-  if (grid_N_mat->data_type != MAT_T_UINT64) {
-    ROS_ERROR("%s: Wrong type of data.", grid_N.c_str());
-    return false;
-  }
-
-  num_elements = grid_N_mat->nbytes / grid_N_mat->data_size;
-  for (size_t ii = 0; ii < num_elements; ii++) {
-    num_voxels_.push_back(static_cast<size_t*>(grid_N_mat->data)[ii]);
-  }
-
-  if (teb_mat->data_type != MAT_T_DOUBLE) {
-    ROS_ERROR("%s: Wrong type of data.", teb.c_str());
-    return false;
-  }
-
-  tracking_bound_ = *static_cast<double*>(teb_mat->data);
-
-  if (data_mat->data_type != MAT_T_DOUBLE) {
-    ROS_ERROR("%s: Wrong type of data.", data.c_str());
-    return false;
-  }
-
-  num_elements = data_mat->nbytes / data_mat->data_size;
-  for (size_t ii = 0; ii < num_elements; ii++) {
-    data_.push_back(static_cast<double*>(data_mat->data)[ii]);
-  }
-
-  // Determine voxel size.
-  for (size_t ii = 0; ii < num_voxels_.size(); ii++)
-    voxel_size_.push_back((upper_[ii] - lower_[ii]) /
-                          static_cast<double>(num_voxels_[ii]));
-
-  // Free memory and close file.
-  Mat_VarFree(grid_min_mat);
-  Mat_VarFree(grid_max_mat);
-  Mat_VarFree(grid_N_mat);
-  Mat_VarFree(teb_mat);
-  Mat_VarFree(data_mat);
-  Mat_Close(matfp);
-
-  return true;
+// Get the tracking error bound in the subsystem containing this dimension.
+double ValueFunction::TrackingBound(size_t dimension) const {
+  // TODO!
+  return 0.0;
 }
 
 } //\namespace meta

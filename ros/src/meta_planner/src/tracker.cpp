@@ -112,7 +112,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
     // Load up the value function.
     const ValueFunction::ConstPtr value =
-      ValueFunction::Create(PRECOMPUTATION_DIR + value_files_[ii], dynamics);
+      ValueFunction::Create(PRECOMPUTATION_DIR + value_files_[ii], dynamics,);
 
     // Create the planner.
     const Planner::ConstPtr planner =

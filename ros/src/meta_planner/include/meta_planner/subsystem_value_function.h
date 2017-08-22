@@ -36,66 +36,79 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the ValueFunction class.
+// Defines the SubsystemValueFunction class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_VALUE_FUNCTION_H
-#define META_PLANNER_VALUE_FUNCTION_H
+#ifndef META_PLANNER_SUBSYSTEM_VALUE_FUNCTION_H
+#define META_PLANNER_SUBSYSTEM_VALUE_FUNCTION_H
 
-#include <meta_planner/subsystem_value_function.h>
 #include <meta_planner/dynamics.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
+#include <matio.h>
+#include <math.h>
 #include <memory>
 
 namespace meta {
 
-class ValueFunction : private Uncopyable {
+class SubsystemValueFunction : private Uncopyable {
 public:
-  typedef std::shared_ptr<const ValueFunction> ConstPtr;
+  typedef std::unique_ptr<const SubsystemValueFunction> ConstPtr;
 
   // Destructor.
-  ~ValueFunction() {}
+  ~SubsystemValueFunction() {}
 
   // Factory method. Use this instead of the constructor.
   // Note that this class is const-only, which means that once it is
   // instantiated it can never be changed.
-  static ConstPtr Create(const std::vector<std::string>& file_names,
-                         const Dynamics::ConstPtr& dynamics,
-                         size_t x_dim, size_t u_dim);
+  static ConstPtr Create(const std::string& file_name);
 
   // Linearly interpolate to get the value/gradient at a particular state.
   double Value(const VectorXd& state) const;
   VectorXd Gradient(const VectorXd& state) const;
 
-  // Get the optimal control at a particular state.
-  inline VectorXd OptimalControl(const VectorXd& state) const {
-    return dynamics_->OptimalControl(state, Gradient(state));
-  }
+  // Get the tracking error bound.
+  inline double TrackingBound() const { return tracking_bound_; }
 
-  // Get the tracking error bound in the subsystem containing this dimension.
-  double TrackingBound(size_t dimension) const;
-
-  // Was this ValueFunction properly initialized?
+  // Was this SubsystemValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
 
 private:
-  explicit ValueFunction(const std::string& file_name,
-                         const Dynamics::ConstPtr& dynamics,
-                         size_t x_dim, size_t u_dim);
+  explicit SubsystemValueFunction(const std::string& file_name,
+                                  const Dynamics::ConstPtr& dynamics);
 
-  // State/control space dimensions.
-  const size_t x_dim_;
-  const size_t u_dim_;
+  // Return the 1D voxel index corresponding to the given state.
+  size_t StateToIndex(const VectorXd& state) const;
 
-  // Dynamics.
-  const Dynamics::ConstPtr dynamics_;
+  // Compute the distance (vector) from this state to the center
+  // of the nearest voxel.
+  VectorXd DistanceToCenter(const VectorXd& state) const;
 
-  // List of value functions for independent subsystems.
-  std::vector<SubsystemValueFunction::ConstPtr> subsystems_;
+  // Compute a central difference at the voxel containing this state.
+  VectorXd CentralDifference(const VectorXd& state) const;
+
+  // Load from file. Returns whether or not it was successful.
+  bool Load(const std::string& file_name);
+
+  // Which dimensions in the full state/control space does this
+  // value grid correspond to?
+  std::vector<size_t> state_dimensions_;
+  std::vector<size_t> control_dimensions_;
+
+  // Number of voxels and upper/lower bounds in each dimension.
+  std::vector<size_t> num_voxels_;
+  std::vector<double> voxel_size_;
+  std::vector<double> lower_;
+  std::vector<double> upper_;
+
+  // Data is stored in row-major order.
+  std::vector<double> data_;
+
+  // Tracking error bound.
+  double tracking_bound_;
 
   // Was this value function initialized/loaded properly?
   bool initialized_;
