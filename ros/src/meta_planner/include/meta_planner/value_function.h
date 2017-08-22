@@ -49,6 +49,8 @@
 #include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
+#include <limits>
+#include <unordered_set>
 #include <memory>
 
 namespace meta {

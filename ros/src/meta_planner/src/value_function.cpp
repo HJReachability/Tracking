@@ -96,6 +96,32 @@ ValueFunction::ValueFunction(const std::string& directory,
     ROS_ERROR("Dynamics pointer was null.");
     initialized_ = false;
   }
+
+  // Check that all subsystem dimensions are mutually exclusive and
+  // cover the full state space.
+  std::unordered_set<size_t> dims;
+  for (size_t ii = 0; ii < x_dim_; ii++)
+    dims.insert(ii);
+
+  for (const auto& subsystem : subsystems_) {
+    for (size_t ii : subsystem->StateDimensions()) {
+      if (dims.count(ii) == 0) {
+        // Another subsystem already has this dimension.
+        ROS_ERROR("Multiple subsystems have dimension %zu.", ii);
+        initialized_ = false;
+        return;
+      }
+
+      // Remove this dimension from the set.
+      dims.erase(ii);
+    }
+  }
+
+  // Check if there are any dimensions remaining.
+  if (dims.size() > 0) {
+    ROS_ERROR("Not all dimensions are accounted for in ValueFunction.");
+    initialized_ = false;
+  }
 }
 
 // Combine values of different subsystems.
