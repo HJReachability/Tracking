@@ -70,6 +70,14 @@ public:
   double Value(const VectorXd& state) const;
   VectorXd Gradient(const VectorXd& state) const;
 
+  // Get the state/control dimensions for this subsystem.
+  inline const std::vector<size_t>& StateDimensions() const {
+    return state_dimensions_;
+  }
+  inline const std::vector<size_t>& ControlDimensions() const {
+    return control_dimensions_;
+  }
+
   // Get the tracking error bound.
   inline double TrackingBound() const { return tracking_bound_; }
 

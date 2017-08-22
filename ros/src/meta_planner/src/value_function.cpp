@@ -110,14 +110,42 @@ double ValueFunction::Value(const VectorXd& state) const {
 
 // Combine gradients from different subsystems.
 VectorXd ValueFunction::Gradient(const VectorXd& state) const {
-  // TODO!
-  return VectorXd::Zero(x_dim_);
+  VectorXd gradient(state.size());
+
+  for (const auto& subsystem : subsystems_) {
+    const VectorXd subsystem_gradient = subsystem->Gradient(state);
+    const std::vector<size_t>& dims = subsystem->ControlDimensions();
+
+    for (size_t ii = 0; ii < dims.size(); ii++)
+      gradient(dims[ii]) = subsystem_gradient(ii);
+  }
+
+  return gradient;
 }
 
 // Get the tracking error bound in the subsystem containing this dimension.
 double ValueFunction::TrackingBound(size_t dimension) const {
-  // TODO!
-  return 0.0;
+  bool found = false;
+
+  // Loop through all subsystems to find the one containing this dimension.
+  // NOTE: if we want to do this frequently, we should just store a map.
+  for (const auto& subsystem : subsystems_) {
+    for (size_t ii : subsystem->StateDimensions())
+      if (ii == dimension) {
+        found = true;
+        break;
+      }
+
+    if (found)
+      return subsystem->TrackingBound();
+  }
+
+  // Catch not found.
+  if (!found)
+    ROS_WARN("Could not find the tracking error bound in dimension %zu.",
+             dimension);
+
+  return std::numeric_limits<double>::infinity();
 }
 
 } //\namespace meta
