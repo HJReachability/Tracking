@@ -44,6 +44,8 @@
 
 #include <demo/balls_in_box.h>
 
+namespace meta {
+
 // Factory method. Use this instead of the constructor.
 BallsInBox::Ptr BallsInBox::Create(size_t dimension) {
   BallsInBox::Ptr ptr(new BallsInBox(dimension));
@@ -203,3 +205,5 @@ void BallsInBox::AddObstacle(const VectorXd& point, double r) {
   points_.push_back(point);
   radii_.push_back(std::max(r, kSmallNumber));
 }
+
+} //\namespace meta

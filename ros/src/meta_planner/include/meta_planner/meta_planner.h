@@ -57,6 +57,8 @@
 #include <vector>
 #include <limits>
 
+namespace meta {
+
 class MetaPlanner : private Uncopyable {
 public:
   explicit MetaPlanner(const Box::ConstPtr& space, double max_connection_radius =
@@ -76,5 +78,7 @@ private:
   // Maximum distance between waypoints.
   const double max_connection_radius_;
 };
+
+} //\namespace meta
 
 #endif

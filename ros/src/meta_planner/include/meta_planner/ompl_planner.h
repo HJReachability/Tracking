@@ -62,6 +62,8 @@
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <memory>
 
+namespace meta {
+
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
@@ -234,5 +236,6 @@ VectorXd OmplPlanner<PlannerType>::FromOmplState(
   return converted;
 }
 
+} //\namespace meta
 
 #endif

@@ -45,6 +45,14 @@
 
 #include <Eigen/Dense>
 
+// ------------------------------- CONSTANTS -------------------------------- //
+
+namespace meta {
+  namespace constants {
+    // Acceleration due to gravity.
+    const double G = 9.81;
+  } //\namespace constants
+
 // ------------------------ THIRD PARTY TYPEDEFS ---------------------------- //
 
 typedef Eigen::Matrix<double, 3, 4> Matrix34d;
@@ -54,5 +62,7 @@ using Eigen::Matrix4d;
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
 using Eigen::Quaterniond;
+
+} //\namespace meta
 
 #endif

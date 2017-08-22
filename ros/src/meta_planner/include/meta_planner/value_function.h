@@ -52,6 +52,8 @@
 #include <math.h>
 #include <memory>
 
+namespace meta {
+
 class ValueFunction : private Uncopyable {
 public:
   typedef std::shared_ptr<const ValueFunction> ConstPtr;
@@ -115,5 +117,7 @@ private:
   // Was this value function initialized/loaded properly?
   bool initialized_;
 };
+
+} //\namespace meta
 
 #endif

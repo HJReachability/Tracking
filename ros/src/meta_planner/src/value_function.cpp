@@ -42,6 +42,8 @@
 
 #include <meta_planner/value_function.h>
 
+namespace meta {
+
 // Factory method. Use this instead of the constructor.
 // Note that this class is const-only, which means that once it is
 // instantiated it can never be changed.
@@ -310,3 +312,5 @@ bool ValueFunction::Load(const std::string& file_name) {
 
   return true;
 }
+
+} //\namespace meta

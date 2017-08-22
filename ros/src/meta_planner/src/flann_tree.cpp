@@ -43,6 +43,8 @@
 
 #include <meta_planner/flann_tree.h>
 
+namespace meta {
+
 FlannTree::~FlannTree() {
   // Free memory from points in the kdtree.
   if (index_ != nullptr) {
@@ -148,3 +150,5 @@ FlannTree::RadiusSearch(VectorXd& query, double r) const {
 
   return neighbors;
 }
+
+} //\namespace meta

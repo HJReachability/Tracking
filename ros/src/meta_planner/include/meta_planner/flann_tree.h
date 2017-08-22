@@ -54,6 +54,8 @@
 #include <vector>
 #include <math.h>
 
+namespace meta {
+
 class FlannTree : private Uncopyable {
 public:
   explicit FlannTree() {}
@@ -75,5 +77,7 @@ private:
   std::unique_ptr< flann::KDTreeIndex< flann::L2<double> > > index_;
   std::vector<Waypoint::ConstPtr> registry_;
 };
+
+} //\namespace meta
 
 #endif

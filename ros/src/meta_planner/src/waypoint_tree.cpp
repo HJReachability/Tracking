@@ -44,6 +44,8 @@
 
 #include <meta_planner/waypoint_tree.h>
 
+namespace meta {
+
 WaypointTree::WaypointTree(const VectorXd& start, const VectorXd& stop,
                            double start_time)
   : root_(Waypoint::Create(start, start_time, nullptr, nullptr)) {
@@ -80,3 +82,5 @@ Trajectory::Ptr WaypointTree::BestTrajectory() const {
 
   return traj;
 }
+
+} //\namespace meta

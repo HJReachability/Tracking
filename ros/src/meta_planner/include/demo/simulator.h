@@ -56,6 +56,8 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <string>
 
+namespace meta {
+
 class Simulator : private Uncopyable {
 public:
   explicit Simulator();
@@ -119,5 +121,7 @@ private:
   // Name of this class, for use in debug messages.
   std::string name_;
 };
+
+} //\namespace meta
 
 #endif

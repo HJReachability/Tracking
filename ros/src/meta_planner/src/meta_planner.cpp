@@ -44,6 +44,8 @@
 
 #include <meta_planner/meta_planner.h>
 
+namespace meta {
+
 // Plan a trajectory using the given (ordered) list of Planners.
 // (1) Set up a new RRT-like structure to hold the meta plan.
 // (2) Sample a new point in the state space.
@@ -116,3 +118,5 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
 
   return best;
 }
+
+} //\namespace meta

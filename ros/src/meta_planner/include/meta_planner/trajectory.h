@@ -57,6 +57,8 @@
 #include <exception>
 #include <memory>
 
+namespace meta {
+
 class Trajectory {
 public:
   typedef std::shared_ptr<Trajectory> Ptr;
@@ -212,5 +214,7 @@ inline double Trajectory::FirstTime() const {
 
   return map_.begin()->first;
 }
+
+} //\namespace meta
 
 #endif

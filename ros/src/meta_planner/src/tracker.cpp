@@ -42,6 +42,8 @@
 
 #include <meta_planner/tracker.h>
 
+namespace meta {
+
 Tracker::Tracker()
   : initialized_(false),
     tf_listener_(tf_buffer_) {}
@@ -372,3 +374,5 @@ void Tracker::RunMetaPlanner() {
   // Visualize the new trajectory.
   traj_->Visualize(traj_pub_, fixed_frame_id_);
 }
+
+} //\namespace meta

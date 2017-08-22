@@ -60,6 +60,8 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <string>
 
+namespace meta {
+
 class Tracker : private Uncopyable {
 public:
   explicit Tracker();
@@ -136,5 +138,7 @@ private:
   // Name of this class, for use in debug messages.
   std::string name_;
 };
+
+} //\namespace meta
 
 #endif

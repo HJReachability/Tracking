@@ -56,6 +56,8 @@
 
 #include <ros/ros.h>
 
+namespace meta {
+
 class Planner : private Uncopyable {
 public:
   virtual ~Planner() {}
@@ -83,5 +85,7 @@ protected:
   // Dimensions within the overall state space in which this Planner operates.
   const std::vector<size_t> dimensions_;
 };
+
+} //\namespace meta
 
 #endif

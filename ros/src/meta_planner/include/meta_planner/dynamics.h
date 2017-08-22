@@ -49,6 +49,8 @@
 #include <ros/ros.h>
 #include <memory>
 
+namespace meta {
+
 class Dynamics : private Uncopyable {
 public:
   typedef std::shared_ptr<const Dynamics> ConstPtr;
@@ -86,5 +88,7 @@ protected:
   const VectorXd lower_u_;
   const VectorXd upper_u_;
 };
+
+} //\namespace meta
 
 #endif

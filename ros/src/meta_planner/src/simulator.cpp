@@ -44,6 +44,8 @@
 #include <demo/simulator.h>
 #include <random>
 
+namespace meta {
+
 Simulator::Simulator()
   : initialized_(false) {}
 
@@ -256,3 +258,5 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
 
   sensor_radius_pub_.publish(sensor_radius_marker);
 }
+
+} //\namespace meta

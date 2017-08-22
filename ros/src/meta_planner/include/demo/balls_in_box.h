@@ -50,6 +50,8 @@
 
 #include <vector>
 
+namespace meta {
+
 class BallsInBox : public Box {
 public:
   typedef std::shared_ptr<BallsInBox> Ptr;
@@ -85,5 +87,7 @@ private:
   std::vector<VectorXd> points_;
   std::vector<double> radii_;
 };
+
+} //\namespace meta
 
 #endif

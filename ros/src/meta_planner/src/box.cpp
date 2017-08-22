@@ -43,6 +43,8 @@
 
 #include <meta_planner/box.h>
 
+namespace meta {
+
 // Factory method. Use this instead of the constructor.
 Box::Ptr Box::Create(size_t dimension) {
   Box::Ptr ptr(new Box(dimension));
@@ -184,3 +186,5 @@ VectorXd Box::UpperBounds(const std::vector<size_t>& dimensions) const {
 
   return punctured;
 }
+
+} //\namespace meta

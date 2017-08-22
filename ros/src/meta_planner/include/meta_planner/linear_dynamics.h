@@ -45,6 +45,8 @@
 
 #include <meta_planner/dynamics.h>
 
+namespace meta {
+
 class LinearDynamics : public Dynamics {
 public:
   ~LinearDynamics() {}
@@ -77,5 +79,7 @@ private:
   const MatrixXd A_;
   const MatrixXd B_;
 };
+
+} //\namespace meta
 
 #endif

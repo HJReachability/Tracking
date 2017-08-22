@@ -51,6 +51,8 @@
 #include <algorithm>
 #include <random>
 
+namespace meta {
+
 class Box : public Environment {
 public:
   typedef std::shared_ptr<Box> Ptr;
@@ -92,5 +94,7 @@ protected:
   VectorXd lower_;
   VectorXd upper_;
 };
+
+} //\namespace meta
 
 #endif

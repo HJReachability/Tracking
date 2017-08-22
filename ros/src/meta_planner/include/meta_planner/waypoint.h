@@ -49,6 +49,8 @@
 
 #include <memory>
 
+namespace meta {
+
 struct Waypoint : private Uncopyable {
 public:
   typedef std::shared_ptr<const Waypoint> ConstPtr;
@@ -79,5 +81,7 @@ private:
       parent_(parent),
       time_(time) {}
 };
+
+} //\namespace meta
 
 #endif

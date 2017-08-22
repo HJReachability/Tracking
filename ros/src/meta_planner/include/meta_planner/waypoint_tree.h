@@ -53,6 +53,8 @@
 #include <iostream>
 #include <list>
 
+namespace meta {
+
 class WaypointTree : private Uncopyable {
 public:
   ~WaypointTree() {}
@@ -86,5 +88,7 @@ private:
   // Kdtree storing all waypoints for easy nearest neighbor searching.
   FlannTree kdtree_;
 };
+
+} //\namespace meta
 
 #endif

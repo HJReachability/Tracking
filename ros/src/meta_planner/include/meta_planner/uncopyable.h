@@ -43,6 +43,8 @@
 #ifndef META_PLANNER_UNCOPYABLE_H
 #define META_PLANNER_UNCOPYABLE_H
 
+namespace meta {
+
 class Uncopyable {
 protected:
   Uncopyable() {}
@@ -54,5 +56,7 @@ private:
   Uncopyable(const Uncopyable& other);
   Uncopyable& operator=(const Uncopyable& other);
 };
+
+} //\namespace meta
 
 #endif

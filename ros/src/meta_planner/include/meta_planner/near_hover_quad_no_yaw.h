@@ -36,27 +36,68 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The Tracker node.
+// Defines the NearHoverQuadNoYaw class. Assumes that state 'x' entried are:
+// * x(0) -- x
+// * x(1) -- x_dot
+// * x(2) -- y
+// * x(3) -- y_dot
+// * x(4) -- z
+// * x(5) -- z_dot
+//
+// Also assumes that entried in control 'u' are:
+// * u(0) -- thrust
+// * u(1) -- roll
+// * u(2) -- pitch
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/tracker.h>
+#ifndef META_PLANNER_NEAR_HOVER_QUAD_NO_YAW_H
+#define META_PLANNER_NEAR_HOVER_QUAD_NO_YAW_H
 
-#include <ros/ros.h>
+#include <meta_planner/dynamics.h>
 
-int main(int argc, char** argv) {
-  ros::init(argc, argv, "tracker");
-  ros::NodeHandle n("~");
+#include <math.h>
 
-  meta::Tracker tracker;
+namespace meta {
 
-  if (!tracker.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize Tracker.",
-              ros::this_node::getName().c_str());
-    return EXIT_FAILURE;
+class NearHoverQuadNoYaw : public Dynamics {
+public:
+  ~NearHoverQuadNoYaw() {}
+
+  // Factory method. Use this instead of the constructor.
+  static Dynamics::ConstPtr Create(const VectorXd& lower_u,
+                                   const VectorXd& upper_u);
+
+  // Derived classes must be able to give the time derivative of state
+  // as a function of current state and control.
+  inline VectorXd operator()(const VectorXd& x, const VectorXd& u) const {
+    VectorXd x_dot(X_DIM);
+    x_dot(0) = x(1);
+    x_dot(1) = constants::G * std::tan(u(2));
+    x_dot(2) = x(3);
+    x_dot(3) = constants::G * std::tan(u(1));
+    x_dot(4) = x(5);
+    x_dot(5) = u(0) - constants::G;
+
+    return x_dot;
   }
 
-  ros::spin();
+  // Derived classes must be able to compute an optimal control given
+  // the gradient of the value function at the specified state.
+  // In this case (linear dynamics), the state is irrelevant given the
+  // gradient of the value function at that state.
+  VectorXd OptimalControl(const VectorXd& x,
+                          const VectorXd& value_gradient) const;
 
-  return EXIT_SUCCESS;
-}
+private:
+  // Private constructor. Use the factory method instead.
+  explicit NearHoverQuadNoYaw(const VectorXd& lower_u, const VectorXd& upper_u);
+
+  // Static constants for dimensions.
+  static const size_t X_DIM;
+  static const size_t U_DIM;
+};
+
+} //\namespace meta
+
+#endif

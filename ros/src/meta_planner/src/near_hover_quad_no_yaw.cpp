@@ -36,27 +36,57 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The Tracker node.
+// Defines the NearHoverQuadNoYaw class. Assumes that state 'x' entried are:
+// * x(0) -- x
+// * x(1) -- x_dot
+// * x(2) -- y
+// * x(3) -- y_dot
+// * x(4) -- z
+// * x(5) -- z_dot
+//
+// Also assumes that entried in control 'u' are:
+// * u(0) -- thrust
+// * u(1) -- roll
+// * u(2) -- pitch
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/tracker.h>
+#include <meta_planner/near_hover_quad_no_yaw.h>
 
-#include <ros/ros.h>
+namespace meta {
 
-int main(int argc, char** argv) {
-  ros::init(argc, argv, "tracker");
-  ros::NodeHandle n("~");
+// Dimensions.
+const size_t NearHoverQuadNoYaw::X_DIM = 6;
+const size_t NearHoverQuadNoYaw::U_DIM = 3;
 
-  meta::Tracker tracker;
-
-  if (!tracker.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize Tracker.",
-              ros::this_node::getName().c_str());
-    return EXIT_FAILURE;
-  }
-
-  ros::spin();
-
-  return EXIT_SUCCESS;
+// Factory method. Use this instead of the constructor.
+Dynamics::ConstPtr NearHoverQuadNoYaw::Create(const VectorXd& lower_u,
+                                              const VectorXd& upper_u) {
+  Dynamics::ConstPtr ptr(new NearHoverQuadNoYaw(lower_u, upper_u));
+  return ptr;
 }
+
+// Derived classes must be able to compute an optimal control given
+// the gradient of the value function at the specified state.
+// In this case (linear dynamics), the state is irrelevant given the
+// gradient of the value function at that state.
+VectorXd NearHoverQuadNoYaw::OptimalControl(
+  const VectorXd& x, const VectorXd& value_gradient) const {
+  // Set each dimension of optimal control to upper/lower bound depending
+  // on the sign of the gradient in that dimension. We want to minimize the
+  // inner product between the projected gradient and control.
+  // If the gradient is 0, then sets control to zero by default.
+  VectorXd optimal_control(VectorXd::Zero(lower_u_.size()));
+  optimal_control(0) = (value_gradient(5) < 0.0) ? upper_u_(0) : lower_u_(0);
+  optimal_control(1) = (value_gradient(3) < 0.0) ? upper_u_(1) : lower_u_(1);
+  optimal_control(2) = (value_gradient(1) < 0.0) ? upper_u_(2) : lower_u_(2);
+
+  return optimal_control;
+}
+
+// Private constructor. Use the factory method instead.
+NearHoverQuadNoYaw::NearHoverQuadNoYaw(
+  const VectorXd& lower_u, const VectorXd& upper_u)
+  : Dynamics(lower_u, upper_u) {}
+
+} //\namespace meta

@@ -51,6 +51,8 @@
 #include <random>
 #include <string>
 
+namespace meta {
+
 class Environment : private Uncopyable {
 public:
   virtual ~Environment() {}
@@ -74,5 +76,7 @@ protected:
   std::random_device rd_;
   mutable std::default_random_engine rng_;
 };
+
+} //\namespace meta
 
 #endif

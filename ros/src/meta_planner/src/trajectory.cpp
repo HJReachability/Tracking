@@ -42,6 +42,8 @@
 
 #include <meta_planner/trajectory.h>
 
+namespace meta {
+
 // Find the state corresponding to a particular time via linear interpolation.
 VectorXd Trajectory::GetState(double time) const {
 #ifdef ENABLE_DEBUG_MESSAGES
@@ -220,3 +222,5 @@ void Trajectory::Print(const std::string& prefix) const {
     std::cout << pair.first << " -- "
               << pair.second.state_.transpose() << std::endl;
 }
+
+} //\namespace meta

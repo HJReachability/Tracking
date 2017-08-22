@@ -42,6 +42,8 @@
 
 #include <meta_planner/linear_dynamics.h>
 
+namespace meta {
+
 // Factory method. Use this instead of the constructor.
 Dynamics::ConstPtr LinearDynamics::Create(const MatrixXd& A,
                                           const MatrixXd& B,
@@ -92,3 +94,5 @@ LinearDynamics::LinearDynamics(const MatrixXd& A, const MatrixXd& B,
   if (B_.cols() != lower_u_.size())
     ROS_ERROR("B matrix width does not match control dimension.");
 }
+
+} //\namespace meta
