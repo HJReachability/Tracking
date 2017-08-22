@@ -79,6 +79,10 @@ public:
 private:
   explicit SubsystemValueFunction(const std::string& file_name);
 
+  // Puncture a state vector for the overall system to get a
+  // valid state vector for this subsystem.
+  VectorXd Puncture(const VectorXd& state) const;
+
   // Return the 1D voxel index corresponding to the given state.
   size_t StateToIndex(const VectorXd& state) const;
 

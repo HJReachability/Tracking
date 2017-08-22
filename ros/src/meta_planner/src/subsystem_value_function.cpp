@@ -60,19 +60,21 @@ SubsystemValueFunction::SubsystemValueFunction(const std::string& file_name)
 
 // Return the voxel index corresponding to the given state.
 size_t SubsystemValueFunction::StateToIndex(const VectorXd& state) const {
+  const VectorXd punctured = Puncture(state);
+
   // Quantize each dimension of the state.
   std::vector<size_t> quantized;
-  for (size_t ii = 0; ii < state.size(); ii++) {
-    if (state(ii) < lower_[ii]) {
+  for (size_t ii = 0; ii < punctured.size(); ii++) {
+    if (punctured(ii) < lower_[ii]) {
       ROS_WARN("State is below the SubsystemValueFunction grid in dimension %zu.", ii);
       quantized.push_back(0);
-    } else if (state(ii) > upper_[ii]) {
+    } else if (punctured(ii) > upper_[ii]) {
       ROS_WARN("State is above the SubsystemValueFunction grid in dimension %zu.", ii);
       quantized.push_back(num_voxels_[ii] - 1);
     }
 
     quantized.push_back(
-      static_cast<size_t>((state(ii) - lower_[ii]) / voxel_size_[ii]));
+      static_cast<size_t>((punctured(ii) - lower_[ii]) / voxel_size_[ii]));
   }
 
   // Convert to row-major order.
@@ -90,6 +92,8 @@ size_t SubsystemValueFunction::StateToIndex(const VectorXd& state) const {
 
 // Linearly interpolate to get the value at a particular state.
 double SubsystemValueFunction::Value(const VectorXd& state) const {
+  const VectorXd punctured = Puncture(state);
+
   // Get distance from voxel center in each dimension.
   const VectorXd center_distance = DistanceToCenter(state);
 
@@ -97,8 +101,8 @@ double SubsystemValueFunction::Value(const VectorXd& state) const {
   const double nn_value = data_[StateToIndex(state)];
   double approx_value = nn_value;
 
-  VectorXd neighbor = state;
-  for (size_t ii = 0; ii < state.size(); ii++) {
+  VectorXd neighbor = punctured;
+  for (size_t ii = 0; ii < punctured.size(); ii++) {
     // Get neighboring value.
     if (center_distance(ii) >= 0.0)
       neighbor(ii) += voxel_size_[ii];
@@ -106,7 +110,7 @@ double SubsystemValueFunction::Value(const VectorXd& state) const {
       neighbor(ii) -= voxel_size_[ii];
 
     const double neighbor_value = data_[StateToIndex(neighbor)];
-    neighbor(ii) = state(ii);
+    neighbor(ii) = punctured(ii);
 
     // Compute forward difference.
     const double slope = (center_distance(ii) >= 0.0) ?
@@ -122,6 +126,8 @@ double SubsystemValueFunction::Value(const VectorXd& state) const {
 
 // Linearly interpolate to get the gradient at a particular state.
 VectorXd SubsystemValueFunction::Gradient(const VectorXd& state) const {
+  const VectorXd punctured = Puncture(state);
+
   // Get distance from voxel center in each dimension.
   const VectorXd center_distance = DistanceToCenter(state);
 
@@ -130,8 +136,8 @@ VectorXd SubsystemValueFunction::Gradient(const VectorXd& state) const {
   VectorXd gradient = nn_gradient;
 
   // Interpolate gradients at each neighbor.
-  VectorXd neighbor = state;
-  for (size_t ii = 0; ii < state.size(); ii++) {
+  VectorXd neighbor = punctured;
+  for (size_t ii = 0; ii < punctured.size(); ii++) {
     // Get neighboring voxel's gradient.
     if (center_distance(ii) >= 0.0)
       neighbor(ii) += voxel_size_[ii];
@@ -139,7 +145,7 @@ VectorXd SubsystemValueFunction::Gradient(const VectorXd& state) const {
       neighbor(ii) -= voxel_size_[ii];
 
     const VectorXd neighbor_gradient = CentralDifference(neighbor);
-    neighbor(ii) = state(ii);
+    neighbor(ii) = punctured(ii);
 
     // Compute forward difference.
     const VectorXd diff = (center_distance(ii) >= 0.0) ?
@@ -153,23 +159,35 @@ VectorXd SubsystemValueFunction::Gradient(const VectorXd& state) const {
   return gradient;
 }
 
+// Puncture a state vector for the overall system to get a
+// valid state vector for this subsystem.
+VectorXd SubsystemValueFunction::Puncture(const VectorXd& state) const {
+  VectorXd punctured(state_dimensions_.size());
+  for (size_t ii = 0; ii < state_dimensions_.size(); ii++)
+    punctured(ii) = state(state_dimensions_[ii]);
+
+  return punctured;
+}
+
+
 // Compute a central difference at the voxel containing this state.
 VectorXd SubsystemValueFunction::CentralDifference(const VectorXd& state) const {
-  VectorXd gradient(VectorXd::Zero(state.size()));
+  const VectorXd punctured = Puncture(state);
 
   // Get the value at the voxel containing this state.
+  VectorXd gradient(VectorXd::Zero(punctured.size()));
   const double nn_value = data_[StateToIndex(state)];
 
   // Compute a central difference in each dimension.
-  VectorXd neighbor = state;
-  for (size_t ii = 0; ii < state.size(); ii++) {
+  VectorXd neighbor = punctured;
+  for (size_t ii = 0; ii < punctured.size(); ii++) {
     neighbor(ii) += voxel_size_[ii];
     const double forward = data_[StateToIndex(neighbor)];
 
     neighbor(ii) -= 2.0 * voxel_size_[ii];
     const double backward = data_[StateToIndex(neighbor)];
 
-    neighbor(ii) = state(ii);
+    neighbor(ii) = punctured(ii);
     gradient(ii) = 0.5 * (forward - backward) / voxel_size_[ii];
   }
 
@@ -179,13 +197,15 @@ VectorXd SubsystemValueFunction::CentralDifference(const VectorXd& state) const 
 // Compute the distance (vector) from this state to the center
 // of the nearest voxel.
 VectorXd SubsystemValueFunction::DistanceToCenter(const VectorXd& state) const {
-  VectorXd center_distance(state.size());
-  for (size_t ii = 0; ii < state.size(); ii++) {
+  const VectorXd punctured = Puncture(state);
+
+  VectorXd center_distance(punctured.size());
+  for (size_t ii = 0; ii < punctured.size(); ii++) {
     const double center =
       std::floor((state(ii) - lower_[ii]) / voxel_size_[ii]) * voxel_size_[ii] +
       0.5 * voxel_size_[ii] + lower_[ii];
 
-    center_distance(ii) = state(ii) - center;
+    center_distance(ii) = punctured(ii) - center;
   }
 
   return center_distance;

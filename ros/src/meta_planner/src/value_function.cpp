@@ -100,8 +100,12 @@ ValueFunction::ValueFunction(const std::string& directory,
 
 // Combine values of different subsystems.
 double ValueFunction::Value(const VectorXd& state) const {
-  // TODO!
-  return 0.0;
+  double max_value = -std::numeric_limits<double>::infinity();
+
+  for (const auto& subsystem : subsystems_)
+    max_value = std::max(max_value, subsystem->Value(state));
+
+  return max_value;
 }
 
 // Combine gradients from different subsystems.
