@@ -32,7 +32,7 @@ meta:
     # Directories in which value functions are stored.
     # These are assumed to be in the PRECOMPUTATION_DIR directory, and to
     # end in a '/' so that raw filenames can be concatenated directly.
-    values: [Point_3D_3D_RS/]
+    values: [Point_3D_3D/]
 
     # Max speed for each planner.
     max_speeds: [0.75]
