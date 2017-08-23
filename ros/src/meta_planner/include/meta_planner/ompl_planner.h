@@ -132,12 +132,15 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const VectorXd& start,
   const VectorXd& lower = space_->LowerBounds(dimensions_);
   const VectorXd& upper = space_->UpperBounds(dimensions_);
 
+  const VectorXd punctured_start = Puncture(start);
+  const VectorXd punctured_stop = Puncture(stop);
+
   // Check that both start and stop are in bounds.
   for (size_t ii = 0; ii < dimensions_.size(); ii++) {
-    if (start(dimensions_[ii]) < lower(ii) ||
-        start(dimensions_[ii]) > upper(ii) ||
-        stop(dimensions_[ii]) < lower(ii) ||
-        stop(dimensions_[ii]) > upper(ii)) {
+    if (punctured_start(ii) < lower(ii) ||
+        punctured_start(ii) > upper(ii) ||
+        punctured_stop(ii) < lower(ii) ||
+        punctured_stop(ii) > upper(ii)) {
       ROS_ERROR("Start or stop point was outside environment bounds.");
       return nullptr;
     }
@@ -161,8 +164,8 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const VectorXd& start,
   ob::ScopedState<ob::RealVectorStateSpace> ompl_start(ompl_space);
   ob::ScopedState<ob::RealVectorStateSpace> ompl_stop(ompl_space);
   for (size_t ii = 0; ii < dimensions_.size(); ii++) {
-    ompl_start[ii] = start(dimensions_[ii]);
-    ompl_stop[ii] = stop(dimensions_[ii]);
+    ompl_start[ii] = punctured_start(ii);
+    ompl_stop[ii] = punctured_stop(ii);
   }
 
   ompl_setup.setStartAndGoalStates(ompl_start, ompl_stop);
@@ -173,7 +176,7 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const VectorXd& start,
   ompl_setup.setPlanner(ompl_planner);
 
   // Solve. Parameter is the amount of time (in seconds) used by the solver.
-  const ob::PlannerStatus solved = ompl_setup.solve(1.0);
+  const ob::PlannerStatus solved = ompl_setup.solve(0.1);
 
   if (solved) {
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();
@@ -192,7 +195,7 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const VectorXd& start,
       // Assuming speed is isotropic.
       // TODO: make this more general.
       else {
-        time += (state - traj->LastState()).norm() / speed_;
+        time += (Puncture(state) - Puncture(traj->LastState())).norm() / speed_;
         traj->Add(time, state, value_);
       }
     }

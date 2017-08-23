@@ -78,6 +78,16 @@ protected:
       space_(space),
       dimensions_(dimensions) {}
 
+  // Puncture the state vector in this Planner's dimensions.
+  inline VectorXd Puncture(const VectorXd& state) const {
+    VectorXd punctured(dimensions_.size());
+
+    for (size_t ii = 0; ii < dimensions_.size(); ii++)
+      punctured(ii) = state(dimensions_[ii]);
+
+    return punctured;
+  }
+
   // Value function.
   const ValueFunction::ConstPtr value_;
 
