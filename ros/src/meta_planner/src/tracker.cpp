@@ -64,20 +64,13 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  // TODO! Remove this assumption.
-  if (state_dim_ != control_dim_) {
-    ROS_ERROR("%s: State and control dimensions must be the same.",
-              name_.c_str());
-    return false;
-  }
-
   // Initialize state space. For now, use an empty box.
   // TODO: Parameterize this somehow and integrate with occupancy grid.
   space_ = BallsInBox::Create(state_dim_);
 
   // Set state space bounds.
-  VectorXd state_upper_vec(control_dim_);
-  VectorXd state_lower_vec(control_dim_);
+  VectorXd state_upper_vec(state_dim_);
+  VectorXd state_lower_vec(state_dim_);
   for (size_t ii = 0; ii < state_dim_; ii++) {
     state_upper_vec(ii) = state_upper_[ii];
     state_lower_vec(ii) = state_lower_[ii];
@@ -86,8 +79,22 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   space_->SetBounds(state_lower_vec, state_upper_vec);
 
   // Set the initial state and goal.
+  const size_t kXDim = 0;
+  const size_t kYDim = 2;
+  const size_t kZDim = 4;
+  const size_t kVxDim = 1;
+  const size_t kVyDim = 3;
+  const size_t kVzDim = 5;
+
   state_ = state_lower_vec;
+  state_(kVxDim) = 0.0;
+  state_(kVyDim) = 0.0;
+  state_(kVzDim) = 0.0;
+
   goal_ = state_upper_vec;
+  goal_(kVxDim) = 0.0;
+  goal_(kVyDim) = 0.0;
+  goal_(kVzDim) = 0.0;
 
   // Set control upper/lower bounds as Eigen::Vectors.
   VectorXd control_upper_vec(control_dim_);
@@ -100,7 +107,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // Create planners.
   for (size_t ii = 0; ii < value_directories_.size(); ii++) {
     // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
-    const std::vector<size_t> planner_dims = {0, 1, 2};
+    const std::vector<size_t> planner_dims = {kXDim, kYDim, kZDim};
     const Dynamics::ConstPtr dynamics =
       NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
 

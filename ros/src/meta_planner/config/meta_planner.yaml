@@ -17,22 +17,24 @@ meta:
     dim: 3
 
     # Upper and lower bounds for control.
-    upper: [1.0, 1.0, 1.0]
-    lower: [-1.0, -1.0, -1.0]
+    # In the quadrotor 6D model, the controls are [thrust, roll, pitch].
+    upper: [16.0, 0.25, 0.25]
+    lower: [6.0, -0.25, -0.25]
 
   state:
     # Full (tracker) state space dimension.
-    dim: 3
+    dim: 6
 
     # Upper and lower bounds for state space.
-    upper: [10.0, 10.0, 10.0]
-    lower: [0.0, 0.0, 0.0]
+    # In the quadrotor 6D model, state is [x, vx, y, vy, z, vz].
+    upper: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+    lower: [-10.0, -10.0, -10.0, -10.0, -10.0, -10.0]
 
   planners:
-    # Directories in which value functions are stored.
+    # Directories in which subsystem value functions are stored.
     # These are assumed to be in the PRECOMPUTATION_DIR directory, and to
     # end in a '/' so that raw filenames can be concatenated directly.
-    values: [Point_3D_3D/]
+    values: [RRT3D_speed_2_tenths/]
 
   topics:
     # Sensor publication topic.

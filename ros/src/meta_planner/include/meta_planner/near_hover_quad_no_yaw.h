@@ -45,9 +45,9 @@
 // * x(5) -- z_dot
 //
 // Also assumes that entried in control 'u' are:
-// * u(0) -- thrust
+// * u(0) -- pitch
 // * u(1) -- roll
-// * u(2) -- pitch
+// * u(2) -- thrust
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -73,11 +73,11 @@ public:
   inline VectorXd operator()(const VectorXd& x, const VectorXd& u) const {
     VectorXd x_dot(X_DIM);
     x_dot(0) = x(1);
-    x_dot(1) = constants::G * std::tan(u(2));
+    x_dot(1) = constants::G * std::tan(u(0));
     x_dot(2) = x(3);
     x_dot(3) = constants::G * std::tan(u(1));
     x_dot(4) = x(5);
-    x_dot(5) = u(0) - constants::G;
+    x_dot(5) = u(2) - constants::G;
 
     return x_dot;
   }

@@ -95,7 +95,7 @@ ValueFunction::ValueFunction(const std::string& directory,
   // Set max planner speed and check consistency.
   max_planner_speed_ = subsystems_.front()->MaxPlannerSpeed();
   for (const auto& subsystem : subsystems_) {
-    if (max_planner_speed_ != subsystem->MaxPlannerSpeed()) {
+    if (std::abs(max_planner_speed_ - subsystem->MaxPlannerSpeed()) > 1e-8) {
       ROS_ERROR("Max planner speed was not consistent across subsystems.");
       initialized_ = false;
       return;
