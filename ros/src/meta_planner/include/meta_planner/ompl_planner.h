@@ -129,8 +129,8 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const VectorXd& start,
     std::make_shared<ob::RealVectorStateSpace>(dimensions_.size()));
 
   // Set bounds for the environment.
-  const VectorXd& lower = space_->LowerBounds(dimensions_);
-  const VectorXd& upper = space_->UpperBounds(dimensions_);
+  const VectorXd lower = space_->LowerBounds(dimensions_);
+  const VectorXd upper = space_->UpperBounds(dimensions_);
 
   const VectorXd punctured_start = Puncture(start);
   const VectorXd punctured_stop = Puncture(stop);
