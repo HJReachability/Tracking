@@ -81,6 +81,9 @@ public:
   // Get the tracking error bound in the subsystem containing this dimension.
   double TrackingBound(size_t dimension) const;
 
+  // Max planner speed.
+  inline double MaxPlannerSpeed() const { return max_planner_speed_; }
+
   // Was this ValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
 
@@ -95,6 +98,9 @@ private:
 
   // Dynamics.
   const Dynamics::ConstPtr dynamics_;
+
+  // Planner max speed.
+  double max_planner_speed_;
 
   // List of value functions for independent subsystems.
   std::vector<SubsystemValueFunction::ConstPtr> subsystems_;

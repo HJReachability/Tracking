@@ -99,16 +99,10 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
   // Create planners.
   for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-    // NOTE: Assuming that planners operate in full state space for now.
-    std::vector<size_t> dimensions(state_dim_);
-    std::iota(dimensions.begin(), dimensions.end(), 0);
-
-    // NOTE: Hardcoding dynamics for now. Assuming direct velocity control
-    // in each dimension.
-    const MatrixXd A(MatrixXd::Zero(state_dim_, state_dim_));
-    const MatrixXd B(MatrixXd::Identity(state_dim_, state_dim_));
+    // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
+    const std::vector<size_t> planner_dims = {0, 1, 2};
     const Dynamics::ConstPtr dynamics =
-      LinearDynamics::Create(A, B, control_lower_vec, control_upper_vec);
+      NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
 
     // Load up the value function.
     const ValueFunction::ConstPtr value =
@@ -117,8 +111,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
     // Create the planner.
     const Planner::ConstPtr planner =
-      OmplPlanner<og::RRTConnect>::Create(value, space_,
-                                          dimensions, max_speeds_[ii]);
+      OmplPlanner<og::RRTConnect>::Create(value, space_, planner_dims);
 
     planners_.push_back(planner);
   }
@@ -164,13 +157,6 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (value_directories_.size() == 0) {
     ROS_ERROR("%s: Must specify at least one value function directory.",
               name_.c_str());
-    return false;
-  }
-
-  if (!ros::param::search("meta/planners/max_speeds", key)) return false;
-  if (!ros::param::get(key, max_speeds_)) return false;
-  if (max_speeds_.size() != value_directories_.size()) {
-    ROS_ERROR("%s: Must specify a max speed for each planner.", name_.c_str());
     return false;
   }
 
@@ -351,11 +337,6 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   // 3) Interpolate gradient to get optimal control.
   const VectorXd optimal_control = value->OptimalControl(relative_state);
-
-#if 0
-  const VectorXd optimal_control =
-    -1.1 * max_speeds_[0] * relative_state / relative_state.norm();
-#endif
 
   // 4) Apply optimal control.
   geometry_msgs::Vector3 control_msg;

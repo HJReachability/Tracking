@@ -82,6 +82,7 @@ ValueFunction::ValueFunction(const std::string& directory,
     ROS_ERROR("No valid files in this directory: %s.",
               std::string(PRECOMPUTATION_DIR + directory).c_str());
     initialized_ = false;
+    return;
   }
 
   // Load each subsystem from file.
@@ -91,10 +92,14 @@ ValueFunction::ValueFunction(const std::string& directory,
     initialized_ &= subsystems_.back()->IsInitialized();
   }
 
-  // Make sure dynamics pointer is valid.
-  if (dynamics_.get() == NULL) {
-    ROS_ERROR("Dynamics pointer was null.");
-    initialized_ = false;
+  // Set max planner speed and check consistency.
+  max_planner_speed_ = subsystems_.front()->MaxPlannerSpeed();
+  for (const auto& subsystem : subsystems_) {
+    if (max_planner_speed_ != subsystem->MaxPlannerSpeed()) {
+      ROS_ERROR("Max planner speed was not consistent across subsystems.");
+      initialized_ = false;
+      return;
+    }
   }
 
   // Check that all subsystem dimensions are mutually exclusive and
@@ -120,6 +125,13 @@ ValueFunction::ValueFunction(const std::string& directory,
   // Check if there are any dimensions remaining.
   if (dims.size() > 0) {
     ROS_ERROR("Not all dimensions are accounted for in ValueFunction.");
+    initialized_ = false;
+    return;
+  }
+
+  // Make sure dynamics pointer is valid.
+  if (dynamics_.get() == NULL) {
+    ROS_ERROR("Dynamics pointer was null.");
     initialized_ = false;
   }
 }
@@ -156,20 +168,17 @@ double ValueFunction::TrackingBound(size_t dimension) const {
   // Loop through all subsystems to find the one containing this dimension.
   // NOTE: if we want to do this frequently, we should just store a map.
   for (const auto& subsystem : subsystems_) {
-    for (size_t ii : subsystem->StateDimensions())
-      if (ii == dimension) {
-        found = true;
-        break;
-      }
+    const std::vector<size_t>& state_dims = subsystem->StateDimensions();
 
-    if (found)
-      return subsystem->TrackingBound();
+    for (size_t ii = 0; ii < state_dims.size(); ii++) {
+      if (state_dims[ii] == dimension)
+        return subsystem->TrackingBound(ii);
+    }
   }
 
   // Catch not found.
-  if (!found)
-    ROS_WARN("Could not find the tracking error bound in dimension %zu.",
-             dimension);
+  ROS_WARN("Could not find the tracking error bound in dimension %zu.",
+           dimension);
 
   return std::numeric_limits<double>::infinity();
 }

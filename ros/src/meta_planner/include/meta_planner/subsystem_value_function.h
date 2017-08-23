@@ -78,8 +78,11 @@ public:
     return control_dimensions_;
   }
 
-  // Get the tracking error bound.
-  inline double TrackingBound() const { return tracking_bound_; }
+  // Get the tracking error bound in the specified dimension..
+  inline double TrackingBound(size_t ii) const { return tracking_bound_[ii]; }
+
+  // Max planner speed.
+  inline double MaxPlannerSpeed() const { return max_planner_speed_; }
 
   // Was this SubsystemValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
@@ -118,8 +121,11 @@ private:
   // Data is stored in row-major order.
   std::vector<double> data_;
 
-  // Tracking error bound.
-  double tracking_bound_;
+  // Tracking error bound in each dimension.
+  std::vector<double> tracking_bound_;
+
+  // Max planner speed.
+  double max_planner_speed_;
 
   // Was this value function initialized/loaded properly?
   bool initialized_;

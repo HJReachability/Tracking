@@ -266,6 +266,14 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
+  const std::string max_planner_speed = "max_planner_speed";
+  matvar_t* max_planner_speed_mat =
+    Mat_VarRead(matfp, max_planner_speed.c_str());
+  if (max_planner_speed_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", max_planner_speed.c_str());
+    return false;
+  }
+
   const std::string data = "data";
   matvar_t* data_mat = Mat_VarRead(matfp, data.c_str());
   if (data_mat == NULL) {
@@ -329,7 +337,17 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-  tracking_bound_ = *static_cast<double*>(teb_mat->data);
+  num_elements = teb_mat->nbytes / teb_mat->data_size;
+  for (size_t ii = 0; ii < num_elements; ii++) {
+    tracking_bound_.push_back(static_cast<double*>(teb_mat->data)[ii]);
+  }
+
+  if (max_planner_speed_mat->data_type != MAT_T_DOUBLE) {
+    ROS_ERROR("%s: Wrong type of data.", max_planner_speed.c_str());
+    return false;
+  }
+
+  max_planner_speed_ = *static_cast<double*>(max_planner_speed_mat->data);
 
   if (data_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", data.c_str());
@@ -353,6 +371,7 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
   Mat_VarFree(x_dims_mat);
   Mat_VarFree(u_dims_mat);
   Mat_VarFree(teb_mat);
+  Mat_VarFree(max_planner_speed_mat);
   Mat_VarFree(data_mat);
   Mat_Close(matfp);
 

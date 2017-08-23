@@ -60,9 +60,11 @@ namespace meta {
 
 class Planner : private Uncopyable {
 public:
+  typedef std::shared_ptr<const Planner> ConstPtr;
+
+  // Destructor.
   virtual ~Planner() {}
 
-  typedef std::shared_ptr<const Planner> ConstPtr;
   // Derived classes must plan trajectories between two points.
   virtual Trajectory::Ptr Plan(const VectorXd& start,
                                const VectorXd& stop,

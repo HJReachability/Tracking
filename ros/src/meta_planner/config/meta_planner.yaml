@@ -34,9 +34,6 @@ meta:
     # end in a '/' so that raw filenames can be concatenated directly.
     values: [Point_3D_3D/]
 
-    # Max speed for each planner.
-    max_speeds: [0.75]
-
   topics:
     # Sensor publication topic.
     sensor: /sensor

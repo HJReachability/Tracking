@@ -51,6 +51,7 @@
 #include <meta_planner/uncopyable.h>
 #include <meta_planner/ompl_planner.h>
 #include <meta_planner/linear_dynamics.h>
+#include <meta_planner/near_hover_quad_no_yaw.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
@@ -103,7 +104,6 @@ private:
   // Planners and related parameters.
   std::vector<Planner::ConstPtr> planners_;
   std::vector<std::string> value_directories_;
-  std::vector<double> max_speeds_;
 
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
