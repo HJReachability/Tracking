@@ -308,21 +308,24 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   br_.sendTransform(transform_stamped);
 
-#if 0
   // Visualize the tracking bound.
   visualization_msgs::Marker tracking_bound_marker;
   tracking_bound_marker.ns = "bound";
   tracking_bound_marker.header.frame_id = tracker_frame_id_;
   tracking_bound_marker.header.stamp = current_time;
   tracking_bound_marker.id = 0;
-  tracking_bound_marker.type = visualization_msgs::Marker::SPHERE;
+  tracking_bound_marker.type = visualization_msgs::Marker::CUBE;
   tracking_bound_marker.action = visualization_msgs::Marker::ADD;
 
-  const double tracking_bound =
-    traj_->GetValueFunction(current_time.toSec())->TrackingBound();
-  tracking_bound_marker.scale.x = 2.0 * tracking_bound;
-  tracking_bound_marker.scale.y = 2.0 * tracking_bound;
-  tracking_bound_marker.scale.z = 2.0 * tracking_bound;
+  const size_t kXDim = 0;
+  const size_t kYDim = 2;
+  const size_t kZDim = 4;
+  tracking_bound_marker.scale.x =
+    2.0 * traj_->GetValueFunction(current_time.toSec())->TrackingBound(kXDim);
+  tracking_bound_marker.scale.y =
+    2.0 * traj_->GetValueFunction(current_time.toSec())->TrackingBound(kYDim);
+  tracking_bound_marker.scale.z =
+    2.0 * traj_->GetValueFunction(current_time.toSec())->TrackingBound(kZDim);
 
   tracking_bound_marker.color.a = 0.3;
   tracking_bound_marker.color.r = 0.9;
@@ -330,7 +333,6 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.color.b = 0.9;
 
   tracking_bound_pub_.publish(tracking_bound_marker);
-#endif
 
   // 2) Get corresponding value function.
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());

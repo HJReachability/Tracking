@@ -178,8 +178,7 @@ void BallsInBox::Visualize(const ros::Publisher& pub,
   // Publish cube marker.
   pub.publish(cube);
 
-
-  // TODO: visualize obstacles as SPHERE markers.
+  // Visualize obstacles as spheres.
   for (size_t ii = 0; ii < points_.size(); ii++){
     visualization_msgs::Marker sphere;
     sphere.ns = "sphere";
