@@ -58,31 +58,31 @@ public:
   typedef std::shared_ptr<const BallsInBox> ConstPtr;
 
   // Factory method. Use this instead of the constructor.
-  static Ptr Create(size_t dimension);
+  static Ptr Create();
 
   // Destructor.
   ~BallsInBox() {}
 
   // Inherited collision checker from Box needs to be overwritten.
-  bool IsValid(const VectorXd& state,
+  bool IsValid(const Vector3d& position,
                const ValueFunction::ConstPtr& value) const;
 
   // Check for obstacles within a sensing radius.
-  bool SenseObstacle(const VectorXd& state, double sensor_radius,
-                     VectorXd& obstacle_position, double& obstacle_radius) const;
+  bool SenseObstacle(const Vector3d& position, double sensor_radius,
+                     Vector3d& obstacle_position, double& obstacle_radius) const;
 
   // Check if a given obstacle is in the environment.
-  bool IsObstacle(const VectorXd& obstacle_position,
+  bool IsObstacle(const Vector3d& obstacle_position,
                   double obstacle_radius) const;
 
   // Inherited visualizer from Box needs to be overwritten.
   void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
 
   // Add a spherical obstacle of the given radius to the environment.
-  void AddObstacle(const VectorXd& point, double r);
+  void AddObstacle(const Vector3d& point, double r);
 
 private:
-  BallsInBox(size_t dimension);
+  BallsInBox();
 
   // List of obstacle locations and radii.
   std::vector<VectorXd> points_;

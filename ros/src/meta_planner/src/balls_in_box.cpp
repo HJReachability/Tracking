@@ -47,25 +47,19 @@
 namespace meta {
 
 // Factory method. Use this instead of the constructor.
-BallsInBox::Ptr BallsInBox::Create(size_t dimension) {
-  BallsInBox::Ptr ptr(new BallsInBox(dimension));
+BallsInBox::Ptr BallsInBox::Create() {
+  BallsInBox::Ptr ptr(new BallsInBox());
   return ptr;
 }
 
 // Constructor. Don't use this. Use the factory method instead.
-BallsInBox::BallsInBox(size_t dimension)
-  : Box(dimension) {}
+BallsInBox::BallsInBox()
+  : Box() {}
 
 // Inherited collision checker from Box needs to be overwritten.
-bool BallsInBox::IsValid(const VectorXd& state,
+bool BallsInBox::IsValid(const Vector3d& position,
                          const ValueFunction::ConstPtr& value) const {
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (state.size() != dimension_) {
-    ROS_ERROR("Improperly sized state vector (%zu vs. %zu).",
-              state.size(), dimension_);
-    return false;
-  }
-
   if (!value.get()) {
     ROS_ERROR("Value function pointer was null.");
     return false;
@@ -73,25 +67,25 @@ bool BallsInBox::IsValid(const VectorXd& state,
 #endif
 
   // Check bounds.
-  for (size_t ii = 0; ii < state.size(); ii++) {
+  for (size_t ii = 0; ii < 3; ii++) {
     const double bound = value->TrackingBound(ii);
 
-    if (state(ii) < lower_(ii) + bound ||
-        state(ii) > upper_(ii) - bound)
+    if (position(ii) < lower_(ii) + bound ||
+        position(ii) > upper_(ii) - bound)
       return false;
   }
 
   // Check against each obstacle.
   // NOTE: assuming rectangular tracking bound.
   for (size_t ii = 0; ii < points_.size(); ii++) {
-    const VectorXd& p = points_[ii];
+    const Vector3d& p = points_[ii];
 
     // Find the corner of the tracking bound which is closest to this obstacle.
-    VectorXd corner(state.size());
-    for (size_t jj = 0; jj < corner.size(); jj++)
-      corner(jj) = (state(jj) - p(jj) > 0.0) ?
-        state(jj) - value->TrackingBound(jj) :
-        state(jj) + value->TrackingBound(jj);
+    Vector3d corner;
+    for (size_t jj = 0; jj < 3; jj++)
+      corner(jj) = (position(jj) - p(jj) > 0.0) ?
+        position(jj) - value->TrackingBound(jj) :
+        position(jj) + value->TrackingBound(jj);
 
     if ((corner - p).norm() <= radii_[ii])
       return false;
@@ -102,17 +96,16 @@ bool BallsInBox::IsValid(const VectorXd& state,
 
 
 //Checks for obstacles within a sensing radius.
-bool BallsInBox::SenseObstacle(const VectorXd& state, double sensor_radius,
-                               VectorXd& obstacle_position,
+bool BallsInBox::SenseObstacle(const Vector3d& position, double sensor_radius,
+                               Vector3d& obstacle_position,
                                double& obstacle_radius) const{
   for (size_t ii = 0; ii < points_.size(); ii++){
-    if ((state - points_[ii]).norm() <= radii_[ii] + sensor_radius) {
+    if ((position - points_[ii]).norm() <= radii_[ii] + sensor_radius) {
       obstacle_position(0) = points_[ii](0);
       obstacle_position(1) = points_[ii](1);
       obstacle_position(2) = points_[ii](2);
 
       obstacle_radius = radii_[ii];
-
       return true;
     }
   }
@@ -121,7 +114,7 @@ bool BallsInBox::SenseObstacle(const VectorXd& state, double sensor_radius,
 }
 
 // Checks if a given obstacle is in the environment.
-bool BallsInBox::IsObstacle(const VectorXd& obstacle_position,
+bool BallsInBox::IsObstacle(const Vector3d& obstacle_position,
                             double obstacle_radius) const {
   for (size_t ii = 0; ii < points_.size(); ii++)
     if ((obstacle_position - points_[ii]).norm() < 1e-8 &&
@@ -154,20 +147,14 @@ void BallsInBox::Visualize(const ros::Publisher& pub,
   geometry_msgs::Point center;
 
   // Fill in center and scale.
-  if (dimension_ >= 1) {
-    cube.scale.x = upper_[0] - lower_[0];
-    center.x = lower_[0] + 0.5 * cube.scale.x;
-  }
+  cube.scale.x = upper_(0) - lower_(0);
+  center.x = lower_(0) + 0.5 * cube.scale.x;
 
-  if (dimension_ >= 2) {
-    cube.scale.y = upper_[1] - lower_[1];
-    center.y = lower_[1] + 0.5 * cube.scale.y;
-  }
+  cube.scale.y = upper_(1) - lower_(1);
+  center.y = lower_(1) + 0.5 * cube.scale.y;
 
-  if (dimension_ >= 3) {
-    cube.scale.z = upper_[2] - lower_[2];
-    center.z = lower_[2] + 0.5 * cube.scale.z;
-  }
+  cube.scale.z = upper_(2) - lower_(2);
+  center.z = lower_(2) + 0.5 * cube.scale.z;
 
   cube.pose.position = center;
   cube.pose.orientation.x = 0.0;
@@ -198,7 +185,7 @@ void BallsInBox::Visualize(const ros::Publisher& pub,
     sphere.color.b = 0.5;
 
     geometry_msgs::Point p;
-    const VectorXd point = points_[ii];
+    const Vector3d point = points_[ii];
     p.x = point(0);
     p.y = point(1);
     p.z = point(2);
@@ -212,14 +199,10 @@ void BallsInBox::Visualize(const ros::Publisher& pub,
 }
 
 // Add a spherical obstacle of the given radius to the environment.
-void BallsInBox::AddObstacle(const VectorXd& point, double r) {
+void BallsInBox::AddObstacle(const Vector3d& point, double r) {
   const double kSmallNumber = 1e-8;
 
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (point.size() != dimension_)
-    ROS_ERROR("Improperly sized point (%zu vs. %zu).",
-              point.size(), dimension_);
-
   if (r < kSmallNumber)
     ROS_ERROR("Radius was too small: %f.", r);
 #endif

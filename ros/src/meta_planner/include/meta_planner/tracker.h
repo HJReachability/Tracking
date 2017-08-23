@@ -98,6 +98,7 @@ private:
   std::vector<double> state_lower_;
 
   // Control upper/lower bounds.
+  Dynamics::ConstPtr dynamics_;
   std::vector<double> control_upper_;
   std::vector<double> control_lower_;
 

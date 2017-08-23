@@ -59,11 +59,11 @@ public:
   virtual ~Environment() {}
 
   // Derived classes must be able to sample uniformly from the state space.
-  virtual VectorXd Sample() const = 0;
+  virtual Vector3d Sample() const = 0;
 
   // Derived classes must provide a collision checker which returns true if
-  // and only if the provided state is a valid collision-free configuration.
-  virtual bool IsValid(const VectorXd& state,
+  // and only if the provided position is a valid collision-free configuration.
+  virtual bool IsValid(const Vector3d& position,
                        const ValueFunction::ConstPtr& value) const = 0;
 
   // Derived classes must have some sort of visualization through RVIZ.

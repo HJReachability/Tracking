@@ -78,12 +78,34 @@ VectorXd LinearDynamics::OptimalControl(const VectorXd& x,
   return optimal_control;
 }
 
+// Puncture a full state vector and return a position.
+Vector3d LinearDynamics::Puncture(const VectorXd& x) const {
+  ROS_WARN("Puncture is unimplemented.");
+  return Vector3d::Zero();
+}
+
+// Get the corresponding full state dimension to the given spatial dimension.
+size_t LinearDynamics::SpatialDimension(size_t dimension) const {
+  ROS_WARN("SpatialDimension is unimplemented.");
+
+  return dimension;
+}
+
 // Derived classes must be able to translate a geometric trajectory
 // (i.e. through Euclidean space) into a full state space trajectory.
 std::vector<VectorXd> LinearDynamics::LiftGeometricTrajectory(
-  const std::vector<VectorXd>& states,
+  const std::vector<Vector3d>& positions,
   const std::vector<double>& times) const {
   ROS_WARN("LiftGeometricTrajectory is unimplemented.");
+
+  std::vector<VectorXd> states;
+  for (const auto& p : positions) {
+    VectorXd state(3);
+    state(0) = p(0);
+    state(1) = p(1);
+    state(2) = p(2);
+    states.push_back(state);
+  }
 
   return states;
 }

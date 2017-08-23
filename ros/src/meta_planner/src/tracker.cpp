@@ -64,9 +64,20 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
+  // Set control upper/lower bounds as Eigen::Vectors.
+  VectorXd control_upper_vec(control_dim_);
+  VectorXd control_lower_vec(control_dim_);
+  for (size_t ii = 0; ii < control_dim_; ii++) {
+    control_upper_vec(ii) = control_upper_[ii];
+    control_lower_vec(ii) = control_lower_[ii];
+  }
+
+  Dynamics::ConstPtr dynamics_ =
+    NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
+
   // Initialize state space. For now, use an empty box.
   // TODO: Parameterize this somehow and integrate with occupancy grid.
-  space_ = BallsInBox::Create(state_dim_);
+  space_ = BallsInBox::Create();
 
   // Set state space bounds.
   VectorXd state_upper_vec(state_dim_);
@@ -76,7 +87,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     state_lower_vec(ii) = state_lower_[ii];
   }
 
-  space_->SetBounds(state_lower_vec, state_upper_vec);
+  space_->SetBounds(dynamics_->Puncture(state_lower_vec), state_upper_vec);
 
   // Set the initial state and goal.
   const size_t kXDim = 0;
@@ -98,21 +109,9 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   goal_(kVyDim) = 0.0;
   goal_(kVzDim) = 0.0;
 
-  // Set control upper/lower bounds as Eigen::Vectors.
-  VectorXd control_upper_vec(control_dim_);
-  VectorXd control_lower_vec(control_dim_);
-  for (size_t ii = 0; ii < control_dim_; ii++) {
-    control_upper_vec(ii) = control_upper_[ii];
-    control_lower_vec(ii) = control_lower_[ii];
-  }
-
   // Create planners.
   for (size_t ii = 0; ii < value_directories_.size(); ii++) {
     // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
-    const std::vector<size_t> planner_dims = { kXDim, kYDim, kZDim };
-    const Dynamics::ConstPtr dynamics =
-      NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
-
     // Load up the value function.
     const ValueFunction::ConstPtr value =
       ValueFunction::Create(value_directories_[ii], dynamics,
@@ -120,7 +119,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
     // Create the planner.
     const Planner::ConstPtr planner =
-      OmplPlanner<og::RRTConnect>::Create(value, space_, planner_dims);
+      OmplPlanner<og::RRTConnect>::Create(value, space_);
 
     planners_.push_back(planner);
   }

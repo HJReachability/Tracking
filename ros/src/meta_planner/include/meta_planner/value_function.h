@@ -78,7 +78,7 @@ public:
     return dynamics_->OptimalControl(state, Gradient(state));
   }
 
-  // Get the tracking error bound in the subsystem containing this dimension.
+  // Get the tracking error bound in this spatial dimension.
   double TrackingBound(size_t dimension) const;
 
   // Get the dynamics.

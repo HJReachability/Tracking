@@ -161,9 +161,12 @@ VectorXd ValueFunction::Gradient(const VectorXd& state) const {
   return gradient;
 }
 
-// Get the tracking error bound in the subsystem containing this dimension.
+// Get the tracking error bound in this spatial dimension.
 double ValueFunction::TrackingBound(size_t dimension) const {
   bool found = false;
+
+  // Get corresponding full state dimension.
+  const size_t full_dim = dynamics_->SpatialDimension(dimension);
 
   // Loop through all subsystems to find the one containing this dimension.
   // NOTE: if we want to do this frequently, we should just store a map.
@@ -171,8 +174,8 @@ double ValueFunction::TrackingBound(size_t dimension) const {
     const std::vector<size_t>& state_dims = subsystem->StateDimensions();
 
     for (size_t ii = 0; ii < state_dims.size(); ii++) {
-      if (state_dims[ii] == dimension)
-        return subsystem->TrackingBound(ii);
+      if (state_dims[ii] == full_dim)
+        return subsystem->TrackingBound(full_dim);
     }
   }
 

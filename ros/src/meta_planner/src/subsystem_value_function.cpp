@@ -216,8 +216,6 @@ VectorXd SubsystemValueFunction::DistanceToCenter(const VectorXd& state) const {
 // TODO! Reserve enough space initially for each vector so it does
 // resize so much.
 bool SubsystemValueFunction::Load(const std::string& file_name) {
-  std::cout << file_name.c_str() << std::endl;
-
   // Open the file.
   mat_t* matfp = Mat_Open(file_name.c_str(), MAT_ACC_RDONLY);
   if (matfp == NULL) {

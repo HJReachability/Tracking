@@ -65,8 +65,19 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
+  // Control bounds.
+  VectorXd control_upper_vec(control_dim_);
+  VectorXd control_lower_vec(control_dim_);
+  for (size_t ii = 0; ii < control_dim_; ii++) {
+    control_upper_vec(ii) = control_upper_[ii];
+    control_lower_vec(ii) = control_lower_[ii];
+  }
+
+  // Dynamics.
+  dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
+
   // Initialize state space.
-  space_ = BallsInBox::Create(state_dim_);
+  space_ = BallsInBox::Create();
 
   // Set state space bounds.
   VectorXd state_upper_vec(state_dim_);
@@ -76,7 +87,8 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
     state_lower_vec(ii) = state_lower_[ii];
   }
 
-  space_->SetBounds(state_lower_vec, state_upper_vec);
+  space_->SetBounds(dynamics_->Puncture(state_lower_vec),
+                    dynamics_->Puncture(state_upper_vec));
 
   // Add obstacles.
   std::random_device rd;
@@ -89,6 +101,10 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
 
   // Initialize current state and control.
   state_ = state_lower_vec;
+  state_(1) = 0.0;
+  state_(3) = 0.0;
+  state_(5) = 0.0;
+
   control_ = VectorXd::Zero(control_dim_);
 
   // Set the initial time.
@@ -131,6 +147,13 @@ bool Simulator::LoadParameters(const ros::NodeHandle& n) {
 
   if (!ros::param::search("meta/state/lower", key)) return false;
   if (!ros::param::get(key, state_lower_)) return false;
+
+  // Control parameters.
+  if (!ros::param::search("meta/control/upper", key)) return false;
+  if (!ros::param::get(key, control_upper_)) return false;
+
+  if (!ros::param::search("meta/control/lower", key)) return false;
+  if (!ros::param::get(key, control_lower_)) return false;
 
   // Topics and frame ids.
   if (!ros::param::search("meta/topics/control", key)) return false;
@@ -195,10 +218,12 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
   // Update state.
   const ros::Time now = ros::Time::now();
   const double dt = (now - time_).toSec();
-  for (size_t ii = 0; ii < state_.size(); ii++)
-    state_(ii) += control_(ii) * dt;
+
+  state_ += dynamics_->operator()(state_, control_) * dt;
 
   time_ = now;
+
+  std::cout << "TF broadcasting..." << std::endl;
 
   // Broadcast tf.
   geometry_msgs::TransformStamped transform_stamped;
@@ -209,8 +234,8 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
   transform_stamped.child_frame_id = robot_frame_id_;
 
   transform_stamped.transform.translation.x = state_(0);
-  transform_stamped.transform.translation.y = state_(1);
-  transform_stamped.transform.translation.z = state_(2);
+  transform_stamped.transform.translation.y = state_(2);
+  transform_stamped.transform.translation.z = state_(4);
 
   transform_stamped.transform.rotation.x = 0;
   transform_stamped.transform.rotation.y = 0;
@@ -219,12 +244,20 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
 
   br_.sendTransform(transform_stamped);
 
+
+  std::cout << "Sensing obstacles..." << std::endl;
+
   // Publish sensor message if an obstacle is within range.
   // TODO! Parameterize sensor radius.
-  VectorXd obstacle_position(3);
+  Vector3d obstacle_position;
   double obstacle_radius = -1.0;
 
-  if (space_->SenseObstacle(state_.head(3), sensor_radius_,
+  Vector3d position;
+  position(0) = state_(0);
+  position(1) = state_(2);
+  position(2) = state_(4);
+
+  if (space_->SenseObstacle(position, sensor_radius_,
                             obstacle_position, obstacle_radius)) {
     geometry_msgs::Quaternion q;
     q.x = obstacle_position(0);
@@ -234,6 +267,8 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
 
     sensor_pub_.publish(q);
   }
+
+  std::cout << "Visualizating..." << std::endl;
 
   // Visualize the environment.
   space_->Visualize(environment_pub_, fixed_frame_id_);

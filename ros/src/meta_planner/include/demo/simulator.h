@@ -45,6 +45,7 @@
 #define DEMO_SIMULATOR_H
 
 #include <demo/balls_in_box.h>
+#include <meta_planner/near_hover_quad_no_yaw.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
@@ -76,6 +77,11 @@ private:
   // Timer callback for generating sensor measurements and updating
   // state based on last received control signal.
   void TimerCallback(const ros::TimerEvent& e);
+
+  // Dynamics.
+  Dynamics::ConstPtr dynamics_;
+  std::vector<double> control_lower_;
+  std::vector<double> control_upper_;
 
   // Current state and control.
   VectorXd state_;

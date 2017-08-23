@@ -72,30 +72,15 @@ public:
 
 protected:
   explicit Planner(const ValueFunction::ConstPtr& value,
-                   const Box::ConstPtr& space,
-                   const std::vector<size_t>& dimensions)
+                   const Box::ConstPtr& space)
     : value_(value),
-      space_(space),
-      dimensions_(dimensions) {}
-
-  // Puncture the state vector in this Planner's dimensions.
-  inline VectorXd Puncture(const VectorXd& state) const {
-    VectorXd punctured(dimensions_.size());
-
-    for (size_t ii = 0; ii < dimensions_.size(); ii++)
-      punctured(ii) = state(dimensions_[ii]);
-
-    return punctured;
-  }
+      space_(space) {}
 
   // Value function.
   const ValueFunction::ConstPtr value_;
 
   // State space (with collision checking).
   const Box::ConstPtr space_;
-
-  // Dimensions within the overall state space in which this Planner operates.
-  const std::vector<size_t> dimensions_;
 };
 
 } //\namespace meta

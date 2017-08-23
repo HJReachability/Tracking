@@ -89,10 +89,16 @@ public:
   VectorXd OptimalControl(const VectorXd& x,
                           const VectorXd& value_gradient) const;
 
+  // Puncture a full state vector and return a position.
+  Vector3d Puncture(const VectorXd& x) const;
+
+  // Get the corresponding full state dimension to the given spatial dimension.
+  size_t SpatialDimension(size_t dimension) const;
+
   // Derived classes must be able to translate a geometric trajectory
   // (i.e. through Euclidean space) into a full state space trajectory.
   std::vector<VectorXd> LiftGeometricTrajectory(
-    const std::vector<VectorXd>& states,
+    const std::vector<Vector3d>& positions,
     const std::vector<double>& times) const;
 
 private:

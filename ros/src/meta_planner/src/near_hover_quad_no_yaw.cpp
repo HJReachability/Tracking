@@ -84,35 +84,53 @@ VectorXd NearHoverQuadNoYaw::OptimalControl(
   return optimal_control;
 }
 
+// Get the corresponding full state dimension to the given spatial dimension.
+size_t NearHoverQuadNoYaw::SpatialDimension(size_t dimension) const {
+  if (dimension == 0)
+    return 0;
+  if (dimension == 1)
+    return 2;
+  if (dimension == 2)
+    return 4;
+
+  ROS_ERROR("Invalid spatial dimension.");
+  return 0;
+}
+
+// Puncture a full state vector and return a position.
+Vector3d NearHoverQuadNoYaw::Puncture(const VectorXd& x) const {
+  return Vector3d(x(0), x(2), x(4));
+}
+
 // Derived classes must be able to translate a geometric trajectory
 // (i.e. through Euclidean space) into a full state space trajectory.
 std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
-  const std::vector<VectorXd>& states,
+  const std::vector<Vector3d>& positions,
   const std::vector<double>& times) const {
   // Number of entries in trajectory.
-  size_t num_waypoints = states.size();
+  size_t num_waypoints = positions.size();
 
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (states.size() != times.size()) {
+  if (positions.size() != times.size()) {
     ROS_WARN("Inconsistent number of states, times, and values.");
-    num_waypoints = std::min(states.size(), times.size());
+    num_waypoints = std::min(positions.size(), times.size());
   }
 #endif
 
   // Create a clean, empty trajectory.
   std::vector<VectorXd> full_states;
-  VectorXd velocity(VectorXd::Zero(X_DIM));
+  Vector3d velocity(Vector3d::Zero());
 
   // Loop through the geometric trajectory and get the velocity with a
   // forward difference.
   for (size_t ii = 0; ii < num_waypoints - 1; ii++) {
-    velocity = (states[ii + 1] - states[ii]) / (times[ii + 1] - times[ii]);
+    velocity = (positions[ii + 1] - positions[ii]) / (times[ii + 1] - times[ii]);
 
     // Populate full state vector.
     VectorXd full(X_DIM);
-    full(0) = states[ii](0);
-    full(2) = states[ii](2);
-    full(4) = states[ii](4);
+    full(0) = positions[ii](0);
+    full(2) = positions[ii](1);
+    full(4) = positions[ii](2);
 
     full(1) = velocity(0);
     full(3) = velocity(1);
@@ -124,9 +142,9 @@ std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
 
   // Catch final waypoint.
   VectorXd full(X_DIM);
-  full(0) = states.back()(0);
-  full(2) = states.back()(2);
-  full(4) = states.back()(4);
+  full(0) = positions.back()(0);
+  full(2) = positions.back()(2);
+  full(4) = positions.back()(4);
 
   full(1) = velocity(0);
   full(3) = velocity(1);
