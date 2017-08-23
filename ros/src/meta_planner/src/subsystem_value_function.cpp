@@ -216,6 +216,8 @@ VectorXd SubsystemValueFunction::DistanceToCenter(const VectorXd& state) const {
 // TODO! Reserve enough space initially for each vector so it does
 // resize so much.
 bool SubsystemValueFunction::Load(const std::string& file_name) {
+  std::cout << file_name.c_str() << std::endl;
+
   // Open the file.
   mat_t* matfp = Mat_Open(file_name.c_str(), MAT_ACC_RDONLY);
   if (matfp == NULL) {
@@ -238,24 +240,10 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-  const std::string grid_N = "grid_N";
-  matvar_t* grid_N_mat = Mat_VarRead(matfp, grid_N.c_str());
-  if (grid_N_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", grid_N.c_str());
-    return false;
-  }
-
   const std::string x_dims = "x_dims";
   matvar_t* x_dims_mat = Mat_VarRead(matfp, x_dims.c_str());
   if (x_dims_mat == NULL) {
     ROS_ERROR("Could not read variable: %s.", x_dims.c_str());
-    return false;
-  }
-
-  const std::string u_dims = "u_dims";
-  matvar_t* u_dims_mat = Mat_VarRead(matfp, u_dims.c_str());
-  if (u_dims_mat == NULL) {
-    ROS_ERROR("Could not read variable: %s.", u_dims.c_str());
     return false;
   }
 
@@ -271,6 +259,20 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
     Mat_VarRead(matfp, max_planner_speed.c_str());
   if (max_planner_speed_mat == NULL) {
     ROS_ERROR("Could not read variable: %s.", max_planner_speed.c_str());
+    return false;
+  }
+
+  const std::string u_dims = "u_dims";
+  matvar_t* u_dims_mat = Mat_VarRead(matfp, u_dims.c_str());
+  if (u_dims_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", u_dims.c_str());
+    return false;
+  }
+
+  const std::string grid_N = "grid_N";
+  matvar_t* grid_N_mat = Mat_VarRead(matfp, grid_N.c_str());
+  if (grid_N_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", grid_N.c_str());
     return false;
   }
 

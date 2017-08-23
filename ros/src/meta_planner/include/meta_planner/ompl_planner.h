@@ -182,25 +182,33 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const VectorXd& start,
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();
 
     // Populate the Trajectory with states and time stamps.
-    Trajectory::Ptr traj = Trajectory::Create();
+    std::vector<VectorXd> states;
+    std::vector<double> times;
+    std::vector<ValueFunction::ConstPtr> values;
+
     double time = start_time;
     for (size_t ii = 0; ii < solution.getStateCount(); ii++) {
-      const VectorXd state = FromOmplState(solution.getState(ii));
+      const VectorXd state = Puncture(FromOmplState(solution.getState(ii)));
 
       // Catch first state.
       if (ii == 0)
-        traj->Add(time, state, value_);
+        times.push_back(time);
 
       // Handle all other states.
       // Assuming speed is isotropic.
       // TODO: make this more general.
-      else {
-        time += (Puncture(state) - Puncture(traj->LastState())).norm() / speed_;
-        traj->Add(time, state, value_);
-      }
+      else
+        time += (state - states.back()).norm() / speed_;
+
+      states.push_back(state);
+      values.push_back(value_);
     }
 
-    return traj;
+    // Convert to full state space.
+    std::vector<VectorXd> full_states =
+      value_->GetDynamics()->LiftGeometricTrajectory(states, times);
+
+    return Trajectory::Create(times, full_states, values);
   }
 
   ROS_WARN("OMPL Planner could not compute a solution.");

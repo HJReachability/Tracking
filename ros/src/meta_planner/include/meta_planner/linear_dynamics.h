@@ -70,6 +70,13 @@ public:
   VectorXd OptimalControl(const VectorXd& x,
                           const VectorXd& value_gradient) const;
 
+  // Derived classes must be able to translate a geometric trajectory
+  // (i.e. through Euclidean space) into a full state space trajectory.
+  // Should be overridden by derived classes.
+  virtual std::vector<VectorXd> LiftGeometricTrajectory(
+    const std::vector<VectorXd>& states,
+    const std::vector<double>& times) const;
+
 private:
   // Private constructor. Use the factory method instead.
   explicit LinearDynamics(const MatrixXd& A, const MatrixXd& B,

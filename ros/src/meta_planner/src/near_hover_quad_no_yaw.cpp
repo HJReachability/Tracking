@@ -84,6 +84,59 @@ VectorXd NearHoverQuadNoYaw::OptimalControl(
   return optimal_control;
 }
 
+// Derived classes must be able to translate a geometric trajectory
+// (i.e. through Euclidean space) into a full state space trajectory.
+std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
+  const std::vector<VectorXd>& states,
+  const std::vector<double>& times) const {
+  // Number of entries in trajectory.
+  size_t num_waypoints = states.size();
+
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (states.size() != times.size()) {
+    ROS_WARN("Inconsistent number of states, times, and values.");
+    num_waypoints = std::min(states.size(), times.size());
+  }
+#endif
+
+  // Create a clean, empty trajectory.
+  std::vector<VectorXd> full_states;
+  VectorXd velocity(VectorXd::Zero(X_DIM));
+
+  // Loop through the geometric trajectory and get the velocity with a
+  // forward difference.
+  for (size_t ii = 0; ii < num_waypoints - 1; ii++) {
+    velocity = (states[ii + 1] - states[ii]) / (times[ii + 1] - times[ii]);
+
+    // Populate full state vector.
+    VectorXd full(X_DIM);
+    full(0) = states[ii](0);
+    full(2) = states[ii](2);
+    full(4) = states[ii](4);
+
+    full(1) = velocity(0);
+    full(3) = velocity(1);
+    full(5) = velocity(2);
+
+    // Append to trajectory.
+    full_states.push_back(full);
+  }
+
+  // Catch final waypoint.
+  VectorXd full(X_DIM);
+  full(0) = states.back()(0);
+  full(2) = states.back()(2);
+  full(4) = states.back()(4);
+
+  full(1) = velocity(0);
+  full(3) = velocity(1);
+  full(5) = velocity(2);
+
+  full_states.push_back(full);
+
+  return full_states;
+}
+
 // Private constructor. Use the factory method instead.
 NearHoverQuadNoYaw::NearHoverQuadNoYaw(
   const VectorXd& lower_u, const VectorXd& upper_u)

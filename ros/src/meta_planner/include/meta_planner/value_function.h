@@ -81,6 +81,9 @@ public:
   // Get the tracking error bound in the subsystem containing this dimension.
   double TrackingBound(size_t dimension) const;
 
+  // Get the dynamics.
+  inline Dynamics::ConstPtr GetDynamics() const { return dynamics_; }
+
   // Max planner speed.
   inline double MaxPlannerSpeed() const { return max_planner_speed_; }
 

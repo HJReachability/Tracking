@@ -34,7 +34,7 @@ meta:
     # Directories in which subsystem value functions are stored.
     # These are assumed to be in the PRECOMPUTATION_DIR directory, and to
     # end in a '/' so that raw filenames can be concatenated directly.
-    values: [RRT3D_speed_2_tenths/]
+    values: [speed_1_tenths/]
 
   topics:
     # Sensor publication topic.

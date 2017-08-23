@@ -70,6 +70,28 @@ public:
     return ptr;
   }
 
+  static inline Ptr Create(const std::vector<double>& times,
+                           const std::vector<VectorXd>& states,
+                           const std::vector<ValueFunction::ConstPtr>& values) {
+    Ptr ptr(new Trajectory());
+
+    // Number of entries in trajectory.
+    size_t num_waypoints = states.size();
+
+#ifdef ENABLE_DEBUG_MESSAGES
+    if (states.size() != times.size() || states.size() != values.size()) {
+      ROS_WARN("Inconsistent number of states, times, and values.");
+      num_waypoints = std::min(states.size(),
+                               std::min(times.size(), values.size()));
+    }
+#endif
+
+    for (size_t ii = 0; ii < num_waypoints; ii++)
+      ptr->Add(times[ii], states[ii], values[ii]);
+
+    return ptr;
+  }
+
   // Clear out this Trajectory.
   void Clear();
 

@@ -109,7 +109,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // Create planners.
   for (size_t ii = 0; ii < value_directories_.size(); ii++) {
     // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
-    const std::vector<size_t> planner_dims = {kXDim, kYDim, kZDim};
+    const std::vector<size_t> planner_dims = { kXDim, kYDim, kZDim };
     const Dynamics::ConstPtr dynamics =
       NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
 
@@ -124,6 +124,8 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
     planners_.push_back(planner);
   }
+
+  ros::spin();
 
   // Generate an initial trajectory.
   RunMetaPlanner();

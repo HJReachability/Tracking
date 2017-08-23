@@ -67,6 +67,12 @@ public:
   virtual VectorXd OptimalControl(const VectorXd& x,
                                   const VectorXd& value_gradient) const = 0;
 
+  // Derived classes must be able to translate a geometric trajectory
+  // (i.e. through Euclidean space) into a full state space trajectory.
+  virtual std::vector<VectorXd> LiftGeometricTrajectory(
+    const std::vector<VectorXd>& states,
+    const std::vector<double>& times) const = 0;
+
 protected:
   // Protected constructor. Use the factory method instead.
   explicit Dynamics(const VectorXd& lower_u, const VectorXd& upper_u)

@@ -78,6 +78,16 @@ VectorXd LinearDynamics::OptimalControl(const VectorXd& x,
   return optimal_control;
 }
 
+// Derived classes must be able to translate a geometric trajectory
+// (i.e. through Euclidean space) into a full state space trajectory.
+std::vector<VectorXd> LinearDynamics::LiftGeometricTrajectory(
+  const std::vector<VectorXd>& states,
+  const std::vector<double>& times) const {
+  ROS_WARN("LiftGeometricTrajectory is unimplemented.");
+
+  return states;
+}
+
 // Private constructor. Use the factory method instead.
 LinearDynamics::LinearDynamics(const MatrixXd& A, const MatrixXd& B,
                                const VectorXd& lower_u, const VectorXd& upper_u)

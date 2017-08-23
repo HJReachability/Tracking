@@ -89,6 +89,12 @@ public:
   VectorXd OptimalControl(const VectorXd& x,
                           const VectorXd& value_gradient) const;
 
+  // Derived classes must be able to translate a geometric trajectory
+  // (i.e. through Euclidean space) into a full state space trajectory.
+  std::vector<VectorXd> LiftGeometricTrajectory(
+    const std::vector<VectorXd>& states,
+    const std::vector<double>& times) const;
+
 private:
   // Private constructor. Use the factory method instead.
   explicit NearHoverQuadNoYaw(const VectorXd& lower_u, const VectorXd& upper_u);
