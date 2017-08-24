@@ -60,7 +60,7 @@ public:
 
   // Derived classes must be able to give the time derivative of state
   // as a function of current state and control.
-  virtual VectorXd operator()(const VectorXd& x, const VectorXd& u) const = 0;
+  virtual VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const = 0;
 
   // Derived classes must be able to compute an optimal control given
   // the gradient of the value function at the specified state.

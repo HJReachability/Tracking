@@ -60,9 +60,9 @@ const size_t NearHoverQuadNoYaw::X_DIM = 6;
 const size_t NearHoverQuadNoYaw::U_DIM = 3;
 
 // Factory method. Use this instead of the constructor.
-Dynamics::ConstPtr NearHoverQuadNoYaw::Create(const VectorXd& lower_u,
-                                              const VectorXd& upper_u) {
-  Dynamics::ConstPtr ptr(new NearHoverQuadNoYaw(lower_u, upper_u));
+NearHoverQuadNoYaw::ConstPtr NearHoverQuadNoYaw::
+Create(const VectorXd& lower_u, const VectorXd& upper_u) {
+  NearHoverQuadNoYaw::ConstPtr ptr(new NearHoverQuadNoYaw(lower_u, upper_u));
   return ptr;
 }
 
@@ -99,7 +99,10 @@ size_t NearHoverQuadNoYaw::SpatialDimension(size_t dimension) const {
 
 // Puncture a full state vector and return a position.
 Vector3d NearHoverQuadNoYaw::Puncture(const VectorXd& x) const {
-  return Vector3d(x(0), x(2), x(4));
+  std::cout << "puncturing..." << std::endl;
+
+  const Vector3d punctured(x(0), x(2), x(4));
+  return punctured;
 }
 
 // Derived classes must be able to translate a geometric trajectory

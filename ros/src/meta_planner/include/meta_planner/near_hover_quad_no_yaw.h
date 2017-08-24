@@ -62,15 +62,18 @@ namespace meta {
 
 class NearHoverQuadNoYaw : public Dynamics {
 public:
+  typedef std::shared_ptr<const NearHoverQuadNoYaw> ConstPtr;
+
+  // Destructor.
   ~NearHoverQuadNoYaw() {}
 
   // Factory method. Use this instead of the constructor.
-  static Dynamics::ConstPtr Create(const VectorXd& lower_u,
-                                   const VectorXd& upper_u);
+  static ConstPtr Create(const VectorXd& lower_u,
+                         const VectorXd& upper_u);
 
   // Derived classes must be able to give the time derivative of state
   // as a function of current state and control.
-  inline VectorXd operator()(const VectorXd& x, const VectorXd& u) const {
+  inline VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const {
     VectorXd x_dot(X_DIM);
     x_dot(0) = x(1);
     x_dot(1) = constants::G * std::tan(u(0));

@@ -72,8 +72,8 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     control_lower_vec(ii) = control_lower_[ii];
   }
 
-  Dynamics::ConstPtr dynamics_ =
-    NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
+  // NOTE: Do these need to be relative dynamics?
+  dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
 
   // Initialize state space. For now, use an empty box.
   // TODO: Parameterize this somehow and integrate with occupancy grid.
@@ -87,7 +87,8 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     state_lower_vec(ii) = state_lower_[ii];
   }
 
-  space_->SetBounds(dynamics_->Puncture(state_lower_vec), state_upper_vec);
+  space_->SetBounds(dynamics_->Puncture(state_lower_vec),
+                    dynamics_->Puncture(state_upper_vec));
 
   // Set the initial state and goal.
   const size_t kXDim = 0;
@@ -114,7 +115,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
     // Load up the value function.
     const ValueFunction::ConstPtr value =
-      ValueFunction::Create(value_directories_[ii], dynamics,
+      ValueFunction::Create(value_directories_[ii], dynamics_,
                             state_dim_, control_dim_);
 
     // Create the planner.
@@ -123,8 +124,6 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
     planners_.push_back(planner);
   }
-
-  ros::spin();
 
   // Generate an initial trajectory.
   RunMetaPlanner();
@@ -365,7 +364,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 // Run meta planner.
 void Tracker::RunMetaPlanner() {
   const MetaPlanner meta(space_);
-  traj_ = meta.Plan(state_, goal_, planners_);
+
+  traj_ = meta.Plan(dynamics_->Puncture(state_),
+                    dynamics_->Puncture(goal_), planners_);
 
   // Visualize the new trajectory.
   traj_->Visualize(traj_pub_, fixed_frame_id_);

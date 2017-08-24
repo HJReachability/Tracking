@@ -49,17 +49,20 @@ namespace meta {
 
 class LinearDynamics : public Dynamics {
 public:
+  typedef std::shared_ptr<const LinearDynamics> ConstPtr;
+
+  // Destructor.
   ~LinearDynamics() {}
 
   // Factory method. Use this instead of the constructor.
-  static Dynamics::ConstPtr Create(const MatrixXd& A,
-                                   const MatrixXd& B,
-                                   const VectorXd& lower_u,
-                                   const VectorXd& upper_u);
+  static ConstPtr Create(const MatrixXd& A,
+                         const MatrixXd& B,
+                         const VectorXd& lower_u,
+                         const VectorXd& upper_u);
 
   // Derived classes must be able to give the time derivative of state
   // as a function of current state and control.
-  inline VectorXd operator()(const VectorXd& x, const VectorXd& u) const {
+  inline VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const {
     return A_ * x + B_ * u;
   }
 

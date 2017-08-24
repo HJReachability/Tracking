@@ -219,11 +219,9 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
   const ros::Time now = ros::Time::now();
   const double dt = (now - time_).toSec();
 
-  state_ += dynamics_->operator()(state_, control_) * dt;
+  state_ += dynamics_->Evaluate(state_, control_) * dt;
 
   time_ = now;
-
-  std::cout << "TF broadcasting..." << std::endl;
 
   // Broadcast tf.
   geometry_msgs::TransformStamped transform_stamped;
@@ -243,9 +241,6 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
   transform_stamped.transform.rotation.w = 1;
 
   br_.sendTransform(transform_stamped);
-
-
-  std::cout << "Sensing obstacles..." << std::endl;
 
   // Publish sensor message if an obstacle is within range.
   // TODO! Parameterize sensor radius.
@@ -267,8 +262,6 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
 
     sensor_pub_.publish(q);
   }
-
-  std::cout << "Visualizating..." << std::endl;
 
   // Visualize the environment.
   space_->Visualize(environment_pub_, fixed_frame_id_);

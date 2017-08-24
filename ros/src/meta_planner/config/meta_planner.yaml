@@ -28,7 +28,7 @@ meta:
     # Upper and lower bounds for state space.
     # In the quadrotor 6D model, state is [x, vx, y, vy, z, vz].
     upper: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
-    lower: [-10.0, -10.0, -10.0, -10.0, -10.0, -10.0]
+    lower: [0.0, -10.0, 0.0, -10.0, 0.0, -10.0]
 
   planners:
     # Directories in which subsystem value functions are stored.

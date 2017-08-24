@@ -66,8 +66,8 @@ public:
   virtual ~Planner() {}
 
   // Derived classes must plan trajectories between two points.
-  virtual Trajectory::Ptr Plan(const VectorXd& start,
-                               const VectorXd& stop,
+  virtual Trajectory::Ptr Plan(const Vector3d& start,
+                               const Vector3d& stop,
                                double start_time = 0.0) const = 0;
 
 protected:

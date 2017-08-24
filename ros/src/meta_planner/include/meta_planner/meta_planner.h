@@ -68,7 +68,7 @@ public:
   ~MetaPlanner() {}
 
   // Plan a trajectory using the given (ordered) list of Planners.
-  Trajectory::Ptr Plan(const VectorXd& start, const VectorXd& stop,
+  Trajectory::Ptr Plan(const Vector3d& start, const Vector3d& stop,
                        const std::vector<Planner::ConstPtr>& planners) const;
 
 private:

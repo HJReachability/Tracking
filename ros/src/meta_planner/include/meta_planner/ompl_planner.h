@@ -118,15 +118,16 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
     std::make_shared<ob::RealVectorStateSpace>(3));
 
   // Set bounds for the environment.
-  const VectorXd lower = space_->LowerBounds();
-  const VectorXd upper = space_->UpperBounds();
+  const Vector3d lower = space_->LowerBounds();
+  const Vector3d upper = space_->UpperBounds();
+
+  std::cout << "lower: " << lower.transpose() << std::endl;
+  std::cout << "upper: " << upper.transpose() << std::endl;
 
   // Check that both start and stop are in bounds.
   for (size_t ii = 0; ii < 3; ii++) {
-    if (start(ii) < lower(ii) ||
-        start(ii) > upper(ii) ||
-        stop(ii) < lower(ii) ||
-        stop(ii) > upper(ii)) {
+    if (start(ii) < lower(ii) || start(ii) > upper(ii) ||
+        stop(ii) < lower(ii) || stop(ii) > upper(ii)) {
       ROS_ERROR("Start or stop point was outside environment bounds.");
       return nullptr;
     }
@@ -162,9 +163,11 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
   ompl_setup.setPlanner(ompl_planner);
 
   // Solve. Parameter is the amount of time (in seconds) used by the solver.
-  const ob::PlannerStatus solved = ompl_setup.solve(0.1);
+  std::cout << "running planner" << std::endl;
+  const ob::PlannerStatus solved = ompl_setup.solve(1.0);
 
   if (solved) {
+    std::cout << "succeess" << std::endl;
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();
 
     // Populate the Trajectory with states and time stamps.
@@ -218,6 +221,8 @@ Vector3d OmplPlanner<PlannerType>::FromOmplState(
   Vector3d converted;
   for (size_t ii = 0; ii < 3; ii++)
     converted(ii) = cast_state->values[ii];
+
+  std::cout << "Converted: " << converted.transpose() << std::endl;
 
   return converted;
 }

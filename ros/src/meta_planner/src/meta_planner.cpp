@@ -53,15 +53,17 @@ namespace meta {
 // (4) Plan a trajectory (starting with most aggressive planner).
 // (5) Try to connect to the goal point.
 // (6) Stop when we have a feasible trajectory. Otherwise go to (2).
-Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
-                                  const std::vector<Planner::ConstPtr>& planners) const {
+Trajectory::Ptr MetaPlanner::Plan(
+  const Vector3d& start, const Vector3d& stop,
+  const std::vector<Planner::ConstPtr>& planners) const {
   // (1) Set up a new RRT-like structure to hold the meta plan.
-  WaypointTree tree(start, stop, ros::Time::now().toSec());
+  const ros::Time start_time = ros::Time::now();
+  WaypointTree tree(start, stop, start_time.toSec());
 
   bool done = false;
-  while (!done) {
+  while (!done && (ros::Time::now() - start_time).toSec() < 1.0) {
     // (2) Sample a new point in the state space.
-    VectorXd sample = space_->Sample();
+    Vector3d sample = space_->Sample();
 
     // (3) Find the nearest neighbor.
     const size_t kNumNeighbors = 1;
@@ -113,10 +115,14 @@ Trajectory::Ptr MetaPlanner::Plan(const VectorXd& start, const VectorXd& stop,
     }
   }
 
-  // Get the best (fastest) trajectory out of the tree.
-  const Trajectory::Ptr best = tree.BestTrajectory();
+  if (done) {
+    // Get the best (fastest) trajectory out of the tree.
+    const Trajectory::Ptr best = tree.BestTrajectory();
+    return best;
+  }
 
-  return best;
+  ROS_ERROR("Meta planner failed.");
+  return nullptr;
 }
 
 } //\namespace meta

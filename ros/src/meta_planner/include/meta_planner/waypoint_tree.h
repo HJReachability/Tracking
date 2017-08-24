@@ -58,17 +58,17 @@ namespace meta {
 class WaypointTree : private Uncopyable {
 public:
   ~WaypointTree() {}
-  explicit WaypointTree(const VectorXd& start, const VectorXd& stop,
+  explicit WaypointTree(const Vector3d& start, const Vector3d& stop,
                         double start_time = 0.0);
 
   // Find nearest neighbors in the tree.
   inline std::vector<Waypoint::ConstPtr>
-  KnnSearch(VectorXd& query, size_t k) const {
+  KnnSearch(Vector3d& query, size_t k) const {
     return kdtree_.KnnSearch(query, k);
   }
 
   inline std::vector<Waypoint::ConstPtr>
-  RadiusSearch(VectorXd& query, double r) const {
+  RadiusSearch(Vector3d& query, double r) const {
     return kdtree_.RadiusSearch(query, r);
   }
 
@@ -80,7 +80,7 @@ public:
 
 private:
   // Root of the tree.
-  const Waypoint::ConstPtr root_;
+  Waypoint::ConstPtr root_;
 
   // Best terminal waypoint.
   Waypoint::ConstPtr terminus_;

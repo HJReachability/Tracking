@@ -46,9 +46,11 @@
 
 namespace meta {
 
-WaypointTree::WaypointTree(const VectorXd& start, const VectorXd& stop,
-                           double start_time)
-  : root_(Waypoint::Create(start, start_time, nullptr, nullptr)) {
+WaypointTree::WaypointTree(const Vector3d& start, const Vector3d& stop,
+                           double start_time) {
+  std::cout << "creating root" << std::endl << std::flush;
+  root_ = Waypoint::Create(start, start_time, nullptr, nullptr);
+  std::cout << "inserting root" << std::endl << std::flush;
   kdtree_.Insert(root_);
 }
 

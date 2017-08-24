@@ -45,11 +45,11 @@
 namespace meta {
 
 // Factory method. Use this instead of the constructor.
-Dynamics::ConstPtr LinearDynamics::Create(const MatrixXd& A,
-                                          const MatrixXd& B,
-                                          const VectorXd& lower_u,
-                                          const VectorXd& upper_u) {
-  Dynamics::ConstPtr ptr(new LinearDynamics(A, B, lower_u, upper_u));
+LinearDynamics::ConstPtr LinearDynamics::Create(const MatrixXd& A,
+                                                const MatrixXd& B,
+                                                const VectorXd& lower_u,
+                                                const VectorXd& upper_u) {
+  LinearDynamics::ConstPtr ptr(new LinearDynamics(A, B, lower_u, upper_u));
   return ptr;
 }
 

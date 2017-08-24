@@ -65,10 +65,10 @@ public:
   bool Insert(const Waypoint::ConstPtr& waypoint);
 
   // Nearest neighbor search.
-  std::vector<Waypoint::ConstPtr> KnnSearch(VectorXd& query, size_t k) const;
+  std::vector<Waypoint::ConstPtr> KnnSearch(Vector3d& query, size_t k) const;
 
   // Radius search.
-  std::vector<Waypoint::ConstPtr> RadiusSearch(VectorXd& query, double r) const;
+  std::vector<Waypoint::ConstPtr> RadiusSearch(Vector3d& query, double r) const;
 
 private:
   // A Flann kdtree. Searches in this tree return indices, which are then mapped
