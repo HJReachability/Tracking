@@ -106,6 +106,7 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
   state_(5) = 0.0;
 
   control_ = VectorXd::Zero(control_dim_);
+  control_(2) = 10.0;
 
   // Set the initial time.
   time_ = ros::Time::now();
@@ -235,10 +236,17 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
   transform_stamped.transform.translation.y = state_(2);
   transform_stamped.transform.translation.z = state_(4);
 
-  transform_stamped.transform.rotation.x = 0;
-  transform_stamped.transform.rotation.y = 0;
-  transform_stamped.transform.rotation.z = 0;
-  transform_stamped.transform.rotation.w = 1;
+  // RPY to quaternion.
+  const double roll = control_(1);
+  const double pitch = control_(0);
+  const double yaw = 0.0;
+  const Quaterniond q = Eigen::AngleAxisd(roll, Vector3d::UnitX()) *
+    Eigen::AngleAxisd(pitch, Vector3d::UnitY());
+
+  transform_stamped.transform.rotation.x = q.x();
+  transform_stamped.transform.rotation.y = q.y();
+  transform_stamped.transform.rotation.z = q.z();
+  transform_stamped.transform.rotation.w = q.w();
 
   br_.sendTransform(transform_stamped);
 

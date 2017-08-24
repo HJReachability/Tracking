@@ -131,6 +131,9 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // Publish environment.
   space_->Visualize(environment_pub_, fixed_frame_id_);
 
+  // Wait a little for the simulator to begin.
+  ros::Duration(0.5).sleep();
+
   initialized_ = true;
   return true;
 }
@@ -239,12 +242,8 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 
 // Callback for processing sensor measurements. Replan trajectory.
 void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
-  VectorXd point(3);
-  point(0) = msg->x;
-  point(1) = msg->y;
-  point(2) = msg->z;
-
-  double radius = msg->w;
+  const Vector3d point(msg->x, msg->y, msg->z);
+  const double radius = msg->w;
 
   // Check if our version of the map has already seen this point.
   if (!(space_->IsObstacle(point, radius))) {
@@ -292,12 +291,14 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   }
 
   // 1) Compute relative state.
-  state_(0) = tf.transform.translation.x;
-  state_(1) = tf.transform.translation.y;
-  state_(2) = tf.transform.translation.z;
+  state_(dynamics_->SpatialDimension(0)) = tf.transform.translation.x;
+  state_(dynamics_->SpatialDimension(1)) = tf.transform.translation.y;
+  state_(dynamics_->SpatialDimension(2)) = tf.transform.translation.z;
 
   const VectorXd planner_state = traj_->GetState(current_time.toSec());
   const VectorXd relative_state = state_ - planner_state;
+
+  const Vector3d planner_position = dynamics_->Puncture(planner_state);
 
   // Publish planner state on tf.
   geometry_msgs::TransformStamped transform_stamped;
@@ -306,9 +307,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   transform_stamped.child_frame_id = planner_frame_id_;
 
-  transform_stamped.transform.translation.x = planner_state(0);
-  transform_stamped.transform.translation.y = planner_state(1);
-  transform_stamped.transform.translation.z = planner_state(2);
+  transform_stamped.transform.translation.x = planner_position(0);
+  transform_stamped.transform.translation.y = planner_position(1);
+  transform_stamped.transform.translation.z = planner_position(2);
 
   transform_stamped.transform.rotation.x = 0;
   transform_stamped.transform.rotation.y = 0;
@@ -316,6 +317,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   transform_stamped.transform.rotation.w = 1;
 
   br_.sendTransform(transform_stamped);
+
+  // 2) Get corresponding value function.
+  const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
 
   // Visualize the tracking bound.
   visualization_msgs::Marker tracking_bound_marker;
@@ -326,15 +330,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.type = visualization_msgs::Marker::CUBE;
   tracking_bound_marker.action = visualization_msgs::Marker::ADD;
 
-  const size_t kXDim = 0;
-  const size_t kYDim = 2;
-  const size_t kZDim = 4;
-  tracking_bound_marker.scale.x =
-    2.0 * traj_->GetValueFunction(current_time.toSec())->TrackingBound(kXDim);
-  tracking_bound_marker.scale.y =
-    2.0 * traj_->GetValueFunction(current_time.toSec())->TrackingBound(kYDim);
-  tracking_bound_marker.scale.z =
-    2.0 * traj_->GetValueFunction(current_time.toSec())->TrackingBound(kZDim);
+  tracking_bound_marker.scale.x = 2.0 * value->TrackingBound(0);
+  tracking_bound_marker.scale.y = 2.0 * value->TrackingBound(1);
+  tracking_bound_marker.scale.z = 2.0 * value->TrackingBound(2);
 
   tracking_bound_marker.color.a = 0.3;
   tracking_bound_marker.color.r = 0.9;
@@ -342,9 +340,6 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.color.b = 0.9;
 
   tracking_bound_pub_.publish(tracking_bound_marker);
-
-  // 2) Get corresponding value function.
-  const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
 
   // 3) Interpolate gradient to get optimal control.
   const VectorXd optimal_control = value->OptimalControl(relative_state);

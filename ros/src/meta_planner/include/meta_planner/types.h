@@ -44,6 +44,7 @@
 #define META_PLANNER_TYPES_H
 
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 // ------------------------------- CONSTANTS -------------------------------- //
 
