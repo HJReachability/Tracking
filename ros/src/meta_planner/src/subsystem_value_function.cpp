@@ -344,7 +344,14 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
-  max_planner_speed_ = *static_cast<double*>(max_planner_speed_mat->data);
+  num_elements = max_planner_speed_mat->nbytes / max_planner_speed_mat->data_size;
+  if (num_elements != 3)
+    ROS_WARN("Number of entries in max planner speed vector was %zu != 3.",
+             num_elements);
+
+  for (size_t ii = 0; ii < num_elements; ii++) {
+    max_planner_speed_.push_back(static_cast<double*>(max_planner_speed_mat->data)[ii]);
+  }
 
   if (data_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", data.c_str());

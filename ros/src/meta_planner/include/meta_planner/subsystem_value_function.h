@@ -78,11 +78,13 @@ public:
     return control_dimensions_;
   }
 
-  // Get the tracking error bound in the specified dimension..
+  // Get the tracking error bound in the specified subsystem dimension.
   inline double TrackingBound(size_t ii) const { return tracking_bound_[ii]; }
 
-  // Max planner speed.
-  inline double MaxPlannerSpeed() const { return max_planner_speed_; }
+  // Max planner speed in the given spatial dimension.
+  inline double MaxPlannerSpeed(size_t ii) const {
+    return max_planner_speed_[ii];
+  }
 
   // Was this SubsystemValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
@@ -112,7 +114,7 @@ private:
   std::vector<size_t> state_dimensions_;
   std::vector<size_t> control_dimensions_;
 
-  // Number of voxels and upper/lower bounds in each dimension.
+  // Number of voxels and upper/lower bounds in each subsystem dimension.
   std::vector<size_t> num_voxels_;
   std::vector<double> voxel_size_;
   std::vector<double> lower_;
@@ -121,11 +123,11 @@ private:
   // Data is stored in row-major order.
   std::vector<double> data_;
 
-  // Tracking error bound in each dimension.
+  // Tracking error bound in each subsystem dimension.
   std::vector<double> tracking_bound_;
 
-  // Max planner speed.
-  double max_planner_speed_;
+  // Max planner speed in each spatial dimension.
+  std::vector<double> max_planner_speed_;
 
   // Was this value function initialized/loaded properly?
   bool initialized_;

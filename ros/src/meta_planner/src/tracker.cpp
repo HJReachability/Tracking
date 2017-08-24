@@ -42,6 +42,8 @@
 
 #include <meta_planner/tracker.h>
 
+#include <stdlib.h>
+
 namespace meta {
 
 Tracker::Tracker()
@@ -143,6 +145,10 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 // Load all parameters from config files.
 bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
+
+  // Meta planning parameters.
+  if (!ros::param::search("meta/meta/max_connection_radius", key)) return false;
+  if (!ros::param::get(key, max_connection_radius_)) return false;
 
   // Control parameters.
   if (!ros::param::search("meta/control/time_step", key)) return false;
@@ -361,6 +367,17 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   tracking_bound_pub_.publish(tracking_bound_marker);
 
+  // Warn if outside tracking error bound.
+  if (std::abs(relative_state(dynamics_->SpatialDimension(0))) >
+      value->TrackingBound(0) ||
+      std::abs(relative_state(dynamics_->SpatialDimension(1))) >
+      value->TrackingBound(1) ||
+      std::abs(relative_state(dynamics_->SpatialDimension(2))) >
+      value->TrackingBound(2)) {
+    ROS_WARN("%s: Leaving the tracking error bound.", name_.c_str());
+    //    std::terminate();
+  }
+
   // 3) Interpolate gradient to get optimal control.
   const VectorXd optimal_control = value->OptimalControl(relative_state);
 
@@ -383,7 +400,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
 // Run meta planner.
 void Tracker::RunMetaPlanner() {
-  const MetaPlanner meta(space_);
+  const MetaPlanner meta(space_, max_connection_radius_);
 
   traj_ = meta.Plan(dynamics_->Puncture(state_),
                     dynamics_->Puncture(goal_), planners_);

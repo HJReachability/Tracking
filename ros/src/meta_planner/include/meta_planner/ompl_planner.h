@@ -86,9 +86,6 @@ private:
 
   // Convert between OMPL states and Vector3ds.
   Vector3d FromOmplState(const ob::State* state) const;
-
-  // Robot speed.
-  const double speed_;
 };
 
 // ------------------------------- IMPLEMENTATION --------------------------- //
@@ -96,8 +93,7 @@ private:
 template<typename PlannerType>
 OmplPlanner<PlannerType>::OmplPlanner(const ValueFunction::ConstPtr& value,
                                       const Box::ConstPtr& space)
-  : Planner(value, space),
-    speed_(value->MaxPlannerSpeed()) {}
+  : Planner(value, space) {}
 
 // Create OmplPlanner pointer.
 template<typename PlannerType>
@@ -175,10 +171,16 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
       const Vector3d position = FromOmplState(solution.getState(ii));
 
       // Handle all other states.
-      // Assuming speed is isotropic.
-      // TODO: make this more general.
-      if (ii > 0)
-        time += (position - positions.back()).norm() / speed_;
+      if (ii > 0) {
+        double dt = 0.0;
+        for (size_t jj = 0; jj < 3; jj++) {
+          dt = std::max(std::abs(position(jj) - positions.back()(jj)) /
+                        value_->MaxPlannerSpeed(jj),
+                        dt);
+        }
+
+        time += dt;
+      }
 
       times.push_back(time);
       positions.push_back(position);

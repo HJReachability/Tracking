@@ -93,12 +93,17 @@ ValueFunction::ValueFunction(const std::string& directory,
   }
 
   // Set max planner speed and check consistency.
-  max_planner_speed_ = subsystems_.front()->MaxPlannerSpeed();
-  for (const auto& subsystem : subsystems_) {
-    if (std::abs(max_planner_speed_ - subsystem->MaxPlannerSpeed()) > 1e-8) {
-      ROS_ERROR("Max planner speed was not consistent across subsystems.");
-      initialized_ = false;
-      return;
+  for (size_t ii = 0; ii < 3; ii++) {
+    max_planner_speed_(ii) = subsystems_.front()->MaxPlannerSpeed(ii);
+
+    std::cout << "max planner speed in dim " << ii << " is " << max_planner_speed_(ii) << std::endl;
+    for (const auto& subsystem : subsystems_) {
+      if (std::abs(max_planner_speed_(ii) -
+                   subsystem->MaxPlannerSpeed(ii)) > 1e-8) {
+        ROS_ERROR("Max planner speed was not consistent across subsystems.");
+        initialized_ = false;
+        return;
+      }
     }
   }
 

@@ -106,6 +106,9 @@ private:
   std::vector<Planner::ConstPtr> planners_;
   std::vector<std::string> value_directories_;
 
+  // Max connection radius for meta planner.
+  double max_connection_radius_;
+
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;

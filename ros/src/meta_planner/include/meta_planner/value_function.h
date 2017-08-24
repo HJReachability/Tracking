@@ -84,8 +84,10 @@ public:
   // Get the dynamics.
   inline Dynamics::ConstPtr GetDynamics() const { return dynamics_; }
 
-  // Max planner speed.
-  inline double MaxPlannerSpeed() const { return max_planner_speed_; }
+  // Max planner speed in the given spatial dimension.
+  inline double MaxPlannerSpeed(size_t ii) const {
+    return max_planner_speed_(ii);
+  }
 
   // Was this ValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
@@ -102,8 +104,8 @@ private:
   // Dynamics.
   const Dynamics::ConstPtr dynamics_;
 
-  // Planner max speed.
-  double max_planner_speed_;
+  // Planner max speed in each spatial dimension.
+  Vector3d max_planner_speed_;
 
   // List of value functions for independent subsystems.
   std::vector<SubsystemValueFunction::ConstPtr> subsystems_;
