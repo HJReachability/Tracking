@@ -95,14 +95,14 @@ private:
   VectorXd Puncture(const VectorXd& state) const;
 
   // Return the 1D voxel index corresponding to the given state.
-  size_t StateToIndex(const VectorXd& state) const;
+  size_t StateToIndex(const VectorXd& punctured) const;
 
   // Compute the distance (vector) from this state to the center
   // of the nearest voxel.
-  VectorXd DistanceToCenter(const VectorXd& state) const;
+  VectorXd DistanceToCenter(const VectorXd& punctured) const;
 
   // Compute a central difference at the voxel containing this state.
-  VectorXd CentralDifference(const VectorXd& state) const;
+  VectorXd CentralDifference(const VectorXd& punctured) const;
 
   // Load from file. Returns whether or not it was successful.
   bool Load(const std::string& file_name);

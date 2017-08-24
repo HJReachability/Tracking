@@ -338,8 +338,6 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   br_.sendTransform(transform_stamped);
 
-  std::cout << "Sent tf" << std::endl;
-
   // 2) Get corresponding value function.
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
 
@@ -352,13 +350,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.type = visualization_msgs::Marker::CUBE;
   tracking_bound_marker.action = visualization_msgs::Marker::ADD;
 
-  std::cout << "Getting trancking bound" << std::endl;
-
   tracking_bound_marker.scale.x = 2.0 * value->TrackingBound(0);
   tracking_bound_marker.scale.y = 2.0 * value->TrackingBound(1);
   tracking_bound_marker.scale.z = 2.0 * value->TrackingBound(2);
-
-  std::cout << "got it" << std::endl;
 
   tracking_bound_marker.color.a = 0.3;
   tracking_bound_marker.color.r = 0.9;
@@ -368,9 +362,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_pub_.publish(tracking_bound_marker);
 
   // 3) Interpolate gradient to get optimal control.
-  std::cout << "getting opt ctl" << std::endl;
   const VectorXd optimal_control = value->OptimalControl(relative_state);
-  std::cout << "opt ctl: " << optimal_control.transpose() << std::endl;
 
   // 4) Apply optimal control.
   geometry_msgs::Vector3 control_msg;

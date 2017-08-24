@@ -79,8 +79,6 @@ Trajectory::Ptr MetaPlanner::Plan(
     for (const auto& planner : planners) {
       traj = planner->Plan(neighbors[0]->point_, sample, neighbors[0]->time_);
 
-      std::cout << "success." << std::endl;
-
       if (traj != nullptr)
         break;
     }
@@ -103,9 +101,7 @@ Trajectory::Ptr MetaPlanner::Plan(
     const Waypoint::ConstPtr waypoint = Waypoint::Create(
       sample, traj->LastTime(), traj, neighbors[0]);
 
-    std::cout << "Inserting waypoint" << std::endl;
     tree.Insert(waypoint, false);
-    std::cout << "done." << std::endl;
 
     if (goal_traj != nullptr) {
       // Connect to the goal. NOTE: the first point in goal_traj coincides with
@@ -114,10 +110,7 @@ Trajectory::Ptr MetaPlanner::Plan(
       const Waypoint::ConstPtr goal = Waypoint::Create(
         stop, goal_traj->LastTime(), goal_traj, waypoint);
 
-      std::cout << "inserting goal waypoint" << std::endl;
       tree.Insert(goal, true);
-
-      std::cout << "inserted goal in tree" << std::endl;
 
       // TODO: in future we could have some other stopping criteria.
       done = true;
@@ -125,10 +118,8 @@ Trajectory::Ptr MetaPlanner::Plan(
   }
 
   if (done) {
-    std::cout << "Getting best from tree" << std::endl;
     // Get the best (fastest) trajectory out of the tree.
     const Trajectory::Ptr best = tree.BestTrajectory();
-    std::cout << "got best" << std::endl;
     return best;
   }
 

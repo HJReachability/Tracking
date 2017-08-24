@@ -163,7 +163,6 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
   const ob::PlannerStatus solved = ompl_setup.solve(1.0);
 
   if (solved) {
-    std::cout << "planner succeeded" << std::endl;
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();
 
     // Populate the Trajectory with states and time stamps.
@@ -174,8 +173,6 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
     double time = start_time;
     for (size_t ii = 0; ii < solution.getStateCount(); ii++) {
       const Vector3d position = FromOmplState(solution.getState(ii));
-
-      std::cout << "position: " << position.transpose() << std::endl;
 
       // Handle all other states.
       // Assuming speed is isotropic.
@@ -188,13 +185,9 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
       values.push_back(value_);
     }
 
-    std::cout << "Liftin.." << std::endl;
-
     // Convert to full state space.
     std::vector<VectorXd> full_states =
       value_->GetDynamics()->LiftGeometricTrajectory(positions, times);
-
-    std::cout << "done lifting" << std::endl;
 
     return Trajectory::Create(times, full_states, values);
   }

@@ -73,6 +73,7 @@ Create(const VectorXd& lower_u, const VectorXd& upper_u) {
 VectorXd NearHoverQuadNoYaw::OptimalControl(
   const VectorXd& x, const VectorXd& value_gradient) const {
   std::cout << "value grad " << value_gradient.transpose() << std::endl;
+
   // Set each dimension of optimal control to upper/lower bound depending
   // on the sign of the gradient in that dimension. We want to minimize the
   // inner product between the projected gradient and control.
@@ -108,7 +109,6 @@ Vector3d NearHoverQuadNoYaw::Puncture(const VectorXd& x) const {
 std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
   const std::vector<Vector3d>& positions,
   const std::vector<double>& times) const {
-  std::cout << "lifint traj" << std::endl;
 
   // Number of entries in trajectory.
   size_t num_waypoints = positions.size();
