@@ -44,6 +44,15 @@
 #define META_PLANNER_TYPES_H
 
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
+
+// ------------------------------- CONSTANTS -------------------------------- //
+
+namespace meta {
+  namespace constants {
+    // Acceleration due to gravity.
+    const double G = 9.81;
+  } //\namespace constants
 
 // ------------------------ THIRD PARTY TYPEDEFS ---------------------------- //
 
@@ -54,5 +63,7 @@ using Eigen::Matrix4d;
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
 using Eigen::Quaterniond;
+
+} //\namespace meta
 
 #endif

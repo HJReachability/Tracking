@@ -43,6 +43,7 @@
 #include <meta_planner/box.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/ompl_planner.h>
+#include <meta_planner/linear_dynamics.h>
 #include <meta_planner/types.h>
 
 #include <stdio.h>
@@ -66,12 +67,24 @@ TEST(OmplPlanner, TestUnitBox) {
   std::vector<size_t> dimensions(kAmbientDimension);
   std::iota(dimensions.begin(), dimensions.end(), 0);
 
-  // Create a nullptr for the ValueFunction.
-  const ValueFunction::ConstPtr null_value(NULL);
+  // Create a new ValueFunction, but don't bother specifying dynamics.
+  // TODO! Fix this to use one of the small test mat files instead.
+  const std::string file_name =
+    std::string(PRECOMPUTATION_DIR) + std::string("POINT_3D_3D_RS.mat");
+
+  // Create identity dynamics.
+  const Dynamics::ConstPtr dynamics = LinearDynamics::Create(
+    MatrixXd::Identity(kStateDimension, kStateDimension),
+    MatrixXd::Identity(kStateDimension, kControlDimension),
+    VectorXd::Constant(kControlDimension, kControlLower),
+    VectorXd::Constant(kControlDimension, kControlUpper));
+
+  const ValueFunction::ConstPtr value =
+    ValueFunction::Create(file_name, dynamics);
 
   // Plan.
   const Planner::ConstPtr planner = OmplPlanner<og::RRTConnect>::Create(
-    null_value, box, dimensions, kVelocity);
+    value, box, dimensions, kVelocity);
   const Trajectory::ConstPtr traj = planner->Plan(start, stop);
 
   // Check that start and stop states match.

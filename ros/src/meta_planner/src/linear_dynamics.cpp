@@ -42,12 +42,14 @@
 
 #include <meta_planner/linear_dynamics.h>
 
+namespace meta {
+
 // Factory method. Use this instead of the constructor.
-Dynamics::ConstPtr LinearDynamics::Create(const MatrixXd& A,
-                                          const MatrixXd& B,
-                                          const VectorXd& lower_u,
-                                          const VectorXd& upper_u) {
-  Dynamics::ConstPtr ptr(new LinearDynamics(A, B, lower_u, upper_u));
+LinearDynamics::ConstPtr LinearDynamics::Create(const MatrixXd& A,
+                                                const MatrixXd& B,
+                                                const VectorXd& lower_u,
+                                                const VectorXd& upper_u) {
+  LinearDynamics::ConstPtr ptr(new LinearDynamics(A, B, lower_u, upper_u));
   return ptr;
 }
 
@@ -61,18 +63,51 @@ VectorXd LinearDynamics::OptimalControl(const VectorXd& x,
   const VectorXd proj_gradient = B_.transpose() * value_gradient;
 
   // Set each dimension of optimal control to upper/lower bound depending
-  // on the sign of the gradient in that dimension.
+  // on the sign of the gradient in that dimension. We want to minimize the
+  // inner product between the projected gradient and control.
   // If the gradient is 0, then sets control to zero by default.
   VectorXd optimal_control(VectorXd::Zero(lower_u_.size()));
 
   for (size_t ii = 0; ii < lower_u_.size(); ii++) {
     if (proj_gradient(ii) < 0.0)
-      optimal_control(ii) = lower_u_(ii);
-    else if (proj_gradient(ii) > 0.0)
       optimal_control(ii) = upper_u_(ii);
+    else if (proj_gradient(ii) > 0.0)
+      optimal_control(ii) = lower_u_(ii);
   }
 
   return optimal_control;
+}
+
+// Puncture a full state vector and return a position.
+Vector3d LinearDynamics::Puncture(const VectorXd& x) const {
+  ROS_WARN("Puncture is unimplemented.");
+  return Vector3d::Zero();
+}
+
+// Get the corresponding full state dimension to the given spatial dimension.
+size_t LinearDynamics::SpatialDimension(size_t dimension) const {
+  ROS_WARN("SpatialDimension is unimplemented.");
+
+  return dimension;
+}
+
+// Derived classes must be able to translate a geometric trajectory
+// (i.e. through Euclidean space) into a full state space trajectory.
+std::vector<VectorXd> LinearDynamics::LiftGeometricTrajectory(
+  const std::vector<Vector3d>& positions,
+  const std::vector<double>& times) const {
+  ROS_WARN("LiftGeometricTrajectory is unimplemented.");
+
+  std::vector<VectorXd> states;
+  for (const auto& p : positions) {
+    VectorXd state(3);
+    state(0) = p(0);
+    state(1) = p(1);
+    state(2) = p(2);
+    states.push_back(state);
+  }
+
+  return states;
 }
 
 // Private constructor. Use the factory method instead.
@@ -91,3 +126,5 @@ LinearDynamics::LinearDynamics(const MatrixXd& A, const MatrixXd& B,
   if (B_.cols() != lower_u_.size())
     ROS_ERROR("B matrix width does not match control dimension.");
 }
+
+} //\namespace meta

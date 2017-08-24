@@ -70,5 +70,5 @@ TEST(LinearDynamics, TestOptimalControl) {
     dynamics->OptimalControl(state, value_gradient);
 
   for (size_t ii = 0; ii < kControlDimension; ii++)
-    EXPECT_EQ(optimal_control(ii), kControlUpper);
+    EXPECT_EQ(optimal_control(ii), kControlLower);
 }

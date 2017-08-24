@@ -44,9 +44,10 @@
 #include <demo/simulator.h>
 #include <random>
 
+namespace meta {
+
 Simulator::Simulator()
-  : initialized_(false),
-    dimension_(3) {}
+  : initialized_(false) {}
 
 Simulator::~Simulator() {}
 
@@ -64,32 +65,51 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Initialize current state and control to zero.
-  state_ = VectorXd::Zero(dimension_);
-  control_ = VectorXd::Zero(dimension_);
-
-  // Initialize state space. For now, use an empty box.
-  // TODO: populate with obstacles.
-  space_ = BallsInBox::Create(dimension_); //Create returns a pointer to a BallsInBox object
-  VectorXd lower(dimension_);
-  VectorXd upper(dimension_);
-  //Box has corners at (0, 0, 0) and (1, 1, 1) for 3D
-  for (size_t ii = 0; ii < dimension_; ii++){
-    lower(ii) = 0.0;
-    upper(ii) = 1.0;
-  }
-  space_->SetBounds(lower, upper);
-  const size_t kNumObstacles = 5; 
-
-  std::random_device r;
-  std::default_random_engine engine(r()); 
-  std::uniform_real_distribution<double> uniform_dist(0.05, 0.3);
-  //Add an obstacle with a random radius at a random location
-  for (size_t ii = 0; ii < kNumObstacles; ii++){
-    space_->AddObstacle(space_->Sample(), uniform_dist(engine));
+  // Control bounds.
+  VectorXd control_upper_vec(control_dim_);
+  VectorXd control_lower_vec(control_dim_);
+  for (size_t ii = 0; ii < control_dim_; ii++) {
+    control_upper_vec(ii) = control_upper_[ii];
+    control_lower_vec(ii) = control_lower_[ii];
   }
 
-  time_ = ros::WallTime::now();
+  // Dynamics.
+  dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
+
+  // Initialize state space.
+  space_ = BallsInBox::Create();
+
+  // Set state space bounds.
+  VectorXd state_upper_vec(state_dim_);
+  VectorXd state_lower_vec(state_dim_);
+  for (size_t ii = 0; ii < state_dim_; ii++) {
+    state_upper_vec(ii) = state_upper_[ii];
+    state_lower_vec(ii) = state_lower_[ii];
+  }
+
+  space_->SetBounds(dynamics_->Puncture(state_lower_vec),
+                    dynamics_->Puncture(state_upper_vec));
+
+  // Add obstacles.
+  std::random_device rd;
+  std::default_random_engine rng(rd());
+  std::uniform_real_distribution<double> uniform_radius(0.5, 2.0);
+
+  // Add an obstacle with a random radius at a random location.
+  for (size_t ii = 0; ii < num_obstacles_; ii++)
+    space_->AddObstacle(space_->Sample(), uniform_radius(rng));
+
+  // Initialize current state and control.
+  state_ = 0.5 * (state_lower_vec + state_upper_vec);
+  state_(1) = 0.0;
+  state_(3) = 0.0;
+  state_(5) = 0.0;
+
+  control_ = VectorXd::Zero(control_dim_);
+  control_(2) = 10.0;
+
+  // Set the initial time.
+  time_ = ros::Time::now();
 
   initialized_ = true;
   return true;
@@ -99,26 +119,61 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
 bool Simulator::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
 
-  // Control time step.
-  if (!ros::param::search("meta_planner/control/time_step", key)) return false;
+  // Sensor radius.
+  if (!ros::param::search("meta/simulator/sensor_radius", key)) return false;
+  if (!ros::param::get(key, sensor_radius_)) return false;
+
+  // Number of obstacles.
+  int num_obstacles = 1;
+  if (!ros::param::search("meta/simulator/num_obstacles", key)) return false;
+  if (!ros::param::get(key, num_obstacles)) return false;
+  num_obstacles_ = static_cast<size_t>(num_obstacles);
+
+  // Control parameters.
+  if (!ros::param::search("meta/simulator/time_step", key)) return false;
   if (!ros::param::get(key, time_step_)) return false;
 
+  int dimension = 1;
+  if (!ros::param::search("meta/control/dim", key)) return false;
+  if (!ros::param::get(key, dimension)) return false;
+  control_dim_ = static_cast<size_t>(dimension);
+
+  // State space parameters.
+  if (!ros::param::search("meta/state/dim", key)) return false;
+  if (!ros::param::get(key, dimension)) return false;
+  state_dim_ = static_cast<size_t>(dimension);
+
+  if (!ros::param::search("meta/state/upper", key)) return false;
+  if (!ros::param::get(key, state_upper_)) return false;
+
+  if (!ros::param::search("meta/state/lower", key)) return false;
+  if (!ros::param::get(key, state_lower_)) return false;
+
+  // Control parameters.
+  if (!ros::param::search("meta/control/upper", key)) return false;
+  if (!ros::param::get(key, control_upper_)) return false;
+
+  if (!ros::param::search("meta/control/lower", key)) return false;
+  if (!ros::param::get(key, control_lower_)) return false;
+
   // Topics and frame ids.
-  if (!ros::param::search("meta_planner/topics/control", key)) return false;
+  if (!ros::param::search("meta/topics/control", key)) return false;
   if (!ros::param::get(key, control_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/topics/sensor", key)) return false;
+  if (!ros::param::search("meta/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/topics/vis", key)) return false;
-  if (!ros::param::get(key, vis_topic_)) return false;
+  if (!ros::param::search("meta/topics/sensor_radius", key)) return false;
+  if (!ros::param::get(key, sensor_radius_topic_)) return false;
 
-  if (!ros::param::search("meta_planner/frames/fixed", key)) return false;
+  if (!ros::param::search("meta/topics/true_environment", key)) return false;
+  if (!ros::param::get(key, environment_topic_)) return false;
+
+  if (!ros::param::search("meta/frames/fixed", key)) return false;
   if (!ros::param::get(key, fixed_frame_id_)) return false;
 
-  if (!ros::param::search("meta_planner/frames/tracker", key)) return false;
+  if (!ros::param::search("meta/frames/tracker", key)) return false;
   if (!ros::param::get(key, robot_frame_id_)) return false;
-  std::cout << "frames/tracker" << std::endl;
 
   // TODO! Load environment parameters.
 
@@ -134,8 +189,11 @@ bool Simulator::RegisterCallbacks(const ros::NodeHandle& n) {
     control_topic_.c_str(), 10, &Simulator::ControlCallback, this);
 
   // Publishers.
-  vis_pub_ = nl.advertise<visualization_msgs::Marker>(
-    vis_topic_.c_str(), 10, false);
+  environment_pub_ = nl.advertise<visualization_msgs::Marker>(
+    environment_topic_.c_str(), 10, false);
+
+  sensor_radius_pub_ = nl.advertise<visualization_msgs::Marker>(
+    sensor_radius_topic_.c_str(), 10, false);
 
   sensor_pub_ = nl.advertise<geometry_msgs::Quaternion>(
     sensor_topic_.c_str(), 10, false);
@@ -150,7 +208,6 @@ bool Simulator::RegisterCallbacks(const ros::NodeHandle& n) {
 
 // Callback for processing control signals.
 void Simulator::ControlCallback(const geometry_msgs::Vector3::ConstPtr& msg) {
-  // TODO!
   control_(0) = msg->x;
   control_(1) = msg->y;
   control_(2) = msg->z;
@@ -159,52 +216,86 @@ void Simulator::ControlCallback(const geometry_msgs::Vector3::ConstPtr& msg) {
 // Timer callback for generating sensor measurements and updating
 // state based on last received control signal.
 void Simulator::TimerCallback(const ros::TimerEvent& e) {
-  // TODO!
-  //Update state
-  const ros::WallTime now = ros::WallTime::now();
+  // Update state.
+  const ros::Time now = ros::Time::now();
   const double dt = (now - time_).toSec();
-  time_ = now;
-  for (size_t ii = 0; ii < state_.size(); ii++)
-    state_(ii) += control_(ii) * dt;
-  
 
-  // Broadcast tf
+  state_ += dynamics_->Evaluate(state_, control_) * dt;
+
+  time_ = now;
+
+  // Broadcast tf.
   geometry_msgs::TransformStamped transform_stamped;
- 
+
   transform_stamped.header.frame_id = fixed_frame_id_;
-  transform_stamped.header.stamp = ros::Time::now();
-  
+  transform_stamped.header.stamp = now;
+
   transform_stamped.child_frame_id = robot_frame_id_;
 
-  transform_stamped.transform.translation.x = state_(0);
-  transform_stamped.transform.translation.y = state_(1);
-  transform_stamped.transform.translation.z = state_(2);
- 
-  transform_stamped.transform.rotation.x = 0;
-  transform_stamped.transform.rotation.y = 0;
-  transform_stamped.transform.rotation.z = 0;
-  transform_stamped.transform.rotation.w = 1;
-  
+  transform_stamped.transform.translation.x =
+    state_(dynamics_->SpatialDimension(0));
+  transform_stamped.transform.translation.y =
+    state_(dynamics_->SpatialDimension(1));
+  transform_stamped.transform.translation.z =
+    state_(dynamics_->SpatialDimension(2));
+
+  // RPY to quaternion.
+  const double roll = control_(1);
+  const double pitch = control_(0);
+  const double yaw = 0.0;
+  const Quaterniond q = Eigen::AngleAxisd(roll, Vector3d::UnitX()) *
+    Eigen::AngleAxisd(pitch, Vector3d::UnitY());
+
+  transform_stamped.transform.rotation.x = q.x();
+  transform_stamped.transform.rotation.y = q.y();
+  transform_stamped.transform.rotation.z = q.z();
+  transform_stamped.transform.rotation.w = q.w();
+
   br_.sendTransform(transform_stamped);
 
+  // Publish sensor message if an obstacle is within range.
+  // TODO! Parameterize sensor radius.
+  Vector3d obstacle_position;
+  double obstacle_radius = -1.0;
 
-  //Publish sensor message if an obstacle is within range
-  VectorXd point(3);
-  for (size_t ii = 0; ii < point.size(); ii++){
-    point(ii) = 0;
-  }
-  double radius = 0;
-  double sensingDist = 0.05;
-  bool obstacle_sensed = space_->SenseObstacle(state_, point, radius, sensingDist);
-  if (obstacle_sensed) {
+  Vector3d position;
+  position(0) = state_(dynamics_->SpatialDimension(0));
+  position(1) = state_(dynamics_->SpatialDimension(1));
+  position(2) = state_(dynamics_->SpatialDimension(2));
+
+  if (space_->SenseObstacle(position, sensor_radius_,
+                            obstacle_position, obstacle_radius)) {
     geometry_msgs::Quaternion q;
-    q.x = point(0);
-    q.y = point(1);
-    q.z = point(2);
-    q.w = radius;
+    q.x = obstacle_position(0);
+    q.y = obstacle_position(1);
+    q.z = obstacle_position(2);
+    q.w = obstacle_radius;
+
     sensor_pub_.publish(q);
   }
 
-  space_->Visualize(vis_pub_, fixed_frame_id_);
- 
+  // Visualize the environment.
+  space_->Visualize(environment_pub_, fixed_frame_id_);
+
+   // Visualize the sensor radius.
+  visualization_msgs::Marker sensor_radius_marker;
+  sensor_radius_marker.ns = "sensor";
+  sensor_radius_marker.header.frame_id = robot_frame_id_;
+  sensor_radius_marker.header.stamp = now;
+  sensor_radius_marker.id = 0;
+  sensor_radius_marker.type = visualization_msgs::Marker::SPHERE;
+  sensor_radius_marker.action = visualization_msgs::Marker::ADD;
+
+  sensor_radius_marker.scale.x = 2.0 * sensor_radius_;
+  sensor_radius_marker.scale.y = 2.0 * sensor_radius_;
+  sensor_radius_marker.scale.z = 2.0 * sensor_radius_;
+
+  sensor_radius_marker.color.a = 0.2;
+  sensor_radius_marker.color.r = 0.8;
+  sensor_radius_marker.color.g = 0.0;
+  sensor_radius_marker.color.b = 0.2;
+
+  sensor_radius_pub_.publish(sensor_radius_marker);
 }
+
+} //\namespace meta

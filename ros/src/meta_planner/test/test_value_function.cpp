@@ -54,8 +54,10 @@ TEST(ValueFunction, TestInitialize) {
   const double kControlLower = -1.0;
   const double kControlUpper = 1.0;
 
+  // TODO! Revert to using the small test mat file.
   const std::string file_name =
-    std::string(PRECOMPUTATION_DIR) + std::string("test_value_function.mat");
+    std::string(PRECOMPUTATION_DIR) + std::string("Point_3D_3D_RS.mat");
+    //    std::string(PRECOMPUTATION_DIR) + std::string("test_value_function.mat");
 
   // Create identity dynamics.
   const Dynamics::ConstPtr dynamics = LinearDynamics::Create(
@@ -79,7 +81,8 @@ TEST(ValueFunction, TestValue) {
   const double kControlUpper = 1.0;
 
   const std::string file_name =
-    std::string(PRECOMPUTATION_DIR) + std::string("test_value_function.mat");
+    std::string(PRECOMPUTATION_DIR) + std::string("Point_3D_3D_RS.mat");
+    //    std::string(PRECOMPUTATION_DIR) + std::string("test_value_function.mat");
 
   // Create identity dynamics.
   const Dynamics::ConstPtr dynamics = LinearDynamics::Create(
@@ -113,7 +116,8 @@ TEST(ValueFunction, TestGradient) {
   const double kControlUpper = 1.0;
 
   const std::string file_name =
-    std::string(PRECOMPUTATION_DIR) + std::string("test_value_function.mat");
+    std::string(PRECOMPUTATION_DIR) + std::string("Point_3D_3D_RS.mat");
+    //    std::string(PRECOMPUTATION_DIR) + std::string("test_value_function.mat");
 
   // Create identity dynamics.
   const Dynamics::ConstPtr dynamics = LinearDynamics::Create(

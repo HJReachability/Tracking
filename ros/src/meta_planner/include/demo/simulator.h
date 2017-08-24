@@ -45,6 +45,7 @@
 #define DEMO_SIMULATOR_H
 
 #include <demo/balls_in_box.h>
+#include <meta_planner/near_hover_quad_no_yaw.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
@@ -55,6 +56,8 @@
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <string>
+
+namespace meta {
 
 class Simulator : private Uncopyable {
 public:
@@ -75,34 +78,48 @@ private:
   // state based on last received control signal.
   void TimerCallback(const ros::TimerEvent& e);
 
+  // Dynamics.
+  Dynamics::ConstPtr dynamics_;
+  std::vector<double> control_lower_;
+  std::vector<double> control_upper_;
+
   // Current state and control.
   VectorXd state_;
   VectorXd control_;
 
+  // Sensor radius.
+  double sensor_radius_;
+
   // State space.
   BallsInBox::Ptr space_;
-  const size_t dimension_;
+  size_t num_obstacles_;
+  size_t state_dim_;
+  size_t control_dim_;
+
+  std::vector<double> state_lower_;
+  std::vector<double> state_upper_;
 
   // Set a recurring timer for a discrete-time controller.
+  ros::Time time_;
   ros::Timer timer_;
   double time_step_;
 
-  ros::WallTime time_;
-
-  tf2_ros::TransformBroadcaster br_;
-
   // Publishers/subscribers and related topics.
   ros::Subscriber control_sub_;
-  ros::Publisher vis_pub_;
+  ros::Publisher sensor_radius_pub_;
+  ros::Publisher environment_pub_;
   ros::Publisher sensor_pub_;
 
   std::string control_topic_;
-  std::string vis_topic_;
+  std::string sensor_radius_topic_;
+  std::string environment_topic_;
   std::string sensor_topic_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;
   std::string robot_frame_id_;
+
+  tf2_ros::TransformBroadcaster br_;
 
   // Is this class initialized?
   bool initialized_;
@@ -110,5 +127,7 @@ private:
   // Name of this class, for use in debug messages.
   std::string name_;
 };
+
+} //\namespace meta
 
 #endif

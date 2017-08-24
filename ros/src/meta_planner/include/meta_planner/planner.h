@@ -56,32 +56,33 @@
 
 #include <ros/ros.h>
 
+namespace meta {
+
 class Planner : private Uncopyable {
 public:
+  typedef std::shared_ptr<const Planner> ConstPtr;
+
+  // Destructor.
   virtual ~Planner() {}
 
-  typedef std::shared_ptr<const Planner> ConstPtr;
   // Derived classes must plan trajectories between two points.
-  virtual Trajectory::Ptr Plan(const VectorXd& start,
-                               const VectorXd& stop,
+  virtual Trajectory::Ptr Plan(const Vector3d& start,
+                               const Vector3d& stop,
                                double start_time = 0.0) const = 0;
 
 protected:
   explicit Planner(const ValueFunction::ConstPtr& value,
-                   const Box::ConstPtr& space,
-                   const std::vector<size_t>& dimensions)
+                   const Box::ConstPtr& space)
     : value_(value),
-      space_(space),
-      dimensions_(dimensions) {}
+      space_(space) {}
 
   // Value function.
   const ValueFunction::ConstPtr value_;
 
   // State space (with collision checking).
   const Box::ConstPtr space_;
-
-  // Dimensions within the overall state space in which this Planner operates.
-  const std::vector<size_t> dimensions_;
 };
+
+} //\namespace meta
 
 #endif

@@ -45,19 +45,24 @@
 
 #include <meta_planner/dynamics.h>
 
+namespace meta {
+
 class LinearDynamics : public Dynamics {
 public:
+  typedef std::shared_ptr<const LinearDynamics> ConstPtr;
+
+  // Destructor.
   ~LinearDynamics() {}
 
   // Factory method. Use this instead of the constructor.
-  static Dynamics::ConstPtr Create(const MatrixXd& A,
-                                   const MatrixXd& B,
-                                   const VectorXd& lower_u,
-                                   const VectorXd& upper_u);
+  static ConstPtr Create(const MatrixXd& A,
+                         const MatrixXd& B,
+                         const VectorXd& lower_u,
+                         const VectorXd& upper_u);
 
   // Derived classes must be able to give the time derivative of state
   // as a function of current state and control.
-  inline VectorXd operator()(const VectorXd& x, const VectorXd& u) const {
+  inline VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const {
     return A_ * x + B_ * u;
   }
 
@@ -68,6 +73,19 @@ public:
   VectorXd OptimalControl(const VectorXd& x,
                           const VectorXd& value_gradient) const;
 
+  // Puncture a full state vector and return a position.
+  virtual Vector3d Puncture(const VectorXd& x) const;
+
+  // Get the corresponding full state dimension to the given spatial dimension.
+  virtual size_t SpatialDimension(size_t dimension) const;
+
+  // Derived classes must be able to translate a geometric trajectory
+  // (i.e. through Euclidean space) into a full state space trajectory.
+  // Should be overridden by derived classes.
+  virtual std::vector<VectorXd> LiftGeometricTrajectory(
+    const std::vector<Vector3d>& positions,
+    const std::vector<double>& times) const;
+
 private:
   // Private constructor. Use the factory method instead.
   explicit LinearDynamics(const MatrixXd& A, const MatrixXd& B,
@@ -77,5 +95,7 @@ private:
   const MatrixXd A_;
   const MatrixXd B_;
 };
+
+} //\namespace meta
 
 #endif

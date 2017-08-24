@@ -43,6 +43,8 @@
 
 #include <meta_planner/flann_tree.h>
 
+namespace meta {
+
 FlannTree::~FlannTree() {
   // Free memory from points in the kdtree.
   if (index_ != nullptr) {
@@ -92,7 +94,7 @@ bool FlannTree::Insert(const Waypoint::ConstPtr& waypoint) {
 
 // Nearest neighbor search.
 std::vector<Waypoint::ConstPtr>
-FlannTree::KnnSearch(VectorXd& query, size_t k) const {
+FlannTree::KnnSearch(Vector3d& query, size_t k) const {
   std::vector<Waypoint::ConstPtr> neighbors;
 
   if (index_ == nullptr) {
@@ -122,7 +124,7 @@ FlannTree::KnnSearch(VectorXd& query, size_t k) const {
 
 // Radius search.
 std::vector<Waypoint::ConstPtr>
-FlannTree::RadiusSearch(VectorXd& query, double r) const {
+FlannTree::RadiusSearch(Vector3d& query, double r) const {
   std::vector<Waypoint::ConstPtr> neighbors;
 
   if (index_ == nullptr) {
@@ -148,3 +150,5 @@ FlannTree::RadiusSearch(VectorXd& query, double r) const {
 
   return neighbors;
 }
+
+} //\namespace meta

@@ -43,14 +43,17 @@
 #ifndef META_PLANNER_VALUE_FUNCTION_H
 #define META_PLANNER_VALUE_FUNCTION_H
 
+#include <meta_planner/subsystem_value_function.h>
 #include <meta_planner/dynamics.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
-#include <matio.h>
-#include <math.h>
+#include <limits>
+#include <unordered_set>
 #include <memory>
+
+namespace meta {
 
 class ValueFunction : private Uncopyable {
 public:
@@ -62,8 +65,9 @@ public:
   // Factory method. Use this instead of the constructor.
   // Note that this class is const-only, which means that once it is
   // instantiated it can never be changed.
-  static ConstPtr Create(const std::string& file_name,
-                         const Dynamics::ConstPtr& dynamics);
+  static ConstPtr Create(const std::string& directory,
+                         const Dynamics::ConstPtr& dynamics,
+                         size_t x_dim, size_t u_dim);
 
   // Linearly interpolate to get the value/gradient at a particular state.
   double Value(const VectorXd& state) const;
@@ -74,40 +78,42 @@ public:
     return dynamics_->OptimalControl(state, Gradient(state));
   }
 
+  // Get the tracking error bound in this spatial dimension.
+  double TrackingBound(size_t dimension) const;
+
+  // Get the dynamics.
+  inline Dynamics::ConstPtr GetDynamics() const { return dynamics_; }
+
+  // Max planner speed in the given spatial dimension.
+  inline double MaxPlannerSpeed(size_t ii) const {
+    return max_planner_speed_(ii);
+  }
+
   // Was this ValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
 
 private:
-  explicit ValueFunction(const std::string& file_name,
-                         const Dynamics::ConstPtr& dynamics);
+  explicit ValueFunction(const std::string& directory,
+                         const Dynamics::ConstPtr& dynamics,
+                         size_t x_dim, size_t u_dim);
 
-  // Return the 1D voxel index corresponding to the given state.
-  size_t StateToIndex(const VectorXd& state) const;
-
-  // Compute the distance (vector) from this state to the center
-  // of the nearest voxel.
-  VectorXd DistanceToCenter(const VectorXd& state) const;
-
-  // Compute a central difference at the voxel containing this state.
-  VectorXd CentralDifference(const VectorXd& state) const;
-
-  // Load from file. Returns whether or not it was successful.
-  bool Load(const std::string& file_name);
+  // State/control space dimensions.
+  const size_t x_dim_;
+  const size_t u_dim_;
 
   // Dynamics.
   const Dynamics::ConstPtr dynamics_;
 
-  // Number of voxels and upper/lower bounds in each dimension.
-  std::vector<size_t> num_voxels_;
-  std::vector<double> voxel_size_;
-  std::vector<double> lower_;
-  std::vector<double> upper_;
+  // Planner max speed in each spatial dimension.
+  Vector3d max_planner_speed_;
 
-  // Data is stored in row-major order.
-  std::vector<double> data_;
+  // List of value functions for independent subsystems.
+  std::vector<SubsystemValueFunction::ConstPtr> subsystems_;
 
   // Was this value function initialized/loaded properly?
   bool initialized_;
 };
+
+} //\namespace meta
 
 #endif

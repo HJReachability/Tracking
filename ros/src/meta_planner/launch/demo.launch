@@ -13,7 +13,7 @@
 
   <node name="simulator"
         pkg="meta_planner"
-        type="demo_node"
+        type="simulator_node"
         output="screen">
   </node>
 

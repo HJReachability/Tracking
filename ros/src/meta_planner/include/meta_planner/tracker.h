@@ -50,13 +50,18 @@
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 #include <meta_planner/ompl_planner.h>
+#include <meta_planner/linear_dynamics.h>
+#include <meta_planner/near_hover_quad_no_yaw.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <string>
+
+namespace meta {
 
 class Tracker : private Uncopyable {
 public:
@@ -76,37 +81,61 @@ private:
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
 
+  // Run the meta planner.
+  void RunMetaPlanner();
+
   // Current state and trajectory.
+  VectorXd goal_;
   VectorXd state_;
   Trajectory::ConstPtr traj_;
 
-  // State space.
-  size_t dimension_;
+  // Spaces and dimensions.
+  size_t control_dim_;
+  size_t state_dim_;
   BallsInBox::Ptr space_;
+
+  std::vector<double> state_upper_;
+  std::vector<double> state_lower_;
+
+  // Control upper/lower bounds.
+  NearHoverQuadNoYaw::ConstPtr dynamics_;
+  std::vector<double> control_upper_;
+  std::vector<double> control_lower_;
+
+  // Planners and related parameters.
+  std::vector<Planner::ConstPtr> planners_;
+  std::vector<std::string> value_directories_;
+
+  // Max connection radius for meta planner.
+  double max_connection_radius_;
 
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;
+  bool first_time_;
 
-  // std::vector of planners for the meta_planner
-  std::vector<Planner::ConstPtr> planners_;
-
-  // Buffer and listener to get current pose.
+  // TF interfacing.
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
+  tf2_ros::TransformBroadcaster br_;
 
   // Publishers/subscribers and related topics.
   ros::Publisher control_pub_;
-  ros::Publisher rrt_connect_vis_pub_;
+  ros::Publisher environment_pub_;
+  ros::Publisher traj_pub_;
+  ros::Publisher tracking_bound_pub_;
   ros::Subscriber sensor_sub_;
 
   std::string control_topic_;
-  std::string rrt_connect_vis_topic_;
+  std::string environment_topic_;
+  std::string traj_topic_;
+  std::string tracking_bound_topic_;
   std::string sensor_topic_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;
   std::string tracker_frame_id_;
+  std::string planner_frame_id_;
 
   // Is this class initialized?
   bool initialized_;
@@ -114,5 +143,7 @@ private:
   // Name of this class, for use in debug messages.
   std::string name_;
 };
+
+} //\namespace meta
 
 #endif

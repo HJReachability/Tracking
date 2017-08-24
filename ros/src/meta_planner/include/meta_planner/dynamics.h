@@ -49,6 +49,8 @@
 #include <ros/ros.h>
 #include <memory>
 
+namespace meta {
+
 class Dynamics : private Uncopyable {
 public:
   typedef std::shared_ptr<const Dynamics> ConstPtr;
@@ -58,12 +60,24 @@ public:
 
   // Derived classes must be able to give the time derivative of state
   // as a function of current state and control.
-  virtual VectorXd operator()(const VectorXd& x, const VectorXd& u) const = 0;
+  virtual VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const = 0;
 
   // Derived classes must be able to compute an optimal control given
   // the gradient of the value function at the specified state.
   virtual VectorXd OptimalControl(const VectorXd& x,
                                   const VectorXd& value_gradient) const = 0;
+
+  // Puncture a full state vector and return a position.
+  virtual Vector3d Puncture(const VectorXd& x) const = 0;
+
+  // Get the corresponding full state dimension to the given spatial dimension.
+  virtual size_t SpatialDimension(size_t dimension) const = 0;
+
+  // Derived classes must be able to translate a geometric trajectory
+  // (i.e. through Euclidean space) into a full state space trajectory.
+  virtual std::vector<VectorXd> LiftGeometricTrajectory(
+    const std::vector<Vector3d>& positions,
+    const std::vector<double>& times) const = 0;
 
 protected:
   // Protected constructor. Use the factory method instead.
@@ -86,5 +100,7 @@ protected:
   const VectorXd lower_u_;
   const VectorXd upper_u_;
 };
+
+} //\namespace meta
 
 #endif

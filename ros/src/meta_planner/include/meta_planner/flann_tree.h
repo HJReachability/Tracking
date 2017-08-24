@@ -54,6 +54,8 @@
 #include <vector>
 #include <math.h>
 
+namespace meta {
+
 class FlannTree : private Uncopyable {
 public:
   explicit FlannTree() {}
@@ -63,10 +65,10 @@ public:
   bool Insert(const Waypoint::ConstPtr& waypoint);
 
   // Nearest neighbor search.
-  std::vector<Waypoint::ConstPtr> KnnSearch(VectorXd& query, size_t k) const;
+  std::vector<Waypoint::ConstPtr> KnnSearch(Vector3d& query, size_t k) const;
 
   // Radius search.
-  std::vector<Waypoint::ConstPtr> RadiusSearch(VectorXd& query, double r) const;
+  std::vector<Waypoint::ConstPtr> RadiusSearch(Vector3d& query, double r) const;
 
 private:
   // A Flann kdtree. Searches in this tree return indices, which are then mapped
@@ -75,5 +77,7 @@ private:
   std::unique_ptr< flann::KDTreeIndex< flann::L2<double> > > index_;
   std::vector<Waypoint::ConstPtr> registry_;
 };
+
+} //\namespace meta
 
 #endif

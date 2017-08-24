@@ -43,6 +43,7 @@
 #ifndef META_PLANNER_TRAJECTORY_H
 #define META_PLANNER_TRAJECTORY_H
 
+#include <meta_planner/dynamics.h>
 #include <meta_planner/value_function.h>
 #include <meta_planner/types.h>
 
@@ -57,6 +58,8 @@
 #include <exception>
 #include <memory>
 
+namespace meta {
+
 class Trajectory {
 public:
   typedef std::shared_ptr<Trajectory> Ptr;
@@ -65,6 +68,28 @@ public:
   // Factory method. Use this instead of the constructor.
   static inline Ptr Create() {
     Ptr ptr(new Trajectory());
+    return ptr;
+  }
+
+  static inline Ptr Create(const std::vector<double>& times,
+                           const std::vector<VectorXd>& states,
+                           const std::vector<ValueFunction::ConstPtr>& values) {
+    Ptr ptr(new Trajectory());
+
+    // Number of entries in trajectory.
+    size_t num_waypoints = states.size();
+
+#ifdef ENABLE_DEBUG_MESSAGES
+    if (states.size() != times.size() || states.size() != values.size()) {
+      ROS_WARN("Inconsistent number of states, times, and values.");
+      num_waypoints = std::min(states.size(),
+                               std::min(times.size(), values.size()));
+    }
+#endif
+
+    for (size_t ii = 0; ii < num_waypoints; ii++)
+      ptr->Add(times[ii], states[ii], values[ii]);
+
     return ptr;
   }
 
@@ -101,7 +126,9 @@ public:
   const ValueFunction::ConstPtr& GetValueFunction(double time) const;
 
   // Visualize this trajectory in RVIZ.
-  void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
+  void Visualize(const ros::Publisher& pub,
+                 const std::string& frame_id,
+                 const Dynamics::ConstPtr& dynamics) const;
 
   // Print this trajectory to stdout.
   void Print(const std::string& prefix) const;
@@ -212,5 +239,7 @@ inline double Trajectory::FirstTime() const {
 
   return map_.begin()->first;
 }
+
+} //\namespace meta
 
 #endif

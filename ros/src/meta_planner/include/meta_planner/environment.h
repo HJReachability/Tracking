@@ -43,6 +43,7 @@
 #ifndef META_PLANNER_ENVIRONMENT_H
 #define META_PLANNER_ENVIRONMENT_H
 
+#include <meta_planner/value_function.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
@@ -51,16 +52,19 @@
 #include <random>
 #include <string>
 
+namespace meta {
+
 class Environment : private Uncopyable {
 public:
   virtual ~Environment() {}
 
   // Derived classes must be able to sample uniformly from the state space.
-  virtual VectorXd Sample() const = 0;
+  virtual Vector3d Sample() const = 0;
 
   // Derived classes must provide a collision checker which returns true if
-  // and only if the provided state is a valid collision-free configuration.
-  virtual bool IsValid(const VectorXd& state) const = 0;
+  // and only if the provided position is a valid collision-free configuration.
+  virtual bool IsValid(const Vector3d& position,
+                       const ValueFunction::ConstPtr& value) const = 0;
 
   // Derived classes must have some sort of visualization through RVIZ.
   virtual void Visualize(const ros::Publisher& pub,
@@ -74,5 +78,7 @@ protected:
   std::random_device rd_;
   mutable std::default_random_engine rng_;
 };
+
+} //\namespace meta
 
 #endif

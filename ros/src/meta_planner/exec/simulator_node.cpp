@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "simulator");
   ros::NodeHandle n("~");
 
-  Simulator sim;
+  meta::Simulator sim;
 
   if (!sim.Initialize(n)) {
     ROS_ERROR("%s: Failed to initialize Simulator.",

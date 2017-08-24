@@ -43,25 +43,26 @@
 
 #include <meta_planner/box.h>
 
+namespace meta {
+
 // Factory method. Use this instead of the constructor.
-Box::Ptr Box::Create(size_t dimension) {
-  Box::Ptr ptr(new Box(dimension));
+Box::Ptr Box::Create() {
+  Box::Ptr ptr(new Box());
   return ptr;
 }
 
 // Constructor. Don't use this. Use the factory method instead.
-Box::Box(size_t dimension)
+Box::Box()
   : Environment(),
-    dimension_(dimension),
-    lower_(VectorXd::Zero(dimension)),
-    upper_(VectorXd::Constant(dimension, 1.0)) {}
+    lower_(Vector3d::Zero()),
+    upper_(Vector3d::Constant(1.0)) {}
 
 // Inherited from Environment, but can be overwritten by child classes.
-VectorXd Box::Sample() const {
-  VectorXd sample(dimension_);
+Vector3d Box::Sample() const {
+  Vector3d sample;
 
   // Sample each dimension from this distribution.
-  for (size_t ii = 0; ii < dimension_; ii++) {
+  for (size_t ii = 0; ii < 3; ii++) {
     std::uniform_real_distribution<double> unif(lower_(ii), upper_(ii));
     sample(ii) = unif(rng_);
   }
@@ -71,17 +72,23 @@ VectorXd Box::Sample() const {
 
 // Inherited from Environment, but can be overwritten by child classes.
 // Returns true if the state is a valid configuration.
-bool Box::IsValid(const VectorXd& state) const {
+bool Box::IsValid(const Vector3d& position,
+                  const ValueFunction::ConstPtr& value) const {
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (state.size() != dimension_)
-    ROS_ERROR("Improperly sized state vector (%zu vs. %zu).",
-              state.size(), dimension_);
+  if (!value.get()) {
+    ROS_ERROR("Value function pointer was null.");
+    return false;
+  }
 #endif
 
   // No obstacles. Just check bounds.
-  for (size_t ii = 0; ii < state.size(); ii++)
-    if (state(ii) < lower_(ii) || state(ii) > upper_(ii))
+  for (size_t ii = 0; ii < 3; ii++) {
+    const double bound = value->TrackingBound(ii);
+
+    if (position(ii) < lower_(ii) + bound ||
+        position(ii) > upper_(ii) - bound)
       return false;
+  }
 
   return true;
 }
@@ -109,20 +116,14 @@ void Box::Visualize(const ros::Publisher& pub,
   geometry_msgs::Point center;
 
   // Fill in center and scale.
-  if (dimension_ >= 1) {
-    cube.scale.x = upper_[0] - lower_[0];
-    center.x = lower_[0] + 0.5 * cube.scale.x;
-  }
+  cube.scale.x = upper_(0) - lower_(0);
+  center.x = lower_(0) + 0.5 * cube.scale.x;
 
-  if (dimension_ >= 2) {
-    cube.scale.y = upper_[1] - lower_[1];
-    center.y = lower_[1] + 0.5 * cube.scale.y;
-  }
+  cube.scale.y = upper_(1) - lower_(1);
+  center.y = lower_(1) + 0.5 * cube.scale.y;
 
-  if (dimension_ >= 3) {
-    cube.scale.z = upper_[2] - lower_[2];
-    center.z = lower_[2] + 0.5 * cube.scale.z;
-  }
+  cube.scale.z = upper_(2) - lower_(2);
+  center.z = lower_(2) + 0.5 * cube.scale.z;
 
   cube.pose.position = center;
   cube.pose.orientation.x = 0.0;
@@ -135,52 +136,9 @@ void Box::Visualize(const ros::Publisher& pub,
 }
 
 // Set bounds in each dimension.
-void Box::SetBounds(const VectorXd& lower, const VectorXd& upper) {
-#ifdef ENABLE_DEBUG_MESSAGES
-  if (lower.size() != dimension_ || upper.size() != dimension_) {
-    ROS_ERROR("Improperly sized lower/upper bounds. Did not set.");
-    return;
-  }
-#endif
-
+void Box::SetBounds(const Vector3d& lower, const Vector3d& upper) {
   lower_ = lower;
   upper_ = upper;
 }
 
-// Get the lower bounds at the specified dimensions.
-VectorXd Box::LowerBounds(const std::vector<size_t>& dimensions) const {
-  VectorXd punctured = VectorXd::Zero(dimensions.size());
-
-  for (size_t ii = 0; ii < dimensions.size(); ii++) {
-#ifdef ENABLE_DEBUG_MESSAGES
-    if (dimensions[ii] >= dimension_) {
-      ROS_ERROR("Tried to access bound for a non-existent dimension: %zu.",
-                dimensions[ii]);
-      continue;
-    }
-#endif
-
-    punctured[ii] = lower_[dimensions[ii]];
-  }
-
-  return punctured;
-}
-
-// Get the upper bounds at the specified dimensions.
-VectorXd Box::UpperBounds(const std::vector<size_t>& dimensions) const {
-  VectorXd punctured = VectorXd::Zero(dimensions.size());
-
-  for (size_t ii = 0; ii < dimensions.size(); ii++) {
-#ifdef ENABLE_DEBUG_MESSAGES
-    if (dimensions[ii] >= dimension_) {
-      ROS_ERROR("Tried to access bound for a non-existent dimension: %zu.",
-                dimensions[ii]);
-      continue;
-    }
-#endif
-
-    punctured[ii] = upper_[dimensions[ii]];
-  }
-
-  return punctured;
-}
+} //\namespace meta
