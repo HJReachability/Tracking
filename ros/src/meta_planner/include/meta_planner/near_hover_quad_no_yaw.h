@@ -78,7 +78,7 @@ public:
     x_dot(0) = x(1);
     x_dot(1) = constants::G * std::tan(u(0));
     x_dot(2) = x(3);
-    x_dot(3) = constants::G * std::tan(u(1));
+    x_dot(3) = -constants::G * std::tan(u(1));
     x_dot(4) = x(5);
     x_dot(5) = u(2) - constants::G;
 

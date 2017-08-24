@@ -344,7 +344,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   // Visualize the tracking bound.
   visualization_msgs::Marker tracking_bound_marker;
   tracking_bound_marker.ns = "bound";
-  tracking_bound_marker.header.frame_id = tracker_frame_id_;
+  tracking_bound_marker.header.frame_id = planner_frame_id_;
   tracking_bound_marker.header.stamp = current_time;
   tracking_bound_marker.id = 0;
   tracking_bound_marker.type = visualization_msgs::Marker::CUBE;

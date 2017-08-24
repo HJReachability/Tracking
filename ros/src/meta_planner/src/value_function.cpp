@@ -176,7 +176,7 @@ double ValueFunction::TrackingBound(size_t dimension) const {
 
     for (size_t ii = 0; ii < state_dims.size(); ii++) {
       if (state_dims[ii] == full_dim)
-        return subsystem->TrackingBound(full_dim);
+        return subsystem->TrackingBound(ii);
     }
   }
 

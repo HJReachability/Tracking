@@ -7,8 +7,10 @@ Panels:
         - /Global Options1
         - /Status1
         - /Grid1
+        - /TF1
         - /TF1/Frames1
         - /Known Map1
+        - /Trajectory1
       Splitter Ratio: 0.5
     Tree Height: 869
   - Class: rviz/Selection
@@ -53,7 +55,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/TF
       Enabled: true
-      Frame Timeout: 15
+      Frame Timeout: 10000
       Frames:
         All Enabled: false
         fixed:
@@ -69,7 +71,10 @@ Visualization Manager:
       Show Names: true
       Tree:
         fixed:
-          {}
+          planner:
+            {}
+          tracker:
+            {}
       Update Interval: 0
       Value: true
     - Class: rviz/Marker
@@ -85,7 +90,7 @@ Visualization Manager:
       Marker Topic: /vis/known_env
       Name: Known Map
       Namespaces:
-        {}
+        cube: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -93,7 +98,7 @@ Visualization Manager:
       Marker Topic: /vis/bound
       Name: Tracking Bound
       Namespaces:
-        {}
+        bound: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -101,7 +106,8 @@ Visualization Manager:
       Marker Topic: /vis/traj
       Name: Trajectory
       Namespaces:
-        {}
+        lines: true
+        spheres: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -109,7 +115,7 @@ Visualization Manager:
       Marker Topic: /vis/sensor
       Name: Sensor Radius
       Namespaces:
-        {}
+        sensor: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -136,7 +142,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 29.1388
+      Distance: 7.5415
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -148,10 +154,10 @@ Visualization Manager:
         Z: 5.2679
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.834796
+      Pitch: 0.174796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 6.04363
+      Yaw: 4.72871
     Saved: ~
 Window Geometry:
   Displays:

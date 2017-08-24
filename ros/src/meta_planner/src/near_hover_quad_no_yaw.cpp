@@ -80,7 +80,7 @@ VectorXd NearHoverQuadNoYaw::OptimalControl(
   // If the gradient is 0, then sets control to zero by default.
   VectorXd optimal_control(VectorXd::Zero(lower_u_.size()));
   optimal_control(0) = (value_gradient(1) < 0.0) ? upper_u_(0) : lower_u_(0);
-  optimal_control(1) = (value_gradient(3) < 0.0) ? upper_u_(1) : lower_u_(1);
+  optimal_control(1) = (value_gradient(3) > 0.0) ? upper_u_(1) : lower_u_(1);
   optimal_control(2) = (value_gradient(5) < 0.0) ? upper_u_(2) : lower_u_(2);
 
   return optimal_control;
