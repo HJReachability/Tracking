@@ -1,4 +1,4 @@
-function [data,g_max,g_min,g_N]=Point_3D_3D_RS(N, vtracker, vplanner, visualize)
+function [data,g_max,g_min,g_N, teb]=Point_3D_3D_RS(N, vtracker, vplanner, visualize)
 
 if nargin < 1
   N = 200;
@@ -108,10 +108,6 @@ extraArgs.keepLast = 1;
 
 % solve backwards reachable set
 [data, tau] = HJIPDE_solve(data0, tau, sD, 'max_data0', extraArgs); 
-
-% largest cost along all time (along the entire 5th dimension which is
-% time)
-%data = max(data,[],5); %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if visualize
   figure(1)
