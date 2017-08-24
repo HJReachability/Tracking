@@ -43,6 +43,7 @@
 #ifndef META_PLANNER_TRAJECTORY_H
 #define META_PLANNER_TRAJECTORY_H
 
+#include <meta_planner/dynamics.h>
 #include <meta_planner/value_function.h>
 #include <meta_planner/types.h>
 
@@ -125,7 +126,9 @@ public:
   const ValueFunction::ConstPtr& GetValueFunction(double time) const;
 
   // Visualize this trajectory in RVIZ.
-  void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
+  void Visualize(const ros::Publisher& pub,
+                 const std::string& frame_id,
+                 const Dynamics::ConstPtr& dynamics) const;
 
   // Print this trajectory to stdout.
   void Print(const std::string& prefix) const;

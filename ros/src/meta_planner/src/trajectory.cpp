@@ -115,9 +115,17 @@ const ValueFunction::ConstPtr& Trajectory::GetValueFunction(double time) const {
 
 // Visualize this trajectory in RVIZ.
 void Trajectory::Visualize(const ros::Publisher& pub,
-                           const std::string& frame_id) const {
+                           const std::string& frame_id,
+                           const Dynamics::ConstPtr& dynamics) const {
   if (pub.getNumSubscribers() <= 0)
     return;
+
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (!dynamics.get()) {
+    ROS_ERROR("Dynamics pointer was null. Did not visualize.");
+    return;
+  }
+#endif
 
   // Set up spheres marker.
   visualization_msgs::Marker spheres;
@@ -159,10 +167,11 @@ void Trajectory::Visualize(const ros::Publisher& pub,
 
   // Iterate through the trajectory and append to markers.
   for (const auto& pair : map_) {
+    // Extract point.
     geometry_msgs::Point p;
-    p.x = pair.second.state_(0);
-    p.y = pair.second.state_(1);
-    p.z = pair.second.state_(2);
+    p.x = pair.second.state_(dynamics->SpatialDimension(0));
+    p.y = pair.second.state_(dynamics->SpatialDimension(1));
+    p.z = pair.second.state_(dynamics->SpatialDimension(2));
 
     const std_msgs::ColorRGBA c = Colormap(pair.first);
 

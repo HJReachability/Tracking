@@ -100,7 +100,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
   const double kSmallNumber = 1.5;
 
-  state_ = state_lower_vec + VectorXd::Constant(state_dim_, kSmallNumber);
+  state_ = 0.5 * (state_lower_vec + state_upper_vec);
   state_(kVxDim) = 0.0;
   state_(kVyDim) = 0.0;
   state_(kVzDim) = 0.0;
@@ -364,6 +364,8 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   // 3) Interpolate gradient to get optimal control.
   const VectorXd optimal_control = value->OptimalControl(relative_state);
 
+  std::cout << "optimal control: " << optimal_control.transpose() << std::endl;
+
   // 4) Apply optimal control.
   geometry_msgs::Vector3 control_msg;
   control_msg.x = optimal_control(0);
@@ -374,6 +376,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   // Publish environment.
   space_->Visualize(environment_pub_, fixed_frame_id_);
+
+  // Visualize trajectory.
+  traj_->Visualize(traj_pub_, fixed_frame_id_, dynamics_);
 }
 
 // Run meta planner.
@@ -384,7 +389,7 @@ void Tracker::RunMetaPlanner() {
                     dynamics_->Puncture(goal_), planners_);
 
   // Visualize the new trajectory.
-  traj_->Visualize(traj_pub_, fixed_frame_id_);
+  traj_->Visualize(traj_pub_, fixed_frame_id_, dynamics_);
 }
 
 } //\namespace meta

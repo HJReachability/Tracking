@@ -18,8 +18,8 @@ meta:
 
     # Upper and lower bounds for control.
     # In the quadrotor 6D model, the controls are [thrust, roll, pitch].
-    upper: [16.0, 0.25, 0.25]
-    lower: [6.0, -0.25, -0.25]
+    upper: [0.25, 0.25, 16.0]
+    lower: [-0.25, -0.25, 6.0]
 
   state:
     # Full (tracker) state space dimension.

@@ -100,7 +100,7 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
     space_->AddObstacle(space_->Sample(), uniform_radius(rng));
 
   // Initialize current state and control.
-  state_ = state_lower_vec;
+  state_ = 0.5 * (state_lower_vec + state_upper_vec);
   state_(1) = 0.0;
   state_(3) = 0.0;
   state_(5) = 0.0;
@@ -232,9 +232,12 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
 
   transform_stamped.child_frame_id = robot_frame_id_;
 
-  transform_stamped.transform.translation.x = state_(0);
-  transform_stamped.transform.translation.y = state_(2);
-  transform_stamped.transform.translation.z = state_(4);
+  transform_stamped.transform.translation.x =
+    state_(dynamics_->SpatialDimension(0));
+  transform_stamped.transform.translation.y =
+    state_(dynamics_->SpatialDimension(1));
+  transform_stamped.transform.translation.z =
+    state_(dynamics_->SpatialDimension(2));
 
   // RPY to quaternion.
   const double roll = control_(1);
@@ -256,9 +259,9 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
   double obstacle_radius = -1.0;
 
   Vector3d position;
-  position(0) = state_(0);
-  position(1) = state_(2);
-  position(2) = state_(4);
+  position(0) = state_(dynamics_->SpatialDimension(0));
+  position(1) = state_(dynamics_->SpatialDimension(1));
+  position(2) = state_(dynamics_->SpatialDimension(2));
 
   if (space_->SenseObstacle(position, sensor_radius_,
                             obstacle_position, obstacle_radius)) {
