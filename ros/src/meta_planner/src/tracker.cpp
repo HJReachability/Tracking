@@ -98,7 +98,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   const size_t kVyDim = 3;
   const size_t kVzDim = 5;
 
-  const double kSmallNumber = 0.1;
+  const double kSmallNumber = 1.5;
 
   state_ = state_lower_vec + VectorXd::Constant(state_dim_, kSmallNumber);
   state_(kVxDim) = 0.0;

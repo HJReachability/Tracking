@@ -124,6 +124,9 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
   std::cout << "lower: " << lower.transpose() << std::endl;
   std::cout << "upper: " << upper.transpose() << std::endl;
 
+  std::cout << "start: " << start.transpose() << std::endl;
+  std::cout << "stop: " << stop.transpose() << std::endl;
+
   // Check that both start and stop are in bounds.
   for (size_t ii = 0; ii < 3; ii++) {
     if (start(ii) < lower(ii) || start(ii) > upper(ii) ||

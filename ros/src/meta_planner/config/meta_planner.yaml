@@ -7,7 +7,7 @@ meta:
     sensor_radius: 1.0
 
     # Number of obstacles.
-    num_obstacles: 20
+    num_obstacles: 0
 
   control:
     # Interval (seconds) of the discrete-time control update.

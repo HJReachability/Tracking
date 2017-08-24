@@ -62,6 +62,8 @@ Trajectory::Ptr MetaPlanner::Plan(
 
   bool done = false;
   while (!done && (ros::Time::now() - start_time).toSec() < 1.0) {
+    std::cout << "Sampling a new point." << std::endl;
+
     // (2) Sample a new point in the state space.
     Vector3d sample = space_->Sample();
 
