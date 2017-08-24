@@ -62,8 +62,6 @@ Trajectory::Ptr MetaPlanner::Plan(
 
   bool done = false;
   while (!done && (ros::Time::now() - start_time).toSec() < 1.0) {
-    std::cout << "Sampling a new point." << std::endl;
-
     // (2) Sample a new point in the state space.
     Vector3d sample = space_->Sample();
 
@@ -80,6 +78,8 @@ Trajectory::Ptr MetaPlanner::Plan(
     Trajectory::Ptr traj;
     for (const auto& planner : planners) {
       traj = planner->Plan(neighbors[0]->point_, sample, neighbors[0]->time_);
+
+      std::cout << "success." << std::endl;
 
       if (traj != nullptr)
         break;
@@ -102,15 +102,22 @@ Trajectory::Ptr MetaPlanner::Plan(
     // (6) Stop when we have a feasible trajectory. Otherwise go to (2).
     const Waypoint::ConstPtr waypoint = Waypoint::Create(
       sample, traj->LastTime(), traj, neighbors[0]);
+
+    std::cout << "Inserting waypoint" << std::endl;
     tree.Insert(waypoint, false);
+    std::cout << "done." << std::endl;
 
     if (goal_traj != nullptr) {
       // Connect to the goal. NOTE: the first point in goal_traj coincides with
       // the last point in traj, but when we merge the two trajectories the
       // std::map insertion rules will prevent duplicates.
       const Waypoint::ConstPtr goal = Waypoint::Create(
-        goal_traj->LastState(), goal_traj->LastTime(), goal_traj, waypoint);
+        stop, goal_traj->LastTime(), goal_traj, waypoint);
+
+      std::cout << "inserting goal waypoint" << std::endl;
       tree.Insert(goal, true);
+
+      std::cout << "inserted goal in tree" << std::endl;
 
       // TODO: in future we could have some other stopping criteria.
       done = true;
@@ -118,8 +125,10 @@ Trajectory::Ptr MetaPlanner::Plan(
   }
 
   if (done) {
+    std::cout << "Getting best from tree" << std::endl;
     // Get the best (fastest) trajectory out of the tree.
     const Trajectory::Ptr best = tree.BestTrajectory();
+    std::cout << "got best" << std::endl;
     return best;
   }
 

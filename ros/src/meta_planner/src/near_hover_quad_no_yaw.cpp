@@ -99,10 +99,7 @@ size_t NearHoverQuadNoYaw::SpatialDimension(size_t dimension) const {
 
 // Puncture a full state vector and return a position.
 Vector3d NearHoverQuadNoYaw::Puncture(const VectorXd& x) const {
-  std::cout << "puncturing..." << std::endl;
-
-  const Vector3d punctured(x(0), x(2), x(4));
-  return punctured;
+  return Vector3d(x(0), x(2), x(4));
 }
 
 // Derived classes must be able to translate a geometric trajectory
@@ -110,12 +107,14 @@ Vector3d NearHoverQuadNoYaw::Puncture(const VectorXd& x) const {
 std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
   const std::vector<Vector3d>& positions,
   const std::vector<double>& times) const {
+  std::cout << "lifint traj" << std::endl;
+
   // Number of entries in trajectory.
   size_t num_waypoints = positions.size();
 
 #ifdef ENABLE_DEBUG_MESSAGES
   if (positions.size() != times.size()) {
-    ROS_WARN("Inconsistent number of states, times, and values.");
+    ROS_WARN("Inconsistent number of states and times.");
     num_waypoints = std::min(positions.size(), times.size());
   }
 #endif
@@ -146,8 +145,8 @@ std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
   // Catch final waypoint.
   VectorXd full(X_DIM);
   full(0) = positions.back()(0);
-  full(2) = positions.back()(2);
-  full(4) = positions.back()(4);
+  full(2) = positions.back()(1);
+  full(4) = positions.back()(2);
 
   full(1) = velocity(0);
   full(3) = velocity(1);

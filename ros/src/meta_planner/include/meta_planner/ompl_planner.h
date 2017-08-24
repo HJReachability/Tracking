@@ -121,12 +121,6 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
   const Vector3d lower = space_->LowerBounds();
   const Vector3d upper = space_->UpperBounds();
 
-  std::cout << "lower: " << lower.transpose() << std::endl;
-  std::cout << "upper: " << upper.transpose() << std::endl;
-
-  std::cout << "start: " << start.transpose() << std::endl;
-  std::cout << "stop: " << stop.transpose() << std::endl;
-
   // Check that both start and stop are in bounds.
   for (size_t ii = 0; ii < 3; ii++) {
     if (start(ii) < lower(ii) || start(ii) > upper(ii) ||
@@ -166,11 +160,10 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
   ompl_setup.setPlanner(ompl_planner);
 
   // Solve. Parameter is the amount of time (in seconds) used by the solver.
-  std::cout << "running planner" << std::endl;
   const ob::PlannerStatus solved = ompl_setup.solve(1.0);
 
   if (solved) {
-    std::cout << "succeess" << std::endl;
+    std::cout << "planner succeeded" << std::endl;
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();
 
     // Populate the Trajectory with states and time stamps.
@@ -182,23 +175,26 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
     for (size_t ii = 0; ii < solution.getStateCount(); ii++) {
       const Vector3d position = FromOmplState(solution.getState(ii));
 
-      // Catch first state.
-      if (ii == 0)
-        times.push_back(time);
+      std::cout << "position: " << position.transpose() << std::endl;
 
       // Handle all other states.
       // Assuming speed is isotropic.
       // TODO: make this more general.
-      else
+      if (ii > 0)
         time += (position - positions.back()).norm() / speed_;
 
+      times.push_back(time);
       positions.push_back(position);
       values.push_back(value_);
     }
 
+    std::cout << "Liftin.." << std::endl;
+
     // Convert to full state space.
     std::vector<VectorXd> full_states =
       value_->GetDynamics()->LiftGeometricTrajectory(positions, times);
+
+    std::cout << "done lifting" << std::endl;
 
     return Trajectory::Create(times, full_states, values);
   }
@@ -224,8 +220,6 @@ Vector3d OmplPlanner<PlannerType>::FromOmplState(
   Vector3d converted;
   for (size_t ii = 0; ii < 3; ii++)
     converted(ii) = cast_state->values[ii];
-
-  std::cout << "Converted: " << converted.transpose() << std::endl;
 
   return converted;
 }

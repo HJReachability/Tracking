@@ -62,16 +62,12 @@ bool FlannTree::Insert(const Waypoint::ConstPtr& waypoint) {
     return false;
   }
 
-  std::cout << "inserting in flann" << std::endl;
-
   // Copy the input point into FLANN's Matrix type.
   const size_t cols = waypoint->point_.size();
   flann::Matrix<double> flann_point(new double[cols], 1, cols);
 
   for (size_t ii = 0; ii < cols; ii++)
     flann_point[0][ii] = waypoint->point_(ii);
-
-  std::cout << "made flann pt" << std::endl;
 
   // If this is the first point in the index, create the index and exit.
   if (index_ == nullptr) {
