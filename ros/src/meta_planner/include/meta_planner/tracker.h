@@ -109,6 +109,7 @@ private:
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;
+  bool first_time_;
 
   // TF interfacing.
   tf2_ros::Buffer tf_buffer_;

@@ -152,11 +152,19 @@ VectorXd ValueFunction::Gradient(const VectorXd& state) const {
 
   for (const auto& subsystem : subsystems_) {
     const VectorXd subsystem_gradient = subsystem->Gradient(state);
-    const std::vector<size_t>& dims = subsystem->ControlDimensions();
+    const std::vector<size_t>& dims = subsystem->StateDimensions();
 
-    for (size_t ii = 0; ii < dims.size(); ii++)
+    std::cout << "subsystem grad " << subsystem_gradient.transpose() << std::endl;
+    std::cout << "dims: ";
+
+    for (size_t ii = 0; ii < dims.size(); ii++) {
       gradient(dims[ii]) = subsystem_gradient(ii);
+      std::cout << "(" << dims[ii] << ", " << gradient(dims[ii]) << ")";
+    }
+    std::cout << std::endl;
   }
+
+  std::cout << "grad: " << gradient.transpose() << std::endl;
 
   return gradient;
 }

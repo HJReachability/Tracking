@@ -110,6 +110,8 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   goal_(kVyDim) = 0.0;
   goal_(kVzDim) = 0.0;
 
+  first_time_ = true;
+
   // Create planners.
   for (size_t ii = 0; ii < value_directories_.size(); ii++) {
     // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
@@ -291,6 +293,20 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   }
 
   // 1) Compute relative state.
+  // NOTE: right now velocity calculation is totally not portable...
+  if (!first_time_) {
+    state_(1) = (tf.transform.translation.x - state_(0)) / time_step_;
+    state_(3) = (tf.transform.translation.y - state_(2)) / time_step_;
+    state_(5) = (tf.transform.translation.z - state_(4)) / time_step_;
+  } else {
+    state_(1) = 0.0;
+    state_(3) = 0.0;
+    state_(5) = 0.0;
+    first_time_ = false;
+  }
+
+  std::cout << "state: " << state_.transpose() << std::endl;
+
   state_(dynamics_->SpatialDimension(0)) = tf.transform.translation.x;
   state_(dynamics_->SpatialDimension(1)) = tf.transform.translation.y;
   state_(dynamics_->SpatialDimension(2)) = tf.transform.translation.z;
@@ -298,7 +314,11 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   const VectorXd planner_state = traj_->GetState(current_time.toSec());
   const VectorXd relative_state = state_ - planner_state;
 
+  std::cout << "relative state: " << relative_state.transpose() << std::endl;
+
   const Vector3d planner_position = dynamics_->Puncture(planner_state);
+
+  std::cout << "planner pos: " << planner_position.transpose() << std::endl;
 
   // Publish planner state on tf.
   geometry_msgs::TransformStamped transform_stamped;
@@ -318,6 +338,8 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   br_.sendTransform(transform_stamped);
 
+  std::cout << "Sent tf" << std::endl;
+
   // 2) Get corresponding value function.
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
 
@@ -330,9 +352,13 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.type = visualization_msgs::Marker::CUBE;
   tracking_bound_marker.action = visualization_msgs::Marker::ADD;
 
+  std::cout << "Getting trancking bound" << std::endl;
+
   tracking_bound_marker.scale.x = 2.0 * value->TrackingBound(0);
   tracking_bound_marker.scale.y = 2.0 * value->TrackingBound(1);
   tracking_bound_marker.scale.z = 2.0 * value->TrackingBound(2);
+
+  std::cout << "got it" << std::endl;
 
   tracking_bound_marker.color.a = 0.3;
   tracking_bound_marker.color.r = 0.9;
@@ -342,7 +368,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_pub_.publish(tracking_bound_marker);
 
   // 3) Interpolate gradient to get optimal control.
+  std::cout << "getting opt ctl" << std::endl;
   const VectorXd optimal_control = value->OptimalControl(relative_state);
+  std::cout << "opt ctl: " << optimal_control.transpose() << std::endl;
 
   // 4) Apply optimal control.
   geometry_msgs::Vector3 control_msg;
