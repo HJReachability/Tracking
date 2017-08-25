@@ -12,7 +12,7 @@ end
 
 % function for computing derivatives
 if nargin <3
-  derivFunc = @upwindFirstFirst;
+  derivFunc = @upwindFirstFirst; 
   %can also try @upwindFirstWENO5 for more fidelity
 end
 
