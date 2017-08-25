@@ -1,7 +1,7 @@
 meta:
   simulator:
     # Time step for simulator.
-    time_step: 0.01
+    time_step: 0.005
 
     # Sensor radius.
     sensor_radius: 1.0
@@ -11,7 +11,7 @@ meta:
 
   control:
     # Interval (seconds) of the discrete-time control update.
-    time_step: 0.02
+    time_step: 0.01
 
     # Control dimension.
     dim: 3
