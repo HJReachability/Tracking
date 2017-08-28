@@ -56,23 +56,38 @@
 // Note: angle sign convention is based on positive accelerations on FLU frame
 // (theta PITCH DOWN / phi ROLL LEFT / psi YAW left)
 
-#ifndef META_PLANNER_LINEAR_DYNAMICS_H
-#define META_PLANNER_LINEAR_DYNAMICS_H
+#ifndef META_PLANNER_NEAR_HOVER_DYNAMICS_H
+#define META_PLANNER_NEAR_HOVER_DYNAMICS_H
 
 #include <meta_planner/dynamics.h>
+#include <meta_planner/types.h>
+
+namespace meta {
 
 class NearHoverDynamics : public Dynamics {
 public:
+  typedef std::shared_ptr<const NearHoverDynamics> ConstPtr;
+
+  // Destructor.
   ~NearHoverDynamics() {}
 
   // Factory method. Use this instead of the constructor.
-  static Dynamics::ConstPtr Create(const double g,
-                                   const VectorXd& lower_u,
-                                   const VectorXd& upper_u);
+  static NearHoverDynamics::ConstPtr Create(const VectorXd& lower_u,
+                                            const VectorXd& upper_u);
 
   // Derived from parent virtual operator, gives the time derivative of state
   // as a function of current state and control. See above description for details.
-  VectorXd operator()(const VectorXd& x, const VectorXd& u) const;
+  inline VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const {
+    VectorXd xdot(X_DIM);
+    xdot[0] = x[3];
+    xdot[1] = x[4];
+    xdot[2] = x[5];
+    xdot[3] = u[3]*sin(u[1])*cos(x[6]) - u[3]*sin(u[0])*sin(x[6]);
+    xdot[4] = u[3]*sin(u[0])*cos(x[6]) + u[3]*sin(u[1])*sin(x[6]);
+    xdot[5] = u[3]*cos(u[0])*cos(u[1]) - constants::G;
+    xdot[6] = u[2];
+    return xdot;
+  }
 
   // Derived classes must be able to compute an optimal control given
   // the gradient of the value function at the specified state.
@@ -80,14 +95,28 @@ public:
   VectorXd OptimalControl(const VectorXd& x,
                           const VectorXd& value_gradient) const;
 
+  // Puncture a full state vector and return a position.
+  Vector3d Puncture(const VectorXd& x) const;
+
+  // Get the corresponding full state dimension to the given spatial dimension.
+  size_t SpatialDimension(size_t dimension) const;
+
+  // Derived classes must be able to translate a geometric trajectory
+  // (i.e. through Euclidean space) into a full state space trajectory.
+  std::vector<VectorXd> LiftGeometricTrajectory(
+    const std::vector<Vector3d>& positions,
+    const std::vector<double>& times) const;
+
 private:
   // Private constructor. Use the factory method instead.
-  explicit NearHoverDynamics(const double g,
-                             const VectorXd& lower_u,
+  explicit NearHoverDynamics(const VectorXd& lower_u,
                              const VectorXd& upper_u);
 
-  // Gravitational acceleration (m/s^2).
-  const double g_;
+  // Static dimensions.
+  static const size_t X_DIM;
+  static const size_t U_DIM;
 };
+
+} //\namespace meta
 
 #endif
