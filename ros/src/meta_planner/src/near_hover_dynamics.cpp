@@ -31,63 +31,74 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * Please contact the author(s) of this library if you have any questions.
- * Authors: David Fridovich-Keil   ( dfk@eecs.berkeley.edu )
+ * Authors: Jaime Fernandez Fisac   ( jfisac@eecs.berkeley.edu )
+ *          David Fridovich-Keil    ( dfk@eecs.berkeley.edu )
  */
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the NearHoverQuadNoYaw class. Assumes that state 'x' entried are:
-// * x(0) -- x
-// * x(1) -- y
-// * x(2) -- z
-// * x(3) -- x_dot
-// * x(4) -- y_dot
-// * x(5) -- z_dot
-//
-// Also assumes that entried in control 'u' are:
-// * u(0) -- pitch
-// * u(1) -- roll
-// * u(2) -- thrust
+// Defines the NearHoverDynamics class (7D quadrotor model used by Crazyflie).
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/near_hover_quad_no_yaw.h>
+// System dynamics
+// (quadrotor in near hover, assuming small attitude angles)
+//    dx/dt     =  vx_G
+//    dy/dt     =  vy_G
+//    dz/dt     =  vz_G
+//    dvx_G/dt  =  T*sin(theta)*cos(psi) - T*sin(phi)*sin(psi)
+//    dvy_G/dt  =  T*sin(phi)*cos(psi)   + T*sin(theta)*sin(psi)
+//    dvz_G/dt  =  T*cos(phi)*cos(theta) - g
+//    dpsi/dt   =  w
+//
+//    control: u = [ phi, theta, w, T]
+//
+// Note: angle sign convention is based on positive accelerations on FLU frame
+// (theta PITCH DOWN / phi ROLL LEFT / psi YAW left)
+
+#include <meta_planner/near_hover_dynamics.h>
 
 namespace meta {
 
-// Dimensions.
-const size_t NearHoverQuadNoYaw::X_DIM = 6;
-const size_t NearHoverQuadNoYaw::U_DIM = 3;
+const size_t NearHoverDynamics::X_DIM = 7;
+const size_t NearHoverDynamics::U_DIM = 4;
 
 // Factory method. Use this instead of the constructor.
-NearHoverQuadNoYaw::ConstPtr NearHoverQuadNoYaw::
-Create(const VectorXd& lower_u, const VectorXd& upper_u) {
-  NearHoverQuadNoYaw::ConstPtr ptr(new NearHoverQuadNoYaw(lower_u, upper_u));
+NearHoverDynamics::ConstPtr NearHoverDynamics::Create(const VectorXd& lower_u,
+                                                      const VectorXd& upper_u) {
+  NearHoverDynamics::ConstPtr ptr(new NearHoverDynamics(lower_u, upper_u));
   return ptr;
 }
 
 // Derived classes must be able to compute an optimal control given
 // the gradient of the value function at the specified state.
-// In this case (linear dynamics), the state is irrelevant given the
-// gradient of the value function at that state.
-VectorXd NearHoverQuadNoYaw::OptimalControl(
-  const VectorXd& x, const VectorXd& value_gradient) const {
-  std::cout << "value grad " << value_gradient.transpose() << std::endl;
+// This function is currently not implemented for NearHover.
+VectorXd NearHoverDynamics::OptimalControl(const VectorXd& x,
+                                           const VectorXd& value_gradient) const {
 
-  // Set each dimension of optimal control to upper/lower bound depending
-  // on the sign of the gradient in that dimension. We want to minimize the
-  // inner product between the projected gradient and control.
-  // If the gradient is 0, then sets control to zero by default.
+  // The optimal control is the solution to a nonconvex optimization problem
+  // with the inner product <grad(V),xdot(x,u)> as the objective.
+  // No solution method is currently implemented.
+  // Instead, the optimal control is set to zero by default.
+  // TODO!
+  ROS_WARN("Unimplemented method NearHoverDynamics::OptimalControl.");
   VectorXd optimal_control(VectorXd::Zero(lower_u_.size()));
-  optimal_control(0) = (value_gradient(3) < 0.0) ? upper_u_(0) : lower_u_(0);
-  optimal_control(1) = (value_gradient(4) > 0.0) ? upper_u_(1) : lower_u_(1);
-  optimal_control(2) = (value_gradient(5) < 0.0) ? upper_u_(2) : lower_u_(2);
 
   return optimal_control;
 }
 
+// Private constructor. Use the factory method instead.
+NearHoverDynamics::NearHoverDynamics(const VectorXd& lower_u,
+                                     const VectorXd& upper_u)
+  : Dynamics(lower_u, upper_u) {}
+
+// Puncture a full state vector and return a position.
+Vector3d NearHoverDynamics::Puncture(const VectorXd& x) const {
+  return Vector3d(x(0), x(1), x(2));
+}
+
 // Get the corresponding full state dimension to the given spatial dimension.
-size_t NearHoverQuadNoYaw::SpatialDimension(size_t dimension) const {
+size_t NearHoverDynamics::SpatialDimension(size_t dimension) const {
   if (dimension == 0)
     return 0;
   if (dimension == 1)
@@ -99,17 +110,11 @@ size_t NearHoverQuadNoYaw::SpatialDimension(size_t dimension) const {
   return 0;
 }
 
-// Puncture a full state vector and return a position.
-Vector3d NearHoverQuadNoYaw::Puncture(const VectorXd& x) const {
-  return Vector3d(x(0), x(1), x(2));
-}
-
 // Derived classes must be able to translate a geometric trajectory
 // (i.e. through Euclidean space) into a full state space trajectory.
-std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
-  const std::vector<Vector3d>& positions,
-  const std::vector<double>& times) const {
-
+std::vector<VectorXd> NearHoverDynamics::
+LiftGeometricTrajectory(const std::vector<Vector3d>& positions,
+                        const std::vector<double>& times) const {
   // Number of entries in trajectory.
   size_t num_waypoints = positions.size();
 
@@ -139,6 +144,9 @@ std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
     full(4) = velocity(1);
     full(5) = velocity(2);
 
+    // Assume zero yaw.
+    full(6) = 0.0;
+
     // Append to trajectory.
     full_states.push_back(full);
   }
@@ -153,14 +161,12 @@ std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
   full(4) = velocity(1);
   full(5) = velocity(2);
 
+  // Assume zero yaw.
+  full(6) = 0.0;
+
   full_states.push_back(full);
 
   return full_states;
 }
-
-// Private constructor. Use the factory method instead.
-NearHoverQuadNoYaw::NearHoverQuadNoYaw(
-  const VectorXd& lower_u, const VectorXd& upper_u)
-  : Dynamics(lower_u, upper_u) {}
 
 } //\namespace meta

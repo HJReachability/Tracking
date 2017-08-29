@@ -31,64 +31,67 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * Please contact the author(s) of this library if you have any questions.
- * Authors: David Fridovich-Keil   ( dfk@eecs.berkeley.edu )
+ * Authors: Jaime Fernandez Fisac   ( jfisac@eecs.berkeley.edu )
+ *          David Fridovich-Keil    ( dfk@eecs.berkeley.edu )
  */
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the NearHoverQuadNoYaw class. Assumes that state 'x' entried are:
-// * x(0) -- x
-// * x(1) -- y
-// * x(2) -- z
-// * x(3) -- x_dot
-// * x(4) -- y_dot
-// * x(5) -- z_dot
-//
-// Also assumes that entried in control 'u' are:
-// * u(0) -- pitch
-// * u(1) -- roll
-// * u(2) -- thrust
+// Defines the NearHoverDynamics class (7D quadrotor model used by Crazyflie).
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_NEAR_HOVER_QUAD_NO_YAW_H
-#define META_PLANNER_NEAR_HOVER_QUAD_NO_YAW_H
+// System dynamics
+// (quadrotor in near hover, assuming small attitude angles)
+//    dx/dt     =  vx_G
+//    dy/dt     =  vy_G
+//    dz/dt     =  vz_G
+//    dvx_G/dt  =  T*sin(theta)*cos(psi) - T*sin(phi)*sin(psi)
+//    dvy_G/dt  =  T*sin(phi)*cos(psi)   + T*sin(theta)*sin(psi)
+//    dvz_G/dt  =  T*cos(phi)*cos(theta) - g
+//    dpsi/dt   =  w
+//
+//    control: u = [ phi, theta, w, T]
+//
+// Note: angle sign convention is based on positive accelerations on FLU frame
+// (theta PITCH DOWN / phi ROLL LEFT / psi YAW left)
+
+#ifndef META_PLANNER_NEAR_HOVER_DYNAMICS_H
+#define META_PLANNER_NEAR_HOVER_DYNAMICS_H
 
 #include <meta_planner/dynamics.h>
-
-#include <math.h>
+#include <meta_planner/types.h>
 
 namespace meta {
 
-class NearHoverQuadNoYaw : public Dynamics {
+class NearHoverDynamics : public Dynamics {
 public:
-  typedef std::shared_ptr<const NearHoverQuadNoYaw> ConstPtr;
+  typedef std::shared_ptr<const NearHoverDynamics> ConstPtr;
 
   // Destructor.
-  ~NearHoverQuadNoYaw() {}
+  ~NearHoverDynamics() {}
 
   // Factory method. Use this instead of the constructor.
-  static ConstPtr Create(const VectorXd& lower_u,
-                         const VectorXd& upper_u);
+  static NearHoverDynamics::ConstPtr Create(const VectorXd& lower_u,
+                                            const VectorXd& upper_u);
 
-  // Derived classes must be able to give the time derivative of state
-  // as a function of current state and control.
+  // Derived from parent virtual operator, gives the time derivative of state
+  // as a function of current state and control. See above description for details.
   inline VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const {
-    VectorXd x_dot(X_DIM);
-    x_dot(0) = x(3);
-    x_dot(1) = x(4);
-    x_dot(2) = x(5);
-    x_dot(3) = constants::G * std::tan(u(0));
-    x_dot(4) = -constants::G * std::tan(u(1));
-    x_dot(5) = u(2) - constants::G;
-
-    return x_dot;
+    VectorXd xdot(X_DIM);
+    xdot[0] = x[3];
+    xdot[1] = x[4];
+    xdot[2] = x[5];
+    xdot[3] = u[3]*sin(u[1])*cos(x[6]) - u[3]*sin(u[0])*sin(x[6]);
+    xdot[4] = u[3]*sin(u[0])*cos(x[6]) + u[3]*sin(u[1])*sin(x[6]);
+    xdot[5] = u[3]*cos(u[0])*cos(u[1]) - constants::G;
+    xdot[6] = u[2];
+    return xdot;
   }
 
   // Derived classes must be able to compute an optimal control given
   // the gradient of the value function at the specified state.
-  // In this case (linear dynamics), the state is irrelevant given the
-  // gradient of the value function at that state.
+  // This function is currently not implemented for NearHover.
   VectorXd OptimalControl(const VectorXd& x,
                           const VectorXd& value_gradient) const;
 
@@ -106,9 +109,10 @@ public:
 
 private:
   // Private constructor. Use the factory method instead.
-  explicit NearHoverQuadNoYaw(const VectorXd& lower_u, const VectorXd& upper_u);
+  explicit NearHoverDynamics(const VectorXd& lower_u,
+                             const VectorXd& upper_u);
 
-  // Static constants for dimensions.
+  // Static dimensions.
   static const size_t X_DIM;
   static const size_t U_DIM;
 };

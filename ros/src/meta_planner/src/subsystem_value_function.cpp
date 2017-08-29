@@ -360,6 +360,9 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
 
   num_elements = data_mat->nbytes / data_mat->data_size;
   for (size_t ii = 0; ii < num_elements; ii++) {
+    // NOTE: Could scale up by a large factor here to improve reliability in
+    // the sign of the interpolated gradients. Seems to have at best only a
+    // minor positive effect on tracking though so reverting to no scaling.
     data_.push_back(static_cast<double*>(data_mat->data)[ii]);
   }
 
