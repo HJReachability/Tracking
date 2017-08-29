@@ -55,6 +55,7 @@
 
 #include <crazyflie_msgs/PositionStateStamped.h>
 #include <crazyflie_msgs/ControlStamped.h>
+#include <crazyflie_msgs/NoYawControlStamped.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
@@ -84,9 +85,6 @@ private:
   // Callback for processing state updates.
   void StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
 
-  // Callback for processing least restrictive control updates.
-  void LqrControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg);
-
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
 
@@ -97,9 +95,6 @@ private:
   VectorXd goal_;
   VectorXd state_;
   Trajectory::ConstPtr traj_;
-
-  // Most recent least restrictive (LQR) control.
-  VectorXd lqr_control_;
 
   // Spaces and dimensions.
   size_t control_dim_;
@@ -136,11 +131,9 @@ private:
   ros::Publisher tracking_bound_pub_;
   ros::Publisher reference_pub_;
   ros::Subscriber sensor_sub_;
-  ros::Subscriber lqr_control_sub_;
   ros::Subscriber state_sub_;
 
   std::string control_topic_;
-  std::string lqr_control_topic_;
   std::string environment_topic_;
   std::string traj_topic_;
   std::string tracking_bound_topic_;
