@@ -38,10 +38,10 @@
 //
 // Defines the NearHoverQuadNoYaw class. Assumes that state 'x' entried are:
 // * x(0) -- x
-// * x(1) -- x_dot
-// * x(2) -- y
-// * x(3) -- y_dot
-// * x(4) -- z
+// * x(1) -- y
+// * x(2) -- z
+// * x(3) -- x_dot
+// * x(4) -- y_dot
 // * x(5) -- z_dot
 //
 // Also assumes that entried in control 'u' are:
@@ -75,11 +75,11 @@ public:
   // as a function of current state and control.
   inline VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const {
     VectorXd x_dot(X_DIM);
-    x_dot(0) = x(1);
-    x_dot(1) = constants::G * std::tan(u(0));
-    x_dot(2) = x(3);
-    x_dot(3) = -constants::G * std::tan(u(1));
-    x_dot(4) = x(5);
+    x_dot(0) = x(3);
+    x_dot(1) = x(4);
+    x_dot(2) = x(5);
+    x_dot(3) = constants::G * std::tan(u(0));
+    x_dot(4) = -constants::G * std::tan(u(1));
     x_dot(5) = u(2) - constants::G;
 
     return x_dot;

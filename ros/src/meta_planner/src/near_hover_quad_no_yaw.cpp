@@ -38,10 +38,10 @@
 //
 // Defines the NearHoverQuadNoYaw class. Assumes that state 'x' entried are:
 // * x(0) -- x
-// * x(1) -- x_dot
-// * x(2) -- y
-// * x(3) -- y_dot
-// * x(4) -- z
+// * x(1) -- y
+// * x(2) -- z
+// * x(3) -- x_dot
+// * x(4) -- y_dot
 // * x(5) -- z_dot
 //
 // Also assumes that entried in control 'u' are:
@@ -79,8 +79,8 @@ VectorXd NearHoverQuadNoYaw::OptimalControl(
   // inner product between the projected gradient and control.
   // If the gradient is 0, then sets control to zero by default.
   VectorXd optimal_control(VectorXd::Zero(lower_u_.size()));
-  optimal_control(0) = (value_gradient(1) < 0.0) ? upper_u_(0) : lower_u_(0);
-  optimal_control(1) = (value_gradient(3) > 0.0) ? upper_u_(1) : lower_u_(1);
+  optimal_control(0) = (value_gradient(3) < 0.0) ? upper_u_(0) : lower_u_(0);
+  optimal_control(1) = (value_gradient(4) > 0.0) ? upper_u_(1) : lower_u_(1);
   optimal_control(2) = (value_gradient(5) < 0.0) ? upper_u_(2) : lower_u_(2);
 
   return optimal_control;
@@ -91,9 +91,9 @@ size_t NearHoverQuadNoYaw::SpatialDimension(size_t dimension) const {
   if (dimension == 0)
     return 0;
   if (dimension == 1)
-    return 2;
+    return 1;
   if (dimension == 2)
-    return 4;
+    return 2;
 
   ROS_ERROR("Invalid spatial dimension.");
   return 0;
@@ -101,7 +101,7 @@ size_t NearHoverQuadNoYaw::SpatialDimension(size_t dimension) const {
 
 // Puncture a full state vector and return a position.
 Vector3d NearHoverQuadNoYaw::Puncture(const VectorXd& x) const {
-  return Vector3d(x(0), x(2), x(4));
+  return Vector3d(x(0), x(1), x(2));
 }
 
 // Derived classes must be able to translate a geometric trajectory
@@ -132,11 +132,11 @@ std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
     // Populate full state vector.
     VectorXd full(X_DIM);
     full(0) = positions[ii](0);
-    full(2) = positions[ii](1);
-    full(4) = positions[ii](2);
+    full(1) = positions[ii](1);
+    full(2) = positions[ii](2);
 
-    full(1) = velocity(0);
-    full(3) = velocity(1);
+    full(3) = velocity(0);
+    full(4) = velocity(1);
     full(5) = velocity(2);
 
     // Append to trajectory.
@@ -146,11 +146,11 @@ std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(
   // Catch final waypoint.
   VectorXd full(X_DIM);
   full(0) = positions.back()(0);
-  full(2) = positions.back()(1);
-  full(4) = positions.back()(2);
+  full(1) = positions.back()(1);
+  full(2) = positions.back()(2);
 
-  full(1) = velocity(0);
-  full(3) = velocity(1);
+  full(3) = velocity(0);
+  full(4) = velocity(1);
   full(5) = velocity(2);
 
   full_states.push_back(full);

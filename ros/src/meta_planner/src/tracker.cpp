@@ -301,12 +301,12 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   // 1) Compute relative state.
   // NOTE: right now velocity calculation is totally not portable...
   if (!first_time_) {
-    state_(1) = (tf.transform.translation.x - state_(0)) / time_step_;
-    state_(3) = (tf.transform.translation.y - state_(2)) / time_step_;
+    state_(3) = (tf.transform.translation.x - state_(0)) / time_step_;
+    state_(4) = (tf.transform.translation.y - state_(2)) / time_step_;
     state_(5) = (tf.transform.translation.z - state_(4)) / time_step_;
   } else {
-    state_(1) = 0.0;
     state_(3) = 0.0;
+    state_(4) = 0.0;
     state_(5) = 0.0;
     first_time_ = false;
   }
