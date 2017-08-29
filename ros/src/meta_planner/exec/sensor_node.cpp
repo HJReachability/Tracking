@@ -40,17 +40,17 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <demo/simulator.h>
+#include <demo/sensor.h>
 
 #include <ros/ros.h>
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "simulator");
+  ros::init(argc, argv, "sensor");
   ros::NodeHandle n("~");
 
-  meta::Simulator sim;
+  meta::Sensor sensor;
 
-  if (!sim.Initialize(n)) {
+  if (!sensor.Initialize(n)) {
     ROS_ERROR("%s: Failed to initialize Simulator.",
               ros::this_node::getName().c_str());
     return EXIT_FAILURE;

@@ -1,5 +1,5 @@
 meta:
-  simulator:
+  sensor:
     # Time step for simulator.
     time_step: 0.005
 
@@ -44,6 +44,12 @@ meta:
     # Sensor publication topic.
     sensor: /sensor
 
+    # State estimator topic.
+    state: /state
+
+    # Reference to track.
+    reference: /reference
+
     # Visualization topics.
     traj: /vis/traj
     true_environment: /vis/true_env
@@ -51,8 +57,9 @@ meta:
     tracking_bound: /vis/bound
     sensor_radius: /vis/sensor
 
-    # Control topic.
-    control: /control
+    # Control topics.
+    merged_control: /control/merged
+    lqr_control: /control/lqr
 
   frames:
     # Fixed frame.

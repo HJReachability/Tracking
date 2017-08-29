@@ -134,6 +134,7 @@ private:
   ros::Publisher environment_pub_;
   ros::Publisher traj_pub_;
   ros::Publisher tracking_bound_pub_;
+  ros::Publisher reference_pub_;
   ros::Subscriber sensor_sub_;
   ros::Subscriber lqr_control_sub_;
   ros::Subscriber state_sub_;
@@ -145,6 +146,7 @@ private:
   std::string tracking_bound_topic_;
   std::string sensor_topic_;
   std::string state_topic_;
+  std::string reference_topic_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;
