@@ -49,7 +49,7 @@
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
-#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
@@ -59,10 +59,10 @@
 
 namespace meta {
 
-class Simulator : private Uncopyable {
+class Sensor : private Uncopyable {
 public:
-  explicit Simulator();
-  ~Simulator();
+  explicit Sensor();
+  ~Sensor();
 
   // Initialize this class with all parameters and callbacks.
   bool Initialize(const ros::NodeHandle& n);
@@ -71,21 +71,9 @@ private:
   bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // Callback for processing control signals.
-  void ControlCallback(const geometry_msgs::Vector3::ConstPtr& msg);
-
   // Timer callback for generating sensor measurements and updating
   // state based on last received control signal.
   void TimerCallback(const ros::TimerEvent& e);
-
-  // Dynamics.
-  Dynamics::ConstPtr dynamics_;
-  std::vector<double> control_lower_;
-  std::vector<double> control_upper_;
-
-  // Current state and control.
-  VectorXd state_;
-  VectorXd control_;
 
   // Sensor radius.
   double sensor_radius_;
@@ -95,22 +83,20 @@ private:
   size_t num_obstacles_;
   size_t state_dim_;
   size_t control_dim_;
+  NearHoverQuadNoYaw::ConstPtr dynamics_;
 
   std::vector<double> state_lower_;
   std::vector<double> state_upper_;
 
   // Set a recurring timer for a discrete-time controller.
-  ros::Time time_;
   ros::Timer timer_;
   double time_step_;
 
   // Publishers/subscribers and related topics.
-  ros::Subscriber control_sub_;
   ros::Publisher sensor_radius_pub_;
   ros::Publisher environment_pub_;
   ros::Publisher sensor_pub_;
 
-  std::string control_topic_;
   std::string sensor_radius_topic_;
   std::string environment_topic_;
   std::string sensor_topic_;
@@ -119,7 +105,9 @@ private:
   std::string fixed_frame_id_;
   std::string robot_frame_id_;
 
-  tf2_ros::TransformBroadcaster br_;
+  // TF stuff.
+  tf2_ros::TransformListener tf_listener_;
+  tf2_ros::Buffer tf_buffer_;
 
   // Is this class initialized?
   bool initialized_;

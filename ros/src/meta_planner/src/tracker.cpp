@@ -191,7 +191,7 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::get(key, state_lower_)) return false;
 
   // Topics and frame ids.
-  if (!ros::param::search("meta/topics/control", key)) return false;
+  if (!ros::param::search("meta/topics/merged_control", key)) return false;
   if (!ros::param::get(key, control_topic_)) return false;
 
   if (!ros::param::search("meta/topics/lqr_control", key)) return false;
@@ -211,6 +211,9 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
 
   if (!ros::param::search("meta/topics/state", key)) return false;
   if (!ros::param::get(key, state_topic_)) return false;
+
+  if (!ros::param::search("meta/topics/reference", key)) return false;
+  if (!ros::param::get(key, reference_topic_)) return false;
 
   if (!ros::param::search("meta/frames/fixed", key)) return false;
   if (!ros::param::get(key, fixed_frame_id_)) return false;
@@ -248,8 +251,12 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   tracking_bound_pub_ = nl.advertise<visualization_msgs::Marker>(
     tracking_bound_topic_.c_str(), 10, false);
 
-  control_pub_ = nl.advertise<geometry_msgs::Vector3>(
+  // Actual publishers.
+  control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
     control_topic_.c_str(), 10, false);
+
+  reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
+    reference_topic_.c_str(), 10, false);
 
   // Timer.
   timer_ =
@@ -401,10 +408,13 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
       (1.0 - optimal_weight) * lqr_control_;
   }
 
-  geometry_msgs::Vector3 control_msg;
-  control_msg.x = merged_control(0);
-  control_msg.y = merged_control(1);
-  control_msg.z = merged_control(2);
+  crazyflie_msgs::ControlStamped control_msg;
+  control_msg.header.stamp = ros::Time::now();
+
+  control_msg.control.roll = merged_control(0);
+  control_msg.control.pitch = merged_control(1);
+  control_msg.control.yaw_dot = merged_control(2);
+  control_msg.control.thrust = merged_control(3);
 
   control_pub_.publish(control_msg);
 

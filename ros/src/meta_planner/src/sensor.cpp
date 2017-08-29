@@ -41,19 +41,20 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <demo/simulator.h>
+#include <demo/sensor.h>
 #include <random>
 
 namespace meta {
 
-Simulator::Simulator()
-  : initialized_(false) {}
+Sensor::Sensor()
+  : tf_listener_(tf_buffer_),
+    initialized_(false) {}
 
-Simulator::~Simulator() {}
+Sensor::~Sensor() {}
 
 // Initialize this class with all parameters and callbacks.
-bool Simulator::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "simulator");
+bool Sensor::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "sensor");
 
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
@@ -65,19 +66,12 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Control bounds.
-  VectorXd control_upper_vec(control_dim_);
-  VectorXd control_lower_vec(control_dim_);
-  for (size_t ii = 0; ii < control_dim_; ii++) {
-    control_upper_vec(ii) = control_upper_[ii];
-    control_lower_vec(ii) = control_lower_[ii];
-  }
-
-  // Dynamics.
-  dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
-
   // Initialize state space.
   space_ = BallsInBox::Create();
+
+  // Dynamics with dummy control bounds. We only need puncturing functionality.
+  dynamics_ = NearHoverQuadNoYaw::Create(VectorXd::Zero(control_dim_),
+                                         VectorXd::Zero(control_dim_));
 
   // Set state space bounds.
   VectorXd state_upper_vec(state_dim_);
@@ -99,46 +93,34 @@ bool Simulator::Initialize(const ros::NodeHandle& n) {
   for (size_t ii = 0; ii < num_obstacles_; ii++)
     space_->AddObstacle(space_->Sample(), uniform_radius(rng));
 
-  // Initialize current state and control.
-  state_ = 0.5 * (state_lower_vec + state_upper_vec);
-  state_(1) = 0.0;
-  state_(3) = 0.0;
-  state_(5) = 0.0;
-
-  control_ = VectorXd::Zero(control_dim_);
-  control_(2) = 10.0;
-
-  // Set the initial time.
-  time_ = ros::Time::now();
-
   initialized_ = true;
   return true;
 }
 
 // Load all parameters from config files.
-bool Simulator::LoadParameters(const ros::NodeHandle& n) {
+bool Sensor::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
 
   // Sensor radius.
-  if (!ros::param::search("meta/simulator/sensor_radius", key)) return false;
+  if (!ros::param::search("meta/sensor/sensor_radius", key)) return false;
   if (!ros::param::get(key, sensor_radius_)) return false;
 
   // Number of obstacles.
   int num_obstacles = 1;
-  if (!ros::param::search("meta/simulator/num_obstacles", key)) return false;
+  if (!ros::param::search("meta/sensor/num_obstacles", key)) return false;
   if (!ros::param::get(key, num_obstacles)) return false;
   num_obstacles_ = static_cast<size_t>(num_obstacles);
 
-  // Control parameters.
-  if (!ros::param::search("meta/simulator/time_step", key)) return false;
+  // Time step.
+  if (!ros::param::search("meta/sensor/time_step", key)) return false;
   if (!ros::param::get(key, time_step_)) return false;
 
+  // State space parameters.
   int dimension = 1;
   if (!ros::param::search("meta/control/dim", key)) return false;
   if (!ros::param::get(key, dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
 
-  // State space parameters.
   if (!ros::param::search("meta/state/dim", key)) return false;
   if (!ros::param::get(key, dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
@@ -149,17 +131,7 @@ bool Simulator::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("meta/state/lower", key)) return false;
   if (!ros::param::get(key, state_lower_)) return false;
 
-  // Control parameters.
-  if (!ros::param::search("meta/control/upper", key)) return false;
-  if (!ros::param::get(key, control_upper_)) return false;
-
-  if (!ros::param::search("meta/control/lower", key)) return false;
-  if (!ros::param::get(key, control_lower_)) return false;
-
   // Topics and frame ids.
-  if (!ros::param::search("meta/topics/control", key)) return false;
-  if (!ros::param::get(key, control_topic_)) return false;
-
   if (!ros::param::search("meta/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
@@ -181,14 +153,10 @@ bool Simulator::LoadParameters(const ros::NodeHandle& n) {
 }
 
 // Register all callbacks and publishers.
-bool Simulator::RegisterCallbacks(const ros::NodeHandle& n) {
+bool Sensor::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
-  // Subscriber.
-  control_sub_ = nl.subscribe(
-    control_topic_.c_str(), 10, &Simulator::ControlCallback, this);
-
-  // Publishers.
+   // Publishers.
   environment_pub_ = nl.advertise<visualization_msgs::Marker>(
     environment_topic_.c_str(), 10, false);
 
@@ -200,68 +168,38 @@ bool Simulator::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Timer.
   timer_ = nl.createTimer(
-    ros::Duration(time_step_), &Simulator::TimerCallback, this);
+    ros::Duration(time_step_), &Sensor::TimerCallback, this);
 
   return true;
 }
 
-
-// Callback for processing control signals.
-void Simulator::ControlCallback(const geometry_msgs::Vector3::ConstPtr& msg) {
-  control_(0) = msg->x;
-  control_(1) = msg->y;
-  control_(2) = msg->z;
-}
-
 // Timer callback for generating sensor measurements and updating
 // state based on last received control signal.
-void Simulator::TimerCallback(const ros::TimerEvent& e) {
-  // Update state.
-  const ros::Time now = ros::Time::now();
-  const double dt = (now - time_).toSec();
+void Sensor::TimerCallback(const ros::TimerEvent& e) {
+  // Read position from TF.
+  const ros::Time right_now = ros::Time::now();
 
-  state_ += dynamics_->Evaluate(state_, control_) * dt;
+  // Get the current transform from tf.
+  geometry_msgs::TransformStamped tf;
 
-  time_ = now;
+  try {
+    tf = tf_buffer_.lookupTransform(
+      fixed_frame_id_.c_str(), robot_frame_id_.c_str(), right_now);
+  } catch(tf2::TransformException &ex) {
+    ROS_WARN("%s: %s", name_.c_str(), ex.what());
+    ROS_WARN("%s: Could not determine current state.", name_.c_str());
+    return;
+  }
 
-  // Broadcast tf.
-  geometry_msgs::TransformStamped transform_stamped;
-
-  transform_stamped.header.frame_id = fixed_frame_id_;
-  transform_stamped.header.stamp = now;
-
-  transform_stamped.child_frame_id = robot_frame_id_;
-
-  transform_stamped.transform.translation.x =
-    state_(dynamics_->SpatialDimension(0));
-  transform_stamped.transform.translation.y =
-    state_(dynamics_->SpatialDimension(1));
-  transform_stamped.transform.translation.z =
-    state_(dynamics_->SpatialDimension(2));
-
-  // RPY to quaternion.
-  const double roll = control_(1);
-  const double pitch = control_(0);
-  const double yaw = 0.0;
-  const Quaterniond q = Eigen::AngleAxisd(roll, Vector3d::UnitX()) *
-    Eigen::AngleAxisd(pitch, Vector3d::UnitY());
-
-  transform_stamped.transform.rotation.x = q.x();
-  transform_stamped.transform.rotation.y = q.y();
-  transform_stamped.transform.rotation.z = q.z();
-  transform_stamped.transform.rotation.w = q.w();
-
-  br_.sendTransform(transform_stamped);
+  // Extract translation.
+  const Vector3d position(tf.transform.translation.x,
+                          tf.transform.translation.y,
+                          tf.transform.translation.z);
 
   // Publish sensor message if an obstacle is within range.
   // TODO! Parameterize sensor radius.
   Vector3d obstacle_position;
   double obstacle_radius = -1.0;
-
-  Vector3d position;
-  position(0) = state_(dynamics_->SpatialDimension(0));
-  position(1) = state_(dynamics_->SpatialDimension(1));
-  position(2) = state_(dynamics_->SpatialDimension(2));
 
   if (space_->SenseObstacle(position, sensor_radius_,
                             obstacle_position, obstacle_radius)) {
@@ -281,7 +219,7 @@ void Simulator::TimerCallback(const ros::TimerEvent& e) {
   visualization_msgs::Marker sensor_radius_marker;
   sensor_radius_marker.ns = "sensor";
   sensor_radius_marker.header.frame_id = robot_frame_id_;
-  sensor_radius_marker.header.stamp = now;
+  sensor_radius_marker.header.stamp = right_now;
   sensor_radius_marker.id = 0;
   sensor_radius_marker.type = visualization_msgs::Marker::SPHERE;
   sensor_radius_marker.action = visualization_msgs::Marker::ADD;
