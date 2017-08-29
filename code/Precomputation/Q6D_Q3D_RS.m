@@ -136,6 +136,8 @@ extraArgs.convergeThreshold = dt;
 
 extraArgs.keepLast = 1;
 
+extraArgs.quiet = 1;
+
 % solve backwards reachable set
 datas = cell(1,length(subDims));
 for ii = 1:length(subDims)
@@ -178,6 +180,9 @@ if ~exist(plannerFolderMatlab, 'dir')
   mkdir(plannerFolderMatlab);
 end
 
+for ii = 1:length(sD)
+derivs{ii} = computeGradients(sD{ii}.grid,datas{ii});
+end
 
 for ii = 1:length(subDims)
     data = datas{ii};
@@ -191,18 +196,20 @@ for ii = 1:length(subDims)
     u_dims = (uint64(ii)-1)';
     u_min = uMin(ii)';
     u_max = uMax(ii)';
+    deriv0 = derivs{ii}{1};
+    deriv1 = derivs{ii}{2};
     % note DON'T use -v7.3 extension for compression. it fucks up the C++
     % stuff
     save([speedFolder '/subsystem_' subDimNames(ii) '.mat'], ...
         'data','grid_min','grid_max','grid_N','teb','x_dims','u_dims',...
-        'u_min','u_max', 'max_planner_speed')
+        'u_min','u_max', 'max_planner_speed','deriv0', 'deriv1')
 end
 
 if ~exist([plannerFolderMatlab '/speed_' ...
     num2str(pMax*10) '_tenths.mat'], 'file')
       save([plannerFolderMatlab '/speed_' ...
     num2str(pMax*10) '_tenths.mat'], ...
-        'datas','tau','sD','trackingErrorBound');
+        'datas','tau','sD','trackingErrorBound','derivs');
 end
 end
 

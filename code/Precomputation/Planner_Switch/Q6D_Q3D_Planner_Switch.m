@@ -4,7 +4,7 @@ if nargin <1
 end
 
 if nargin <2
-    planner_speed_big = .2;
+    planner_speed_big = 1;
 end
 
 if nargin <3

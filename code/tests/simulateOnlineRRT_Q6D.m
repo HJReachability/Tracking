@@ -1,4 +1,4 @@
-function simulateOnlineRRT(data_filename, obs_filename, extraArgs)
+function simulateOnlineRRT_Q6D(data_filename, obs_filename, extraArgs)
 % simulateOnlineRRT(data_filename, obs_filename, extraArgs)
 %     Includes tracking
 %
@@ -18,7 +18,7 @@ function simulateOnlineRRT(data_filename, obs_filename, extraArgs)
 %       inputs related to sensing environment
 %       inputs related to RRT (goal?)
 
-%addpath(genpath('.'))
+workingDirectory = pwd;
 
 % Problem setup
 start = [-12; 0; 0];
@@ -30,7 +30,7 @@ goal = [12; 0; 0];
 Dims = {1:2, 3:4, 5:6};
 
 if nargin < 1
-  data_filename = '/Users/sylvia/Documents/MATLAB/planner_RRT3D_Matlab/speed_1_tenths.mat';
+  data_filename = [workingDirectory '/planner_RRT3D_Matlab/speed_20_tenths.mat'];
 end
 
 if nargin < 2
@@ -64,10 +64,10 @@ derivs{ii} = computeGradients(sD{ii}.grid,datas{ii},@upwindFirstFirst);
 end
 
 trackErr = max(trackingErrorBound);
-senseRange = 2;
 virt_v = sD{1}.dynSys.pMax(1);
 dt = 0.1;
 delta_x = virt_v*dt;
+senseRange = 2*trackErr+delta_x;
 
 uMode = 'min';
 % dMode = 'min'; % Not needed since we're not using worst-case control
@@ -122,6 +122,8 @@ global_start = tic; % Time entire simulation
 max_iter = 5000;
 lookup_time = 0;
 
+virt_x = [start];
+
 while iter < max_iter && norm(trueQuad.x([1 3 5]) - goal) > 0.5
   iter = iter + 1;
 
@@ -133,7 +135,9 @@ while iter < max_iter && norm(trueQuad.x([1 3 5]) - goal) > 0.5
   % Replan if a new obstacle is seen
   if isempty(newStates) || sensed_new
     % Update next virtual state
-    newStates = rrtNextState(trueQuad.x([1 3 5]), goal, obsMap.padded_obs, ...
+%     newStates = rrtNextState(trueQuad.x([1 3 5]), goal, obsMap.padded_obs, ...
+%       delta_x, [], false);
+  newStates = rrtNextState(virt_x, goal, obsMap.padded_obs, ...
       delta_x, [], false);
   end
   virt_x = newStates(1,:)';
