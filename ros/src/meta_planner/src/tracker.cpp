@@ -194,9 +194,6 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("meta/topics/merged_control", key)) return false;
   if (!ros::param::get(key, control_topic_)) return false;
 
-  if (!ros::param::search("meta/topics/lqr_control", key)) return false;
-  if (!ros::param::get(key, lqr_control_topic_)) return false;
-
   if (!ros::param::search("meta/topics/sensor", key)) return false;
   if (!ros::param::get(key, sensor_topic_)) return false;
 
@@ -237,9 +234,6 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 
   state_sub_ = nl.subscribe(
     state_topic_.c_str(), 10, &Tracker::StateCallback, this);
-
-  lqr_control_sub_ = nl.subscribe(
-    lqr_control_topic_.c_str(), 10, &Tracker::LqrControlCallback, this);
 
   // Visualization publisher(s).
   environment_pub_ = nl.advertise<visualization_msgs::Marker>(
@@ -292,15 +286,6 @@ void Tracker::StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr
   state_(3) = msg->state.x_dot;
   state_(4) = msg->state.y_dot;
   state_(5) = msg->state.z_dot;
-}
-
-// Callback for processing least restrictive control updates.
-void Tracker::LqrControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
-  // HACK! Assuming control format.
-  lqr_control_(0) = msg->control.roll;
-  lqr_control_(1) = msg->control.pitch;
-  lqr_control_(2) = msg->control.yaw_dot;
-  lqr_control_(3) = msg->control.thrust;
 }
 
 // Callback for applying tracking controller.
@@ -392,29 +377,24 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   std::cout << "optimal control: " << optimal_control.transpose() << std::endl;
 
-  // (4) Merge optimal control with least restrictive control and apply.
+  // (4) Publish optimal control with priority in (0, 1).
   const double kControlMergeBuffer =
     0.25 * std::min(value->TrackingBound(0),
                     std::min(value->TrackingBound(1), value->TrackingBound(2)));
 
-  VectorXd merged_control(control_dim_);
-  if (min_dist_to_bound <= 0.0)
-    merged_control = optimal_control;
-  else if (min_dist_to_bound > kControlMergeBuffer)
-    merged_control = lqr_control_;
-  else {
-    const double optimal_weight = 1.0 - min_dist_to_bound / kControlMergeBuffer;
-    merged_control = optimal_weight * optimal_control +
-      (1.0 - optimal_weight) * lqr_control_;
-  }
-
-  crazyflie_msgs::ControlStamped control_msg;
+  crazyflie_msgs::NoYawControlStamped control_msg;
   control_msg.header.stamp = ros::Time::now();
 
-  control_msg.control.roll = merged_control(0);
-  control_msg.control.pitch = merged_control(1);
-  control_msg.control.yaw_dot = merged_control(2);
-  control_msg.control.thrust = merged_control(3);
+  control_msg.control.roll = optimal_control(0);
+  control_msg.control.pitch = optimal_control(1);
+  control_msg.control.thrust = optimal_control(2);
+
+  if (min_dist_to_bound <= 0.0)
+    control_msg.control.priority = 1.0;
+  else if (min_dist_to_bound > kControlMergeBuffer)
+    control_msg.control.priority = 0.0;
+  else
+    control_msg.control.priority = 1.0 - min_dist_to_bound / kControlMergeBuffer;
 
   control_pub_.publish(control_msg);
 
