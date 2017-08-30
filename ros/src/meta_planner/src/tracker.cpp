@@ -135,7 +135,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   space_->Visualize(environment_pub_, fixed_frame_id_);
 
   // Wait a little for the simulator to begin.
-  ros::Duration(0.5).sleep();
+  ros::Duration(1.0).sleep();
 
   initialized_ = true;
   return true;
@@ -146,18 +146,18 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Meta planning parameters.
-  if (!nl.getParam("/meta/meta/meta/max_connection_radius", max_connection_radius_))
+  if (!nl.getParam("meta/meta/max_connection_radius", max_connection_radius_))
     return false;
 
   // Control parameters.
-  if (!nl.getParam("/meta/meta/control/time_step", time_step_)) return false;
+  if (!nl.getParam("meta/control/time_step", time_step_)) return false;
 
   int dimension = 1;
-  if (!nl.getParam("/meta/meta/control/dim", dimension)) return false;
+  if (!nl.getParam("meta/control/dim", dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("/meta/meta/control/upper", control_upper_)) return false;
-  if (!nl.getParam("/meta/meta/control/lower", control_lower_)) return false;
+  if (!nl.getParam("meta/control/upper", control_upper_)) return false;
+  if (!nl.getParam("meta/control/lower", control_lower_)) return false;
 
   if (control_upper_.size() != control_dim_ ||
       control_lower_.size() != control_dim_) {
@@ -167,7 +167,7 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // Planner parameters.
-  if (!nl.getParam("/meta/meta/planners/values", value_directories_)) return false;
+  if (!nl.getParam("meta/planners/values", value_directories_)) return false;
 
   if (value_directories_.size() == 0) {
     ROS_ERROR("%s: Must specify at least one value function directory.",
@@ -176,23 +176,23 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // State space parameters.
-  if (!nl.getParam("/meta/meta/state/dim", dimension)) return false;
+  if (!nl.getParam("meta/state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("/meta/meta/state/upper", state_upper_)) return false;
-  if (!nl.getParam("/meta/meta/state/lower", state_lower_)) return false;
+  if (!nl.getParam("meta/state/upper", state_upper_)) return false;
+  if (!nl.getParam("meta/state/lower", state_lower_)) return false;
 
   // Topics and frame ids.
-  if (!nl.getParam("/meta/meta/topics/merged_control", control_topic_)) return false;
-  if (!nl.getParam("/meta/meta/topics/sensor", sensor_topic_)) return false;
-  if (!nl.getParam("/meta/meta/topics/known_environment", environment_topic_)) return false;
-  if (!nl.getParam("/meta/meta/topics/traj", traj_topic_)) return false;
-  if (!nl.getParam("/meta/meta/topics/tracking_bound", tracking_bound_topic_)) return false;
-  if (!nl.getParam("/meta/meta/topics/state", state_topic_)) return false;
-  if (!nl.getParam("/meta/meta/topics/reference", reference_topic_)) return false;
-  if (!nl.getParam("/meta/meta/frames/fixed", fixed_frame_id_)) return false;
-  if (!nl.getParam("/meta/meta/frames/tracker", tracker_frame_id_)) return false;
-  if (!nl.getParam("/meta/meta/frames/planner", planner_frame_id_)) return false;
+  if (!nl.getParam("meta/topics/merged_control", control_topic_)) return false;
+  if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
+  if (!nl.getParam("meta/topics/known_environment", environment_topic_)) return false;
+  if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
+  if (!nl.getParam("meta/topics/tracking_bound", tracking_bound_topic_)) return false;
+  if (!nl.getParam("meta/topics/state", state_topic_)) return false;
+  if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
+  if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("meta/frames/tracker", tracker_frame_id_)) return false;
+  if (!nl.getParam("meta/frames/planner", planner_frame_id_)) return false;
 
   return true;
 }
@@ -219,7 +219,7 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
     tracking_bound_topic_.c_str(), 10, false);
 
   // Actual publishers.
-  control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
+  control_pub_ = nl.advertise<crazyflie_msgs::NoYawControlStamped>(
     control_topic_.c_str(), 10, false);
 
   reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
