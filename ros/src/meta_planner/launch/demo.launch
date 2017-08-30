@@ -10,30 +10,34 @@
 
   <arg name="reference_state_topic" default="/ref/planner" />
   <arg name="lqr_control_topic" default="/control/lqr" />
+  <arg name="optimal_control_topic" default="/control/optimal" />
   <arg name="merged_control_topic" default="/control/merged" />
-
   <arg name="sensor_topic" default="/sensor" />
+
+  <arg name="simulator_dt" default="0.005" />
+  <arg name="estimator_dt" default="0.01" />
+  <arg name="lqr_dt" default="0.02" />
+  <arg name="tracker_dt" default="0.02" />
 
   <!-- All tracking-related nodes share a namespace so they can all
        see parameters loaded in the config file. -->
   <group ns="meta">
-    <!-- Load parameters for the demo. -->
-    <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
-
     <node name="tracker"
           pkg="meta_planner"
           type="tracker_node"
           output="screen">
 
+      <!-- Load parameters for the demo. -->
+      <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
+
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/frames/robot" value="$(arg robot_frame)" />
       <param name="meta/frames/planner" value="$(arg planner_frame)" />
 
-      <param name="meta/topics/reference" value="$(arg reference_state_topic)" /
+      <param name="meta/topics/reference" value="$(arg reference_state_topic)" />
 
-      <param name="meta/topics/state" value="$(arg position_state_topic)" /
-      <param name="meta/topics/merged_control" value="$(arg merged_control_topic)" />
-      <param name="meta/topics/lqr_control" value="$(arg lqr_control_topic)" />
+      <param name="meta/topics/state" value="$(arg position_state_topic)" />
+      <param name="meta/topics/control" value="$(arg optimal_control_topic)" />
       <param name="meta/topics/sensor" value="$(arg sensor_topic)" />
     </node>
 
@@ -42,10 +46,13 @@
           type="sensor_node"
           output="screen">
 
+      <!-- Load parameters for the demo. -->
+      <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
+
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/frames/robot" value="$(arg robot_frame)" />
 
-      <param name="meta/topics/state" value="$(arg position_state_topic)" /
+      <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/sensor" value="$(arg sensor_topic)" />
     </node>
   </group>
@@ -56,10 +63,12 @@
         type="near_hover_simulator_node"
         output="screen">
 
-    <param name="simulator/frames/fixed" value="$(arg fixed_frame)" />
-    <param name="simulator/frames/robot" value="$(arg robot_frame)" />
+    <param name="time_step" value="$(arg simulator_dt)" />
 
-    <param name="simulator/topics/merged_control" value="$(arg merged_control_topic)" />
+    <param name="frames/fixed" value="$(arg fixed_frame)" />
+    <param name="frames/robot" value="$(arg robot_frame)" />
+
+    <param name="topics/merged_control" value="$(arg merged_control_topic)" />
   </node>
 
   <!-- State estimators. -->
@@ -68,21 +77,27 @@
         type="dubins_state_estimator_node"
         output="screen">
 
-    <param name="estimator/frames/fixed" value="$(arg fixed_frame)" />
-    <param name="estimator/frames/robot" value="$(arg robot_frame)" />
+    <param name="x_dim" value="7" />
+    <param name="time_step" value="$(arg estimator_dt)" />
 
-    <param name="estimator/topics/state" value="$(arg dubins_state_topic)" />
+    <param name="frames/fixed" value="$(arg fixed_frame)" />
+    <param name="frames/robot" value="$(arg robot_frame)" />
+
+    <param name="topics/state" value="$(arg dubins_state_topic)" />
   </node>
 
   <node name="position_state_estimator"
         pkg="crazyflie_state_estimator"
-        type="position_estimator_node"
+        type="position_state_estimator_node"
         output="screen">
 
-    <param name="estimator/frames/fixed" value="$(arg fixed_frame)" />
-    <param name="estimator/frames/robot" value="$(arg robot_frame)" />
+    <param name="x_dim" value="6" />
+    <param name="time_step" value="$(arg estimator_dt)" />
 
-    <param name="estimator/topics/state" value="$(arg position_state_topic)" />
+    <param name="frames/fixed" value="$(arg fixed_frame)" />
+    <param name="frames/robot" value="$(arg robot_frame)" />
+
+    <param name="topics/state" value="$(arg position_state_topic)" />
   </node>
 
   <!-- LQR controller. -->
@@ -91,9 +106,19 @@
         type="dubins_state_lqr_node"
         output="screen">
 
-    <param name="lqr/topics/reference" value="$(arg reference_state_topic)" />
-    <param name="lqr/topics/state" value="$(arg dubins_state_topic)" />
-    <param name="lqr/topics/lqr_control" value="$(arg lqr_control_topic)" />
+    <param name="topics/reference" value="$(arg reference_state_topic)" />
+    <param name="topics/state" value="$(arg dubins_state_topic)" />
+    <param name="topics/lqr_control" value="$(arg lqr_control_topic)" />
   </node>
 
+  <!-- Merger node. -->
+  <node name="merger"
+        pkg="crazyflie_control_merger"
+        type="no_yaw_merger_node"
+        output="screen">
+
+    <param name="merger/topics/control" value="$(arg lqr_control_topic)" />
+    <param name="merger/topics/prioritized_control" value="$(arg optimal_control_topic)" />
+    <param name="merger/topics/merged" value="$(arg merged_control_topic)" />
+  </node>
 </launch>

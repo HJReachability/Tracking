@@ -143,26 +143,22 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
 // Load all parameters from config files.
 bool Tracker::LoadParameters(const ros::NodeHandle& n) {
-  std::string key;
+  ros::NodeHandle nl(n);
 
   // Meta planning parameters.
-  if (!ros::param::search("meta/meta/max_connection_radius", key)) return false;
-  if (!ros::param::get(key, max_connection_radius_)) return false;
+  if (!nl.getParam("/meta/meta/meta/max_connection_radius", max_connection_radius_))
+    return false;
 
   // Control parameters.
-  if (!ros::param::search("meta/control/time_step", key)) return false;
-  if (!ros::param::get(key, time_step_)) return false;
+  if (!nl.getParam("/meta/meta/control/time_step", time_step_)) return false;
 
   int dimension = 1;
-  if (!ros::param::search("meta/control/dim", key)) return false;
-  if (!ros::param::get(key, dimension)) return false;
+  if (!nl.getParam("/meta/meta/control/dim", dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
 
-  if (!ros::param::search("meta/control/upper", key)) return false;
-  if (!ros::param::get(key, control_upper_)) return false;
+  if (!nl.getParam("/meta/meta/control/upper", control_upper_)) return false;
+  if (!nl.getParam("/meta/meta/control/lower", control_lower_)) return false;
 
-  if (!ros::param::search("meta/control/lower", key)) return false;
-  if (!ros::param::get(key, control_lower_)) return false;
   if (control_upper_.size() != control_dim_ ||
       control_lower_.size() != control_dim_) {
     ROS_ERROR("%s: Upper and/or lower bounds are in the wrong dimension.",
@@ -171,8 +167,8 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // Planner parameters.
-  if (!ros::param::search("meta/planners/values", key)) return false;
-  if (!ros::param::get(key, value_directories_)) return false;
+  if (!nl.getParam("/meta/meta/planners/values", value_directories_)) return false;
+
   if (value_directories_.size() == 0) {
     ROS_ERROR("%s: Must specify at least one value function directory.",
               name_.c_str());
@@ -180,46 +176,23 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // State space parameters.
-  if (!ros::param::search("meta/state/dim", key)) return false;
-  if (!ros::param::get(key, dimension)) return false;
+  if (!nl.getParam("/meta/meta/state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
-  if (!ros::param::search("meta/state/upper", key)) return false;
-  if (!ros::param::get(key, state_upper_)) return false;
-
-  if (!ros::param::search("meta/state/lower", key)) return false;
-  if (!ros::param::get(key, state_lower_)) return false;
+  if (!nl.getParam("/meta/meta/state/upper", state_upper_)) return false;
+  if (!nl.getParam("/meta/meta/state/lower", state_lower_)) return false;
 
   // Topics and frame ids.
-  if (!ros::param::search("meta/topics/merged_control", key)) return false;
-  if (!ros::param::get(key, control_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/sensor", key)) return false;
-  if (!ros::param::get(key, sensor_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/known_environment", key)) return false;
-  if (!ros::param::get(key, environment_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/traj", key)) return false;
-  if (!ros::param::get(key, traj_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/tracking_bound", key)) return false;
-  if (!ros::param::get(key, tracking_bound_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/state", key)) return false;
-  if (!ros::param::get(key, state_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/reference", key)) return false;
-  if (!ros::param::get(key, reference_topic_)) return false;
-
-  if (!ros::param::search("meta/frames/fixed", key)) return false;
-  if (!ros::param::get(key, fixed_frame_id_)) return false;
-
-  if (!ros::param::search("meta/frames/tracker", key)) return false;
-  if (!ros::param::get(key, tracker_frame_id_)) return false;
-
-  if (!ros::param::search("meta/frames/planner", key)) return false;
-  if (!ros::param::get(key, planner_frame_id_)) return false;
+  if (!nl.getParam("/meta/meta/topics/merged_control", control_topic_)) return false;
+  if (!nl.getParam("/meta/meta/topics/sensor", sensor_topic_)) return false;
+  if (!nl.getParam("/meta/meta/topics/known_environment", environment_topic_)) return false;
+  if (!nl.getParam("/meta/meta/topics/traj", traj_topic_)) return false;
+  if (!nl.getParam("/meta/meta/topics/tracking_bound", tracking_bound_topic_)) return false;
+  if (!nl.getParam("/meta/meta/topics/state", state_topic_)) return false;
+  if (!nl.getParam("/meta/meta/topics/reference", reference_topic_)) return false;
+  if (!nl.getParam("/meta/meta/frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("/meta/meta/frames/tracker", tracker_frame_id_)) return false;
+  if (!nl.getParam("/meta/meta/frames/planner", planner_frame_id_)) return false;
 
   return true;
 }

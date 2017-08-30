@@ -93,61 +93,45 @@ bool Sensor::Initialize(const ros::NodeHandle& n) {
   for (size_t ii = 0; ii < num_obstacles_; ii++)
     space_->AddObstacle(space_->Sample(), uniform_radius(rng));
 
+  // Sleep for a little while to let other nodes start up.
+  ros::Duration(0.5).sleep();
+
   initialized_ = true;
   return true;
 }
 
 // Load all parameters from config files.
 bool Sensor::LoadParameters(const ros::NodeHandle& n) {
-  std::string key;
+  ros::NodeHandle nl(n);
 
   // Sensor radius.
-  if (!ros::param::search("meta/sensor/sensor_radius", key)) return false;
-  if (!ros::param::get(key, sensor_radius_)) return false;
+  if (!nl.getParam("meta/sensor/sensor_radius", sensor_radius_)) return false;
 
   // Number of obstacles.
   int num_obstacles = 1;
-  if (!ros::param::search("meta/sensor/num_obstacles", key)) return false;
-  if (!ros::param::get(key, num_obstacles)) return false;
+  if (!nl.getParam("meta/sensor/num_obstacles", num_obstacles)) return false;
   num_obstacles_ = static_cast<size_t>(num_obstacles);
 
   // Time step.
-  if (!ros::param::search("meta/sensor/time_step", key)) return false;
-  if (!ros::param::get(key, time_step_)) return false;
+  if (!nl.getParam("meta/sensor/time_step", time_step_)) return false;
 
   // State space parameters.
   int dimension = 1;
-  if (!ros::param::search("meta/control/dim", key)) return false;
-  if (!ros::param::get(key, dimension)) return false;
+  if (!nl.getParam("meta/control/dim", dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
 
-  if (!ros::param::search("meta/state/dim", key)) return false;
-  if (!ros::param::get(key, dimension)) return false;
+  if (!nl.getParam("meta/state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
-  if (!ros::param::search("meta/state/upper", key)) return false;
-  if (!ros::param::get(key, state_upper_)) return false;
-
-  if (!ros::param::search("meta/state/lower", key)) return false;
-  if (!ros::param::get(key, state_lower_)) return false;
+  if (!nl.getParam("meta/state/upper", state_upper_)) return false;
+  if (!nl.getParam("meta/state/lower", state_lower_)) return false;
 
   // Topics and frame ids.
-  if (!ros::param::search("meta/topics/sensor", key)) return false;
-  if (!ros::param::get(key, sensor_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/sensor_radius", key)) return false;
-  if (!ros::param::get(key, sensor_radius_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/true_environment", key)) return false;
-  if (!ros::param::get(key, environment_topic_)) return false;
-
-  if (!ros::param::search("meta/frames/fixed", key)) return false;
-  if (!ros::param::get(key, fixed_frame_id_)) return false;
-
-  if (!ros::param::search("meta/frames/tracker", key)) return false;
-  if (!ros::param::get(key, robot_frame_id_)) return false;
-
-  // TODO! Load environment parameters.
+  if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
+  if (!nl.getParam("meta/topics/sensor_radius", sensor_radius_topic_)) return false;
+  if (!nl.getParam("meta/topics/true_environment", environment_topic_)) return false;
+  if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("meta/frames/tracker", robot_frame_id_)) return false;
 
   return true;
 }
