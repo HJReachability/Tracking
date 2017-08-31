@@ -94,7 +94,7 @@ bool Sensor::Initialize(const ros::NodeHandle& n) {
     space_->AddObstacle(space_->Sample(), uniform_radius(rng));
 
   // Sleep for a little while to let other nodes start up.
-  ros::Duration(0.5).sleep();
+  ros::Duration(1.0).sleep();
 
   initialized_ = true;
   return true;
