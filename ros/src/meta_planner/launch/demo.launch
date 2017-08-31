@@ -29,6 +29,10 @@
   <arg name="lqr_x_ref_file" default="$(find crazyflie_lqr)/references/x_ref_hover.txt" />
   <arg name="lqr_u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt" />
 
+  <arg name="sim_init_x" default="0.0" />
+  <arg name="sim_init_y" default="0.0" />
+  <arg name="sim_init_z" default="5.0" />
+
   <!-- Crazyflie dynamics simulator. -->
   <node name="simulator"
         pkg="crazyflie_simulator"
@@ -36,11 +40,14 @@
         output="screen">
 
     <param name="time_step" value="$(arg simulator_dt)" />
+    <param name="init/x" value="$(arg sim_init_x)" />
+    <param name="init/y" value="$(arg sim_init_y)" />
+    <param name="init/z" value="$(arg sim_init_z)" />
 
     <param name="frames/fixed" value="$(arg fixed_frame)" />
     <param name="frames/robot" value="$(arg robot_frame)" />
 
-    <param name="topics/merged_control" value="$(arg merged_control_topic)" />
+    <param name="topics/control" value="$(arg merged_control_topic)" />
   </node>
 
   <!-- State estimators. -->
@@ -102,8 +109,7 @@
     <param name="topics/merged" value="$(arg merged_control_topic)" />
   </node>
 
-  <!-- Tracker and sensor nodes. --1292David
-
+  <!-- Tracker and sensor nodes. -->
   <group ns="meta">
     <node name="tracker"
           pkg="meta_planner"
