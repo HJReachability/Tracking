@@ -183,7 +183,7 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/state/lower", state_lower_)) return false;
 
   // Topics and frame ids.
-  if (!nl.getParam("meta/topics/merged_control", control_topic_)) return false;
+  if (!nl.getParam("meta/topics/control", control_topic_)) return false;
   if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
   if (!nl.getParam("meta/topics/known_environment", environment_topic_)) return false;
   if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;

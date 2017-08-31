@@ -57,9 +57,8 @@ meta:
     tracking_bound: /vis/bound
     sensor_radius: /vis/sensor
 
-    # Control topics.
-    merged_control: /control/merged
-    lqr_control: /control/lqr
+    # Control topic.
+    control: /control/optimal
 
   frames:
     # Fixed frame.
