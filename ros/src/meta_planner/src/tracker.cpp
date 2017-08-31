@@ -135,7 +135,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   space_->Visualize(environment_pub_, fixed_frame_id_);
 
   // Wait a little for the simulator to begin.
-  ros::Duration(1.0).sleep();
+  ros::Duration(0.5).sleep();
 
   initialized_ = true;
   return true;
@@ -278,7 +278,6 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
     current_time = ros::Time::now();
   }
 
-
   std::cout << "state: " << state_.transpose() << std::endl;
 
   const VectorXd planner_state = traj_->GetState(current_time.toSec());
@@ -307,6 +306,21 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   transform_stamped.transform.rotation.w = 1;
 
   br_.sendTransform(transform_stamped);
+
+  // Publish planner position to the reference topic.
+  // HACK! Assuming planner state order.
+  crazyflie_msgs::PositionStateStamped reference;
+  reference.header.stamp = current_time;
+
+  reference.state.x = planner_position(0);
+  reference.state.y = planner_position(1);
+  reference.state.z = planner_position(2);
+
+  reference.state.x_dot = planner_state(3);
+  reference.state.y_dot = planner_state(4);
+  reference.state.z_dot = planner_state(5);
+
+  reference_pub_.publish(reference);
 
   // (2) Get corresponding value function.
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());

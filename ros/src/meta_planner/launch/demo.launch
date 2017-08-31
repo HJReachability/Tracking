@@ -15,10 +15,10 @@
   <arg name="sensor_topic" default="/sensor" />
 
   <arg name="simulator_dt" default="0.005" />
-  <arg name="estimator_dt" default="0.01" />
-  <arg name="lqr_dt" default="0.02" />
-  <arg name="tracker_dt" default="0.02" />
-  <arg name="merger_dt" default="0.02" />
+  <arg name="estimator_dt" default="0.005" />
+  <arg name="lqr_dt" default="0.01" />
+  <arg name="tracker_dt" default="0.01" />
+  <arg name="merger_dt" default="0.01" />
 
   <arg name="tracker_x_dim" default="6" />
   <arg name="lqr_x_dim" default="7" />
@@ -26,7 +26,7 @@
   <arg name="lqr_u_dim" default="4" />
 
   <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_lqr.txt" />
-  <arg name="lqr_x_ref_file" default="$(find crazyflie_lqr)/references/x_ref_hover.txt" />
+  <arg name="lqr_x_ref_file" default="$(find crazyflie_lqr)/references/x_ref_hover_sim.txt" />
   <arg name="lqr_u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt" />
 
   <arg name="sim_init_x" default="0.0" />
