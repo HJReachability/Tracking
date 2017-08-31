@@ -372,8 +372,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   crazyflie_msgs::NoYawControlStamped control_msg;
   control_msg.header.stamp = ros::Time::now();
 
-  control_msg.control.roll = optimal_control(0);
-  control_msg.control.pitch = optimal_control(1);
+  // NOTE! Remember, control is assumed to be [pitch, roll, thrust].
+  control_msg.control.roll = optimal_control(1);
+  control_msg.control.pitch = optimal_control(0);
   control_msg.control.thrust = optimal_control(2);
 
   if (min_dist_to_bound <= 0.0)
