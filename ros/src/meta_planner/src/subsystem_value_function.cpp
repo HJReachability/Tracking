@@ -95,6 +95,28 @@ double SubsystemValueFunction::Value(const VectorXd& state) const {
   // Get distance from voxel center in each dimension.
   const VectorXd center_distance = DistanceToCenter(punctured);
 
+  // Set up grid for interpolation.
+  std::vector< std::vector<double> >  axes;
+  std::vector< std::vector<double>::iterator > iters;
+  for (size_t ii = 0; ii < punctured.size(); ii++) {
+    std::vector<double> axis;
+
+    // Axis will have only two entries. Determine lower/upper bounds
+    // in this dimension from center_distance.
+    if (center_distance(ii) >= 0) {
+      axis.push_back(punctured(ii) - center_distance(ii));
+      axis.push_back(axis.back() + voxel_size_[ii]);
+    } else {
+      axis.push_back(punctured(ii) - center_distance(ii) - voxel_size_[ii]);
+      axis.push_back(punctured(ii) - center_distance(ii));
+    }
+
+    // Add to lists.
+    axes.push_back(axis);
+    iters.push_back(axis.begin());
+  }
+
+#if 0
   // Interpolate.
   const double nn_value = data_[StateToIndex(punctured)];
   double approx_value = nn_value;
@@ -120,6 +142,7 @@ double SubsystemValueFunction::Value(const VectorXd& state) const {
   }
 
   return approx_value;
+#endif
 }
 
 // Linearly interpolate to get the gradient at a particular state.
