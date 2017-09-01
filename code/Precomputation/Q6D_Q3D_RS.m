@@ -2,11 +2,11 @@ function [datas,tau,sD,trackingErrorBound]=Q6D_Q3D_RS(pMax, thrustRange, angleRa
 
 small = 0.1;
 dims = 1:6;
-subDims = {dims(1:2), dims(3:4),dims(5:6)};
+subDims = {[dims(1),dims(4)], [dims(2),dims(5)],[dims(3),dims(6)]};
 subDimNames = ['x','y','z'];
 
 if nargin <1
-    pMax = .5;
+    pMax = 1;
 end
 
 if nargin <2
@@ -18,7 +18,7 @@ if nargin <3
 end
 
 if nargin < 4
-    gN = 125*ones(1,length(dims));
+    gN = 275*ones(1,length(dims));
 end
 
 if nargin < 5
@@ -52,8 +52,8 @@ end
 %% Grid and cost
 
 % Grid Bounds
-gMin = -5*ones(1,length(dims));
-gMax = 5*ones(1,length(dims));
+gMin = -3*ones(1,length(dims));
+gMax = 3*ones(1,length(dims));
 
 % createGrid takes in grid bounds, grid number, and periodic dimensions
 for ii = 1:length(subDims)

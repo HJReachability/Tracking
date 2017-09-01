@@ -1,11 +1,11 @@
 function dx = dynamics(obj, ~, x, u, d)
 % dx = dynamics(obj, ~, x, u, ~)
 %     Dynamics of the 6D Quadrotor
-%         \dot x_1 = x_2 - d(1) 
-%         \dot x_2 = g * tan(u(1))
-%         \dot x_3 = x_4 - d(2)
-%         \dot x_4 = - g * tan(u(2))
-%         \dot x_5 = x_6 - d(3)
+%         \dot x_1 = x_4 - d(1) 
+%         \dot x_2 = x_5 - d(2)
+%         \dot x_3 = x_6 - d(3)
+%         \dot x_4 = g * tan(u(1))
+%         \dot x_5 = - g * tan(u(2))
 %         \dot x_6 = u(3) - g
 %         min (radians)      <=     [u(1); u(2)]   <= max (radians)
 %         min thrust (m/s^2) <=         u(3)       <= max thrust (m/s^2)
@@ -49,15 +49,15 @@ end
 function dx = dynamics_cell_helper(obj, x, u, d, dims, dim)
 switch dim
   case 1
-    dx = x{dims==2} - d{1};
+    dx = x{dims==4} - d{1};
   case 2
-    dx = obj.grav * tan(u{1});
+    dx = x{dims==5} - d{2};
   case 3
-    dx = x{dims==4} - d{2};
-  case 4
-    dx = - obj.grav * tan(u{2});
-  case 5
     dx = x{dims==6} - d{3};
+  case 4
+    dx = obj.grav * tan(u{1});
+  case 5
+    dx = - obj.grav * tan(u{2});
   case 6
     dx = u{3} - obj.grav;
     

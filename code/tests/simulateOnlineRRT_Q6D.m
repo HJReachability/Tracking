@@ -1,4 +1,4 @@
-function simulateOnlineRRT_Q6D(data_filename, obs_filename, extraArgs)
+function simulateOnlineRRT_Q6D(planner_speed, data_filename, obs_filename, extraArgs)
 % simulateOnlineRRT(data_filename, obs_filename, extraArgs)
 %     Includes tracking
 %
@@ -25,29 +25,27 @@ start = [-12; 0; 0];
 goal = [12; 0; 0];
 
 
-
 % Subsystems
-Dims = {1:2, 3:4, 5:6};
+dims = 1:6;
+subDims = {[1 4], [2 5], [3 6]};
 
-if nargin < 1
-  data_filename = [workingDirectory '/planner_RRT3D_Matlab/speed_20_tenths.mat'];
+if nargin <1
+    planner_speed = 1;
 end
 
 if nargin < 2
-  obs_filename = 'obs.mat';
+  data_filename = [workingDirectory '/planner_RRT3D_Matlab/speed_' ...
+      num2str(planner_speed*10) '_tenths.mat'];
 end
 
 if nargin < 3
+  obs_filename = 'obs.mat';
+end
+
+if nargin < 4
   extraArgs = [];
 end
 
-% matrix to compare position states (virt vs. true)
-if ~isfield(extraArgs,'Q')
-  Q = zeros(6,3);
-  Q(1,1) = 1;
-  Q(3,2) = 1;
-  Q(5,3) = 1;
-end
 
 if ~isfield(extraArgs, 'visualize')
   vis = true;
@@ -63,12 +61,24 @@ for ii = 1:length(sD)
 derivs{ii} = computeGradients(sD{ii}.grid,datas{ii},@upwindFirstFirst);
 end
 
+posDims = sD{1}.dynSys.pdim;
+velDims = sD{1}.dynSys.vdim;
+
 trackErr = max(trackingErrorBound);
 virt_v = sD{1}.dynSys.pMax(1);
-dt = 0.1;
+dt = 0.01;
 delta_x = virt_v*dt;
 senseRange = 2*trackErr+delta_x;
 
+% matrix to compare position states (virt vs. true)
+  Q = zeros(length(dims),3);
+  Q(1,1) = 1;
+  Q(2,2) = 1;
+  Q(3,3) = 1;
+  
+% planner velocity in tracker's vdims
+  Plan_v = zeros(length(dims),1);
+  
 uMode = 'min';
 % dMode = 'min'; % Not needed since we're not using worst-case control
 
@@ -101,7 +111,7 @@ end
 
 % set initial states to zero
 start_x = zeros(6,1);
-start_x([1 3 5]) = start;
+start_x(posDims) = start;
 
 % Create real quadrotor system
 %rl_ui = [2 4 6];
@@ -124,34 +134,41 @@ lookup_time = 0;
 
 virt_x = [start];
 
-while iter < max_iter && norm(trueQuad.x([1 3 5]) - goal) > 0.5
+while iter < max_iter && norm(trueQuad.x(posDims) - goal) > 0.5
   iter = iter + 1;
+  virt_x_last = virt_x;
 
   % 1. Sense your environment, locate obstacles
   % 2. Expand sensed obstacles by tracking error bound
-  sensed_new = obsMap.sense_update(trueQuad.x([1 3 5]), senseRange, trackErr);
+  sensed_new = obsMap.sense_update(trueQuad.x(posDims), senseRange, trackErr);
   
   %% Path Planner Block
   % Replan if a new obstacle is seen
   if isempty(newStates) || sensed_new
     % Update next virtual state
-%     newStates = rrtNextState(trueQuad.x([1 3 5]), goal, obsMap.padded_obs, ...
+%     newStates = rrtNextState(trueQuad.x(posDims), goal, obsMap.padded_obs, ...
 %       delta_x, [], false);
   newStates = rrtNextState(virt_x, goal, obsMap.padded_obs, ...
       delta_x, [], false);
   end
   virt_x = newStates(1,:)';
+  delta_virt_x = virt_x - virt_x_last;
+  planner_vel = delta_virt_x/dt;
+  %planner_vel = (delta_virt_x > 0)*virt_v + (delta_virt_x <0)*(-virt_v) ...
+  %    + (delta_virt_x == 0)*0;
+  Plan_v(velDims) = planner_vel;
   newStates(1,:) = [];
 
   %% Hybrid Tracking Controller
   % 1. find relative state
   local_start = tic;
-  rel_x = trueQuad.x - Q*virt_x;
+  rel_x = trueQuad.x - [Q*virt_x + Plan_v];
+  %rel_x = trueQuad.x - Q*virt_x;
   
   % 2. Determine which controller to use, find optimal control
   %get spatial gradients
   for ii = 1:length(sD)
-      p{ii} = eval_u(sD{ii}.grid, derivs{ii}, rel_x(Dims{ii}));
+      p{ii} = eval_u(sD{ii}.grid, derivs{ii}, rel_x(subDims{ii}));
   end
 %   pX = eval_u(gX, derivs{1}, rel_x(XDims));
 %   pY = eval_u(gX, derivs{2}, rel_x(YDims));
@@ -160,7 +177,7 @@ while iter < max_iter && norm(trueQuad.x([1 3 5]) - goal) > 0.5
   % Find optimal control of relative system (no performance control)
   u = [];
   for ii = 1:length(sD)
-      utemp = sD{ii}.dynSys.optCtrl([], rel_x(Dims{ii}), p{ii}, uMode);
+      utemp = sD{ii}.dynSys.optCtrl([], rel_x(subDims{ii}), p{ii}, uMode);
       u = [u; utemp];
   end
   u = cell2mat(u);
@@ -180,7 +197,7 @@ while iter < max_iter && norm(trueQuad.x([1 3 5]) - goal) > 0.5
   trueQuad.updateState(u, dt, [], d);
 
   % Make sure error isn't too big (shouldn't happen)
-  if norm(virt_x - trueQuad.x([1 3 5])) > 3
+  if norm(virt_x - trueQuad.x(posDims)) > trackErr
     keyboard
   end
   
@@ -191,7 +208,7 @@ while iter < max_iter && norm(trueQuad.x([1 3 5]) - goal) > 0.5
   if vis
     % Local obstacles and true position
     obsMap.plotLocal;
-    plot3(trueQuad.x(1), trueQuad.x(3), trueQuad.x(5), 'b.')
+    plot3(trueQuad.x(1), trueQuad.x(2), trueQuad.x(3), 'b.')
     hold on
     
     % Virtual state

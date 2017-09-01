@@ -1,6 +1,6 @@
-function [data_switch,tau,sD_switch]=Q6D_Q3D_Planner_Switch(planner_speed_small, planner_speed_big, extraGridPoints, visualize)
+function [data_switch,tau,sD_switch]=Q6D_Q3D_Planner_Switch(planner_speed_small, planner_speed_big, visualize)
 if nargin <1 
-    planner_speed_small = .1;
+    planner_speed_small = .7;
 end
 
 if nargin <2
@@ -8,11 +8,6 @@ if nargin <2
 end
 
 if nargin <3
-    %set grid to larger than bigger tracking error bound by some padding
-    extraGridPoints = 20;
-end
-
-if nargin <4
     visualize = true;
 end
 
@@ -211,6 +206,14 @@ for ii = 1:length(sD_switch)
     axis(surfFigAxis(3:end))
 end
 
+for ii = 1:length(sD_switch)
+    inside = vfs_switch.datas{ii}<=0;
+    k = find(inside);
+    bound1 = abs(vfs_switch.gs{ii}.xs{1}(k(1)));
+    bound2 = abs(vfs_switch.gs{ii}.xs{1}(k(end)));
+    teb_switch(ii) = max(bound1, bound2);
+end
+
 range_lower = [vfs0.gs{1}.min, vfs0.gs{2}.min, vfs0.gs{3}.min];
 range_upper = [vfs0.gs{1}.max, vfs0.gs{2}.max, vfs0.gs{3}.max];
 
@@ -241,42 +244,51 @@ legend('Small','Big','Switch')
 title('Tracking Error Bound in Position Space')
 
 %% Save
-% 
-% matlabFolder = '/Users/sylvia/Documents/MATLAB';
-% plannerFolder = sprintf('%s/planner_RRT3D', matlabFolder);
-% if ~exist(plannerFolder, 'dir')
-%   mkdir(plannerFolder);
-% end
-% 
-% speedFolder = [plannerFolder '/speed_' ...
-%     num2str(max_planner_speed*10) '_tenths'];
-% if ~exist(speedFolder, 'dir')
-%   mkdir(speedFolder);
-% end
-% 
-% plannerFolderMatlab = sprintf('%s/planner_RRT3D_Matlab', matlabFolder);
-% if ~exist(plannerFolderMatlab, 'dir')
-%   mkdir(plannerFolderMatlab);
-% end
-% 
-% 
-% for ii = 1:length(subDims)
-%     data = datas{ii};
-%     grid_min = gMin(subDims{ii});
-%     grid_max = gMax(subDims{ii});
-%     grid_N = uint64(gN(subDims{ii}));
-%     teb = zeros(1,length(subDims{ii}));
-%     idx = find(subDims{ii}==pdim{ii});
-%     teb(idx) = trackingErrorBound(ii);
-%     x_dims = uint64(subDims{ii}-1); %0-index
-%     u_dims = uint64(ii)-1;
-%     u_min = uMin(ii);
-%     u_max = uMax(ii);
-%     save([speedFolder '/subsystem_' subDimNames(ii) '.mat'], ...
-%         'data','grid_min','grid_max','teb','x_dims','u_dims',...
-%         'u_min','u_max', 'max_planner_speed','-v7.3')
-% end
-%     save([plannerFolderMatlab '/speed_' ...
-%     num2str(max_planner_speed*10) '_tenths.mat'], ...
-%         'datas','tau','sD','trackingErrorBound');
+
+matlabFolder = '/Users/sylvia/Documents/MATLAB';
+plannerFolder = sprintf('%s/planner_RRT3D', matlabFolder);
+if ~exist(plannerFolder, 'dir')
+  mkdir(plannerFolder);
+end
+
+switchFolder = [plannerFolder '/speed_' ...
+    num2str(10*planner_speed_big) '_tenths_to_' ...
+    num2str(10*planner_speed_small) '_tenths'];
+if ~exist(switchFolder, 'dir')
+  mkdir(switchFolder);
+end
+
+plannerFolderMatlab = sprintf('%s/planner_RRT3D_Matlab', matlabFolder);
+if ~exist(plannerFolderMatlab, 'dir')
+  mkdir(plannerFolderMatlab);
+end
+
+for ii = 1:length(sD_switch)
+derivs{ii} = computeGradients(sD_switch{ii}.grid,data_switch{ii});
+end
+
+subDimNames = ['x','y','z'];
+for ii = 1:length(sD_switch)
+    data = data_switch{ii};
+    grid_min = sD_switch{ii}.grid.min';
+    grid_max = sD_switch{ii}.grid.max';
+    grid_N = uint64(sD_switch{ii}.grid.N)';
+    teb = zeros(length(sD_switch{ii}.grid.N),1);
+    idx = find(sD_switch{ii}.dynSys.dims==sD_switch{ii}.dynSys.pdim(ii));
+    teb(idx) = teb_switch(ii);
+    x_dims = uint64(sD_switch{1}.dynSys.dims-1)'; %0-index
+    u_dims = (uint64(ii)-1)';
+    u_min = sD_switch{ii}.dynSys.uMin(ii)';
+    u_max = sD_switch{ii}.dynSys.uMax(ii)';
+    max_planner_speed = planner_speed_small;
+    deriv0 = derivs{ii}{1};
+    deriv1 = derivs{ii}{2};
+    
+    save([switchFolder '/subsystem_' subDimNames(ii) '.mat'], ...
+        'data','grid_min','grid_max', 'grid_N', 'teb','x_dims','u_dims',...
+        'u_min','u_max', 'max_planner_speed', 'deriv0','deriv1')
+end
+    save([plannerFolderMatlab '/speed_' num2str(10*planner_speed_big) ...
+        '_tenths_to_' num2str(10*planner_speed_small) '_tenths.mat'], ...
+        'data_switch','tau','sD_switch','teb_switch');
 end

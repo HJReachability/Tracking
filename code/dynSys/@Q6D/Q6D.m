@@ -19,11 +19,11 @@ classdef Q6D < DynSys
         %     Constructor for a 6D quadrotor
         %
         %     Dynamics of the 6D Quadrotor
-        %     \dot x_1 = x_2 - d(1)
-        %     \dot x_2 = g * tan(u(1))
-        %     \dot x_3 = x_4 - d(2)
-        %     \dot x_4 = g * tan(u(2))
-        %     \dot x_5 = x_6 - d(3)
+        %     \dot x_1 = x_4 - d(1)
+        %     \dot x_2 = x_5 - d(2)
+        %     \dot x_3 = x_6 - d(3)
+        %     \dot x_4 = g * tan(u(1))
+        %     \dot x_5 = g * tan(u(2))
         %     \dot x_6 = u(3) - g
         %     min (radians)      <=     [u(1); u(2)]   <= max (radians)
         %     min thrust (m/s^2) <=         u(3)       <= max thrust (m/s^2)
@@ -33,20 +33,20 @@ classdef Q6D < DynSys
             x = zeros(obj.nx, 1);
         end
         
-        if nargin < 3
+        if nargin < 2
             angleMax = deg2rad(15);
             uMin = [-angleMax; -angleMax; 4];
             uMax = [angleMax; angleMax; 16];
         end
         
-        if nargin < 5
+        if nargin < 4
             dMin = zeros(1,3);
             dMax = zeros(1,3);
         end
         
         
         if nargin < 6
-            dims = 1:2;
+            dims = [1,4];
         end
         
         obj.x = x;
@@ -61,8 +61,8 @@ classdef Q6D < DynSys
         obj.nx = length(dims);
         obj.nu = 3;
         obj.nd = 3;
-        obj.pdim = [1 3 5];
-        obj.vdim = [2 4 6];
+        obj.pdim = [1 2 3];
+        obj.vdim = [4 5 6];
     end
   end
 end

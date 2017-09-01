@@ -23,20 +23,20 @@ if strcmp(dMode, 'max')
       ((-deriv{dims==1})<0)*(obj.pMin(1));
   end
   
-  if any(dims == 3)
-    dOpt{3} = ((-deriv{dims==3})>=0)*(obj.dMax(2)) + ...
-      ((-deriv{dims==3})<0)*(obj.dMin(2));
+  if any(dims == 2)
+    dOpt{3} = ((-deriv{dims==2})>=0)*(obj.dMax(2)) + ...
+      ((-deriv{dims==2})<0)*(obj.dMin(2));
   
-    dOpt{4} = ((-deriv{dims==3})>=0)*(obj.pMax(2)) + ...
-      ((-deriv{dims==4})<0)*(obj.pMin(2));
+    dOpt{4} = ((-deriv{dims==2})>=0)*(obj.pMax(2)) + ...
+      ((-deriv{dims==2})<0)*(obj.pMin(2));
   end
   
-  if any(dims == 5)
-    dOpt{5} = ((-deriv{dims==5})>=0)*(obj.dMax(3)) + ...
-      ((-deriv{dims==5})<0)*(obj.dMin(3));
+  if any(dims == 3)
+    dOpt{5} = ((-deriv{dims==3})>=0)*(obj.dMax(3)) + ...
+      ((-deriv{dims==3})<0)*(obj.dMin(3));
 
-    dOpt{6} = ((-deriv{dims==5})>=0)*(obj.pMax(3)) + ...
-      ((-deriv{dims==5})<0)*(obj.pMin(3));
+    dOpt{6} = ((-deriv{dims==3})>=0)*(obj.pMax(3)) + ...
+      ((-deriv{dims==3})<0)*(obj.pMin(3));
   end
 elseif strcmp(dMode, 'min')
   if any(dims == 1)
@@ -47,20 +47,20 @@ elseif strcmp(dMode, 'min')
       ((-deriv{dims==1})<0)*(obj.pMax(1));
   end
   
-  if any(dims == 3)
-    dOpt{3} = ((-deriv{dims==3})>=0)*(obj.dMin(2)) + ...
-      ((-deriv{dims==3})<0)*(obj.dMax(2));
+  if any(dims == 2)
+    dOpt{3} = ((-deriv{dims==2})>=0)*(obj.dMin(2)) + ...
+      ((-deriv{dims==2})<0)*(obj.dMax(2));
   
-    dOpt{4} = ((-deriv{dims==3})>=0)*(obj.pMin(2)) + ...
-      ((-deriv{dims==4})<0)*(obj.pMax(2));
+    dOpt{4} = ((-deriv{dims==2})>=0)*(obj.pMin(2)) + ...
+      ((-deriv{dims==2})<0)*(obj.pMax(2));
   end
   
-  if any(dims == 5)
-    dOpt{5} = ((-deriv{dims==5})>=0)*(obj.dMin(3)) + ...
-      ((-deriv{dims==5})<0)*(obj.dMax(3));
+  if any(dims == 3)
+    dOpt{5} = ((-deriv{dims==3})>=0)*(obj.dMin(3)) + ...
+      ((-deriv{dims==3})<0)*(obj.dMax(3));
 
-    dOpt{6} = ((-deriv{dims==5})>=0)*(obj.pMin(3)) + ...
-      ((-deriv{dims==5})<0)*(obj.pMax(3));
+    dOpt{6} = ((-deriv{dims==3})>=0)*(obj.pMin(3)) + ...
+      ((-deriv{dims==3})<0)*(obj.pMax(3));
   end
   
 else

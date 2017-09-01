@@ -20,15 +20,15 @@ if strcmp(dMode, 'max')
       ((-deriv{dims==1})<0)*(obj.dMin(1));
   end
   
-  if any(dims == 3)
-    dOpt{2} = ((-deriv{dims==3})>=0)*(obj.dMax(2)) + ...
-      ((-deriv{dims==3})<0)*(obj.dMin(2));
+  if any(dims == 2)
+    dOpt{2} = ((-deriv{dims==2})>=0)*(obj.dMax(2)) + ...
+      ((-deriv{dims==2})<0)*(obj.dMin(2));
   
   end
   
-  if any(dims == 5)
-    dOpt{3} = ((-deriv{dims==5})>=0)*(obj.dMax(3)) + ...
-      ((-deriv{dims==5})<0)*(obj.dMin(3));
+  if any(dims == 3)
+    dOpt{3} = ((-deriv{dims==3})>=0)*(obj.dMax(3)) + ...
+      ((-deriv{dims==3})<0)*(obj.dMin(3));
   end
 elseif strcmp(dMode, 'min')
   if any(dims == 1)
@@ -37,15 +37,15 @@ elseif strcmp(dMode, 'min')
   
   end
   
-  if any(dims == 3)
-    dOpt{2} = ((-deriv{dims==3})>=0)*(obj.dMin(2)) + ...
-      ((-deriv{dims==3})<0)*(obj.dMax(2));
+  if any(dims == 2)
+    dOpt{2} = ((-deriv{dims==2})>=0)*(obj.dMin(2)) + ...
+      ((-deriv{dims==2})<0)*(obj.dMax(2));
 
   end
   
-  if any(dims == 5)
-    dOpt{3} = ((-deriv{dims==5})>=0)*(obj.dMin(3)) + ...
-      ((-deriv{dims==5})<0)*(obj.dMax(3));
+  if any(dims == 3)
+    dOpt{3} = ((-deriv{dims==3})>=0)*(obj.dMin(3)) + ...
+      ((-deriv{dims==3})<0)*(obj.dMax(3));
 
   end
   
