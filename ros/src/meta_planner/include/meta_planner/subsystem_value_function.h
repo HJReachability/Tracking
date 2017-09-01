@@ -46,6 +46,7 @@
 #include <meta_planner/dynamics.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
+#include <meta_planner/linterp.h>
 
 #include <ros/ros.h>
 #include <matio.h>
