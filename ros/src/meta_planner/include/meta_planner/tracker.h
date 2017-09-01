@@ -45,21 +45,25 @@
 
 #include <meta_planner/meta_planner.h>
 #include <meta_planner/trajectory.h>
-#include <meta_planner/box.h>
-#include <demo/balls_in_box.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 #include <meta_planner/ompl_planner.h>
 #include <meta_planner/linear_dynamics.h>
 #include <meta_planner/near_hover_quad_no_yaw.h>
+#include <meta_planner/box.h>
+#include <demo/balls_in_box.h>
+
+#include <crazyflie_msgs/PositionStateStamped.h>
+#include <crazyflie_msgs/ControlStamped.h>
+#include <crazyflie_msgs/NoYawControlStamped.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/TransformStamped.h>
-#include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <string>
+#include <math.h>
 
 namespace meta {
 
@@ -77,6 +81,9 @@ private:
 
   // Callback for processing sensor measurements.
   void SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg);
+
+  // Callback for processing state updates.
+  void StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
 
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
@@ -115,8 +122,6 @@ private:
   bool first_time_;
 
   // TF interfacing.
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
   tf2_ros::TransformBroadcaster br_;
 
   // Publishers/subscribers and related topics.
@@ -124,13 +129,17 @@ private:
   ros::Publisher environment_pub_;
   ros::Publisher traj_pub_;
   ros::Publisher tracking_bound_pub_;
+  ros::Publisher reference_pub_;
   ros::Subscriber sensor_sub_;
+  ros::Subscriber state_sub_;
 
   std::string control_topic_;
   std::string environment_topic_;
   std::string traj_topic_;
   std::string tracking_bound_topic_;
   std::string sensor_topic_;
+  std::string state_topic_;
+  std::string reference_topic_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;

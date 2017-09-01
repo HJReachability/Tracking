@@ -88,6 +88,72 @@ size_t SubsystemValueFunction::StateToIndex(const VectorXd& punctured) const {
   return index;
 }
 
+// Compute the grid point below a given state in dimension idx.
+double SubsystemValueFunction::
+LowerGridPoint(const VectorXd& punctured, size_t idx) const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  // Catch errors.
+  if (punctured.size() != state_dimensions_.size()) {
+    ROS_ERROR("Called LowerGridPoint with wrong size vector.");
+    return 0.0;
+  }
+
+  if (idx >= punctured.size()) {
+    ROS_ERROR("Called LowerGridPoint with too large index.");
+    return 0.0;
+  }
+#endif
+
+  return 0.5 * voxel_size_[idx] + lower_[idx] + voxel_size_[idx] *
+    std::floor((punctured(idx) - lower_[idx]) / voxel_size_[idx]);
+}
+
+// Recursive helper function for gradient interpolation.
+// Takes a (punctured) state and index along which to interpolate.
+VectorXd SubsystemValueFunction::
+RecursiveGradientInterpolator(const VectorXd& x, size_t idx) const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  // Catch errors.
+  if (x.size() != state_dimensions_.size()) {
+    ROS_ERROR("Called RecursiveGradientInterpolator with wrong size vector.");
+    return VectorXd::Zero(state_dimensions_.size());
+  }
+
+  if (idx >= x.size()) {
+    ROS_ERROR("Called RecursiveGradientInterpolator with too large index.");
+    return VectorXd::Zero(state_dimensions_.size());
+  }
+#endif
+
+  // Assume x's entries prior to idx are equal to the upper/lower bounds of
+  // the voxel containing x.
+
+  // Begin by computing the lower and upper bounds of the voxel containing x
+  // in dimension idx.
+  const double lower = LowerGridPoint(x, idx);
+  const double upper = lower + voxel_size_[idx];
+
+  // Compute the fractional distance between lower and upper.
+  const double fractional_dist = (x(idx) - lower) / voxel_size_[idx];
+
+  // Split x along dimension idx.
+  VectorXd x_lower = x;
+  x_lower(idx) = lower;
+
+  VectorXd x_upper = x;
+  x_upper(idx) = upper;
+
+  // Base case.
+  if (idx == x.size() - 1) {
+    return CentralDifference(x_upper) * fractional_dist +
+      CentralDifference(x_lower) * (1.0 - fractional_dist);
+  }
+
+  // Recursive step.
+  return RecursiveGradientInterpolator(x_upper, idx + 1) * fractional_dist +
+    RecursiveGradientInterpolator(x_lower, idx + 1) * (1.0 - fractional_dist);
+}
+
 // Linearly interpolate to get the value at a particular state.
 double SubsystemValueFunction::Value(const VectorXd& state) const {
   const VectorXd punctured = Puncture(state);
@@ -125,10 +191,9 @@ double SubsystemValueFunction::Value(const VectorXd& state) const {
 // Linearly interpolate to get the gradient at a particular state.
 VectorXd SubsystemValueFunction::Gradient(const VectorXd& state) const {
   const VectorXd punctured = Puncture(state);
+  const VectorXd gradient = RecursiveGradientInterpolator(punctured, 0);
 
-  // Get distance from voxel center in each dimension.
-  const VectorXd center_distance = DistanceToCenter(punctured);
-
+#if 0
   // Compute gradient at the voxel containing this state.
   const VectorXd nn_gradient = CentralDifference(punctured);
   VectorXd gradient = nn_gradient;
@@ -153,6 +218,7 @@ VectorXd SubsystemValueFunction::Gradient(const VectorXd& state) const {
     // Add to Taylor approximation (separate in each dimension of the gradient).
     gradient += diff * center_distance(ii);
   }
+#endif
 
   return gradient;
 }

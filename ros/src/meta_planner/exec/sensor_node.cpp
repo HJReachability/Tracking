@@ -36,20 +36,27 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Helper toolbox for interpolation.
+// The Simulator node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_INTERPOLATION_H
-#define META_PLANNER_INTERPOLATION_H
+#include <demo/sensor.h>
 
-#include <meta_planner/types.h>
+#include <ros/ros.h>
 
-namespace meta {
-  namespace interpolation {
-    // Multilinear interpolation of the given objects.
-    // TODO!
-  } //\namespace interpolation
-} //\namespace meta
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "sensor");
+  ros::NodeHandle n("~");
 
-#endif
+  meta::Sensor sensor;
+
+  if (!sensor.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize Simulator.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
+  }
+
+  ros::spin();
+
+  return EXIT_SUCCESS;
+}

@@ -1,5 +1,5 @@
 meta:
-  simulator:
+  sensor:
     # Time step for simulator.
     time_step: 0.005
 
@@ -17,7 +17,7 @@ meta:
     dim: 3
 
     # Upper and lower bounds for control.
-    # In the quadrotor 6D model, the controls are [thrust, roll, pitch].
+    # In the quadrotor 6D model, the controls are [pitch, roll, thrust].
     upper: [0.2618, 0.2618, 16.0]
     lower: [-0.2618, -0.2618, 4.0]
 
@@ -44,6 +44,12 @@ meta:
     # Sensor publication topic.
     sensor: /sensor
 
+    # State estimator topic.
+    state: /state
+
+    # Reference to track.
+    reference: /reference
+
     # Visualization topics.
     traj: /vis/traj
     true_environment: /vis/true_env
@@ -52,7 +58,7 @@ meta:
     sensor_radius: /vis/sensor
 
     # Control topic.
-    control: /control
+    control: /control/optimal
 
   frames:
     # Fixed frame.

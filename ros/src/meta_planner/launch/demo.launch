@@ -1,22 +1,148 @@
 <launch>
 
-<group ns="demo">
+  <!-- Top level arguments. -->
+  <arg name="fixed_frame" default="fixed" />
+  <arg name="robot_frame" default="tracker" />
+  <arg name="planner_frame" default="planner" />
 
-  <!-- Load parameters for the demo. -->
-  <rosparam file="$(find meta_planner)/config/meta_planner.yaml"/>
+  <arg name="dubins_state_topic" default="/state/dubins" />
+  <arg name="position_state_topic" default="/state/position" />
 
-  <node name="tracker"
-        pkg="meta_planner"
-        type="tracker_node"
-        output="screen">
-  </node>
+  <arg name="reference_state_topic" default="/ref/planner" />
+  <arg name="lqr_control_topic" default="/control/lqr" />
+  <arg name="optimal_control_topic" default="/control/optimal" />
+  <arg name="merged_control_topic" default="/control/merged" />
+  <arg name="sensor_topic" default="/sensor" />
 
+  <arg name="simulator_dt" default="0.005" />
+  <arg name="estimator_dt" default="0.005" />
+  <arg name="lqr_dt" default="0.01" />
+  <arg name="tracker_dt" default="0.01" />
+  <arg name="merger_dt" default="0.01" />
+
+  <arg name="tracker_x_dim" default="6" />
+  <arg name="lqr_x_dim" default="7" />
+  <arg name="tracker_u_dim" default="3" />
+  <arg name="lqr_u_dim" default="4" />
+
+  <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_manual.txt" />
+  <arg name="lqr_x_ref_file" default="$(find crazyflie_lqr)/references/x_ref_hover_sim.txt" />
+  <arg name="lqr_u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt" />
+
+  <arg name="sim_init_x" default="0.0" />
+  <arg name="sim_init_y" default="0.0" />
+  <arg name="sim_init_z" default="5.0" />
+
+  <!-- Crazyflie dynamics simulator. -->
   <node name="simulator"
-        pkg="meta_planner"
-        type="simulator_node"
+        pkg="crazyflie_simulator"
+        type="near_hover_simulator_node"
         output="screen">
+
+    <param name="time_step" value="$(arg simulator_dt)" />
+    <param name="init/x" value="$(arg sim_init_x)" />
+    <param name="init/y" value="$(arg sim_init_y)" />
+    <param name="init/z" value="$(arg sim_init_z)" />
+
+    <param name="frames/fixed" value="$(arg fixed_frame)" />
+    <param name="frames/robot" value="$(arg robot_frame)" />
+
+    <param name="topics/control" value="$(arg merged_control_topic)" />
   </node>
 
-</group>
+  <!-- State estimators. -->
+  <node name="dubins_state_estimator"
+        pkg="crazyflie_state_estimator"
+        type="dubins_state_estimator_node"
+        output="screen">
 
+    <param name="x_dim" value="$(arg lqr_x_dim)" />
+    <param name="time_step" value="$(arg estimator_dt)" />
+
+    <param name="frames/fixed" value="$(arg fixed_frame)" />
+    <param name="frames/robot" value="$(arg robot_frame)" />
+
+    <param name="topics/state" value="$(arg dubins_state_topic)" />
+  </node>
+
+  <node name="position_state_estimator"
+        pkg="crazyflie_state_estimator"
+        type="position_state_estimator_node"
+        output="screen">
+
+    <param name="x_dim" value="$(arg tracker_x_dim)" />
+    <param name="time_step" value="$(arg estimator_dt)" />
+
+    <param name="frames/fixed" value="$(arg fixed_frame)" />
+    <param name="frames/robot" value="$(arg robot_frame)" />
+
+    <param name="topics/state" value="$(arg position_state_topic)" />
+  </node>
+
+  <!-- LQR controller. -->
+  <node name="lqr_controller"
+        pkg="crazyflie_lqr"
+        type="dubins_state_lift_lqr_node"
+        output="screen">
+
+    <param name="x_dim" value="$(arg lqr_x_dim)" />
+    <param name="u_dim" value="$(arg lqr_u_dim)" />
+
+    <param name="K_file" value="$(arg lqr_K_file)" />
+    <param name="x_ref_file" value="$(arg lqr_x_ref_file)" />
+    <param name="u_ref_file" value="$(arg lqr_u_ref_file)" />
+
+    <param name="topics/reference" value="$(arg reference_state_topic)" />
+    <param name="topics/state" value="$(arg dubins_state_topic)" />
+    <param name="topics/control" value="$(arg lqr_control_topic)" />
+  </node>
+
+  <!-- Merger node. -->
+  <node name="merger"
+        pkg="crazyflie_control_merger"
+        type="no_yaw_merger_node"
+        output="screen">
+
+    <param name="time_step" value="$(arg merger_dt)" />
+    <param name="topics/control" value="$(arg lqr_control_topic)" />
+    <param name="topics/prioritized_control" value="$(arg optimal_control_topic)" />
+    <param name="topics/merged" value="$(arg merged_control_topic)" />
+  </node>
+
+  <!-- Tracker and sensor nodes. -->
+  <group ns="meta">
+    <node name="tracker"
+          pkg="meta_planner"
+          type="tracker_node"
+          output="screen">
+
+      <!-- Load parameters for the demo. -->
+      <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
+
+      <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
+      <param name="meta/frames/robot" value="$(arg robot_frame)" />
+      <param name="meta/frames/planner" value="$(arg planner_frame)" />
+
+      <param name="meta/topics/reference" value="$(arg reference_state_topic)" />
+
+      <param name="meta/topics/state" value="$(arg position_state_topic)" />
+      <param name="meta/topics/control" value="$(arg optimal_control_topic)" />
+      <param name="meta/topics/sensor" value="$(arg sensor_topic)" />
+    </node>
+
+    <node name="sensor"
+          pkg="meta_planner"
+          type="sensor_node"
+          output="screen">
+
+      <!-- Load parameters for the demo. -->
+      <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
+
+      <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
+      <param name="meta/frames/robot" value="$(arg robot_frame)" />
+
+      <param name="meta/topics/state" value="$(arg position_state_topic)" />
+      <param name="meta/topics/sensor" value="$(arg sensor_topic)" />
+    </node>
+  </group>
 </launch>

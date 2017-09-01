@@ -47,8 +47,7 @@
 namespace meta {
 
 Tracker::Tracker()
-  : initialized_(false),
-    tf_listener_(tf_buffer_) {}
+  : initialized_(false) {}
 
 Tracker::~Tracker() {}
 
@@ -74,7 +73,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     control_lower_vec(ii) = control_lower_[ii];
   }
 
-  // NOTE: Do these need to be relative dynamics?
+  // Set up dynamics.
   dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
 
   // Initialize state space. For now, use an empty box.
@@ -94,10 +93,10 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
   // Set the initial state and goal.
   const size_t kXDim = 0;
-  const size_t kYDim = 2;
-  const size_t kZDim = 4;
-  const size_t kVxDim = 1;
-  const size_t kVyDim = 3;
+  const size_t kYDim = 1;
+  const size_t kZDim = 2;
+  const size_t kVxDim = 3;
+  const size_t kVyDim = 4;
   const size_t kVzDim = 5;
 
   const double kSmallNumber = 1.5;
@@ -144,26 +143,22 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
 // Load all parameters from config files.
 bool Tracker::LoadParameters(const ros::NodeHandle& n) {
-  std::string key;
+  ros::NodeHandle nl(n);
 
   // Meta planning parameters.
-  if (!ros::param::search("meta/meta/max_connection_radius", key)) return false;
-  if (!ros::param::get(key, max_connection_radius_)) return false;
+  if (!nl.getParam("meta/meta/max_connection_radius", max_connection_radius_))
+    return false;
 
   // Control parameters.
-  if (!ros::param::search("meta/control/time_step", key)) return false;
-  if (!ros::param::get(key, time_step_)) return false;
+  if (!nl.getParam("meta/control/time_step", time_step_)) return false;
 
   int dimension = 1;
-  if (!ros::param::search("meta/control/dim", key)) return false;
-  if (!ros::param::get(key, dimension)) return false;
+  if (!nl.getParam("meta/control/dim", dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
 
-  if (!ros::param::search("meta/control/upper", key)) return false;
-  if (!ros::param::get(key, control_upper_)) return false;
+  if (!nl.getParam("meta/control/upper", control_upper_)) return false;
+  if (!nl.getParam("meta/control/lower", control_lower_)) return false;
 
-  if (!ros::param::search("meta/control/lower", key)) return false;
-  if (!ros::param::get(key, control_lower_)) return false;
   if (control_upper_.size() != control_dim_ ||
       control_lower_.size() != control_dim_) {
     ROS_ERROR("%s: Upper and/or lower bounds are in the wrong dimension.",
@@ -172,8 +167,8 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // Planner parameters.
-  if (!ros::param::search("meta/planners/values", key)) return false;
-  if (!ros::param::get(key, value_directories_)) return false;
+  if (!nl.getParam("meta/planners/values", value_directories_)) return false;
+
   if (value_directories_.size() == 0) {
     ROS_ERROR("%s: Must specify at least one value function directory.",
               name_.c_str());
@@ -181,40 +176,23 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // State space parameters.
-  if (!ros::param::search("meta/state/dim", key)) return false;
-  if (!ros::param::get(key, dimension)) return false;
+  if (!nl.getParam("meta/state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
-  if (!ros::param::search("meta/state/upper", key)) return false;
-  if (!ros::param::get(key, state_upper_)) return false;
-
-  if (!ros::param::search("meta/state/lower", key)) return false;
-  if (!ros::param::get(key, state_lower_)) return false;
+  if (!nl.getParam("meta/state/upper", state_upper_)) return false;
+  if (!nl.getParam("meta/state/lower", state_lower_)) return false;
 
   // Topics and frame ids.
-  if (!ros::param::search("meta/topics/control", key)) return false;
-  if (!ros::param::get(key, control_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/sensor", key)) return false;
-  if (!ros::param::get(key, sensor_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/known_environment", key)) return false;
-  if (!ros::param::get(key, environment_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/traj", key)) return false;
-  if (!ros::param::get(key, traj_topic_)) return false;
-
-  if (!ros::param::search("meta/topics/tracking_bound", key)) return false;
-  if (!ros::param::get(key, tracking_bound_topic_)) return false;
-
-  if (!ros::param::search("meta/frames/fixed", key)) return false;
-  if (!ros::param::get(key, fixed_frame_id_)) return false;
-
-  if (!ros::param::search("meta/frames/tracker", key)) return false;
-  if (!ros::param::get(key, tracker_frame_id_)) return false;
-
-  if (!ros::param::search("meta/frames/planner", key)) return false;
-  if (!ros::param::get(key, planner_frame_id_)) return false;
+  if (!nl.getParam("meta/topics/control", control_topic_)) return false;
+  if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
+  if (!nl.getParam("meta/topics/known_environment", environment_topic_)) return false;
+  if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
+  if (!nl.getParam("meta/topics/tracking_bound", tracking_bound_topic_)) return false;
+  if (!nl.getParam("meta/topics/state", state_topic_)) return false;
+  if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
+  if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("meta/frames/tracker", tracker_frame_id_)) return false;
+  if (!nl.getParam("meta/frames/planner", planner_frame_id_)) return false;
 
   return true;
 }
@@ -223,9 +201,12 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
 bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
-  // Sensor subscriber.
+  // Subscribers.
   sensor_sub_ = nl.subscribe(
     sensor_topic_.c_str(), 10, &Tracker::SensorCallback, this);
+
+  state_sub_ = nl.subscribe(
+    state_topic_.c_str(), 10, &Tracker::StateCallback, this);
 
   // Visualization publisher(s).
   environment_pub_ = nl.advertise<visualization_msgs::Marker>(
@@ -237,8 +218,12 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   tracking_bound_pub_ = nl.advertise<visualization_msgs::Marker>(
     tracking_bound_topic_.c_str(), 10, false);
 
-  control_pub_ = nl.advertise<geometry_msgs::Vector3>(
+  // Actual publishers.
+  control_pub_ = nl.advertise<crazyflie_msgs::NoYawControlStamped>(
     control_topic_.c_str(), 10, false);
+
+  reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
+    reference_topic_.c_str(), 10, false);
 
   // Timer.
   timer_ =
@@ -265,12 +250,22 @@ void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
   }
 }
 
+// Callback for processing state updates.
+void Tracker::StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg) {
+  // HACK! Assuming state format.
+  state_(0) = msg->state.x;
+  state_(1) = msg->state.y;
+  state_(2) = msg->state.z;
+  state_(3) = msg->state.x_dot;
+  state_(4) = msg->state.y_dot;
+  state_(5) = msg->state.z_dot;
+}
 
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
   ros::Time current_time = ros::Time::now();
 
-  // Rerun the meta planner if the current time is past the end of the
+  // (1) Rerun the meta planner if the current time is past the end of the
   // trajectory timeline.
   if (current_time.toSec() > traj_->LastTime()) {
     ROS_WARN("%s: Current time is past the end of the planned trajectory.",
@@ -279,43 +274,11 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
     // Run the meta planner.
     RunMetaPlanner();
 
+    // Must update current time so it is after the start of the trajectory.
     current_time = ros::Time::now();
   }
 
-  // TODO! In a real (non-point mass) system, we will need to query some sort of
-  // state filter to get our current state. For now, we just query tf and get position.
-
-  // 0) Get current TF.
-  geometry_msgs::TransformStamped tf;
-
-  try {
-    tf = tf_buffer_.lookupTransform(
-      fixed_frame_id_.c_str(), tracker_frame_id_.c_str(), ros::Time(0));
-  } catch(tf2::TransformException &ex) {
-    ROS_WARN("%s: %s", name_.c_str(), ex.what());
-    ROS_WARN("%s: Could not determine current state.", name_.c_str());
-    ros::Duration(time_step_).sleep();
-    return;
-  }
-
-  // 1) Compute relative state.
-  // NOTE: right now velocity calculation is totally not portable...
-  if (!first_time_) {
-    state_(3) = (tf.transform.translation.x - state_(0)) / time_step_;
-    state_(4) = (tf.transform.translation.y - state_(2)) / time_step_;
-    state_(5) = (tf.transform.translation.z - state_(4)) / time_step_;
-  } else {
-    state_(3) = 0.0;
-    state_(4) = 0.0;
-    state_(5) = 0.0;
-    first_time_ = false;
-  }
-
   std::cout << "state: " << state_.transpose() << std::endl;
-
-  state_(dynamics_->SpatialDimension(0)) = tf.transform.translation.x;
-  state_(dynamics_->SpatialDimension(1)) = tf.transform.translation.y;
-  state_(dynamics_->SpatialDimension(2)) = tf.transform.translation.z;
 
   const VectorXd planner_state = traj_->GetState(current_time.toSec());
   const VectorXd relative_state = state_ - planner_state;
@@ -344,7 +307,22 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   br_.sendTransform(transform_stamped);
 
-  // 2) Get corresponding value function.
+  // Publish planner position to the reference topic.
+  // HACK! Assuming planner state order.
+  crazyflie_msgs::PositionStateStamped reference;
+  reference.header.stamp = current_time;
+
+  reference.state.x = planner_position(0);
+  reference.state.y = planner_position(1);
+  reference.state.z = planner_position(2);
+
+  reference.state.x_dot = planner_state(3);
+  reference.state.y_dot = planner_state(4);
+  reference.state.z_dot = planner_state(5);
+
+  reference_pub_.publish(reference);
+
+  // (2) Get corresponding value function.
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
 
   // Visualize the tracking bound.
@@ -368,26 +346,43 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_pub_.publish(tracking_bound_marker);
 
   // Warn if outside tracking error bound.
-  if (std::abs(relative_state(dynamics_->SpatialDimension(0))) >
-      value->TrackingBound(0) ||
-      std::abs(relative_state(dynamics_->SpatialDimension(1))) >
-      value->TrackingBound(1) ||
-      std::abs(relative_state(dynamics_->SpatialDimension(2))) >
-      value->TrackingBound(2)) {
+  double min_dist_to_bound = std::numeric_limits<double>::infinity();
+  for (size_t ii = 0; ii < 3; ii++) {
+    const double signed_dist = value->TrackingBound(ii) -
+      std::abs(relative_state(dynamics_->SpatialDimension(ii)));
+
+    min_dist_to_bound = std::min(min_dist_to_bound, signed_dist);
+  }
+
+  if (min_dist_to_bound <= 0.0) {
     ROS_WARN("%s: Leaving the tracking error bound.", name_.c_str());
     //    std::terminate();
   }
 
-  // 3) Interpolate gradient to get optimal control.
+  // (3) Interpolate gradient to get optimal control.
   const VectorXd optimal_control = value->OptimalControl(relative_state);
 
   std::cout << "optimal control: " << optimal_control.transpose() << std::endl;
 
-  // 4) Apply optimal control.
-  geometry_msgs::Vector3 control_msg;
-  control_msg.x = optimal_control(0);
-  control_msg.y = optimal_control(1);
-  control_msg.z = optimal_control(2);
+  // (4) Publish optimal control with priority in (0, 1).
+  const double kControlMergeBuffer =
+    0.25 * std::min(value->TrackingBound(0),
+                    std::min(value->TrackingBound(1), value->TrackingBound(2)));
+
+  crazyflie_msgs::NoYawControlStamped control_msg;
+  control_msg.header.stamp = ros::Time::now();
+
+  // NOTE! Remember, control is assumed to be [pitch, roll, thrust].
+  control_msg.control.roll = optimal_control(1);
+  control_msg.control.pitch = optimal_control(0);
+  control_msg.control.thrust = optimal_control(2);
+
+  if (min_dist_to_bound <= 0.0)
+    control_msg.control.priority = 1.0;
+  else if (min_dist_to_bound > kControlMergeBuffer)
+    control_msg.control.priority = 0.0;
+  else
+    control_msg.control.priority = 1.0 - min_dist_to_bound / kControlMergeBuffer;
 
   control_pub_.publish(control_msg);
 

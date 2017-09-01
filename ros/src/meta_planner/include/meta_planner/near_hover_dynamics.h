@@ -51,7 +51,7 @@
 //    dvz_G/dt  =  T*cos(phi)*cos(theta) - g
 //    dpsi/dt   =  w
 //
-//    control: u = [ phi, theta, w, T]
+//    control: u = [phi, theta, w, T]
 //
 // Note: angle sign convention is based on positive accelerations on FLU frame
 // (theta PITCH DOWN / phi ROLL LEFT / psi YAW left)
@@ -78,15 +78,15 @@ public:
   // Derived from parent virtual operator, gives the time derivative of state
   // as a function of current state and control. See above description for details.
   inline VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const {
-    VectorXd xdot(X_DIM);
-    xdot[0] = x[3];
-    xdot[1] = x[4];
-    xdot[2] = x[5];
-    xdot[3] = u[3]*sin(u[1])*cos(x[6]) - u[3]*sin(u[0])*sin(x[6]);
-    xdot[4] = u[3]*sin(u[0])*cos(x[6]) + u[3]*sin(u[1])*sin(x[6]);
-    xdot[5] = u[3]*cos(u[0])*cos(u[1]) - constants::G;
-    xdot[6] = u[2];
-    return xdot;
+    VectorXd x_dot(X_DIM);
+    x_dot(0) = x(3);
+    x_dot(1) = x(4);
+    x_dot(2) = x(5);
+    x_dot(3) = u(3)*std::sin(u(1))*std::cos(x(6)) - u(3)*std::sin(u(0))*std::sin(x(6));
+    x_dot(4) = u(3)*std::sin(u(0))*std::cos(x(6)) + u(3)*std::sin(u(1))*std::sin(x(6));
+    x_dot(5) = u(3)*std::cos(u(0))*std::cos(u(1)) - constants::G;
+    x_dot(6) = u(2);
+    return x_dot;
   }
 
   // Derived classes must be able to compute an optimal control given
