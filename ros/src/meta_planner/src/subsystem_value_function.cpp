@@ -88,6 +88,31 @@ size_t SubsystemValueFunction::StateToIndex(const VectorXd& punctured) const {
   return index;
 }
 
+// Recursive helper function for gradient interpolation.
+// Takes a (punctured) state and index along which to interpolate.
+VectorXd SubsystemValueFunction::
+RecursiveGradientInterpolator(const VectorXd& x, size_t idx) const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  // Catch errors.
+  if (x.size() != state_dimensions_.size()) {
+    ROS_ERROR("Called RecursiveGradientInterpolator with wrong size vector.");
+    return VectorXd::Zero(state_dimensions_.size());
+  }
+
+  if (idx >= x.size()) {
+    ROS_ERROR("Called RecursiveGradientInterpolator with too large index.");
+    return VectorXd::Zero(state_dimensions_.size());
+  }
+#endif
+
+  // Base case.
+  if (idx == x.size() - 1) {
+    // Assume x lies on an edge perpendicular to the last dimension of x.
+    // TODO!
+  }
+}
+
+
 // Recursive function to evaluate the gradient on an N-D lattice.
 // NOTE! This is probably not the most efficient implementation, but
 // hopefully that doesn't matter too much...

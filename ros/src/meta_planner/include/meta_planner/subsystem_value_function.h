@@ -115,6 +115,10 @@ private:
     const std::vector<double>& accumulated_coords,
     std::vector<VectorXd>& gradients) const;
 
+  // Recursive helper function for gradient interpolation.
+  // Takes a (punctured) state and index along which to interpolate.
+  VectorXd RecursiveGradientInterpolator(const VectorXd& x, size_t idx) const;
+
   // Load from file. Returns whether or not it was successful.
   bool Load(const std::string& file_name);
 
