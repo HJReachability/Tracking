@@ -46,7 +46,6 @@
 #include <meta_planner/dynamics.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
-#include <meta_planner/linterp.h>
 
 #include <ros/ros.h>
 #include <matio.h>
@@ -109,14 +108,6 @@ private:
 
   // Compute a central difference at the voxel containing this state.
   VectorXd CentralDifference(const VectorXd& punctured) const;
-
-  // Recursive function to evaluate the gradient on an N-D lattice.
-  // NOTE! This is probably not the most efficient implementation, but
-  // hopefully that doesn't matter too much...
-  void RecursiveLatticeGradient(
-    const std::vector< std::vector<double> >& axes,
-    const std::vector<double>& accumulated_coords,
-    std::vector<VectorXd>& gradients) const;
 
   // Recursive helper function for gradient interpolation.
   // Takes a (punctured) state and index along which to interpolate.
