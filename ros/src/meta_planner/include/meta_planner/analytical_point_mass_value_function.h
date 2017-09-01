@@ -36,90 +36,57 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the ValueFunction class. Many functions in this class are declared
-// virtual so that analytical value functions may inherit from this class.
+// Defines the AnalyticalPointMassValueFunction class, which inherits from
+// the ValueFunction class and implements a custom OptimalControl function.
+// Instead of loading subsystems, for simplicity all parameters are read
+// from the ROS parameter server and this class does not utilize explicit
+// subsystem classes.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_VALUE_FUNCTION_H
-#define META_PLANNER_VALUE_FUNCTION_H
+#ifndef META_PLANNER_ANALYTICAL_POINT_MASS_VALUE_FUNCTION_H
+#define META_PLANNER_ANALYTICAL_POINT_MASS_VALUE_FUNCTION_H
 
-#include <meta_planner/subsystem_value_function.h>
+#include <meta_planner/value_function.h>
 #include <meta_planner/dynamics.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
 #include <ros/ros.h>
 #include <limits>
-#include <unordered_set>
 #include <memory>
 
 namespace meta {
 
-class ValueFunction : private Uncopyable {
+class AnalyticalPointMassValueFunction : private Uncopyable {
 public:
-  typedef std::shared_ptr<const ValueFunction> ConstPtr;
+  typedef std::shared_ptr<const AnalyticalPointMassValueFunction> ConstPtr;
 
   // Destructor.
-  virtual ~ValueFunction() {}
+  ~AnalyticalPointMassValueFunction() {}
 
   // Factory method. Use this instead of the constructor.
   // Note that this class is const-only, which means that once it is
-  // instantiated it can never be changed.
-  static ConstPtr Create(const std::string& directory,
+  // instantiated it can never be changed. Note that we must pass in
+  // the maximum planner speed in each geometric dimension.
+  static ConstPtr Create(const Vector3d& max_planner_speed,
                          const Dynamics::ConstPtr& dynamics,
                          size_t x_dim, size_t u_dim);
 
   // Linearly interpolate to get the value/gradient at a particular state.
-  virtual double Value(const VectorXd& state) const;
-  virtual VectorXd Gradient(const VectorXd& state) const;
+  double Value(const VectorXd& state) const;
+  VectorXd Gradient(const VectorXd& state) const;
 
   // Get the optimal control at a particular state.
-  virtual inline VectorXd OptimalControl(const VectorXd& state) const {
-    return dynamics_->OptimalControl(state, Gradient(state));
-  }
+  VectorXd OptimalControl(const VectorXd& state) const;
 
   // Get the tracking error bound in this spatial dimension.
-  virtual double TrackingBound(size_t dimension) const;
-
-  // Get the dynamics.
-  inline Dynamics::ConstPtr GetDynamics() const { return dynamics_; }
-
-  // Max planner speed in the given spatial dimension.
-  inline double MaxPlannerSpeed(size_t ii) const {
-    return max_planner_speed_(ii);
-  }
-
-  // Was this ValueFunction properly initialized?
-  inline bool IsInitialized() const { return initialized_; }
-
-protected:
-  explicit ValueFunction(const Dynamics::ConstPtr& dynamics,
-                         size_t x_dim, size_t u_dim)
-    : x_dim_(x_dim),
-      u_dim_(u_dim),
-      dynamics_(dynamics) {}
-
-  // State/control space dimensions.
-  const size_t x_dim_;
-  const size_t u_dim_;
-
-  // Dynamics.
-  const Dynamics::ConstPtr dynamics_;
-
-  // Planner max speed in each spatial dimension.
-  Vector3d max_planner_speed_;
-
-  // Was this value function initialized/loaded properly?
-  bool initialized_;
+  double TrackingBound(size_t dimension) const;
 
 private:
-  explicit ValueFunction(const std::string& directory,
-                         const Dynamics::ConstPtr& dynamics,
-                         size_t x_dim, size_t u_dim);
-
-  // List of value functions for independent subsystems.
-  std::vector<SubsystemValueFunction::ConstPtr> subsystems_;
+  explicit AnalyticalPointMassValueFunction(const std::string& directory,
+                                            const Dynamics::ConstPtr& dynamics,
+                                            size_t x_dim, size_t u_dim);
 };
 
 } //\namespace meta
