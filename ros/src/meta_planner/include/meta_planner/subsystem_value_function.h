@@ -104,6 +104,9 @@ private:
   // of the nearest voxel.
   VectorXd DistanceToCenter(const VectorXd& punctured) const;
 
+  // Compute the grid point below a given state in dimension idx.
+  double LowerGridPoint(const VectorXd& punctured, size_t idx) const;
+
   // Compute a central difference at the voxel containing this state.
   VectorXd CentralDifference(const VectorXd& punctured) const;
 
