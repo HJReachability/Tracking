@@ -88,6 +88,38 @@ size_t SubsystemValueFunction::StateToIndex(const VectorXd& punctured) const {
   return index;
 }
 
+// Recursive function to evaluate the gradient on an N-D lattice.
+// NOTE! This is probably not the most efficient implementation, but
+// hopefully that doesn't matter too much...
+void SubsystemValueFunction::
+RecursiveLatticeGradient(const std::vector< std::vector<double> >& axes,
+                         const std::vector<double>& accumulated_coords,
+                         std::vector<VectorXd>& gradients) const {
+  // Base case.
+  if (accumulated_coords.size() == axes.size()) {
+    if (accumulated_coords.size() != state_dimensions_.size()) {
+      ROS_ERROR("Wrong number of dimensions in RecursiveLatticeGradient.");
+      return;
+    }
+
+    // Convert accumulated_coords to VectorXd.
+    VectorXd coords(state_dimensions_.size());
+    for (size_t ii = 0; ii < accumulated_coords.size(); ii++)
+      coords(ii) = accumulated_coords[ii];
+
+    gradients.push_back(CentralDifference(coords));
+    return;
+  }
+
+  // Recursive step.
+  for (double x : axes[accumulated_coords.size()]) {
+    std::vector<double> appended_coords(accumulated_coords);
+    appended_coords.push_back(x);
+
+    RecursiveLatticeGradient(axes, appended_coords, gradients);
+  }
+}
+
 // Linearly interpolate to get the value at a particular state.
 double SubsystemValueFunction::Value(const VectorXd& state) const {
   const VectorXd punctured = Puncture(state);
@@ -95,28 +127,6 @@ double SubsystemValueFunction::Value(const VectorXd& state) const {
   // Get distance from voxel center in each dimension.
   const VectorXd center_distance = DistanceToCenter(punctured);
 
-  // Set up grid for interpolation.
-  std::vector< std::vector<double> >  axes;
-  std::vector< std::vector<double>::iterator > iters;
-  for (size_t ii = 0; ii < punctured.size(); ii++) {
-    std::vector<double> axis;
-
-    // Axis will have only two entries. Determine lower/upper bounds
-    // in this dimension from center_distance.
-    if (center_distance(ii) >= 0) {
-      axis.push_back(punctured(ii) - center_distance(ii));
-      axis.push_back(axis.back() + voxel_size_[ii]);
-    } else {
-      axis.push_back(punctured(ii) - center_distance(ii) - voxel_size_[ii]);
-      axis.push_back(punctured(ii) - center_distance(ii));
-    }
-
-    // Add to lists.
-    axes.push_back(axis);
-    iters.push_back(axis.begin());
-  }
-
-#if 0
   // Interpolate.
   const double nn_value = data_[StateToIndex(punctured)];
   double approx_value = nn_value;
@@ -142,7 +152,6 @@ double SubsystemValueFunction::Value(const VectorXd& state) const {
   }
 
   return approx_value;
-#endif
 }
 
 // Linearly interpolate to get the gradient at a particular state.
@@ -152,6 +161,89 @@ VectorXd SubsystemValueFunction::Gradient(const VectorXd& state) const {
   // Get distance from voxel center in each dimension.
   const VectorXd center_distance = DistanceToCenter(punctured);
 
+  // Set up grid for interpolation.
+  std::vector< std::vector<double> > axes;
+  std::vector< std::vector<double>::iterator > iters;
+  for (size_t ii = 0; ii < punctured.size(); ii++) {
+    std::vector<double> axis;
+
+    // Axis will have only two entries. Determine lower/upper bounds
+    // in this dimension from center_distance.
+    if (center_distance(ii) >= 0) {
+      axis.push_back(punctured(ii) - center_distance(ii));
+      axis.push_back(axis.back() + voxel_size_[ii]);
+    } else {
+      axis.push_back(punctured(ii) - center_distance(ii) - voxel_size_[ii]);
+      axis.push_back(punctured(ii) - center_distance(ii));
+    }
+
+    // Add to lists.
+    axes.push_back(axis);
+    iters.push_back(axis.begin());
+  }
+
+  // Evaluate the gradient at all lattice points.
+  std::vector<VectorXd> gradients;
+  RecursiveLatticeGradient(axes, std::vector<double>(), gradients);
+
+  // Interpolate in each dimension separately.
+  // NOTE! This is probably very inefficient and could be speeded up with a
+  // custom implementation.
+  VectorXd gradient(punctured.size());
+  for (size_t ii = 0; ii < punctured.size(); ii++) {
+    std::vector<double> slopes;
+    for (const auto& grad : gradients)
+      slopes.push_back(grad(ii));
+
+    // Construct the interpolator.
+    // HACK! The library I'm using here is templated on the dimension, which
+    // we only know at run-time. Here, I assume that dimension is in [1, 3].
+    // Larger dimensions are possible but must be hard-coded as follows.
+    // TODO! Write a custom non-templated version of this interpolator.
+    double interpolated = 0.0;
+    if (punctured.size() == 1) {
+      // Set grid sizes array.
+      const std::array<double, 1> sizes = { 2 };
+
+      // Set up interpolator.
+      interpolation::InterpMultilinear<1, double> interp(
+        iters.begin(), sizes.begin(), slopes.data(), slopes.data() + slopes.size());
+
+      // Interpolate.
+      const std::array<double, 1> loc = { punctured(0) };
+      interpolated = interp.interp(loc.begin());
+    } else if (punctured.size() == 2) {
+      // Set grid sizes array.
+      const std::array<double, 2> sizes = { 2, 2 };
+
+      // Set up interpolator.
+      interpolation::InterpMultilinear<2, double> interp(
+        iters.begin(), sizes.begin(), slopes.data(), slopes.data() + slopes.size());
+
+      // Interpolate.
+      const std::array<double, 2> loc = { punctured(0), punctured(1) };
+      interpolated = interp.interp(loc.begin());
+    } else if (punctured.size() == 3) {
+      // Set grid sizes array.
+      const std::array<double, 3> sizes = { 2, 2, 2 };
+
+      // Set up interpolator.
+      interpolation::InterpMultilinear<3, double> interp(
+        iters.begin(), sizes.begin(), slopes.data(), slopes.data() + slopes.size());
+
+      // Interpolate.
+      const std::array<double, 3> loc = { punctured(0), punctured(1), punctured(3) };
+      interpolated = interp.interp(loc.begin());
+    } else {
+      ROS_ERROR("Unsupported dimension for linear interpolation.");
+      return VectorXd::Zero(punctured.size());
+    }
+
+    // Fill in the appropriate dimension of the gradient.
+    gradient(ii) = interpolated;
+  }
+
+#if 0
   // Compute gradient at the voxel containing this state.
   const VectorXd nn_gradient = CentralDifference(punctured);
   VectorXd gradient = nn_gradient;
@@ -176,6 +268,7 @@ VectorXd SubsystemValueFunction::Gradient(const VectorXd& state) const {
     // Add to Taylor approximation (separate in each dimension of the gradient).
     gradient += diff * center_distance(ii);
   }
+#endif
 
   return gradient;
 }

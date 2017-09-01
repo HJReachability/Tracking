@@ -382,6 +382,7 @@ typedef InterpMultilinear<3,double> NDInterpolator_3_ML;
 typedef InterpMultilinear<4,double> NDInterpolator_4_ML;
 typedef InterpMultilinear<5,double> NDInterpolator_5_ML;
 
+#if 0
 // C interface
 extern "C" {
   void linterp_simplex_1(double **grids_begin, int *grid_len_begin, double *pF, int xi_len, double **xi_begin, double *pResult);
@@ -418,6 +419,7 @@ void linterp_simplex_3(double **grids_begin, int *grid_len_begin, double *pF, in
   InterpSimplex<N, double, false> interp_obj(grids_begin, grid_len_begin, pF, pF + total_size);
   interp_obj.interp_vec(xi_len, xi_begin, xi_begin + N, pResult);
 }
+#endif
 
 } //\namespace interpolation
 } //\namespace meta

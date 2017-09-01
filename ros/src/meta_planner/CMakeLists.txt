@@ -14,7 +14,7 @@ find_package(Eigen3 REQUIRED)
 find_package(ompl REQUIRED)
 find_package(Matio REQUIRED)
 find_package(Flann REQUIRED)
-find_package(Boost REQUIRED COMPONENTS filesystem numeric)
+find_package(Boost REQUIRED COMPONENTS filesystem)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
