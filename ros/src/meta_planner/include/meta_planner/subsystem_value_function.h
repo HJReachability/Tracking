@@ -130,6 +130,10 @@ private:
   // Data is stored in row-major order.
   std::vector<double> data_;
 
+  // Gradient information at each voxel. One list per dimension, each
+  // in the same order as data_.
+  std::vector< std::vector<double> > gradient_;
+
   // Tracking error bound in each subsystem dimension.
   std::vector<double> tracking_bound_;
 

@@ -257,8 +257,15 @@ VectorXd SubsystemValueFunction::Puncture(const VectorXd& state) const {
 // Compute a central difference at the voxel containing this state.
 VectorXd SubsystemValueFunction::
 CentralDifference(const VectorXd& punctured) const {
-  // Get the value at the voxel containing this state.
   VectorXd gradient(punctured.size());
+
+  // Read the gradient one dimension at a time.
+  const size_t idx = StateToIndex(punctured);
+  for (size_t ii = 0; ii < gradient.size(); ii++)
+    gradient(ii) = gradient_[ii][idx];
+
+#if 0
+  // Get the value at the voxel containing this state.
   const double nn_value = data_[StateToIndex(punctured)];
 
   // Compute a central difference in each dimension.
@@ -273,6 +280,7 @@ CentralDifference(const VectorXd& punctured) const {
     neighbor(ii) = punctured(ii);
     gradient(ii) = 0.5 * (forward - backward) / voxel_size_[ii];
   }
+#endif
 
   return gradient;
 }
@@ -455,6 +463,28 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
   for (size_t ii = 0; ii < num_voxels_.size(); ii++)
     voxel_size_.push_back((upper_[ii] - lower_[ii]) /
                           static_cast<double>(num_voxels_[ii]));
+
+  // Read gradient information one dimension at a time.
+  for (size_t ii = 0; ii < num_voxels_.size(); ii++) {
+    const std::string deriv = "deriv" + std::to_string(ii);
+    matvar_t* deriv_mat = Mat_VarRead(matfp, deriv.c_str());
+    if (deriv_mat == NULL) {
+      ROS_ERROR("Could not read variable: %s.", deriv.c_str());
+      return false;
+    }
+
+    num_elements = deriv_mat->nbytes / deriv_mat->data_size;
+    if (num_elements != data_.size())
+      ROS_ERROR("Derivative %zu had wrong number of elements.", ii);
+
+    std::vector<double> grad;
+    for (size_t ii = 0; ii < num_elements; ii++) {
+      grad.push_back(static_cast<double*>(deriv_mat->data)[ii]);
+    }
+
+    gradient_.push_back(grad);
+    Mat_VarFree(deriv_mat);
+  }
 
   // Free memory and close file.
   Mat_VarFree(grid_min_mat);
