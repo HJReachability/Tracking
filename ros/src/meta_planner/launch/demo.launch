@@ -119,6 +119,8 @@
       <!-- Load parameters for the demo. -->
       <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
 
+      <param name="meta/control/time_step" value="$(arg tracker_dt)" />
+
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/frames/robot" value="$(arg robot_frame)" />
       <param name="meta/frames/planner" value="$(arg planner_frame)" />

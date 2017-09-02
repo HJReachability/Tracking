@@ -104,8 +104,16 @@ LowerGridPoint(const VectorXd& punctured, size_t idx) const {
   }
 #endif
 
-  return 0.5 * voxel_size_[idx] + lower_[idx] + voxel_size_[idx] *
+  // Get center of nearest voxel.
+  const double center =
+    0.5 * voxel_size_[idx] + lower_[idx] + voxel_size_[idx] *
     std::floor((punctured(idx) - lower_[idx]) / voxel_size_[idx]);
+
+  // Check if center is above us. If so, the lower bound is the voxel below.
+  if (center > punctured(idx))
+    return center - voxel_size_[idx];
+
+  return center;
 }
 
 // Recursive helper function for gradient interpolation.
@@ -135,6 +143,7 @@ RecursiveGradientInterpolator(const VectorXd& x, size_t idx) const {
 
   // Compute the fractional distance between lower and upper.
   const double fractional_dist = (x(idx) - lower) / voxel_size_[idx];
+  std::cout << "fractional dist: " << fractional_dist << std::endl;
 
   // Split x along dimension idx.
   VectorXd x_lower = x;
@@ -239,7 +248,7 @@ VectorXd SubsystemValueFunction::Puncture(const VectorXd& state) const {
 VectorXd SubsystemValueFunction::
 CentralDifference(const VectorXd& punctured) const {
   // Get the value at the voxel containing this state.
-  VectorXd gradient(VectorXd::Zero(punctured.size()));
+  VectorXd gradient(punctured.size());
   const double nn_value = data_[StateToIndex(punctured)];
 
   // Compute a central difference in each dimension.

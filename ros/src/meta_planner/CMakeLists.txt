@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf2_ros
   crazyflie_msgs
+  crazyflie_utils
 )
 
 catkin_package(
@@ -33,6 +34,7 @@ catkin_package(
     std_msgs
     tf2_ros
     crazyflie_msgs
+    crazyflie_utils
   DEPENDS
     EIGEN3
     OMPL
