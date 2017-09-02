@@ -69,10 +69,11 @@ size_t SubsystemValueFunction::StateToIndex(const VectorXd& punctured) const {
     } else if (punctured(ii) > upper_[ii]) {
       ROS_WARN("State is above the SubsystemValueFunction grid in dimension %zu.", ii);
       quantized.push_back(num_voxels_[ii] - 1);
+    } else {
+      // In bounds, so quantize. This works because of 0-indexing and casting.
+      quantized.push_back(
+        static_cast<size_t>((punctured(ii) - lower_[ii]) / voxel_size_[ii]));
     }
-
-    quantized.push_back(
-      static_cast<size_t>((punctured(ii) - lower_[ii]) / voxel_size_[ii]));
   }
 
   // Convert to row-major order.
