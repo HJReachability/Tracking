@@ -77,9 +77,11 @@ size_t SubsystemValueFunction::StateToIndex(const VectorXd& punctured) const {
   }
 
   // Convert to row-major order.
-  size_t index = 0;
-  for (size_t ii = 0; ii < quantized.size() - 1; ii++) {
-    const size_t coefficient = num_voxels_[ii + 1];
+  size_t index = quantized[0];
+
+  for (size_t ii = 1; ii < quantized.size(); ii++) {
+    index *= num_voxels_[ii];
+    index += quantized[ii];
   }
 
 #if 0
