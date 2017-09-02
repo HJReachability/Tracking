@@ -14,7 +14,7 @@ end
 surfFig = 1;
 sliceFig = 2;
 boxFig = 3;
-surfFigAxis = [-.5 .5 -.5 .5 -.5 .5];
+surfFigAxis = [-.8 .8 -.8 .8 -.8 .8];
 level = 0;
 az = 0;
 el = 0;
@@ -47,14 +47,14 @@ for ii = 1:length(S.sD)
     view(az,el)
     
     subplot(3,length(S.sD),length(S.sD)+ii)
-    data0{ii} = sqrt(S.datas{ii}) - S.trackingErrorBound(ii);
+    data0{ii} = S.datas{ii} - S.trackingErrorBound(ii);
     levelS{ii} = surf(S.sD{ii}.grid.xs{1},S.sD{ii}.grid.xs{2},data0{ii});
     levelS{ii}.FaceColor = 'b';
     levelS{ii}.FaceAlpha = .25;
     levelS{ii}.LineStyle = 'none';
     hold on
     
-    dataF{ii} = sqrt(B.datas{ii}) - B.trackingErrorBound(ii);
+    dataF{ii} = B.datas{ii} - B.trackingErrorBound(ii);
     levelB{ii} = surf(B.sD{ii}.grid.xs{1},B.sD{ii}.grid.xs{2},dataF{ii});
     levelB{ii}.FaceAlpha = .25;
     levelB{ii}.FaceColor = 'r';

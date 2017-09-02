@@ -38,6 +38,21 @@ if strcmp(dMode, 'max')
     dOpt{6} = ((-deriv{dims==3})>=0)*(obj.pMax(3)) + ...
       ((-deriv{dims==3})<0)*(obj.pMin(3));
   end
+  
+  if any(dims == 4)
+      dOpt{7} = ((-deriv{dims==4})>=0)*(obj.dMax(4)) + ...
+      ((-deriv{dims==4})<0)*(obj.dMin(4));
+  end
+  
+  if any(dims == 5)
+      dOpt{8} = ((-deriv{dims==5})>=0)*(obj.dMax(5)) + ...
+      ((-deriv{dims==5})<0)*(obj.dMin(5));
+  end
+  
+  if any(dims == 6)
+      dOpt{9} = ((-deriv{dims==6})>=0)*(obj.dMax(6)) + ...
+      ((-deriv{dims==6})<0)*(obj.dMin(6));
+  end
 elseif strcmp(dMode, 'min')
   if any(dims == 1)
     dOpt{1} = ((-deriv{dims==1})>=0)*(obj.dMin(1)) + ...
@@ -63,6 +78,20 @@ elseif strcmp(dMode, 'min')
       ((-deriv{dims==3})<0)*(obj.pMax(3));
   end
   
+  if any(dims == 4)
+      dOpt{7} = ((-deriv{dims==4})>=0)*(obj.dMin(4)) + ...
+      ((-deriv{dims==4})<0)*(obj.dMax(4));
+  end
+  
+  if any(dims == 5)
+      dOpt{8} = ((-deriv{dims==5})>=0)*(obj.dMin(5)) + ...
+      ((-deriv{dims==5})<0)*(obj.dMax(5));
+  end
+  
+  if any(dims == 6)
+      dOpt{9} = ((-deriv{dims==6})>=0)*(obj.dMin(6)) + ...
+      ((-deriv{dims==6})<0)*(obj.dMax(6));
+  end
 else
   error('Unknown dMode!')
 end

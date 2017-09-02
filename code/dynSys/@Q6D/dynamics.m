@@ -10,7 +10,7 @@ function dx = dynamics(obj, ~, x, u, d)
 %         min (radians)      <=     [u(1); u(2)]   <= max (radians)
 %         min thrust (m/s^2) <=         u(3)       <= max thrust (m/s^2)
 %         dist vmin (m/s)    <= [d(1); d(2); d(3)] <= dist vmax (m/s)
-
+%         dist amin (m/s^2)  <= [d(4); d(5); d(6)] <= dist amax (m/s^2)
 
 if nargin < 5
   d = {0; 0; 0};
@@ -55,11 +55,11 @@ switch dim
   case 3
     dx = x{dims==6} - d{3};
   case 4
-    dx = obj.grav * tan(u{1});
+    dx = obj.grav * tan(u{1}) - d{4};
   case 5
-    dx = - obj.grav * tan(u{2});
+    dx = - obj.grav * tan(u{2}) - d{5};
   case 6
-    dx = u{3} - obj.grav;
+    dx = u{3} - obj.grav - d{6};
     
   otherwise
     error('Only dimension 1-6 are defined for dynamics of Q6D!')

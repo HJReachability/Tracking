@@ -22,7 +22,7 @@ if nargin < 4
 end
 
 if nargin < 5
-    visualize = 0;
+    visualize = 1;
 end
 
 %% Dynamical system
@@ -37,10 +37,16 @@ uMax = [angleRangeRad(2); angleRangeRad(2); thrustRange(2)];
 min_planner_speed = -pMax*ones(length(subDims),1);
 max_planner_speed = pMax*ones(length(subDims),1);
 
-% min and max disturbance for wind (in x and y)
-dRange = [0; 0];
-dMin = dRange(1)*ones(1,length(subDims));
-dMax = dRange(2)*ones(1,length(subDims));
+% min and max disturbance velocity
+dRangeV = [-.1; .1];
+
+% min and max disturbance acceleration
+dRangeA = [-.1; .1];
+
+dMin = [dRangeV(1)*ones(length(subDims),1); ...
+    dRangeA(1)*ones(length(subDims),1)];
+dMax = [dRangeV(2)*ones(length(subDims),1); ...
+    dRangeA(2)*ones(length(subDims),1)];
 
 % create dynamic systems
 sD = cell(1,length(subDims));
@@ -181,7 +187,8 @@ if ~exist(plannerFolderMatlab, 'dir')
 end
 
 for ii = 1:length(sD)
-derivs{ii} = computeGradients(sD{ii}.grid,datas{ii});
+    datas{ii} = sqrt(datas{ii});
+    derivs{ii} = computeGradients(sD{ii}.grid,datas{ii});
 end
 
 for ii = 1:length(subDims)
@@ -196,6 +203,8 @@ for ii = 1:length(subDims)
     u_dims = (uint64(ii)-1)';
     u_min = uMin(ii)';
     u_max = uMax(ii)';
+    d_min = sD{1}.dynSys.dMin(subDims{1});
+    d_max = sD{1}.dynSys.dMax(subDims{1});
     deriv0 = derivs{ii}{1};
     deriv1 = derivs{ii}{2};
     % note DON'T use -v7.3 extension for compression. it fucks up the C++

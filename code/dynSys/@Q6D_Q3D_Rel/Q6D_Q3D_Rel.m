@@ -31,6 +31,7 @@ classdef Q6D_Q3D_Rel < DynSys
 %         min (radians)      <=     [u(1); u(2)]   <= max (radians)
 %         min thrust (m/s^2) <=         u(3)       <= max thrust (m/s^2)
 %         dist vmin (m/s)    <= [d(1); d(3); d(5)] <= dist vmax (m/s)
+%         dist amin (m/s^2)  <= [d(7); d(8); d(9)] <= dist amax (m/s^2)
 %         planner vmin (m/s) <= [d(2); d(4); d(6)] <= planner vmax (m/s)
 
         if nargin < 1
@@ -44,8 +45,8 @@ classdef Q6D_Q3D_Rel < DynSys
         end
         
         if nargin < 4
-            dMin = zeros(1,3);
-            dMax = zeros(1,3);
+            dMin = zeros(1,6);
+            dMax = zeros(1,6);
         end
         
         if nargin < 6
@@ -70,7 +71,7 @@ classdef Q6D_Q3D_Rel < DynSys
         obj.dims = dims;
         obj.nx = length(dims);
         obj.nu = 3;
-        obj.nd = 6;
+        obj.nd = 9;
         obj.pdim = [1 2 3];
         obj.vdim = [4 5 6];
     end

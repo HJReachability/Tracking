@@ -66,7 +66,7 @@ velDims = sD{1}.dynSys.vdim;
 
 trackErr = max(trackingErrorBound);
 virt_v = sD{1}.dynSys.pMax(1);
-dt = 0.01;
+dt = 0.03;
 delta_x = virt_v*dt;
 senseRange = 2*trackErr+delta_x;
 
@@ -190,8 +190,11 @@ while iter < max_iter && norm(trueQuad.x(posDims) - goal) > 0.5
   
   %% True System Block
   % 1. add random disturbance to velocity within given bound
+  %d = sD{ii}.dynSys.dMin + rand(6,1)...
+  %    .*(sD{ii}.dynSys.dMax - sD{ii}.dynSys.dMin);
+  %d = d./2;
   %d = dynSysX.dMin + rand(3,1).*(dynSysX.dMax - dynSysX.dMin);
-  d = [];
+  d = zeros(6,1);
   
   % 2. update state of true vehicle
   trueQuad.updateState(u, dt, [], d);
