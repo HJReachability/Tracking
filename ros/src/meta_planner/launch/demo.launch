@@ -14,7 +14,7 @@
   <arg name="merged_control_topic" default="/control/merged" />
   <arg name="sensor_topic" default="/sensor" />
 
-  <arg name="simulator_dt" default="0.005" />
+  <arg name="simulator_dt" default="0.001" />
   <arg name="estimator_dt" default="0.005" />
   <arg name="lqr_dt" default="0.01" />
   <arg name="tracker_dt" default="0.01" />
