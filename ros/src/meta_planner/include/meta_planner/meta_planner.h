@@ -61,9 +61,11 @@ namespace meta {
 
 class MetaPlanner : private Uncopyable {
 public:
-  explicit MetaPlanner(const Box::ConstPtr& space, double max_connection_radius =
+  explicit MetaPlanner(const Box::ConstPtr& space, double max_runtime = 1.0,
+                       double max_connection_radius =
                        std::numeric_limits<double>::infinity())
     : space_(space),
+      max_runtime_(max_runtime),
       max_connection_radius_(max_connection_radius) {}
   ~MetaPlanner() {}
 
@@ -74,6 +76,9 @@ public:
 private:
   // State space (with collision checker).
   const Box::ConstPtr space_;
+
+  // Max time to spend searching for an optimal path.
+  const double max_runtime_;
 
   // Maximum distance between waypoints.
   const double max_connection_radius_;

@@ -20,6 +20,8 @@
   <arg name="tracker_dt" default="0.01" />
   <arg name="merger_dt" default="0.01" />
 
+  <arg name="max_meta_runtime" default="0.01" />
+
   <arg name="tracker_x_dim" default="6" />
   <arg name="lqr_x_dim" default="7" />
   <arg name="tracker_u_dim" default="3" />
@@ -118,6 +120,8 @@
 
       <!-- Load parameters for the demo. -->
       <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
+
+      <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
 
       <param name="meta/control/time_step" value="$(arg tracker_dt)" />
 

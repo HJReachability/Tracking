@@ -4,10 +4,10 @@ meta:
     time_step: 0.005
 
     # Sensor radius.
-    sensor_radius: 1.0
+    sensor_radius: 5.0
 
     # Number of obstacles.
-    num_obstacles: 0
+    num_obstacles: 25
 
   control:
     # Interval (seconds) of the discrete-time control update.
@@ -37,8 +37,11 @@ meta:
     values: [speed_1_tenths/]
 
   meta:
+    # Max runtime for the meta planner in seconds.
+    max_runtime: 0.05
+
     # Max connection radius for meta planner.
-    max_connection_radius: 10.0
+    max_connection_radius: 100.0
 
   topics:
     # Sensor publication topic.

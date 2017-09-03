@@ -58,8 +58,7 @@ namespace meta {
 class WaypointTree : private Uncopyable {
 public:
   ~WaypointTree() {}
-  explicit WaypointTree(const Vector3d& start, const Vector3d& stop,
-                        double start_time = 0.0);
+  explicit WaypointTree(const Vector3d& start, double start_time = 0.0);
 
   // Find nearest neighbors in the tree.
   inline std::vector<Waypoint::ConstPtr>

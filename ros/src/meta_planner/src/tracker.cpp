@@ -124,7 +124,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
     // Create the planner.
     const Planner::ConstPtr planner =
-      OmplPlanner<og::RRTConnect>::Create(value, space_);
+      OmplPlanner<og::BITstar>::Create(value, space_);
 
     planners_.push_back(planner);
   }
@@ -147,6 +147,8 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Meta planning parameters.
+  if (!nl.getParam("meta/meta/max_runtime", max_meta_runtime_))
+    return false;
   if (!nl.getParam("meta/meta/max_connection_radius", max_connection_radius_))
     return false;
 
@@ -396,7 +398,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
 // Run meta planner.
 void Tracker::RunMetaPlanner() {
-  const MetaPlanner meta(space_, max_connection_radius_);
+  const MetaPlanner meta(space_, max_meta_runtime_, max_connection_radius_);
 
   traj_ = meta.Plan(dynamics_->Puncture(state_),
                     dynamics_->Puncture(goal_), planners_);

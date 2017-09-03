@@ -153,7 +153,6 @@ RecursiveGradientInterpolator(const VectorXd& x, size_t idx) const {
 
   // Compute the fractional distance between lower and upper.
   const double fractional_dist = (x(idx) - lower) / voxel_size_[idx];
-  std::cout << "fractional dist: " << fractional_dist << std::endl;
 
   // Split x along dimension idx.
   VectorXd x_lower = x;

@@ -46,8 +46,7 @@
 
 namespace meta {
 
-WaypointTree::WaypointTree(const Vector3d& start, const Vector3d& stop,
-                           double start_time)
+WaypointTree::WaypointTree(const Vector3d& start, double start_time)
   : root_(Waypoint::Create(start, start_time, nullptr, nullptr)) {
   kdtree_.Insert(root_);
 }
@@ -57,10 +56,14 @@ void WaypointTree::Insert(const Waypoint::ConstPtr& waypoint, bool is_terminal) 
   kdtree_.Insert(waypoint);
 
   if (is_terminal) {
-    if (terminus_ == nullptr)
+    if (terminus_ == nullptr) {
+      ROS_WARN("Set initial terminus.");
       terminus_ = waypoint;
-    else if (waypoint->time_ < terminus_->time_)
+    }
+    else if (waypoint->time_ < terminus_->time_) {
+      ROS_WARN("Updated terminus.");
       terminus_ = waypoint;
+    }
   }
 }
 

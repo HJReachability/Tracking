@@ -58,10 +58,10 @@ Trajectory::Ptr MetaPlanner::Plan(
   const std::vector<Planner::ConstPtr>& planners) const {
   // (1) Set up a new RRT-like structure to hold the meta plan.
   const ros::Time start_time = ros::Time::now();
-  WaypointTree tree(start, stop, start_time.toSec());
+  WaypointTree tree(start, start_time.toSec());
 
-  bool done = false;
-  while (!done && (ros::Time::now() - start_time).toSec() < 1.0) {
+  bool found = false;
+  while ((ros::Time::now() - start_time).toSec() < max_runtime_) {
     // (2) Sample a new point in the state space.
     Vector3d sample = space_->Sample();
 
@@ -70,12 +70,12 @@ Trajectory::Ptr MetaPlanner::Plan(
     const std::vector<Waypoint::ConstPtr> neighbors =
       tree.KnnSearch(sample, kNumNeighbors);
 
-    if (neighbors.size() == 0 ||
+    if (neighbors.size() != kNumNeighbors ||
         (neighbors[0]->point_ - sample).norm() > max_connection_radius_)
       continue;
 
     // (4) Plan a trajectory (starting with most aggressive planner).
-    Trajectory::Ptr traj;
+    Trajectory::Ptr traj = nullptr;
     for (const auto& planner : planners) {
       traj = planner->Plan(neighbors[0]->point_, sample, neighbors[0]->time_);
 
@@ -83,11 +83,12 @@ Trajectory::Ptr MetaPlanner::Plan(
         break;
     }
 
+    // Check if we could found a trajectory to this sample.
     if (traj == nullptr)
       continue;
 
     // (5) Try to connect to the goal point.
-    Trajectory::Ptr goal_traj;
+    Trajectory::Ptr goal_traj = nullptr;
     if ((sample - stop).norm() <= max_connection_radius_) {
       for (const auto& planner : planners) {
         goal_traj = planner->Plan(sample, stop, traj->LastTime());
@@ -97,30 +98,33 @@ Trajectory::Ptr MetaPlanner::Plan(
       }
     }
 
-    // (6) Stop when we have a feasible trajectory. Otherwise go to (2).
+    // Insert the sample.
     const Waypoint::ConstPtr waypoint = Waypoint::Create(
       sample, traj->LastTime(), traj, neighbors[0]);
 
     tree.Insert(waypoint, false);
 
+    // (6) If this sample was connected to the goal, update the tree terminus.
     if (goal_traj != nullptr) {
-      // Connect to the goal. NOTE: the first point in goal_traj coincides with
-      // the last point in traj, but when we merge the two trajectories the
-      // std::map insertion rules will prevent duplicates.
+      // Connect to the goal.
+      // NOTE: the first point in goal_traj coincides with the last point in
+      // traj, but when we merge the two trajectories the std::map insertion
+      // rules will prevent duplicates.
       const Waypoint::ConstPtr goal = Waypoint::Create(
         stop, goal_traj->LastTime(), goal_traj, waypoint);
 
       tree.Insert(goal, true);
 
-      // TODO: in future we could have some other stopping criteria.
-      done = true;
+      // Mark that we've found a valid trajectory.
+      found = true;
+      ROS_INFO("Found a valid trajectory.");
     }
   }
 
-  if (done) {
+  if (found) {
     // Get the best (fastest) trajectory out of the tree.
-    const Trajectory::Ptr best = tree.BestTrajectory();
-    return best;
+    ROS_INFO("Meta planner succeeded.");
+    return tree.BestTrajectory();
   }
 
   ROS_ERROR("Meta planner failed.");
