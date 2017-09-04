@@ -44,6 +44,75 @@
 
 namespace meta {
 
+// Factory constructor from times, states, values.
+Trajectory::Ptr Trajectory::
+Create(const std::vector<double>& times,
+       const std::vector<VectorXd>& states,
+       const std::vector<ValueFunction::ConstPtr>& values) {
+  Trajectory::Ptr ptr(new Trajectory());
+
+  // Number of entries in trajectory.
+  size_t num_waypoints = states.size();
+
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (states.size() != times.size() || states.size() != values.size()) {
+    ROS_WARN("Inconsistent number of states, times, and values.");
+    num_waypoints = std::min(states.size(),
+                             std::min(times.size(), values.size()));
+  }
+#endif
+
+  for (size_t ii = 0; ii < num_waypoints; ii++)
+    ptr->Add(times[ii], states[ii], values[ii]);
+
+  return ptr;
+}
+
+// Factory constructor from ROS message and list of ValueFunctions.
+Trajectory::Ptr Trajectory::
+Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
+       const std::vector<ValueFunction::ConstPtr>& values) {
+  Trajectory::Ptr ptr(new Trajectory());
+
+  // Number of entries in trajectory.
+  size_t num_waypoints = msg->num_waypoints;
+
+  for (size_t ii = 0; ii < num_waypoints; ii++) {
+    // Convert state message to VectorXd.
+    VectorXd state(msg->states[ii].dimension);
+    for (size_t jj = 0; jj < state.size(); jj++)
+      state(jj) = msg->states[ii].state[jj];
+
+    // Add to this trajectory.
+    ptr->Add(msg->times[ii], state, values[ msg->value_function_ids[ii] ]);
+  }
+
+  return ptr;
+}
+
+// Convert to ROS message.
+meta_planner_msgs::Trajectory Trajectory::ToRosMessage() const {
+  meta_planner_msgs::Trajectory traj_msg;
+  traj_msg.num_waypoints = Size();
+
+  // Iterate through the trajectory and append to message.
+  for (const auto& pair : map_) {
+    // Extract state.
+    meta_planner_msgs::State state_msg;
+    state_msg.dimension = pair.second.state_.size();
+
+    for (size_t ii = 0; ii < pair.second.state_.size(); ii++)
+      state_msg.state.push_back(pair.second.state_(ii));
+
+    // Update message.
+    traj_msg.states.push_back(state_msg);
+    traj_msg.times.push_back(pair.first);
+    traj_msg.value_function_ids.push_back(pair.second.value_->Id());
+  }
+
+  return traj_msg;
+}
+
 // Find the state corresponding to a particular time via linear interpolation.
 VectorXd Trajectory::GetState(double time) const {
 #ifdef ENABLE_DEBUG_MESSAGES

@@ -52,19 +52,19 @@ namespace fs = boost::filesystem;
 // Note that this class is const-only, which means that once it is
 // instantiated it can never be changed.
 ValueFunction::ConstPtr ValueFunction::
-Create(const std::string& directory,
-       const Dynamics::ConstPtr& dynamics,
-       size_t x_dim, size_t u_dim) {
+Create(const std::string& directory, const Dynamics::ConstPtr& dynamics,
+       size_t x_dim, size_t u_dim, ValueFunctionId id) {
   ValueFunction::ConstPtr ptr(
-    new ValueFunction(directory, dynamics, x_dim, u_dim));
+    new ValueFunction(directory, dynamics, x_dim, u_dim, id));
   return ptr;
 }
 
 // Constructor. Don't use this. Use the factory method instead.
 ValueFunction::ValueFunction(const std::string& directory,
                              const Dynamics::ConstPtr& dynamics,
-                             size_t x_dim, size_t u_dim)
-  : x_dim_(x_dim),
+                             size_t x_dim, size_t u_dim, ValueFunctionId id)
+  : id_(id),
+    x_dim_(x_dim),
     u_dim_(u_dim),
     dynamics_(dynamics),
     initialized_(true) {

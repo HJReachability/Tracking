@@ -49,11 +49,12 @@
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
+#include <meta_planner_msgs/SensorMeasurement.h>
+
 #include <tf2_ros/transform_listener.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
-#include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <string>
 

@@ -36,61 +36,27 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines a Box environment with spherical obstacles. For simplicity, this
-// does not bother with a kdtree index to speed up collision queries, since
-// it is only for a simulated demo.
+// The MetaPlanner node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef DEMO_BALLS_IN_BOX_H
-#define DEMO_BALLS_IN_BOX_H
+#include <meta_planner/meta_planner.h>
 
-#include <meta_planner/box.h>
-#include <meta_planner/types.h>
+#include <ros/ros.h>
 
-#include <vector>
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "meta_planner");
+  ros::NodeHandle n("~");
 
-namespace meta {
+  meta::MetaPlanner meta_planner;
 
-class BallsInBox : public Box {
-public:
-  typedef std::shared_ptr<BallsInBox> Ptr;
-  typedef std::shared_ptr<const BallsInBox> ConstPtr;
+  if (!meta_planner.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize MetaPlanner.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
+  }
 
-  // Factory method. Use this instead of the constructor.
-  static Ptr Create();
+  ros::spin();
 
-  // Destructor.
-  ~BallsInBox() {}
-
-  // Inherited collision checker from Box needs to be overwritten.
-  bool IsValid(const Vector3d& position,
-               const ValueFunction::ConstPtr& value) const;
-
-  // Check for obstacles within a sensing radius. Returns true if at least
-  // one obstacle was sensed.
-  bool SenseObstacles(const Vector3d& position, double sensor_radius,
-                      std::vector<Vector3d>& obstacle_positions,
-                      std::vector<double>& obstacle_radii) const;
-
-  // Check if a given obstacle is in the environment.
-  bool IsObstacle(const Vector3d& obstacle_position,
-                  double obstacle_radius) const;
-
-  // Inherited visualizer from Box needs to be overwritten.
-  void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
-
-  // Add a spherical obstacle of the given radius to the environment.
-  void AddObstacle(const Vector3d& point, double r);
-
-private:
-  BallsInBox();
-
-  // List of obstacle locations and radii.
-  std::vector<VectorXd> points_;
-  std::vector<double> radii_;
-};
-
-} //\namespace meta
-
-#endif
+  return EXIT_SUCCESS;
+}

@@ -53,12 +53,14 @@
 #include <meta_planner/box.h>
 #include <demo/balls_in_box.h>
 
+#include <meta_planner_msgs/Trajectory.h>
 #include <crazyflie_msgs/PositionStateStamped.h>
 #include <crazyflie_msgs/ControlStamped.h>
 #include <crazyflie_msgs/NoYawControlStamped.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
+#include <std_msgs/Empty.h>
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -79,20 +81,22 @@ private:
   bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // Callback for processing sensor measurements.
-  void SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg);
-
   // Callback for processing state updates.
   void StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
+
+  // Callback for processing trajectory updates.
+  void TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg);
 
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
 
-  // Run the meta planner.
-  void RunMetaPlanner();
+  // Request a new trajectory from the meta planner.
+  void RequestNewTrajectory() const;
+
+  // Send a hover control.
+  void Hover() const;
 
   // Current state and trajectory.
-  VectorXd goal_;
   VectorXd state_;
   Trajectory::ConstPtr traj_;
 
@@ -109,18 +113,13 @@ private:
   std::vector<double> control_upper_;
   std::vector<double> control_lower_;
 
-  // Planners and related parameters.
-  std::vector<Planner::ConstPtr> planners_;
+  // Value functions and directories in which to find them.
+  std::vector<ValueFunction::ConstPtr> values_;
   std::vector<std::string> value_directories_;
-
-  // Max runtime and connection radius for meta planner.
-  double max_meta_runtime_;
-  double max_connection_radius_;
 
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;
-  bool first_time_;
 
   // TF interfacing.
   tf2_ros::TransformBroadcaster br_;
@@ -128,19 +127,21 @@ private:
   // Publishers/subscribers and related topics.
   ros::Publisher control_pub_;
   ros::Publisher environment_pub_;
-  ros::Publisher traj_pub_;
+  ros::Publisher traj_vis_pub_;
   ros::Publisher tracking_bound_pub_;
   ros::Publisher reference_pub_;
-  ros::Subscriber sensor_sub_;
+  ros::Publisher request_traj_pub_;
   ros::Subscriber state_sub_;
+  ros::Subscriber traj_sub_;
 
   std::string control_topic_;
   std::string environment_topic_;
   std::string traj_topic_;
+  std::string request_traj_topic_;
   std::string tracking_bound_topic_;
-  std::string sensor_topic_;
   std::string state_topic_;
   std::string reference_topic_;
+  std::string traj_vis_topic_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;

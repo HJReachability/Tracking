@@ -147,7 +147,7 @@ bool Sensor::RegisterCallbacks(const ros::NodeHandle& n) {
   sensor_radius_pub_ = nl.advertise<visualization_msgs::Marker>(
     sensor_radius_topic_.c_str(), 10, false);
 
-  sensor_pub_ = nl.advertise<geometry_msgs::Quaternion>(
+  sensor_pub_ = nl.advertise<meta_planner_msgs::SensorMeasurement>(
     sensor_topic_.c_str(), 10, false);
 
   // Timer.
@@ -180,20 +180,28 @@ void Sensor::TimerCallback(const ros::TimerEvent& e) {
                           tf.transform.translation.y,
                           tf.transform.translation.z);
 
+
   // Publish sensor message if an obstacle is within range.
-  // TODO! Parameterize sensor radius.
-  Vector3d obstacle_position;
-  double obstacle_radius = -1.0;
+  std::vector<Vector3d> obstacle_positions;
+  std::vector<double> obstacle_radii;
 
-  if (space_->SenseObstacle(position, sensor_radius_,
-                            obstacle_position, obstacle_radius)) {
-    geometry_msgs::Quaternion q;
-    q.x = obstacle_position(0);
-    q.y = obstacle_position(1);
-    q.z = obstacle_position(2);
-    q.w = obstacle_radius;
+  if (space_->SenseObstacles(position, sensor_radius_,
+                            obstacle_positions, obstacle_radii)) {
+    // Saw at least one obstacle, so convert to message and publish.
+    meta_planner_msgs::SensorMeasurement msg;
+    msg.num_obstacles = obstacle_positions.size();
 
-    sensor_pub_.publish(q);
+    for (size_t ii = 0; ii < obstacle_positions.size(); ii++) {
+      geometry_msgs::Vector3 p;
+      p.x = obstacle_positions[ii](0);
+      p.y = obstacle_positions[ii](1);
+      p.z = obstacle_positions[ii](2);
+
+      msg.positions.push_back(p);
+      msg.radii.push_back(obstacle_radii[ii]);
+    }
+
+    sensor_pub_.publish(msg);
   }
 
   // Visualize the environment.

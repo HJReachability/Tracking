@@ -67,7 +67,7 @@ public:
   // instantiated it can never be changed.
   static ConstPtr Create(const std::string& directory,
                          const Dynamics::ConstPtr& dynamics,
-                         size_t x_dim, size_t u_dim);
+                         size_t x_dim, size_t u_dim, ValueFunctionId id);
 
   // Linearly interpolate to get the value/gradient at a particular state.
   double Value(const VectorXd& state) const;
@@ -89,13 +89,18 @@ public:
     return max_planner_speed_(ii);
   }
 
+  inline ValueFunctionId Id() const { return id_; }
+
   // Was this ValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
 
 private:
   explicit ValueFunction(const std::string& directory,
                          const Dynamics::ConstPtr& dynamics,
-                         size_t x_dim, size_t u_dim);
+                         size_t x_dim, size_t u_dim, ValueFunctionId id);
+
+  // Identifier.
+  const ValueFunctionId id_;
 
   // State/control space dimensions.
   const size_t x_dim_;

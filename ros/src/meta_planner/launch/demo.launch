@@ -20,7 +20,7 @@
   <arg name="tracker_dt" default="0.01" />
   <arg name="merger_dt" default="0.01" />
 
-  <arg name="max_meta_runtime" default="0.01" />
+  <arg name="max_meta_runtime" default="0.5" />
 
   <arg name="tracker_x_dim" default="6" />
   <arg name="lqr_x_dim" default="7" />
@@ -121,8 +121,6 @@
       <!-- Load parameters for the demo. -->
       <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
 
-      <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
-
       <param name="meta/control/time_step" value="$(arg tracker_dt)" />
 
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
@@ -133,6 +131,19 @@
 
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/control" value="$(arg optimal_control_topic)" />
+    </node>
+
+    <node name="meta_planner"
+          pkg="meta_planner"
+          type="meta_planner_node"
+          output="screen">
+      <!-- Load parameters for the demo. -->
+      <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
+
+      <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
+
+      <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
+      <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/sensor" value="$(arg sensor_topic)" />
     </node>
 

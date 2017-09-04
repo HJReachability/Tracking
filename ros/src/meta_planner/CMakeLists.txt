@@ -19,10 +19,13 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   visualization_msgs
+  geometry_msgs
   std_msgs
   tf2_ros
   crazyflie_msgs
   crazyflie_utils
+  meta_planner_msgs
+  message_generation
 )
 
 catkin_package(
@@ -31,10 +34,13 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     visualization_msgs
+    geometry_msgs
     std_msgs
     tf2_ros
     crazyflie_msgs
     crazyflie_utils
+    meta_planner_msgs
+    message_runtime
   DEPENDS
     EIGEN3
     OMPL
@@ -102,6 +108,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
   get_filename_component(exec_name ${executable} NAME_WE)
   message(STATUS "Including executable   \"${BoldBlue}${exec_name}${ColorReset}\".")
   add_executable(${exec_name} ${executable})
+  add_dependencies(${exec_name} ${catkin_EXPORTED_TARGETS})
   target_link_libraries(${exec_name}
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
@@ -119,6 +126,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
   get_filename_component(exec_name ${executable} NAME_WE)
   message(STATUS "Including executable   \"${BoldBlue}${exec_name}${ColorReset}\".")
   add_executable(${exec_name} ${executable})
+  add_dependencies(${exec_name} ${catkin_EXPORTED_TARGETS})
   target_link_libraries(${exec_name}
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
@@ -127,7 +135,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
     ${MATIO_LIBRARIES}
     ${FLANN_LIBRARIES}
     ${BOOST_LIBRARIES}
-  )
+    )
 endforeach()
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 

@@ -47,6 +47,9 @@
 #include <meta_planner/value_function.h>
 #include <meta_planner/types.h>
 
+#include <meta_planner_msgs/Trajectory.h>
+#include <meta_planner_msgs/State.h>
+
 #include <ros/ros.h>
 #include <std_msgs/ColorRGBA.h>
 #include <visualization_msgs/Marker.h>
@@ -71,27 +74,15 @@ public:
     return ptr;
   }
 
-  static inline Ptr Create(const std::vector<double>& times,
-                           const std::vector<VectorXd>& states,
-                           const std::vector<ValueFunction::ConstPtr>& values) {
-    Ptr ptr(new Trajectory());
+  // Factory constructor from times, states, values.
+  static Ptr Create(const std::vector<double>& times,
+                    const std::vector<VectorXd>& states,
+                    const std::vector<ValueFunction::ConstPtr>& values);
 
-    // Number of entries in trajectory.
-    size_t num_waypoints = states.size();
-
-#ifdef ENABLE_DEBUG_MESSAGES
-    if (states.size() != times.size() || states.size() != values.size()) {
-      ROS_WARN("Inconsistent number of states, times, and values.");
-      num_waypoints = std::min(states.size(),
-                               std::min(times.size(), values.size()));
-    }
-#endif
-
-    for (size_t ii = 0; ii < num_waypoints; ii++)
-      ptr->Add(times[ii], states[ii], values[ii]);
-
-    return ptr;
-  }
+  // Factory constructor from ROS message and an ordered list of all
+  // possible ValueFunctions.
+  static Ptr Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
+                    const std::vector<ValueFunction::ConstPtr>& values);
 
   // Clear out this Trajectory.
   void Clear();
@@ -124,6 +115,9 @@ public:
 
   // Return a pointer to the value function being used at this time.
   const ValueFunction::ConstPtr& GetValueFunction(double time) const;
+
+  // Convert to ROS message.
+  meta_planner_msgs::Trajectory ToRosMessage() const;
 
   // Visualize this trajectory in RVIZ.
   void Visualize(const ros::Publisher& pub,

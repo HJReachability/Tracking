@@ -53,12 +53,19 @@ meta:
     # Reference to track.
     reference: /reference
 
+    # Trajectory computed by MetaPlanner.
+    traj: /traj
+
+    # Trajectory requests.
+    request_traj: /request_traj
+
     # Visualization topics.
-    traj: /vis/traj
-    true_environment: /vis/true_env
-    known_environment: /vis/known_env
-    tracking_bound: /vis/bound
-    sensor_radius: /vis/sensor
+    vis:
+      traj: /vis/traj
+      true_environment: /vis/true_env
+      known_environment: /vis/known_env
+      tracking_bound: /vis/bound
+      sensor_radius: /vis/sensor
 
     # Control topic.
     control: /control/optimal
