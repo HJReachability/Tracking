@@ -131,6 +131,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
       const Vector3d max_acceleration_disturbance =
         Vector3d::Constant(max_acceleration_disturbances_[ii]);
 
+      // Create analytical value function.
       const AnalyticalPointMassValueFunction::ConstPtr value =
         AnalyticalPointMassValueFunction::Create(max_planner_speed,
                                                  max_tracker_control,
@@ -139,6 +140,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
                                                  max_acceleration_disturbance,
                                                  dynamics_,
                                                  static_cast<ValueFunctionId>(ii));
+
       values_.push_back(value);
     }
   }

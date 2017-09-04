@@ -48,6 +48,7 @@
 #include <demo/balls_in_box.h>
 #include <meta_planner/near_hover_quad_no_yaw.h>
 #include <meta_planner/value_function.h>
+#include <meta_planner/analytical_point_mass_value_function.h>
 #include <meta_planner/waypoint_tree.h>
 #include <meta_planner/waypoint.h>
 #include <meta_planner/ompl_planner.h>
@@ -93,9 +94,15 @@ private:
   // Plan a trajectory from the given start to stop points and auto-publish.
   void Plan(const Vector3d& start, const Vector3d& stop) const;
 
-  // List of planners and directories in which value functions may be found.
+  // List of planners and flag for whether to load value functions from disk or
+  // create analytic versions given parameters read from ROS.
   std::vector<Planner::ConstPtr> planners_;
+  bool numerical_mode_;
   std::vector<std::string> value_directories_;
+
+  std::vector<double> max_planner_speeds_;
+  std::vector<double> max_velocity_disturbances_;
+  std::vector<double> max_acceleration_disturbances_;
 
   // Geometric goal point.
   Vector3d goal_;

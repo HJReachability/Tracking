@@ -64,7 +64,7 @@ public:
   typedef std::shared_ptr<const AnalyticalPointMassValueFunction> ConstPtr;
 
   // Destructor.
-  ~AnalyticalPointMassValueFunction() {}
+  virtual ~AnalyticalPointMassValueFunction() {}
 
   // Factory method. Use this instead of the constructor.
   // Note that this class is const-only, which means that once it is

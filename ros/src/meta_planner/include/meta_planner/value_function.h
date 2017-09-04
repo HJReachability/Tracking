@@ -103,7 +103,8 @@ protected:
     : dynamics_(dynamics),
       x_dim_(x_dim),
       u_dim_(u_dim),
-      id_(id) {
+      id_(id),
+      initialized_(true) {
     if (!dynamics.get())
       ROS_ERROR("Dynamics pointer was null.");
   }

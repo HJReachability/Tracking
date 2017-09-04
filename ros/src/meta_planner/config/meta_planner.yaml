@@ -33,7 +33,7 @@ meta:
   planners:
     # Mode flag. If true, loads value functions from disk.
     # If false, uses analytical versions with parameters given here.
-    numerical_mode: true
+    numerical_mode: false
 
     # Directories in which subsystem value functions are stored.
     # These are assumed to be in the PRECOMPUTATION_DIR directory, and to

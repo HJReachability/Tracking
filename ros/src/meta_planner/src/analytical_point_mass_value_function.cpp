@@ -172,6 +172,9 @@ AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
   for(size_t ii = 0; ii < u_dim_; ii++){
     u2a_(ii) = a_max_(ii) / u_max_(ii);     // ratio between acc and ctrl at u_max
   }
+
+  // Set max planner speed.
+  max_planner_speed_ = max_planner_speed;
 }
 
 } //\namespace meta
