@@ -36,7 +36,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the ValueFunction class.
+// Defines the ValueFunction class. Many functions in this class are declared
+// virtual so that analytical value functions may inherit from this class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -60,7 +61,7 @@ public:
   typedef std::shared_ptr<const ValueFunction> ConstPtr;
 
   // Destructor.
-  ~ValueFunction() {}
+  virtual ~ValueFunction() {}
 
   // Factory method. Use this instead of the constructor.
   // Note that this class is const-only, which means that once it is
@@ -70,16 +71,16 @@ public:
                          size_t x_dim, size_t u_dim, ValueFunctionId id);
 
   // Linearly interpolate to get the value/gradient at a particular state.
-  double Value(const VectorXd& state) const;
-  VectorXd Gradient(const VectorXd& state) const;
+  virtual double Value(const VectorXd& state) const;
+  virtual VectorXd Gradient(const VectorXd& state) const;
 
   // Get the optimal control at a particular state.
-  inline VectorXd OptimalControl(const VectorXd& state) const {
+  virtual inline VectorXd OptimalControl(const VectorXd& state) const {
     return dynamics_->OptimalControl(state, Gradient(state));
   }
 
   // Get the tracking error bound in this spatial dimension.
-  double TrackingBound(size_t dimension) const;
+  virtual double TrackingBound(size_t dimension) const;
 
   // Get the dynamics.
   inline Dynamics::ConstPtr GetDynamics() const { return dynamics_; }
@@ -94,9 +95,8 @@ public:
   // Was this ValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
 
-private:
-  explicit ValueFunction(const std::string& directory,
-                         const Dynamics::ConstPtr& dynamics,
+protected:
+  explicit ValueFunction(const Dynamics::ConstPtr& dynamics,
                          size_t x_dim, size_t u_dim, ValueFunctionId id);
 
   // Identifier.
@@ -112,11 +112,16 @@ private:
   // Planner max speed in each spatial dimension.
   Vector3d max_planner_speed_;
 
-  // List of value functions for independent subsystems.
-  std::vector<SubsystemValueFunction::ConstPtr> subsystems_;
-
   // Was this value function initialized/loaded properly?
   bool initialized_;
+
+private:
+  explicit ValueFunction(const std::string& directory,
+                         const Dynamics::ConstPtr& dynamics,
+                         size_t x_dim, size_t u_dim, ValueFunctionId id);
+
+  // List of value functions for independent subsystems.
+  std::vector<SubsystemValueFunction::ConstPtr> subsystems_;
 };
 
 } //\namespace meta
