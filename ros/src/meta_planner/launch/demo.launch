@@ -21,6 +21,7 @@
   <arg name="merger_dt" default="0.01" />
 
   <arg name="max_meta_runtime" default="0.5" />
+  <arg name="max_meta_connection_radius" default="5.0" />
 
   <arg name="tracker_x_dim" default="6" />
   <arg name="lqr_x_dim" default="7" />
@@ -141,6 +142,7 @@
       <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
 
       <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
+      <param name="meta/meta/max_connection_radius" value="$(arg max_meta_connection_radius)" />
 
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/topics/state" value="$(arg position_state_topic)" />

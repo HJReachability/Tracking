@@ -102,15 +102,45 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   state_(kVzDim) = 0.0;
 
   // Create value functions.
-  for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-    // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
-    // Load up the value function.
-    const ValueFunction::ConstPtr value =
-      ValueFunction::Create(value_directories_[ii], dynamics_,
-                            state_dim_, control_dim_,
-                            static_cast<ValueFunctionId>(ii));
+  if (numerical_mode_) {
+    for (size_t ii = 0; ii < value_directories_.size(); ii++) {
+      // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
+      // Load up the value function.
+      const ValueFunction::ConstPtr value =
+        ValueFunction::Create(value_directories_[ii], dynamics_,
+                              state_dim_, control_dim_,
+                              static_cast<ValueFunctionId>(ii));
 
-    values_.push_back(value);
+      values_.push_back(value);
+    }
+  } else {
+    for (size_t ii = 0; ii < max_planner_speeds_.size(); ii++) {
+      // Generate inputs for AnalyticalPointMassValueFunction.
+      // HACK! Assuming knowledge of the control/dynamics.
+      const Vector3d max_planner_speed =
+        Vector3d::Constant(max_planner_speeds_[ii]);
+      const Vector3d max_tracker_control(control_upper_[0],
+                                         control_upper_[1],
+                                         control_upper_[2]);
+      const Vector3d max_tracker_acceleration(
+        constants::G * std::tan(control_upper_[0]),
+        constants::G * std::tan(control_upper_[1]),
+        control_upper_[2] - constants::G);
+      const Vector3d max_velocity_disturbance =
+        Vector3d::Constant(max_velocity_disturbances_[ii]);
+      const Vector3d max_acceleration_disturbance =
+        Vector3d::Constant(max_acceleration_disturbances_[ii]);
+
+      const AnalyticalPointMassValueFunction::ConstPtr value =
+        AnalyticalPointMassValueFunction::Create(max_planner_speed,
+                                                 max_tracker_control,
+                                                 max_tracker_acceleration,
+                                                 max_velocity_disturbance,
+                                                 max_acceleration_disturbance,
+                                                 dynamics_,
+                                                 static_cast<ValueFunctionId>(ii));
+      values_.push_back(value);
+    }
   }
 
   // Initialize trajectory to null.
@@ -145,10 +175,27 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // Planner parameters.
-  if (!nl.getParam("meta/planners/values", value_directories_)) return false;
+  if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
+  if (!nl.getParam("meta/planners/value_directories", value_directories_))
+    return false;
 
   if (value_directories_.size() == 0) {
     ROS_ERROR("%s: Must specify at least one value function directory.",
+              name_.c_str());
+    return false;
+  }
+
+  if (!nl.getParam("meta/planners/max_speeds", max_planner_speeds_)) return false;
+  if (!nl.getParam("meta/planners/max_velocity_disturbances",
+                   max_velocity_disturbances_))
+    return false;
+  if (!nl.getParam("meta/planners/max_acceleration_disturbances",
+                   max_acceleration_disturbances_))
+    return false;
+
+  if (max_planner_speeds_.size() != max_velocity_disturbances_.size() ||
+      max_planner_speeds_.size() != max_acceleration_disturbances_.size()) {
+    ROS_ERROR("%s: Must specify max speed/velocity/acceleration disturbances.",
               name_.c_str());
     return false;
   }

@@ -31,10 +31,21 @@ meta:
     lower: [-10.0, -10.0, 0.0, -10.0, -10.0, -10.0]
 
   planners:
+    # Mode flag. If true, loads value functions from disk.
+    # If false, uses analytical versions with parameters given here.
+    numerical_mode: true
+
     # Directories in which subsystem value functions are stored.
     # These are assumed to be in the PRECOMPUTATION_DIR directory, and to
     # end in a '/' so that raw filenames can be concatenated directly.
-    values: [speed_1_tenths/]
+    value_directories: [speed_1_tenths/]
+
+    # Planner max speed and velocity/acceleration disturbances. All values are
+    # assumed to be the same in eadh dimension, so each entry in these lists is
+    # for a different planner.
+    max_speeds: [0.1]
+    max_velocity_disturbances: [0.05]
+    max_acceleration_disturbances: [0.01]
 
   meta:
     # Max runtime for the meta planner in seconds.

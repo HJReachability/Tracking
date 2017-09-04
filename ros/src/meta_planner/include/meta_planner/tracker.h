@@ -43,7 +43,8 @@
 #ifndef META_PLANNER_TRACKER_H
 #define META_PLANNER_TRACKER_H
 
-#include <meta_planner/meta_planner.h>
+#include <meta_planner/analytical_point_mass_value_function.h>
+#include <meta_planner/value_function.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
@@ -113,9 +114,16 @@ private:
   std::vector<double> control_upper_;
   std::vector<double> control_lower_;
 
-  // Value functions and directories in which to find them.
+  // Value functions, flag for whether to load from disk or create
+  // analytic versions given parameters read from ROS.
   std::vector<ValueFunction::ConstPtr> values_;
+
+  bool numerical_mode_;
   std::vector<std::string> value_directories_;
+
+  std::vector<double> max_planner_speeds_;
+  std::vector<double> max_velocity_disturbances_;
+  std::vector<double> max_acceleration_disturbances_;
 
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;

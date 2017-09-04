@@ -92,7 +92,7 @@ Value(const VectorXd& state) const {
     //    const double V_B = x - ( -1/2*pow(v+v_ref_(dim),2) + pow(v_ref_(dim),2) )
     //      /   ( a_max_(dim) - d_a_(dim) );
 
-    // Value function is the minimum of the above two surfaces.
+    // Value function is the maximum of the above two surfaces.
     const double V_this_dim = std::max(V_A, V_B);
     V = std::max(V, V_this_dim);
   }
