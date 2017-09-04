@@ -66,9 +66,11 @@ public:
   virtual ~Planner() {}
 
   // Derived classes must plan trajectories between two points.
+  // Budget is the time the planner is allowed to take during planning.
   virtual Trajectory::Ptr Plan(const Vector3d& start,
                                const Vector3d& stop,
-                               double start_time = 0.0) const = 0;
+                               double start_time = 0.0,
+                               double budget = 1.0) const = 0;
 
 protected:
   explicit Planner(const ValueFunction::ConstPtr& value,

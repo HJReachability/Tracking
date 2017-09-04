@@ -78,7 +78,8 @@ public:
   // Derived classes must plan trajectories between two points.
   Trajectory::Ptr Plan(const Vector3d& start,
                        const Vector3d& stop,
-                       double start_time = 0.0) const;
+                       double start_time = 0.0,
+                       double budget = 1.0) const;
 
 private:
   explicit OmplPlanner(const ValueFunction::ConstPtr& value,
@@ -106,9 +107,9 @@ Create(const ValueFunction::ConstPtr& value,
 
 // Derived classes must plan trajectories between two points.
 template<typename PlannerType>
-Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
-                                               const Vector3d& stop,
-                                               double start_time) const {
+Trajectory::Ptr OmplPlanner<PlannerType>::
+Plan(const Vector3d& start, const Vector3d& stop,
+     double start_time, double budget) const {
   // Create the OMPL state space corresponding to this environment.
   auto ompl_space(
     std::make_shared<ob::RealVectorStateSpace>(3));
@@ -156,7 +157,7 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
   ompl_setup.setPlanner(ompl_planner);
 
   // Solve. Parameter is the amount of time (in seconds) used by the solver.
-  const ob::PlannerStatus solved = ompl_setup.solve(1.0);
+  const ob::PlannerStatus solved = ompl_setup.solve(budget);
 
   if (solved) {
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();

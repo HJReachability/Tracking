@@ -32,7 +32,7 @@
  *
  * Please contact the author(s) of this library if you have any questions.
  * Authors: David Fridovich-Keil    ( dfk@eecs.berkeley.edu )
- * Authors: Jaime Fernandez Fisac   ( jfisac@eecs.berkeley.edu )
+ *          Jaime Fernandez Fisac   ( jfisac@eecs.berkeley.edu )
  */
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,7 +59,7 @@
 
 namespace meta {
 
-class AnalyticalPointMassValueFunction : private Uncopyable {
+class AnalyticalPointMassValueFunction : public ValueFunction {
 public:
   typedef std::shared_ptr<const AnalyticalPointMassValueFunction> ConstPtr;
 
@@ -74,7 +74,9 @@ public:
                          const Vector3d& max_tracker_control,
                          const Vector3d& max_tracker_accel,
                          const Vector3d& max_vel_disturbance,
-                         const Vector3d& max_acc_disturbance);
+                         const Vector3d& max_acc_disturbance,
+                         const Dynamics::ConstPtr& dynamics,
+                         ValueFunctionId id);
 
   // Analytically evaluate value/gradient at a particular state.
   double Value(const VectorXd& state) const;
@@ -91,19 +93,19 @@ private:
                                             const Vector3d& max_tracker_control,
                                             const Vector3d& max_tracker_accel,
                                             const Vector3d& max_vel_disturbance,
-                                            const Vector3d& max_acc_disturbance);
-  
+                                            const Vector3d& max_acc_disturbance,
+                                            const Dynamics::ConstPtr& dynamics,
+                                            ValueFunctionId id);
+
   // Reference, tracker, and disturbance parameters
   const Vector3d v_ref_;            // bound on reference velocity magnitude
   const Vector3d u_max_;            // maximum control input
   const Vector3d a_max_;            // maximum absolute acceleration
-  const Vector3d d_v_;              // velocity disturbance  
+  const Vector3d d_v_;              // velocity disturbance
   const Vector3d d_a_;              // acceleration disturbance
   Vector3d u2a_;              // control gain to acceleration
-  static const size_t p_dim_;       // number of spatial dimensions (always 3)
-  static const size_t x_dim_;       // number of state   dimensions (always 6)
-  static const size_t u_dim_;       // number of control dimensions (always 3)
 
+  static const size_t p_dim_;       // number of spatial dimensions (always 3)
 };
 
 } //\namespace meta

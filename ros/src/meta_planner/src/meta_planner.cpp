@@ -271,7 +271,8 @@ void MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop) const {
     Trajectory::Ptr traj = nullptr;
     for (size_t ii = 0; ii < planners_.size(); ii++) {
       const Planner::ConstPtr planner = planners_[ii];
-      traj = planner->Plan(neighbors[0]->point_, sample, neighbors[0]->time_);
+      traj = planner->Plan(neighbors[0]->point_, sample,
+                           neighbors[0]->time_, 0.1 * max_runtime_);
 
       if (traj != nullptr)
         break;
@@ -286,7 +287,8 @@ void MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop) const {
     if ((sample - stop).norm() <= max_connection_radius_) {
       for (size_t ii = 0; ii < planners_.size(); ii++) {
         const Planner::ConstPtr planner = planners_[ii];
-        goal_traj = planner->Plan(sample, stop, traj->LastTime());
+        goal_traj =
+          planner->Plan(sample, stop, traj->LastTime(), 0.1 * max_runtime_);
 
         if (goal_traj != nullptr)
           break;

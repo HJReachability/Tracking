@@ -90,14 +90,23 @@ public:
     return max_planner_speed_(ii);
   }
 
+  // Get the ID of this value function.
   inline ValueFunctionId Id() const { return id_; }
 
   // Was this ValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
 
 protected:
+  // Constuctor for use by derived classes.
   explicit ValueFunction(const Dynamics::ConstPtr& dynamics,
-                         size_t x_dim, size_t u_dim, ValueFunctionId id);
+                         size_t x_dim, size_t u_dim, ValueFunctionId id)
+    : dynamics_(dynamics),
+      x_dim_(x_dim),
+      u_dim_(u_dim),
+      id_(id) {
+    if (!dynamics.get())
+      ROS_ERROR("Dynamics pointer was null.");
+  }
 
   // Identifier.
   const ValueFunctionId id_;
@@ -116,6 +125,7 @@ protected:
   bool initialized_;
 
 private:
+  // Constructor for use by this class.
   explicit ValueFunction(const std::string& directory,
                          const Dynamics::ConstPtr& dynamics,
                          size_t x_dim, size_t u_dim, ValueFunctionId id);
