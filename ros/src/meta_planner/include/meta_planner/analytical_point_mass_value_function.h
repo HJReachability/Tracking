@@ -31,7 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * Please contact the author(s) of this library if you have any questions.
- * Authors: David Fridovich-Keil   ( dfk@eecs.berkeley.edu )
+ * Authors: David Fridovich-Keil    ( dfk@eecs.berkeley.edu )
+ * Authors: Jaime Fernandez Fisac   ( jfisac@eecs.berkeley.edu )
  */
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,7 +41,7 @@
 // the ValueFunction class and implements a custom OptimalControl function.
 // Instead of loading subsystems, for simplicity all parameters are read
 // from the ROS parameter server and this class does not utilize explicit
-// subsystem classes.
+// subsystem classes. Assumes state order = [all positions, all velocities].
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -70,10 +71,12 @@ public:
   // instantiated it can never be changed. Note that we must pass in
   // the maximum planner speed in each geometric dimension.
   static ConstPtr Create(const Vector3d& max_planner_speed,
-                         const Dynamics::ConstPtr& dynamics,
-                         size_t x_dim, size_t u_dim);
+                         const Vector3d& max_tracker_control,
+                         const Vector3d& max_tracker_accel,
+                         const Vector3d& max_vel_disturbance,
+                         const Vector3d& max_acc_disturbance);
 
-  // Linearly interpolate to get the value/gradient at a particular state.
+  // Analytically evaluate value/gradient at a particular state.
   double Value(const VectorXd& state) const;
   VectorXd Gradient(const VectorXd& state) const;
 
@@ -84,9 +87,23 @@ public:
   double TrackingBound(size_t dimension) const;
 
 private:
-  explicit AnalyticalPointMassValueFunction(const std::string& directory,
-                                            const Dynamics::ConstPtr& dynamics,
-                                            size_t x_dim, size_t u_dim);
+  explicit AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
+                                            const Vector3d& max_tracker_control,
+                                            const Vector3d& max_tracker_accel,
+                                            const Vector3d& max_vel_disturbance,
+                                            const Vector3d& max_acc_disturbance);
+  
+  // Reference, tracker, and disturbance parameters
+  const Vector3d v_ref_;            // bound on reference velocity magnitude
+  const Vector3d u_max_;            // maximum control input
+  const Vector3d a_max_;            // maximum absolute acceleration
+  const Vector3d d_v_;              // velocity disturbance  
+  const Vector3d d_a_;              // acceleration disturbance
+  Vector3d u2a_;              // control gain to acceleration
+  static const size_t p_dim_;       // number of spatial dimensions (always 3)
+  static const size_t x_dim_;       // number of state   dimensions (always 6)
+  static const size_t u_dim_;       // number of control dimensions (always 3)
+
 };
 
 } //\namespace meta
