@@ -311,6 +311,15 @@ void MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop) const {
     // (2) Sample a new point in the state space.
     Vector3d sample = space_->Sample();
 
+    // Throw out this sample if it could never lead to a faster trajectory than
+    // the best one currently.
+    // NOTE! This test assumes that the first planner is the fastest.
+    // NOTE! If no valid trajectory has been found, the tree's best time will
+    // be infinite, so this test will automatically fail.
+    if (planners_.front()->BestPossibleTime(start, sample) +
+        planners_.front()->BestPossibleTime(sample, stop) > tree.BestTime())
+      continue;
+
     // (3) Find the nearest neighbor.
     const size_t kNumNeighbors = 1;
     const std::vector<Waypoint::ConstPtr> neighbors =

@@ -36,52 +36,29 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Waypoint struct. Each Waypoint is just a node in a WaypointTree.
+// Defines the Planner abstract class interface. For now, all Planners must
+// operate within a Box. This is because of the way in which subspaces are
+// specified in the constructor.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_WAYPOINT_H
-#define META_PLANNER_WAYPOINT_H
-
-#include <meta_planner/trajectory.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
-
-#include <memory>
+#include <meta_planner/planner.h>
 
 namespace meta {
 
-struct Waypoint : private Uncopyable {
-public:
-  typedef std::shared_ptr<const Waypoint> ConstPtr;
+// Shortest possible time to go from start to stop for this planner.
+double Planner::
+BestPossibleTime(const Vector3d& start, const Vector3d& stop) const {
+  double time = 0.0;
 
-  // Member variables.
-  const Vector3d point_;
-  const double time_;
-  const Trajectory::ConstPtr traj_;
-  const ConstPtr parent_;
-
-  // Factory method. Use this instead of the constructor.
-  static inline ConstPtr Create(const Vector3d& point, double time,
-                                const Trajectory::ConstPtr& traj,
-                                const ConstPtr& parent) {
-    ConstPtr ptr(new Waypoint(point, time, traj, parent));
-    return ptr;
+  // Take the max of the min times in each dimension.
+  for (size_t ii = 0; ii < 3; ii++) {
+    const double dim_time =
+      std::abs(stop(ii) - start(ii)) / value_->MaxPlannerSpeed(ii);
+    time = std::max(time, dim_time);
   }
 
-  // Destructor.
-  ~Waypoint() {}
-
-private:
-  explicit Waypoint(const Vector3d& point, double time,
-                    const Trajectory::ConstPtr& traj,
-                    const ConstPtr& parent)
-    : point_(point),
-      time_(time),
-      traj_(traj),
-      parent_(parent) {}
-};
+  return time;
+}
 
 } //\namespace meta
-
-#endif

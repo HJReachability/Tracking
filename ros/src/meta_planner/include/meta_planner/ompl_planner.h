@@ -170,13 +170,7 @@ Plan(const Vector3d& start, const Vector3d& stop,
 
       // Handle all other states.
       if (ii > 0) {
-        double dt = 0.0;
-        for (size_t jj = 0; jj < 3; jj++) {
-          dt = std::max(std::abs(position(jj) - positions.back()(jj)) /
-                        value_->MaxPlannerSpeed(jj),
-                        dt);
-        }
-
+        const double dt = BestPossibleTime(positions.back(), position);
         time += dt;
       }
 

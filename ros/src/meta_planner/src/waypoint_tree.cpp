@@ -67,6 +67,15 @@ void WaypointTree::Insert(const Waypoint::ConstPtr& waypoint, bool is_terminal) 
   }
 }
 
+// Get best total time (seconds) of any valid trajectory. Returns negative
+// if no valid trajectory exists.
+double WaypointTree::BestTime() const {
+  if (terminus_ == nullptr)
+    return std::numeric_limits<double>::infinity();
+
+  return terminus_->time_ - root_->time_;
+}
+
 // Get best (fastest) trajectory (if it exists).
 Trajectory::Ptr WaypointTree::BestTrajectory() const {
   if (terminus_ == nullptr) {

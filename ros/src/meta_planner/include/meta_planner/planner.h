@@ -72,6 +72,9 @@ public:
                                double start_time = 0.0,
                                double budget = 1.0) const = 0;
 
+  // Shortest possible time to go from start to stop for this planner.
+  double BestPossibleTime(const Vector3d& start, const Vector3d& stop) const;
+
 protected:
   explicit Planner(const ValueFunction::ConstPtr& value,
                    const Box::ConstPtr& space)
