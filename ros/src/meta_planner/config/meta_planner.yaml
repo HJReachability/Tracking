@@ -18,7 +18,7 @@ meta:
 
     # Upper and lower bounds for control.
     # In the quadrotor 6D model, the controls are [pitch, roll, thrust].
-    upper: [0.2618, 0.2618, 16.0]
+    upper: [0.2618, 0.2618, 15.62] # thrust limits symmetric w.r.t. g = 9.81
     lower: [-0.2618, -0.2618, 4.0]
 
   state:
@@ -44,8 +44,8 @@ meta:
     # assumed to be the same in eadh dimension, so each entry in these lists is
     # for a different planner.
     max_speeds: [0.1]
-    max_velocity_disturbances: [0.05]
-    max_acceleration_disturbances: [0.01]
+    max_velocity_disturbances: [0.0]
+    max_acceleration_disturbances: [1.0]
 
   meta:
     # Max runtime for the meta planner in seconds.

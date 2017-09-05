@@ -111,7 +111,15 @@ Gradient(const VectorXd& state) const {
     const double v = state(p_dim_ + dim);
     const double v_ref = max_planner_speed_(dim);
 
-    if (x < -0.5 * v * v_ref*v_ref / (a_max_(dim) - d_a_(dim))) {
+    // Value surface A: + for x "below" convex Acceleration parabola.
+    const double V_A = -x +
+      (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref) /
+      (a_max_(dim) - d_a_(dim));
+    // Value surface B: + for x "above" concave Braking parabola.
+    const double V_B = x -
+      (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref) /
+      (a_max_(dim) - d_a_(dim));
+    if (V_A > V_B) {
       grad_V(dim) = -1.0;         // if on A side, grad points towards -pos
       grad_V(p_dim_ + dim) = (v - v_ref) / (a_max_(dim) - d_a_(dim));
     } else {
@@ -134,7 +142,15 @@ OptimalControl(const VectorXd& state) const {
     const double v_ref = max_planner_speed_(dim);
     VectorXd grad_V = VectorXd::Zero(x_dim_);
 
-    if (x < -0.5 * v * v_ref*v_ref / (a_max_(dim) - d_a_(dim))) {
+    // Value surface A: + for x "below" convex Acceleration parabola.
+    const double V_A = -x +
+      (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref) /
+      (a_max_(dim) - d_a_(dim));
+    // Value surface B: + for x "above" concave Braking parabola.
+    const double V_B = x -
+      (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref) /
+      (a_max_(dim) - d_a_(dim));
+    if (V_A > V_B) {
       // If on A side, accelerate.
       u_opt(dim) = u2a_(dim) > 0.0 ? u_max_(dim) : u_min_(dim);
     } else {
