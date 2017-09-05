@@ -110,6 +110,12 @@ template<typename PlannerType>
 Trajectory::Ptr OmplPlanner<PlannerType>::
 Plan(const Vector3d& start, const Vector3d& stop,
      double start_time, double budget) const {
+  // Check that both start and stop are in bounds.
+  if (!space_->IsValid(start, value_) || !space_->IsValid(stop, value_)) {
+    ROS_WARN("Start or stop point was in collision or out of bounds.");
+    return nullptr;
+  }
+
   // Create the OMPL state space corresponding to this environment.
   auto ompl_space(
     std::make_shared<ob::RealVectorStateSpace>(3));
@@ -117,15 +123,6 @@ Plan(const Vector3d& start, const Vector3d& stop,
   // Set bounds for the environment.
   const Vector3d lower = space_->LowerBounds();
   const Vector3d upper = space_->UpperBounds();
-
-  // Check that both start and stop are in bounds.
-  for (size_t ii = 0; ii < 3; ii++) {
-    if (start(ii) < lower(ii) || start(ii) > upper(ii) ||
-        stop(ii) < lower(ii) || stop(ii) > upper(ii)) {
-      ROS_ERROR("Start or stop point was outside environment bounds.");
-      return nullptr;
-    }
-  }
 
   ob::RealVectorBounds ompl_bounds(3);
 

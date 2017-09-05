@@ -20,7 +20,7 @@
   <arg name="tracker_dt" default="0.01" />
   <arg name="merger_dt" default="0.01" />
 
-  <arg name="max_meta_runtime" default="0.5" />
+  <arg name="max_meta_runtime" default="1.0" />
   <arg name="max_meta_connection_radius" default="5.0" />
 
   <arg name="tracker_x_dim" default="6" />
