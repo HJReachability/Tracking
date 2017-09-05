@@ -116,16 +116,15 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   } else {
     for (size_t ii = 0; ii < max_planner_speeds_.size(); ii++) {
       // Generate inputs for AnalyticalPointMassValueFunction.
-      // HACK! Assuming knowledge of the control/dynamics.
+      // SEMI-HACK! Manually feeding control/disturbance bounds.
       const Vector3d max_planner_speed =
         Vector3d::Constant(max_planner_speeds_[ii]);
       const Vector3d max_tracker_control(control_upper_[0],
                                          control_upper_[1],
                                          control_upper_[2]);
-      const Vector3d max_tracker_acceleration(
-        constants::G * std::tan(control_upper_[0]),
-        constants::G * std::tan(control_upper_[1]),
-        control_upper_[2] - constants::G);
+      const Vector3d min_tracker_control(control_lower_[0],
+                                         control_lower_[1],
+                                         control_lower_[2]);
       const Vector3d max_velocity_disturbance =
         Vector3d::Constant(max_velocity_disturbances_[ii]);
       const Vector3d max_acceleration_disturbance =
@@ -135,7 +134,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
       const AnalyticalPointMassValueFunction::ConstPtr value =
         AnalyticalPointMassValueFunction::Create(max_planner_speed,
                                                  max_tracker_control,
-                                                 max_tracker_acceleration,
+                                                 min_tracker_control,
                                                  max_velocity_disturbance,
                                                  max_acceleration_disturbance,
                                                  dynamics_,
