@@ -58,38 +58,39 @@ const size_t AnalyticalPointMassValueFunction::p_dim_ = 3;
 AnalyticalPointMassValueFunction::ConstPtr AnalyticalPointMassValueFunction::
 Create(const Vector3d& max_planner_speed,
        const Vector3d& max_tracker_control,
-       const Vector3d& max_tracker_accel,
+       const Vector3d& min_tracker_control,
        const Vector3d& max_vel_disturbance,
        const Vector3d& max_acc_disturbance,
        const Dynamics::ConstPtr& dynamics,
        ValueFunctionId id) {
   AnalyticalPointMassValueFunction::ConstPtr ptr(
     new AnalyticalPointMassValueFunction(max_planner_speed, max_tracker_control,
-                                         max_tracker_accel, max_vel_disturbance,
+                                         min_tracker_control, max_vel_disturbance,
                                          max_acc_disturbance, dynamics, id));
   return ptr;
 }
 
-// Linearly interpolate to get the value/gradient at a particular state.
+// Analytically evaluate value/gradient at a particular state.
 double AnalyticalPointMassValueFunction::
 Value(const VectorXd& state) const {
   double V = 0;
   for (size_t dim = 0; dim < p_dim_; dim++){
     const double x = state(dim);
     const double v = state(p_dim_ + dim);
+    const double v_ref = max_planner_speed_(dim);
 
     // Value surface A: + for x "below" convex Acceleration parabola.
     const double V_A = -x +
-      (0.5 * (v - v_ref_(dim))*(v - v_ref_(dim)) - v_ref_(dim)*v_ref_(dim)) /
+      (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref) /
       (a_max_(dim) - d_a_(dim));
-    //    const double V_A = ( 1/2*pow(v-v_ref_(dim),2) - pow(v_ref_(dim),2) )
+    //    const double V_A = ( 1/2*pow(v-v_ref,2) - pow(v_ref,2) )
     //      /   ( a_max_(dim) - d_a_(dim) ) - x;
 
     // Value surface B: + for x "above" concave Braking parabola.
     const double V_B = x -
-      (-0.5 * (v + v_ref_(dim))*(v + v_ref_(dim)) + v_ref_(dim)*v_ref_(dim)) /
+      (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref) /
       (a_max_(dim) - d_a_(dim));
-    //    const double V_B = x - ( -1/2*pow(v+v_ref_(dim),2) + pow(v_ref_(dim),2) )
+    //    const double V_B = x - ( -1/2*pow(v+v_ref,2) + pow(v_ref,2) )
     //      /   ( a_max_(dim) - d_a_(dim) );
 
     // Value function is the maximum of the above two surfaces.
@@ -108,14 +109,14 @@ Gradient(const VectorXd& state) const {
   for (size_t dim = 0; dim < p_dim_; dim++){
     const double x = state(dim);
     const double v = state(p_dim_ + dim);
+    const double v_ref = max_planner_speed_(dim);
 
-    // NOTE! DFK moving 'v' to numerator explicitly. @JFF is that right?
-    if (x < -0.5 * v * v_ref_(dim)*v_ref_(dim) / (a_max_(dim) - d_a_(dim))) {
+    if (x < -0.5 * v * v_ref*v_ref / (a_max_(dim) - d_a_(dim))) {
       grad_V(dim) = -1.0;         // if on A side, grad points towards -pos
-      grad_V(p_dim_ + dim) = (v - v_ref_(dim)) / (a_max_(dim) - d_a_(dim));
+      grad_V(p_dim_ + dim) = (v - v_ref) / (a_max_(dim) - d_a_(dim));
     } else {
       grad_V(dim) = 1.0;          // if on B side, grad points towards +pos
-      grad_V(p_dim_ + dim) = (v + v_ref_(dim)) / (a_max_(dim) - d_a_(dim));
+      grad_V(p_dim_ + dim) = (v + v_ref) / (a_max_(dim) - d_a_(dim));
     }
   }
 
@@ -130,15 +131,15 @@ OptimalControl(const VectorXd& state) const {
   for (size_t dim = 0; dim < p_dim_; dim++){
     const double x = state(dim);
     const double v = state(p_dim_+dim);
+    const double v_ref = max_planner_speed_(dim);
     VectorXd grad_V = VectorXd::Zero(x_dim_);
 
-    // NOTE! DFK moving 'v' to numerator explicitly. @JFF is that right?
-    if (x < -0.5 * v * v_ref_(dim)*v_ref_(dim) / (a_max_(dim) - d_a_(dim))) {
+    if (x < -0.5 * v * v_ref*v_ref / (a_max_(dim) - d_a_(dim))) {
       // If on A side, accelerate.
-      u_opt(dim) = u2a_(dim) > 0.0 ? u_max_(dim) : -u_max_(dim);
+      u_opt(dim) = u2a_(dim) > 0.0 ? u_max_(dim) : u_min_(dim);
     } else {
       // If on B side, brake.
-      u_opt(dim) = u2a_(dim) > 0.0 ? -u_max_(dim) : u_max_(dim);
+      u_opt(dim) = u2a_(dim) > 0.0 ? u_min_(dim) : u_max_(dim);
     }
   }
 
@@ -150,31 +151,34 @@ double AnalyticalPointMassValueFunction::
 TrackingBound(size_t dim) const {
   // Return a single positive number (semi-length of interval centered on 0)
   // This is equal to the position at the intersection between parabolas.
-  return 0.5 * v_ref_(dim)*v_ref_(dim) / (a_max_(dim) - d_a_(dim));
+  const double v_ref = max_planner_speed_(dim);
+  return 0.5 * v_ref*v_ref / (a_max_(dim) - d_a_(dim));
 }
 
 // Constructor.
 AnalyticalPointMassValueFunction::
 AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
                                  const Vector3d& max_tracker_control,
-                                 const Vector3d& max_tracker_accel,
+                                 const Vector3d& min_tracker_control,
                                  const Vector3d& max_vel_disturbance,
                                  const Vector3d& max_acc_disturbance,
                                  const Dynamics::ConstPtr& dynamics,
                                  ValueFunctionId id)
   : ValueFunction(dynamics, 6, 3, id),
-    v_ref_(max_planner_speed),
     u_max_(max_tracker_control),
-    a_max_(max_tracker_accel),
+    u_min_(min_tracker_control),
     d_v_(max_vel_disturbance),
     d_a_(max_acc_disturbance) {
+
+  // Compute max acceleration (NOTE: assumed symmetric even if u_max != -u_min).
+  const VectorXd x_dot_max = dynamics_->Evaluate(VectorXd::Zero(6), u_max_);
+  a_max_ = x_dot_max.tail<3>().cwiseAbs();
   // Compute control gains.
-  for(size_t ii = 0; ii < u_dim_; ii++){
-    u2a_(ii) = a_max_(ii) / u_max_(ii);     // ratio between acc and ctrl at u_max
-  }
+  u2a_ = x_dot_max.tail<3>().cwiseQuotient( 0.5 * (u_max_ - u_min_) );
 
   // Set max planner speed.
-  max_planner_speed_ = max_planner_speed;
+  max_planner_speed_ = max_planner_speed; // v_ref is a duplicate of this
+
 }
 
 } //\namespace meta

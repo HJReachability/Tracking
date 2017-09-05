@@ -72,7 +72,7 @@ public:
   // the maximum planner speed in each geometric dimension.
   static ConstPtr Create(const Vector3d& max_planner_speed,
                          const Vector3d& max_tracker_control,
-                         const Vector3d& max_tracker_accel,
+                         const Vector3d& min_tracker_control,
                          const Vector3d& max_vel_disturbance,
                          const Vector3d& max_acc_disturbance,
                          const Dynamics::ConstPtr& dynamics,
@@ -91,19 +91,19 @@ public:
 private:
   explicit AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
                                             const Vector3d& max_tracker_control,
-                                            const Vector3d& max_tracker_accel,
+                                            const Vector3d& min_tracker_control,
                                             const Vector3d& max_vel_disturbance,
                                             const Vector3d& max_acc_disturbance,
                                             const Dynamics::ConstPtr& dynamics,
                                             ValueFunctionId id);
 
   // Reference, tracker, and disturbance parameters
-  const Vector3d v_ref_;            // bound on reference velocity magnitude
   const Vector3d u_max_;            // maximum control input
-  const Vector3d a_max_;            // maximum absolute acceleration
+  const Vector3d u_min_;            // minimum control input (not symmetric)
   const Vector3d d_v_;              // velocity disturbance
   const Vector3d d_a_;              // acceleration disturbance
-  Vector3d u2a_;              // control gain to acceleration
+  Vector3d a_max_;                  // maximum absolute acceleration
+  Vector3d u2a_;                    // bang-bang control-to-acceleration gain
 
   static const size_t p_dim_;       // number of spatial dimensions (always 3)
 };
