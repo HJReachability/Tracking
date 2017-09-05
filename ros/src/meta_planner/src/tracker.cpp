@@ -306,16 +306,10 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
     return;
   }
 
-  std::cout << "state: " << state_.transpose() << std::endl;
-
   const VectorXd planner_state = traj_->GetState(current_time.toSec());
   const VectorXd relative_state = state_ - planner_state;
 
-  std::cout << "relative state: " << relative_state.transpose() << std::endl;
-
   const Vector3d planner_position = dynamics_->Puncture(planner_state);
-
-  std::cout << "planner pos: " << planner_position.transpose() << std::endl;
 
   // Publish planner state on tf.
   geometry_msgs::TransformStamped transform_stamped;
@@ -389,8 +383,6 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   // (3) Interpolate gradient to get optimal control.
   const VectorXd optimal_control = value->OptimalControl(relative_state);
-
-  std::cout << "optimal control: " << optimal_control.transpose() << std::endl;
 
   // (4) Publish optimal control with priority in (0, 1).
   const double kControlMergeBuffer =
