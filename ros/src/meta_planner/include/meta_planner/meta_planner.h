@@ -92,7 +92,8 @@ private:
   void RequestTrajectoryCallback(const std_msgs::Empty::ConstPtr& msg);
 
   // Plan a trajectory from the given start to stop points and auto-publish.
-  void Plan(const Vector3d& start, const Vector3d& stop) const;
+  // Returns whether meta planning was successful.
+  bool Plan(const Vector3d& start, const Vector3d& stop) const;
 
   // List of planners and flag for whether to load value functions from disk or
   // create analytic versions given parameters read from ROS.

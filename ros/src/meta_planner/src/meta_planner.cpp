@@ -290,7 +290,15 @@ SensorCallback(const meta_planner_msgs::SensorMeasurement::ConstPtr& msg) {
 // Callback to handle requests for new trajectory.
 void MetaPlanner::RequestTrajectoryCallback(const std_msgs::Empty::ConstPtr& msg) {
   ROS_INFO("%s: Recomputing trajectory.", name_.c_str());
-  Plan(position_, goal_);
+
+  const ros::Time start_time = ros::Time::now();
+  while (!Plan(position_, goal_)) {
+    ROS_ERROR("%s: MetaPlanner failed. Retrying.", name_.c_str());
+    ros::Duration(0.1).sleep();
+  }
+
+  ROS_INFO("%s: MetaPlanner succeeded after %2.5f seconds.",
+           name_.c_str(), (ros::Time::now() - start_time).toSec());
 }
 
 // Plan a trajectory using the given (ordered) list of Planners.
@@ -301,7 +309,7 @@ void MetaPlanner::RequestTrajectoryCallback(const std_msgs::Empty::ConstPtr& msg
 // (5) Try to connect to the goal point.
 // (6) Stop when we have a feasible trajectory. Otherwise go to (2).
 // (7) When finished, convert to a message and publish.
-void MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop) const {
+bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop) const {
   // (1) Set up a new RRT-like structure to hold the meta plan.
   const ros::Time start_time = ros::Time::now();
   WaypointTree tree(start, start_time.toSec());
@@ -388,15 +396,15 @@ void MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop) const {
 
   if (found) {
     // Get the best (fastest) trajectory out of the tree.
-    ROS_INFO("%s: Meta planner succeeded.", name_.c_str());
-
     const Trajectory::ConstPtr best = tree.BestTrajectory();
     ROS_INFO("%s: Publishing trajectory of length %zu.",
              name_.c_str(), best->Size());
 
     traj_pub_.publish(best->ToRosMessage());
-  } else
-    ROS_ERROR("%s: Meta planner failed.", name_.c_str());
+    return true;
+  }
+
+  return false;
 }
 
 } //\namespace meta
