@@ -11,6 +11,7 @@ Panels:
         - /TF1/Frames1
         - /Known Map1
         - /Trajectory1
+        - /Sensor Radius1
         - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 869
@@ -81,9 +82,8 @@ Visualization Manager:
           planner:
             {}
           tracker:
-            {}
-          tracker/base_link:
-            {}
+            tracker/base_link:
+              {}
       Update Interval: 0
       Value: true
     - Class: rviz/Marker
@@ -145,7 +145,7 @@ Visualization Manager:
           Value: true
       Name: RobotModel
       Robot Description: robot_description
-      TF Prefix: ""
+      TF Prefix: tracker
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -173,22 +173,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 2.00405
+      Distance: 1.00225
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.058257
-        Y: -0.0984177
+        X: -0.0193055
+        Y: -0.00219157
         Z: 4.95047e-08
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.324796
+      Pitch: 0.294797
       Target Frame: planner
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.8036
+      Yaw: 3.56043
     Saved: ~
 Window Geometry:
   Displays:

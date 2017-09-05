@@ -2,7 +2,7 @@
 
   <!-- Top level arguments. -->
   <arg name="fixed_frame" default="fixed" />
-  <arg name="tracker_frame" default="base_link" />
+  <arg name="tracker_frame" default="tracker" />
   <arg name="planner_frame" default="planner" />
 
   <arg name="dubins_state_topic" default="/state/dubins" />
@@ -35,6 +35,13 @@
   <arg name="sim_init_x" default="0.0" />
   <arg name="sim_init_y" default="0.0" />
   <arg name="sim_init_z" default="5.0" />
+
+  <!-- TF static publisher to create a base_link frame for the tracker. -->
+  <node pkg="tf"
+        type="static_transform_publisher"
+        name="tracker_base_link_publisher"
+        args="0 0 0 0 0 0 1 $(arg tracker_frame) $(arg tracker_frame)/base_link 100">
+  </node>
 
   <!-- Crazyflie dynamics simulator. -->
   <node name="simulator"
