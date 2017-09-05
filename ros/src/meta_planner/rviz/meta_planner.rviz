@@ -7,7 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /Grid1
-        - /TF1
         - /TF1/Frames1
         - /Known Map1
         - /Trajectory1
@@ -66,7 +65,7 @@ Visualization Manager:
           Value: true
       Marker Scale: 2
       Name: TF
-      Show Arrows: true
+      Show Arrows: false
       Show Axes: true
       Show Names: true
       Tree:
@@ -91,6 +90,7 @@ Visualization Manager:
       Name: Known Map
       Namespaces:
         cube: true
+        sphere: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -142,22 +142,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 44.4004
+      Distance: 38.1481
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.6276
-        Y: -0.916696
+        X: 6.49596
+        Y: -5.57656
         Z: -3.90851
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.860398
+      Pitch: 1.2054
       Target Frame: planner
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.6036
+      Yaw: 5.81861
     Saved: ~
 Window Geometry:
   Displays:

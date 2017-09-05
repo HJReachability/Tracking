@@ -43,7 +43,7 @@ meta:
     # Planner max speed and velocity/acceleration disturbances. All values are
     # assumed to be the same in eadh dimension, so each entry in these lists is
     # for a different planner.
-    max_speeds: [0.1]
+    max_speeds: [0.5]
     max_velocity_disturbances: [0.0]
     max_acceleration_disturbances: [1.0]
 

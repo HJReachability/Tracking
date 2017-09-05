@@ -128,8 +128,9 @@ bool Sensor::LoadParameters(const ros::NodeHandle& n) {
 
   // Topics and frame ids.
   if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
-  if (!nl.getParam("meta/topics/sensor_radius", sensor_radius_topic_)) return false;
-  if (!nl.getParam("meta/topics/true_environment", environment_topic_)) return false;
+  if (!nl.getParam("meta/topics/vis/sensor_radius", sensor_radius_topic_)) return false;
+  if (!nl.getParam("meta/topics/vis/true_environment", environment_topic_)) return false;
+
   if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
   if (!nl.getParam("meta/frames/tracker", robot_frame_id_)) return false;
 
