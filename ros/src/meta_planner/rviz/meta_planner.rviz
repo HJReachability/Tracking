@@ -7,9 +7,11 @@ Panels:
         - /Global Options1
         - /Status1
         - /Grid1
+        - /TF1
         - /TF1/Frames1
         - /Known Map1
         - /Trajectory1
+        - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 869
   - Class: rviz/Selection
@@ -57,22 +59,30 @@ Visualization Manager:
       Frame Timeout: 10000
       Frames:
         All Enabled: false
+        base_link:
+          Value: false
         fixed:
           Value: true
         planner:
           Value: true
         tracker:
-          Value: true
-      Marker Scale: 2
+          Value: false
+        tracker/base_link:
+          Value: false
+      Marker Scale: 0.5
       Name: TF
       Show Arrows: false
       Show Axes: true
       Show Names: true
       Tree:
         fixed:
+          base_link:
+            {}
           planner:
             {}
           tracker:
+            {}
+          tracker/base_link:
             {}
       Update Interval: 0
       Value: true
@@ -118,6 +128,27 @@ Visualization Manager:
         sensor: true
       Queue Size: 100
       Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: ""
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -142,22 +173,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 38.1481
+      Distance: 2.00405
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 6.49596
-        Y: -5.57656
-        Z: -3.90851
+        X: -0.058257
+        Y: -0.0984177
+        Z: 4.95047e-08
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.2054
+      Pitch: 0.324796
       Target Frame: planner
       Value: ThirdPersonFollower (rviz)
-      Yaw: 5.81861
+      Yaw: 3.8036
     Saved: ~
 Window Geometry:
   Displays:

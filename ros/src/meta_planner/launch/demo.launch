@@ -2,7 +2,7 @@
 
   <!-- Top level arguments. -->
   <arg name="fixed_frame" default="fixed" />
-  <arg name="robot_frame" default="tracker" />
+  <arg name="robot_frame" default="base_link" />
   <arg name="planner_frame" default="planner" />
 
   <arg name="dubins_state_topic" default="/state/dubins" />
@@ -20,7 +20,7 @@
   <arg name="tracker_dt" default="0.01" />
   <arg name="merger_dt" default="0.01" />
 
-  <arg name="max_meta_runtime" default="0.1" />
+  <arg name="max_meta_runtime" default="0.3" />
   <arg name="max_meta_connection_radius" default="5.0" />
 
   <arg name="tracker_x_dim" default="6" />
