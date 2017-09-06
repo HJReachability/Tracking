@@ -11,7 +11,7 @@
   <arg name="reference_state_topic" default="/ref/planner" />
   <arg name="lqr_control_topic" default="/control/lqr" />
   <arg name="optimal_control_topic" default="/control/optimal" />
-  <arg name="merged_control_topic" default="/contro/merged" />
+  <arg name="merged_control_topic" default="/control/merged" />
   <arg name="sensor_topic" default="/sensor" />
 
   <arg name="estimator_dt" default="0.01" />
@@ -171,6 +171,7 @@
         output="screen">
 
     <param name="topics/control" value="$(arg merged_control_topic)" />
+    <param name="topics/cmd_vel" value="/$(arg tracker_frame)/cmd_vel" />
   </node>
 
   <!-- Tracker and sensor nodes. -->
