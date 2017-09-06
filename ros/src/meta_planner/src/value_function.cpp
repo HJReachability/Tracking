@@ -192,4 +192,17 @@ double ValueFunction::TrackingBound(size_t dimension) const {
   return std::numeric_limits<double>::infinity();
 }
 
+// Priority of the optimal control at the given state. This is a number
+// between 0 and 1, where 1 means the final control signal should be exactly
+// the optimal control signal computed by this value function.
+double ValueFunction::Priority(const VectorXd& state) const {
+  double priority = 0.0;
+
+  // Take the max priority among all subsystems.
+  for (const auto& subsystem : subsystems_)
+    priority = std::max(priority, subsystem->Priority(state));
+
+  return priority;
+}
+
 } //\namespace meta

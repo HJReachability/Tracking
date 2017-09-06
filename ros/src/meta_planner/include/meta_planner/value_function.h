@@ -82,6 +82,11 @@ public:
   // Get the tracking error bound in this spatial dimension.
   virtual double TrackingBound(size_t dimension) const;
 
+  // Priority of the optimal control at the given state. This is a number
+  // between 0 and 1, where 1 means the final control signal should be exactly
+  // the optimal control signal computed by this value function.
+  virtual double Priority(const VectorXd& state) const;
+
   // Get the dynamics.
   inline Dynamics::ConstPtr GetDynamics() const { return dynamics_; }
 

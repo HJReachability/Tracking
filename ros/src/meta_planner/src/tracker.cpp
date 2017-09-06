@@ -385,10 +385,6 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   const VectorXd optimal_control = value->OptimalControl(relative_state);
 
   // (4) Publish optimal control with priority in (0, 1).
-  const double kControlMergeBuffer =
-    0.25 * std::min(value->TrackingBound(0),
-                    std::min(value->TrackingBound(1), value->TrackingBound(2)));
-
   crazyflie_msgs::NoYawControlStamped control_msg;
   control_msg.header.stamp = ros::Time::now();
 
@@ -396,13 +392,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   control_msg.control.pitch = crazyflie_utils::angles::WrapAngleRadians(optimal_control(0));
   control_msg.control.roll = crazyflie_utils::angles::WrapAngleRadians(optimal_control(1));
   control_msg.control.thrust = optimal_control(2);
-
-  if (min_dist_to_bound <= 0.0)
-    control_msg.control.priority = 1.0;
-  else if (min_dist_to_bound > kControlMergeBuffer)
-    control_msg.control.priority = 0.0;
-  else
-    control_msg.control.priority = 1.0 - min_dist_to_bound / kControlMergeBuffer;
+  control_msg.control.priority = value->Priority(relative_state);
 
   control_pub_.publish(control_msg);
 

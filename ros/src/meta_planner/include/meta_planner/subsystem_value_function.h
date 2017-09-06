@@ -70,6 +70,11 @@ public:
   double Value(const VectorXd& state) const;
   VectorXd Gradient(const VectorXd& state) const;
 
+  // Priority of the optimal control at the given state. This is a number
+  // between 0 and 1, where 1 means the final control signal should be exactly
+  // the optimal control signal computed by this value function.
+  double Priority(const VectorXd& state) const;
+
   // Get the state/control dimensions for this subsystem.
   inline const std::vector<size_t>& StateDimensions() const {
     return state_dimensions_;
@@ -126,6 +131,11 @@ private:
   std::vector<double> voxel_size_;
   std::vector<double> lower_;
   std::vector<double> upper_;
+
+  // Lower and upper bounds for the value function. Used for computing the
+  // 'priority' of the optimal control signal.
+  double priority_lower_;
+  double priority_upper_;
 
   // Data is stored in row-major order.
   std::vector<double> data_;

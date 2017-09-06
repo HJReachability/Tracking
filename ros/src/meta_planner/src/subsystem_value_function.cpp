@@ -58,6 +58,21 @@ SubsystemValueFunction::SubsystemValueFunction(const std::string& file_name)
   : tracking_bound_(0.0),
     initialized_(Load(file_name)) {}
 
+// Priority of the optimal control at the given state. This is a number
+// between 0 and 1, where 1 means the final control signal should be exactly
+// the optimal control signal computed by this value function.
+double SubsystemValueFunction::Priority(const VectorXd& state) const {
+  const double value = Value(state);
+
+  if (value < priority_lower_)
+    return 0.0;
+
+  if (value > priority_upper_)
+    return 1.0;
+
+  return (value - priority_lower_) / (priority_upper_ - priority_lower_);
+}
+
 // Return the voxel index corresponding to the given state.
 size_t SubsystemValueFunction::StateToIndex(const VectorXd& punctured) const {
   // Quantize each dimension of the state.
@@ -341,6 +356,20 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
     return false;
   }
 
+  const std::string priority_lower = "priority_lower";
+  matvar_t* priority_lower_mat = Mat_VarRead(matfp, priority_lower.c_str());
+  if (priority_lower_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", priority_lower.c_str());
+    return false;
+  }
+
+  const std::string priority_upper = "priority_upper";
+  matvar_t* priority_upper_mat = Mat_VarRead(matfp, priority_upper.c_str());
+  if (priority_upper_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", priority_upper.c_str());
+    return false;
+  }
+
   const std::string max_planner_speed = "max_planner_speed";
   matvar_t* max_planner_speed_mat =
     Mat_VarRead(matfp, max_planner_speed.c_str());
@@ -431,6 +460,20 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
     tracking_bound_.push_back(static_cast<double*>(teb_mat->data)[ii]);
   }
 
+  if (priority_lower_mat->data_type != MAT_T_DOUBLE) {
+    ROS_ERROR("%s: Wrong type of data.", priority_lower.c_str());
+    return false;
+  }
+
+  priority_upper_ = *static_cast<double*>(priority_upper_mat->data);
+
+  if (priority_upper_mat->data_type != MAT_T_DOUBLE) {
+    ROS_ERROR("%s: Wrong type of data.", priority_upper.c_str());
+    return false;
+  }
+
+  priority_upper_ = *static_cast<double*>(priority_upper_mat->data);
+
   if (max_planner_speed_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", max_planner_speed.c_str());
     return false;
@@ -492,6 +535,8 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
   Mat_VarFree(x_dims_mat);
   Mat_VarFree(u_dims_mat);
   Mat_VarFree(teb_mat);
+  Mat_VarFree(priority_lower_mat);
+  Mat_VarFree(priority_upper_mat);
   Mat_VarFree(max_planner_speed_mat);
   Mat_VarFree(data_mat);
   Mat_Close(matfp);

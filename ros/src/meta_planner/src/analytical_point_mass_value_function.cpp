@@ -162,6 +162,19 @@ OptimalControl(const VectorXd& state) const {
   return u_opt;
 }
 
+// Priority of the optimal control at the given state. This is a number
+// between 0 and 1, where 1 means the final control signal should be exactly
+// the optimal control signal computed by this value function.
+double AnalyticalPointMassValueFunction::Priority(const VectorXd& state) const {
+  // TODO! @JFF can you implement some equivalent to what we're doing in the
+  // ValueFunction and SubsystemValueFunction classes, i.e. taking priority to
+  // be the value at this state (maxed over all subsystems) - some lower threshold
+  // divided by the difference between the value at the boundary of the set and that
+  // lower threshold?
+  ROS_WARN("Unimplemented virtual function Priority.");
+  return 1.0;
+}
+
 // Get the tracking error bound in this spatial dimension.
 double AnalyticalPointMassValueFunction::
 TrackingBound(size_t dim) const {

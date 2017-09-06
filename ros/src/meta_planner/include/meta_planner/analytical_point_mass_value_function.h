@@ -85,6 +85,11 @@ public:
   // Get the optimal control at a particular state.
   VectorXd OptimalControl(const VectorXd& state) const;
 
+  // Priority of the optimal control at the given state. This is a number
+  // between 0 and 1, where 1 means the final control signal should be exactly
+  // the optimal control signal computed by this value function.
+  double Priority(const VectorXd& state) const;
+
   // Get the tracking error bound in this spatial dimension.
   double TrackingBound(size_t dimension) const;
 
