@@ -11,7 +11,7 @@
   <arg name="reference_state_topic" default="/ref/planner" />
   <arg name="lqr_control_topic" default="/control/lqr" />
   <arg name="optimal_control_topic" default="/control/optimal" />
-  <arg name="merged_control_topic" default="/control/merged" />
+  <arg name="merged_control_topic" default="/contro/merged" />
   <arg name="sensor_topic" default="/sensor" />
 
   <arg name="estimator_dt" default="0.01" />
@@ -31,9 +31,9 @@
   <arg name="lqr_x_ref_file" default="$(find crazyflie_lqr)/references/x_ref_hover_sim.txt" />
   <arg name="lqr_u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt" />
 
-  <arg name="sim_init_x" default="0.0" />
-  <arg name="sim_init_y" default="0.0" />
-  <arg name="sim_init_z" default="5.0" />
+  <arg name="uri" default="radio://0/25/2M/E7E7E7E701" />
+  <arg name="mocap_frame" default="/vicon/cf7/cf7" />
+  <arg name="joy_dev" default="/dev/input/js0" />
 
   <!-- TF static publisher to create a base_link frame for the tracker. -->
   <node pkg="tf"
@@ -42,10 +42,13 @@
         args="0 0 0 0 0 0 1 $(arg tracker_frame) $(arg tracker_frame)/base_link 100">
   </node>
 
+  <node pkg="tf"
+        type="static_transform_publisher"
+        name="tracker_mocap_publisher"
+        args="0 0 0 0 0 0 1 $(arg tracker_frame) $(arg mocap_frame) 100">
+  </node>
+
   <!-- Crazyflie interface. -->
-  <arg name="uri" default="radio://0/25/2M/E7E7E7E701" />
-  <arg name="frame" default="/vicon/cf7/cf7" />
-  <arg name="joy_dev" default="/dev/input/js0" />
 <!--  <arg name="x" default="0" />
   <arg name="y" default="0" />
   <arg name="z" default="0.5" />
@@ -55,7 +58,7 @@
   <group ns="crazyflie">
     <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri)" />
-      <arg name="tf_prefix" value="tracker" />
+      <arg name="tf_prefix" value="$(arg tracker_frame)" />
       <arg name="enable_logging" value="True" />
     </include>
 
