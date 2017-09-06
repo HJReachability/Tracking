@@ -1,9 +1,9 @@
 <launch>
 
   <!-- Top level arguments. -->
-  <arg name="fixed_frame" default="fixed" />
-  <arg name="tracker_frame" default="tracker" />
-  <arg name="planner_frame" default="planner" />
+  <arg name="fixed_frame" default="/world" />
+  <arg name="tracker_frame" default="/tracker" />
+  <arg name="planner_frame" default="/planner" />
 
   <arg name="dubins_state_topic" default="/state/dubins" />
   <arg name="position_state_topic" default="/state/position" />
@@ -171,7 +171,7 @@
         output="screen">
 
     <param name="topics/control" value="$(arg merged_control_topic)" />
-    <param name="topics/cmd_vel" value="/$(arg tracker_frame)/cmd_vel" />
+    <param name="topics/cmd_vel" value="$(arg tracker_frame)/cmd_vel" />
   </node>
 
   <!-- Tracker and sensor nodes. -->
