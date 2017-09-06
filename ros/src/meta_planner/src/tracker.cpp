@@ -377,7 +377,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   }
 
   if (min_dist_to_bound <= 0.0) {
-    ROS_WARN("%s: Leaving the tracking error bound.", name_.c_str());
+    ROS_WARN_ONCE("%s: Leaving the tracking error bound.", name_.c_str());
     //    std::terminate();
   }
 
