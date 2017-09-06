@@ -168,10 +168,12 @@ OptimalControl(const VectorXd& state) const {
 double AnalyticalPointMassValueFunction::Priority(const VectorXd& state) const {
   const double V = Value(state);
   //HACK! JFF NOTE: The threshold should probably be externally set via config
-  const double relative_threshold = 0.1; // 10% of max inside value
+  const double relative_high = 0.50; // 50% of max inside value
+  const double relative_low  = 0.05; // 5% of max inside value
   const double V_safest = Value(VectorXd::Zero(6));
-  const double V_threshold = relative_threshold * V_safest;
-  double priority = 1.0 - std::min(std::max(0.0, V/V_threshold), 1.0);
+  const double V_high = relative_high * V_safest;
+  const double V_low = relative_low * V_safest;
+  double priority = 1.0 - std::min(std::max(0.0,(V-V_low)/(V_high-V_low)),1.0);
   return priority;
 }
 
