@@ -164,6 +164,15 @@
     <param name="topics/merged" value="$(arg merged_control_topic)" />
   </node>
 
+  <!-- CmdVelConverter node. -->
+  <node name="cmd_vel_converter"
+        pkg="crazyflie_control_merger"
+        type="cmd_vel_converter_node"
+        output="screen">
+
+    <param name="topics/control" value="$(arg merged_control_topic)" />
+  </node>
+
   <!-- Tracker and sensor nodes. -->
   <group ns="meta">
     <node name="tracker"
