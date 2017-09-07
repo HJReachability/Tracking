@@ -167,13 +167,18 @@ OptimalControl(const VectorXd& state) const {
 // the optimal control signal computed by this value function.
 double AnalyticalPointMassValueFunction::Priority(const VectorXd& state) const {
   const double V = Value(state);
-  //HACK! JFF NOTE: The threshold should probably be externally set via config
+
+  // HACK! The threshold should probably be externally set via config.
   const double relative_high = 0.50; // 50% of max inside value
   const double relative_low  = 0.05; // 5% of max inside value
+
   const double V_safest = Value(VectorXd::Zero(6));
+
+  // BUG! @JFF this needs to be multiplying the MAX V in the set, not the MIN.
   const double V_high = relative_high * V_safest;
   const double V_low = relative_low * V_safest;
-  double priority = 1.0 - std::min(std::max(0.0,(V-V_low)/(V_high-V_low)),1.0);
+
+  const double priority = 1.0 - std::min(std::max(0.0,(V-V_low)/(V_high-V_low)),1.0);
   return priority;
 }
 
