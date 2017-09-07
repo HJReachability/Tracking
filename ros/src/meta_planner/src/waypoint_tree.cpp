@@ -46,8 +46,7 @@
 
 namespace meta {
 
-WaypointTree::WaypointTree(const Vector3d& start, const Vector3d& stop,
-                           double start_time)
+WaypointTree::WaypointTree(const Vector3d& start, double start_time)
   : root_(Waypoint::Create(start, start_time, nullptr, nullptr)) {
   kdtree_.Insert(root_);
 }
@@ -57,11 +56,24 @@ void WaypointTree::Insert(const Waypoint::ConstPtr& waypoint, bool is_terminal) 
   kdtree_.Insert(waypoint);
 
   if (is_terminal) {
-    if (terminus_ == nullptr)
+    if (terminus_ == nullptr) {
+      ROS_WARN("Set initial terminus.");
       terminus_ = waypoint;
-    else if (waypoint->time_ < terminus_->time_)
+    }
+    else if (waypoint->time_ < terminus_->time_) {
+      ROS_WARN("Updated terminus.");
       terminus_ = waypoint;
+    }
   }
+}
+
+// Get best total time (seconds) of any valid trajectory. Returns negative
+// if no valid trajectory exists.
+double WaypointTree::BestTime() const {
+  if (terminus_ == nullptr)
+    return std::numeric_limits<double>::infinity();
+
+  return terminus_->time_ - root_->time_;
 }
 
 // Get best (fastest) trajectory (if it exists).

@@ -78,7 +78,8 @@ public:
   // Derived classes must plan trajectories between two points.
   Trajectory::Ptr Plan(const Vector3d& start,
                        const Vector3d& stop,
-                       double start_time = 0.0) const;
+                       double start_time = 0.0,
+                       double budget = 1.0) const;
 
 private:
   explicit OmplPlanner(const ValueFunction::ConstPtr& value,
@@ -106,9 +107,15 @@ Create(const ValueFunction::ConstPtr& value,
 
 // Derived classes must plan trajectories between two points.
 template<typename PlannerType>
-Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
-                                               const Vector3d& stop,
-                                               double start_time) const {
+Trajectory::Ptr OmplPlanner<PlannerType>::
+Plan(const Vector3d& start, const Vector3d& stop,
+     double start_time, double budget) const {
+  // Check that both start and stop are in bounds.
+  if (!space_->IsValid(start, value_) || !space_->IsValid(stop, value_)) {
+    ROS_WARN_THROTTLE(1.0, "Start or stop point was in collision or out of bounds.");
+    return nullptr;
+  }
+
   // Create the OMPL state space corresponding to this environment.
   auto ompl_space(
     std::make_shared<ob::RealVectorStateSpace>(3));
@@ -116,15 +123,6 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
   // Set bounds for the environment.
   const Vector3d lower = space_->LowerBounds();
   const Vector3d upper = space_->UpperBounds();
-
-  // Check that both start and stop are in bounds.
-  for (size_t ii = 0; ii < 3; ii++) {
-    if (start(ii) < lower(ii) || start(ii) > upper(ii) ||
-        stop(ii) < lower(ii) || stop(ii) > upper(ii)) {
-      ROS_ERROR("Start or stop point was outside environment bounds.");
-      return nullptr;
-    }
-  }
 
   ob::RealVectorBounds ompl_bounds(3);
 
@@ -156,7 +154,7 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
   ompl_setup.setPlanner(ompl_planner);
 
   // Solve. Parameter is the amount of time (in seconds) used by the solver.
-  const ob::PlannerStatus solved = ompl_setup.solve(1.0);
+  const ob::PlannerStatus solved = ompl_setup.solve(budget);
 
   if (solved) {
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();
@@ -172,13 +170,7 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(const Vector3d& start,
 
       // Handle all other states.
       if (ii > 0) {
-        double dt = 0.0;
-        for (size_t jj = 0; jj < 3; jj++) {
-          dt = std::max(std::abs(position(jj) - positions.back()(jj)) /
-                        value_->MaxPlannerSpeed(jj),
-                        dt);
-        }
-
+        const double dt = BestPossibleTime(positions.back(), position);
         time += dt;
       }
 

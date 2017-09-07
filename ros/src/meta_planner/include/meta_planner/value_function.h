@@ -36,7 +36,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the ValueFunction class.
+// Defines the ValueFunction class. Many functions in this class are declared
+// virtual so that analytical value functions may inherit from this class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -60,26 +61,31 @@ public:
   typedef std::shared_ptr<const ValueFunction> ConstPtr;
 
   // Destructor.
-  ~ValueFunction() {}
+  virtual ~ValueFunction() {}
 
   // Factory method. Use this instead of the constructor.
   // Note that this class is const-only, which means that once it is
   // instantiated it can never be changed.
   static ConstPtr Create(const std::string& directory,
                          const Dynamics::ConstPtr& dynamics,
-                         size_t x_dim, size_t u_dim);
+                         size_t x_dim, size_t u_dim, ValueFunctionId id);
 
   // Linearly interpolate to get the value/gradient at a particular state.
-  double Value(const VectorXd& state) const;
-  VectorXd Gradient(const VectorXd& state) const;
+  virtual double Value(const VectorXd& state) const;
+  virtual VectorXd Gradient(const VectorXd& state) const;
 
   // Get the optimal control at a particular state.
-  inline VectorXd OptimalControl(const VectorXd& state) const {
+  virtual inline VectorXd OptimalControl(const VectorXd& state) const {
     return dynamics_->OptimalControl(state, Gradient(state));
   }
 
   // Get the tracking error bound in this spatial dimension.
-  double TrackingBound(size_t dimension) const;
+  virtual double TrackingBound(size_t dimension) const;
+
+  // Priority of the optimal control at the given state. This is a number
+  // between 0 and 1, where 1 means the final control signal should be exactly
+  // the optimal control signal computed by this value function.
+  virtual double Priority(const VectorXd& state) const;
 
   // Get the dynamics.
   inline Dynamics::ConstPtr GetDynamics() const { return dynamics_; }
@@ -89,13 +95,27 @@ public:
     return max_planner_speed_(ii);
   }
 
+  // Get the ID of this value function.
+  inline ValueFunctionId Id() const { return id_; }
+
   // Was this ValueFunction properly initialized?
   inline bool IsInitialized() const { return initialized_; }
 
-private:
-  explicit ValueFunction(const std::string& directory,
-                         const Dynamics::ConstPtr& dynamics,
-                         size_t x_dim, size_t u_dim);
+protected:
+  // Constuctor for use by derived classes.
+  explicit ValueFunction(const Dynamics::ConstPtr& dynamics,
+                         size_t x_dim, size_t u_dim, ValueFunctionId id)
+    : dynamics_(dynamics),
+      x_dim_(x_dim),
+      u_dim_(u_dim),
+      id_(id),
+      initialized_(true) {
+    if (!dynamics.get())
+      ROS_ERROR("Dynamics pointer was null.");
+  }
+
+  // Identifier.
+  const ValueFunctionId id_;
 
   // State/control space dimensions.
   const size_t x_dim_;
@@ -107,11 +127,17 @@ private:
   // Planner max speed in each spatial dimension.
   Vector3d max_planner_speed_;
 
-  // List of value functions for independent subsystems.
-  std::vector<SubsystemValueFunction::ConstPtr> subsystems_;
-
   // Was this value function initialized/loaded properly?
   bool initialized_;
+
+private:
+  // Constructor for use by this class.
+  explicit ValueFunction(const std::string& directory,
+                         const Dynamics::ConstPtr& dynamics,
+                         size_t x_dim, size_t u_dim, ValueFunctionId id);
+
+  // List of value functions for independent subsystems.
+  std::vector<SubsystemValueFunction::ConstPtr> subsystems_;
 };
 
 } //\namespace meta

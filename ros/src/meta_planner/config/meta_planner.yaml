@@ -4,10 +4,10 @@ meta:
     time_step: 0.005
 
     # Sensor radius.
-    sensor_radius: 1.0
+    sensor_radius: 2.5
 
     # Number of obstacles.
-    num_obstacles: 0
+    num_obstacles: 25
 
   control:
     # Interval (seconds) of the discrete-time control update.
@@ -18,7 +18,7 @@ meta:
 
     # Upper and lower bounds for control.
     # In the quadrotor 6D model, the controls are [pitch, roll, thrust].
-    upper: [0.2618, 0.2618, 16.0]
+    upper: [0.2618, 0.2618, 15.62] # thrust limits symmetric w.r.t. g = 9.81
     lower: [-0.2618, -0.2618, 4.0]
 
   state:
@@ -31,14 +31,28 @@ meta:
     lower: [-10.0, -10.0, 0.0, -10.0, -10.0, -10.0]
 
   planners:
+    # Mode flag. If true, loads value functions from disk.
+    # If false, uses analytical versions with parameters given here.
+    numerical_mode: false
+
     # Directories in which subsystem value functions are stored.
     # These are assumed to be in the PRECOMPUTATION_DIR directory, and to
     # end in a '/' so that raw filenames can be concatenated directly.
-    values: [speed_1_tenths/]
+    value_directories: [speed_1_tenths/]
+
+    # Planner max speed and velocity/acceleration disturbances. All values are
+    # assumed to be the same in eadh dimension, so each entry in these lists is
+    # for a different planner.
+    max_speeds: [0.5, 0.1]
+    max_velocity_disturbances: [0.1, 0.1]
+    max_acceleration_disturbances: [1.0, 1.0]
 
   meta:
+    # Max runtime for the meta planner in seconds.
+    max_runtime: 0.05
+
     # Max connection radius for meta planner.
-    max_connection_radius: 10.0
+    max_connection_radius: 5.0
 
   topics:
     # Sensor publication topic.
@@ -50,12 +64,22 @@ meta:
     # Reference to track.
     reference: /reference
 
+    # Trajectory computed by MetaPlanner.
+    traj: /traj
+
+    # Trajectory requests.
+    request_traj: /request_traj
+
+    # Triggering a replan event.
+    trigger_replan: /replan
+
     # Visualization topics.
-    traj: /vis/traj
-    true_environment: /vis/true_env
-    known_environment: /vis/known_env
-    tracking_bound: /vis/bound
-    sensor_radius: /vis/sensor
+    vis:
+      traj: /vis/traj
+      true_environment: /vis/true_env
+      known_environment: /vis/known_env
+      tracking_bound: /vis/bound
+      sensor_radius: /vis/sensor
 
     # Control topic.
     control: /control/optimal

@@ -58,6 +58,21 @@ SubsystemValueFunction::SubsystemValueFunction(const std::string& file_name)
   : tracking_bound_(0.0),
     initialized_(Load(file_name)) {}
 
+// Priority of the optimal control at the given state. This is a number
+// between 0 and 1, where 1 means the final control signal should be exactly
+// the optimal control signal computed by this value function.
+double SubsystemValueFunction::Priority(const VectorXd& state) const {
+  const double value = Value(state);
+
+  if (value < priority_lower_)
+    return 0.0;
+
+  if (value > priority_upper_)
+    return 1.0;
+
+  return (value - priority_lower_) / (priority_upper_ - priority_lower_);
+}
+
 // Return the voxel index corresponding to the given state.
 size_t SubsystemValueFunction::StateToIndex(const VectorXd& punctured) const {
   // Quantize each dimension of the state.
@@ -77,9 +92,11 @@ size_t SubsystemValueFunction::StateToIndex(const VectorXd& punctured) const {
   }
 
   // Convert to row-major order.
-  size_t index = 0;
-  for (size_t ii = 0; ii < quantized.size() - 1; ii++) {
-    const size_t coefficient = num_voxels_[ii + 1];
+  size_t index = quantized[0];
+
+  for (size_t ii = 1; ii < quantized.size(); ii++) {
+    index *= num_voxels_[ii];
+    index += quantized[ii];
   }
 
 #if 0
@@ -151,7 +168,6 @@ RecursiveGradientInterpolator(const VectorXd& x, size_t idx) const {
 
   // Compute the fractional distance between lower and upper.
   const double fractional_dist = (x(idx) - lower) / voxel_size_[idx];
-  std::cout << "fractional dist: " << fractional_dist << std::endl;
 
   // Split x along dimension idx.
   VectorXd x_lower = x;
@@ -255,8 +271,15 @@ VectorXd SubsystemValueFunction::Puncture(const VectorXd& state) const {
 // Compute a central difference at the voxel containing this state.
 VectorXd SubsystemValueFunction::
 CentralDifference(const VectorXd& punctured) const {
-  // Get the value at the voxel containing this state.
   VectorXd gradient(punctured.size());
+
+  // Read the gradient one dimension at a time.
+  const size_t idx = StateToIndex(punctured);
+  for (size_t ii = 0; ii < gradient.size(); ii++)
+    gradient(ii) = gradient_[ii][idx];
+
+#if 0
+  // Get the value at the voxel containing this state.
   const double nn_value = data_[StateToIndex(punctured)];
 
   // Compute a central difference in each dimension.
@@ -271,6 +294,7 @@ CentralDifference(const VectorXd& punctured) const {
     neighbor(ii) = punctured(ii);
     gradient(ii) = 0.5 * (forward - backward) / voxel_size_[ii];
   }
+#endif
 
   return gradient;
 }
@@ -329,6 +353,20 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
   matvar_t* teb_mat = Mat_VarRead(matfp, teb.c_str());
   if (teb_mat == NULL) {
     ROS_ERROR("Could not read variable: %s.", teb.c_str());
+    return false;
+  }
+
+  const std::string priority_lower = "priority_lower";
+  matvar_t* priority_lower_mat = Mat_VarRead(matfp, priority_lower.c_str());
+  if (priority_lower_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", priority_lower.c_str());
+    return false;
+  }
+
+  const std::string priority_upper = "priority_upper";
+  matvar_t* priority_upper_mat = Mat_VarRead(matfp, priority_upper.c_str());
+  if (priority_upper_mat == NULL) {
+    ROS_ERROR("Could not read variable: %s.", priority_upper.c_str());
     return false;
   }
 
@@ -422,6 +460,20 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
     tracking_bound_.push_back(static_cast<double*>(teb_mat->data)[ii]);
   }
 
+  if (priority_lower_mat->data_type != MAT_T_DOUBLE) {
+    ROS_ERROR("%s: Wrong type of data.", priority_lower.c_str());
+    return false;
+  }
+
+  priority_upper_ = *static_cast<double*>(priority_upper_mat->data);
+
+  if (priority_upper_mat->data_type != MAT_T_DOUBLE) {
+    ROS_ERROR("%s: Wrong type of data.", priority_upper.c_str());
+    return false;
+  }
+
+  priority_upper_ = *static_cast<double*>(priority_upper_mat->data);
+
   if (max_planner_speed_mat->data_type != MAT_T_DOUBLE) {
     ROS_ERROR("%s: Wrong type of data.", max_planner_speed.c_str());
     return false;
@@ -454,6 +506,28 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
     voxel_size_.push_back((upper_[ii] - lower_[ii]) /
                           static_cast<double>(num_voxels_[ii]));
 
+  // Read gradient information one dimension at a time.
+  for (size_t ii = 0; ii < num_voxels_.size(); ii++) {
+    const std::string deriv = "deriv" + std::to_string(ii);
+    matvar_t* deriv_mat = Mat_VarRead(matfp, deriv.c_str());
+    if (deriv_mat == NULL) {
+      ROS_ERROR("Could not read variable: %s.", deriv.c_str());
+      return false;
+    }
+
+    num_elements = deriv_mat->nbytes / deriv_mat->data_size;
+    if (num_elements != data_.size())
+      ROS_ERROR("Derivative %zu had wrong number of elements.", ii);
+
+    std::vector<double> grad;
+    for (size_t ii = 0; ii < num_elements; ii++) {
+      grad.push_back(static_cast<double*>(deriv_mat->data)[ii]);
+    }
+
+    gradient_.push_back(grad);
+    Mat_VarFree(deriv_mat);
+  }
+
   // Free memory and close file.
   Mat_VarFree(grid_min_mat);
   Mat_VarFree(grid_max_mat);
@@ -461,6 +535,8 @@ bool SubsystemValueFunction::Load(const std::string& file_name) {
   Mat_VarFree(x_dims_mat);
   Mat_VarFree(u_dims_mat);
   Mat_VarFree(teb_mat);
+  Mat_VarFree(priority_lower_mat);
+  Mat_VarFree(priority_upper_mat);
   Mat_VarFree(max_planner_speed_mat);
   Mat_VarFree(data_mat);
   Mat_Close(matfp);

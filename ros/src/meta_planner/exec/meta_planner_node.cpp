@@ -36,52 +36,27 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Waypoint struct. Each Waypoint is just a node in a WaypointTree.
+// The MetaPlanner node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_WAYPOINT_H
-#define META_PLANNER_WAYPOINT_H
+#include <meta_planner/meta_planner.h>
 
-#include <meta_planner/trajectory.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <ros/ros.h>
 
-#include <memory>
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "meta_planner");
+  ros::NodeHandle n("~");
 
-namespace meta {
+  meta::MetaPlanner meta_planner;
 
-struct Waypoint : private Uncopyable {
-public:
-  typedef std::shared_ptr<const Waypoint> ConstPtr;
-
-  // Member variables.
-  const Vector3d point_;
-  const double time_;
-  const Trajectory::ConstPtr traj_;
-  const ConstPtr parent_;
-
-  // Factory method. Use this instead of the constructor.
-  static inline ConstPtr Create(const Vector3d& point, double time,
-                                const Trajectory::ConstPtr& traj,
-                                const ConstPtr& parent) {
-    ConstPtr ptr(new Waypoint(point, time, traj, parent));
-    return ptr;
+  if (!meta_planner.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize MetaPlanner.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
   }
 
-  // Destructor.
-  ~Waypoint() {}
+  ros::spin();
 
-private:
-  explicit Waypoint(const Vector3d& point, double time,
-                    const Trajectory::ConstPtr& traj,
-                    const ConstPtr& parent)
-    : point_(point),
-      time_(time),
-      traj_(traj),
-      parent_(parent) {}
-};
-
-} //\namespace meta
-
-#endif
+  return EXIT_SUCCESS;
+}

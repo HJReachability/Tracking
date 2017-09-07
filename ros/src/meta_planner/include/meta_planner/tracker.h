@@ -43,7 +43,8 @@
 #ifndef META_PLANNER_TRACKER_H
 #define META_PLANNER_TRACKER_H
 
-#include <meta_planner/meta_planner.h>
+#include <meta_planner/analytical_point_mass_value_function.h>
+#include <meta_planner/value_function.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
@@ -53,12 +54,16 @@
 #include <meta_planner/box.h>
 #include <demo/balls_in_box.h>
 
+#include <meta_planner_msgs/Trajectory.h>
+#include <meta_planner_msgs/TrajectoryRequest.h>
+
 #include <crazyflie_msgs/PositionStateStamped.h>
 #include <crazyflie_msgs/ControlStamped.h>
 #include <crazyflie_msgs/NoYawControlStamped.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
+#include <std_msgs/Empty.h>
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -79,22 +84,31 @@ private:
   bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // Callback for processing sensor measurements.
-  void SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg);
-
   // Callback for processing state updates.
   void StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
+
+  // Callback for processing trajectory updates.
+  void TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg);
+
+  // Callback for when the MetaPlanner sees a new obstacle and wants the Tracker to
+  // hover and request a new trajectory.
+  void TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg);
 
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
 
-  // Run the meta planner.
-  void RunMetaPlanner();
+  // Request a new trajectory from the meta planner.
+  void RequestNewTrajectory() const;
+
+  // Send a hover control.
+  void Hover();
 
   // Current state and trajectory.
-  VectorXd goal_;
   VectorXd state_;
-  Trajectory::ConstPtr traj_;
+  Trajectory::Ptr traj_;
+
+  // Maximum runtime for meta planner.
+  double max_meta_runtime_;
 
   // Spaces and dimensions.
   size_t control_dim_;
@@ -109,17 +123,20 @@ private:
   std::vector<double> control_upper_;
   std::vector<double> control_lower_;
 
-  // Planners and related parameters.
-  std::vector<Planner::ConstPtr> planners_;
+  // Value functions, flag for whether to load from disk or create
+  // analytic versions given parameters read from ROS.
+  std::vector<ValueFunction::ConstPtr> values_;
+
+  bool numerical_mode_;
   std::vector<std::string> value_directories_;
 
-  // Max connection radius for meta planner.
-  double max_connection_radius_;
+  std::vector<double> max_planner_speeds_;
+  std::vector<double> max_velocity_disturbances_;
+  std::vector<double> max_acceleration_disturbances_;
 
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;
-  bool first_time_;
 
   // TF interfacing.
   tf2_ros::TransformBroadcaster br_;
@@ -127,19 +144,23 @@ private:
   // Publishers/subscribers and related topics.
   ros::Publisher control_pub_;
   ros::Publisher environment_pub_;
-  ros::Publisher traj_pub_;
+  ros::Publisher traj_vis_pub_;
   ros::Publisher tracking_bound_pub_;
   ros::Publisher reference_pub_;
-  ros::Subscriber sensor_sub_;
+  ros::Publisher request_traj_pub_;
   ros::Subscriber state_sub_;
+  ros::Subscriber traj_sub_;
+  ros::Subscriber trigger_replan_sub_;
 
   std::string control_topic_;
   std::string environment_topic_;
   std::string traj_topic_;
+  std::string request_traj_topic_;
   std::string tracking_bound_topic_;
-  std::string sensor_topic_;
   std::string state_topic_;
   std::string reference_topic_;
+  std::string traj_vis_topic_;
+  std::string trigger_replan_topic_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;

@@ -77,10 +77,6 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // Set up dynamics.
   dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
 
-  // Initialize state space. For now, use an empty box.
-  // TODO: Parameterize this somehow and integrate with occupancy grid.
-  space_ = BallsInBox::Create();
-
   // Set state space bounds.
   VectorXd state_upper_vec(state_dim_);
   VectorXd state_lower_vec(state_dim_);
@@ -89,10 +85,8 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     state_lower_vec(ii) = state_lower_[ii];
   }
 
-  space_->SetBounds(dynamics_->Puncture(state_lower_vec),
-                    dynamics_->Puncture(state_upper_vec));
-
   // Set the initial state and goal.
+  // HACK! Assuming state layout.
   const size_t kXDim = 0;
   const size_t kYDim = 1;
   const size_t kZDim = 2;
@@ -107,33 +101,53 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   state_(kVyDim) = 0.0;
   state_(kVzDim) = 0.0;
 
-  goal_ = state_upper_vec - VectorXd::Constant(state_dim_, kSmallNumber);
-  goal_(kVxDim) = 0.0;
-  goal_(kVyDim) = 0.0;
-  goal_(kVzDim) = 0.0;
+  // Create value functions.
+  if (numerical_mode_) {
+    for (size_t ii = 0; ii < value_directories_.size(); ii++) {
+      // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
+      // Load up the value function.
+      const ValueFunction::ConstPtr value =
+        ValueFunction::Create(value_directories_[ii], dynamics_,
+                              state_dim_, control_dim_,
+                              static_cast<ValueFunctionId>(ii));
 
-  first_time_ = true;
+      values_.push_back(value);
+    }
+  } else {
+    for (size_t ii = 0; ii < max_planner_speeds_.size(); ii++) {
+      // Generate inputs for AnalyticalPointMassValueFunction.
+      // SEMI-HACK! Manually feeding control/disturbance bounds.
+      const Vector3d max_planner_speed =
+        Vector3d::Constant(max_planner_speeds_[ii]);
+      const Vector3d max_tracker_control(control_upper_[0],
+                                         control_upper_[1],
+                                         control_upper_[2]);
+      const Vector3d min_tracker_control(control_lower_[0],
+                                         control_lower_[1],
+                                         control_lower_[2]);
+      const Vector3d max_velocity_disturbance =
+        Vector3d::Constant(max_velocity_disturbances_[ii]);
+      const Vector3d max_acceleration_disturbance =
+        Vector3d::Constant(max_acceleration_disturbances_[ii]);
 
-  // Create planners.
-  for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-    // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
-    // Load up the value function.
-    const ValueFunction::ConstPtr value =
-      ValueFunction::Create(value_directories_[ii], dynamics_,
-                            state_dim_, control_dim_);
+      // Create analytical value function.
+      const AnalyticalPointMassValueFunction::ConstPtr value =
+        AnalyticalPointMassValueFunction::Create(max_planner_speed,
+                                                 max_tracker_control,
+                                                 min_tracker_control,
+                                                 max_velocity_disturbance,
+                                                 max_acceleration_disturbance,
+                                                 dynamics_,
+                                                 static_cast<ValueFunctionId>(ii));
 
-    // Create the planner.
-    const Planner::ConstPtr planner =
-      OmplPlanner<og::RRTConnect>::Create(value, space_);
-
-    planners_.push_back(planner);
+      values_.push_back(value);
+    }
   }
 
-  // Generate an initial trajectory.
-  RunMetaPlanner();
-
-  // Publish environment.
-  space_->Visualize(environment_pub_, fixed_frame_id_);
+  // Initialize trajectory to null as a cue to Hover(). Hover will reset the
+  // trajectory to just hover in place.
+  traj_ = nullptr;
+  Hover();
 
   // Wait a little for the simulator to begin.
   ros::Duration(0.5).sleep();
@@ -145,10 +159,6 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 // Load all parameters from config files.
 bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
-
-  // Meta planning parameters.
-  if (!nl.getParam("meta/meta/max_connection_radius", max_connection_radius_))
-    return false;
 
   // Control parameters.
   if (!nl.getParam("meta/control/time_step", time_step_)) return false;
@@ -168,10 +178,28 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // Planner parameters.
-  if (!nl.getParam("meta/planners/values", value_directories_)) return false;
+  if (!nl.getParam("meta/meta/max_runtime", max_meta_runtime_)) return false;
+  if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
+  if (!nl.getParam("meta/planners/value_directories", value_directories_))
+    return false;
 
   if (value_directories_.size() == 0) {
     ROS_ERROR("%s: Must specify at least one value function directory.",
+              name_.c_str());
+    return false;
+  }
+
+  if (!nl.getParam("meta/planners/max_speeds", max_planner_speeds_)) return false;
+  if (!nl.getParam("meta/planners/max_velocity_disturbances",
+                   max_velocity_disturbances_))
+    return false;
+  if (!nl.getParam("meta/planners/max_acceleration_disturbances",
+                   max_acceleration_disturbances_))
+    return false;
+
+  if (max_planner_speeds_.size() != max_velocity_disturbances_.size() ||
+      max_planner_speeds_.size() != max_acceleration_disturbances_.size()) {
+    ROS_ERROR("%s: Must specify max speed/velocity/acceleration disturbances.",
               name_.c_str());
     return false;
   }
@@ -185,12 +213,16 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
 
   // Topics and frame ids.
   if (!nl.getParam("meta/topics/control", control_topic_)) return false;
-  if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
-  if (!nl.getParam("meta/topics/known_environment", environment_topic_)) return false;
   if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
-  if (!nl.getParam("meta/topics/tracking_bound", tracking_bound_topic_)) return false;
+  if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
+  if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
+
   if (!nl.getParam("meta/topics/state", state_topic_)) return false;
   if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
+  if (!nl.getParam("meta/topics/vis/traj", traj_vis_topic_)) return false;
+  if (!nl.getParam("meta/topics/vis/tracking_bound", tracking_bound_topic_))
+    return false;
+
   if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
   if (!nl.getParam("meta/frames/tracker", tracker_frame_id_)) return false;
   if (!nl.getParam("meta/frames/planner", planner_frame_id_)) return false;
@@ -203,18 +235,21 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Subscribers.
-  sensor_sub_ = nl.subscribe(
-    sensor_topic_.c_str(), 10, &Tracker::SensorCallback, this);
-
   state_sub_ = nl.subscribe(
     state_topic_.c_str(), 10, &Tracker::StateCallback, this);
+
+  traj_sub_ = nl.subscribe(
+    traj_topic_.c_str(), 10, &Tracker::TrajectoryCallback, this);
+
+  trigger_replan_sub_ = nl.subscribe(
+    trigger_replan_topic_.c_str(), 10, &Tracker::TriggerReplanCallback, this);
 
   // Visualization publisher(s).
   environment_pub_ = nl.advertise<visualization_msgs::Marker>(
     environment_topic_.c_str(), 10, false);
 
-  traj_pub_ = nl.advertise<visualization_msgs::Marker>(
-    traj_topic_.c_str(), 10, false);
+  traj_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
+    traj_vis_topic_.c_str(), 10, false);
 
   tracking_bound_pub_ = nl.advertise<visualization_msgs::Marker>(
     tracking_bound_topic_.c_str(), 10, false);
@@ -226,29 +261,14 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
     reference_topic_.c_str(), 10, false);
 
+  request_traj_pub_ = nl.advertise<meta_planner_msgs::TrajectoryRequest>(
+    request_traj_topic_.c_str(), 10, false);
+
   // Timer.
   timer_ =
     nl.createTimer(ros::Duration(time_step_), &Tracker::TimerCallback, this);
 
   return true;
-}
-
-
-// Callback for processing sensor measurements. Replan trajectory.
-void Tracker::SensorCallback(const geometry_msgs::Quaternion::ConstPtr& msg){
-  const Vector3d point(msg->x, msg->y, msg->z);
-  const double radius = msg->w;
-
-  // Check if our version of the map has already seen this point.
-  if (!(space_->IsObstacle(point, radius))) {
-    space_->AddObstacle(point, radius);
-
-    // Run meta_planner.
-    RunMetaPlanner();
-
-    // Publish environment.
-    space_->Visualize(environment_pub_, fixed_frame_id_);
-  }
 }
 
 // Callback for processing state updates.
@@ -262,33 +282,49 @@ void Tracker::StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr
   state_(5) = msg->state.z_dot;
 }
 
+// Callback for processing trajectory updates.
+void Tracker::TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg) {
+  traj_ = Trajectory::Create(msg, values_);
+}
+
+// Callback for when the MetaPlanner sees a new obstacle and wants the Tracker to
+// hover and request a new trajectory.
+void Tracker::TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg) {
+  // Set trajectory to be the remainder of this trajectory, then hovering
+  // at the end for a while.
+  Hover();
+
+  // Request a new trajectory starting from the state we will be in after
+  // the max_meta_runtime_ has elapsed.
+  RequestNewTrajectory();
+}
+
+
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
   ros::Time current_time = ros::Time::now();
 
-  // (1) Rerun the meta planner if the current time is past the end of the
-  // trajectory timeline.
-  if (current_time.toSec() > traj_->LastTime()) {
-    ROS_WARN("%s: Current time is past the end of the planned trajectory.",
+  // (1) If current time is near the end of the current trajectory, just hover and
+  //     post a request for a new trajectory.
+  if (current_time.toSec() > traj_->LastTime() - max_meta_runtime_) {
+    ROS_WARN_THROTTLE(1.0, "%s: Nearing end of trajector. Replanning.",
              name_.c_str());
 
-    // Run the meta planner.
-    RunMetaPlanner();
+    // Set trajectory to be the remainder of this trajectory, then hovering
+    // at the end for a while.
+    Hover();
 
-    // Must update current time so it is after the start of the trajectory.
-    current_time = ros::Time::now();
+    // Request a new trajectory starting from the state we will be in after
+    // the max_meta_runtime_ has elapsed.
+    RequestNewTrajectory();
+
+    return;
   }
-
-  std::cout << "state: " << state_.transpose() << std::endl;
 
   const VectorXd planner_state = traj_->GetState(current_time.toSec());
   const VectorXd relative_state = state_ - planner_state;
 
-  std::cout << "relative state: " << relative_state.transpose() << std::endl;
-
   const Vector3d planner_position = dynamics_->Puncture(planner_state);
-
-  std::cout << "planner pos: " << planner_position.transpose() << std::endl;
 
   // Publish planner state on tf.
   geometry_msgs::TransformStamped transform_stamped;
@@ -356,53 +392,94 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   }
 
   if (min_dist_to_bound <= 0.0) {
-    ROS_WARN("%s: Leaving the tracking error bound.", name_.c_str());
+    ROS_WARN_THROTTLE(1.0, "%s: Leaving the tracking error bound.", name_.c_str());
     //    std::terminate();
   }
 
   // (3) Interpolate gradient to get optimal control.
   const VectorXd optimal_control = value->OptimalControl(relative_state);
 
-  std::cout << "optimal control: " << optimal_control.transpose() << std::endl;
-
   // (4) Publish optimal control with priority in (0, 1).
-  const double kControlMergeBuffer =
-    0.25 * std::min(value->TrackingBound(0),
-                    std::min(value->TrackingBound(1), value->TrackingBound(2)));
-
   crazyflie_msgs::NoYawControlStamped control_msg;
   control_msg.header.stamp = ros::Time::now();
 
   // NOTE! Remember, control is assumed to be [pitch, roll, thrust].
-  control_msg.control.pitch = angles::WrapAngleRadians(optimal_control(0));
-  control_msg.control.roll = angles::WrapAngleRadians(optimal_control(1));
+  control_msg.control.pitch = crazyflie_utils::angles::WrapAngleRadians(optimal_control(0));
+  control_msg.control.roll = crazyflie_utils::angles::WrapAngleRadians(optimal_control(1));
   control_msg.control.thrust = optimal_control(2);
-
-  if (min_dist_to_bound <= 0.0)
-    control_msg.control.priority = 1.0;
-  else if (min_dist_to_bound > kControlMergeBuffer)
-    control_msg.control.priority = 0.0;
-  else
-    control_msg.control.priority = 1.0 - min_dist_to_bound / kControlMergeBuffer;
+  control_msg.control.priority = value->Priority(relative_state);
 
   control_pub_.publish(control_msg);
 
-  // Publish environment.
-  space_->Visualize(environment_pub_, fixed_frame_id_);
-
   // Visualize trajectory.
-  traj_->Visualize(traj_pub_, fixed_frame_id_, dynamics_);
+  traj_->Visualize(traj_vis_pub_, fixed_frame_id_, dynamics_);
 }
 
-// Run meta planner.
-void Tracker::RunMetaPlanner() {
-  const MetaPlanner meta(space_, max_connection_radius_);
+// Request a new trajectory from the meta planner.
+void Tracker::RequestNewTrajectory() const {
+  ROS_INFO("%s: Requesting a new trajectory.", name_.c_str());
 
-  traj_ = meta.Plan(dynamics_->Puncture(state_),
-                    dynamics_->Puncture(goal_), planners_);
+  // Determine time and state where we will receive the new trajectory.
+  // This is when/where the new trajectory should start from.
+  const double start_time = ros::Time::now().toSec() + max_meta_runtime_;
+  const VectorXd start_state = traj_->GetState(start_time);
 
-  // Visualize the new trajectory.
-  traj_->Visualize(traj_pub_, fixed_frame_id_, dynamics_);
+  // Populate request.
+  meta_planner_msgs::TrajectoryRequest msg;
+  msg.start_time = start_time;
+  msg.start_state.dimension = state_dim_;
+
+  for (size_t ii = 0; ii < start_state.size(); ii++)
+    msg.start_state.state.push_back(start_state(ii));
+
+  request_traj_pub_.publish(msg);
+}
+
+// Set the trajectory to continue the existing trajectory, then hover at the end.
+// If no current trajectory exists, simply hover at the current state.
+void Tracker::Hover() {
+  ROS_INFO("%s: Setting a hover trajectory.", name_.c_str());
+
+  // Get the current time.
+  const double now = ros::Time::now().toSec();
+
+  // Catch null trajectory, which should only occur on startup.
+  // Hover at the current trajectory for max_meta_runtime_ + some small amount.
+  // Set the value function for this trajectory to be the one for the least
+  // aggressive planner, ie. for the smallest tracking bubble.
+  if (traj_ == nullptr) {
+    traj_ = Trajectory::Create();
+
+    // Get a zero-velocity version of the current state.
+    // HACK! Assuming state layout.
+    VectorXd hover_state = state_;
+    hover_state(3) = 0.0;
+    hover_state(4) = 0.0;
+    hover_state(5) = 0.0;
+
+    traj_->Add(now, hover_state, values_.back());
+    traj_->Add(now + max_meta_runtime_ + 1.0, hover_state, values_.back());
+    return;
+  }
+
+  // Non-null current trajectory.
+  // Copy over the remainder of the current trajectory.
+  Trajectory::Ptr hover = Trajectory::Create(traj_, now);
+
+  // Get the last state and make sure it has zero velocity.
+  // HACK! Assuming state layout.
+  VectorXd last_state = hover->LastState();
+  last_state(3) = 0.0;
+  last_state(4) = 0.0;
+  last_state(5) = 0.0;
+
+  // Hover at the last state.
+  // HACK! Assuming can hover using last value function. Is this true?
+  hover->Add(hover->LastTime() + max_meta_runtime_ + 1.0,
+             last_state,
+             hover->LastValueFunction());
+
+  traj_ = hover;
 }
 
 } //\namespace meta

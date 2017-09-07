@@ -2,7 +2,7 @@
 
   <!-- Top level arguments. -->
   <arg name="fixed_frame" default="fixed" />
-  <arg name="robot_frame" default="tracker" />
+  <arg name="tracker_frame" default="tracker" />
   <arg name="planner_frame" default="planner" />
 
   <arg name="dubins_state_topic" default="/state/dubins" />
@@ -14,24 +14,34 @@
   <arg name="merged_control_topic" default="/control/merged" />
   <arg name="sensor_topic" default="/sensor" />
 
-  <arg name="simulator_dt" default="0.005" />
+  <arg name="simulator_dt" default="0.001" />
   <arg name="estimator_dt" default="0.005" />
-  <arg name="lqr_dt" default="0.01" />
+  <arg name="lqr_dt" default="0.001" />
   <arg name="tracker_dt" default="0.01" />
   <arg name="merger_dt" default="0.01" />
+
+  <arg name="max_meta_runtime" default="0.2" />
+  <arg name="max_meta_connection_radius" default="5.0" />
 
   <arg name="tracker_x_dim" default="6" />
   <arg name="lqr_x_dim" default="7" />
   <arg name="tracker_u_dim" default="3" />
   <arg name="lqr_u_dim" default="4" />
 
-  <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_manual.txt" />
+  <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_lqr.txt" />
   <arg name="lqr_x_ref_file" default="$(find crazyflie_lqr)/references/x_ref_hover_sim.txt" />
   <arg name="lqr_u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt" />
 
   <arg name="sim_init_x" default="0.0" />
   <arg name="sim_init_y" default="0.0" />
   <arg name="sim_init_z" default="5.0" />
+
+  <!-- TF static publisher to create a base_link frame for the tracker. -->
+  <node pkg="tf"
+        type="static_transform_publisher"
+        name="tracker_base_link_publisher"
+        args="0 0 0 0 0 0 1 $(arg tracker_frame) $(arg tracker_frame)/base_link 100">
+  </node>
 
   <!-- Crazyflie dynamics simulator. -->
   <node name="simulator"
@@ -45,7 +55,7 @@
     <param name="init/z" value="$(arg sim_init_z)" />
 
     <param name="frames/fixed" value="$(arg fixed_frame)" />
-    <param name="frames/robot" value="$(arg robot_frame)" />
+    <param name="frames/robot" value="$(arg tracker_frame)" />
 
     <param name="topics/control" value="$(arg merged_control_topic)" />
   </node>
@@ -60,7 +70,7 @@
     <param name="time_step" value="$(arg estimator_dt)" />
 
     <param name="frames/fixed" value="$(arg fixed_frame)" />
-    <param name="frames/robot" value="$(arg robot_frame)" />
+    <param name="frames/robot" value="$(arg tracker_frame)" />
 
     <param name="topics/state" value="$(arg dubins_state_topic)" />
   </node>
@@ -74,7 +84,7 @@
     <param name="time_step" value="$(arg estimator_dt)" />
 
     <param name="frames/fixed" value="$(arg fixed_frame)" />
-    <param name="frames/robot" value="$(arg robot_frame)" />
+    <param name="frames/robot" value="$(arg tracker_frame)" />
 
     <param name="topics/state" value="$(arg position_state_topic)" />
   </node>
@@ -122,13 +132,27 @@
       <param name="meta/control/time_step" value="$(arg tracker_dt)" />
 
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
-      <param name="meta/frames/robot" value="$(arg robot_frame)" />
+      <param name="meta/frames/tracker" value="$(arg tracker_frame)" />
       <param name="meta/frames/planner" value="$(arg planner_frame)" />
 
       <param name="meta/topics/reference" value="$(arg reference_state_topic)" />
 
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/control" value="$(arg optimal_control_topic)" />
+    </node>
+
+    <node name="meta_planner"
+          pkg="meta_planner"
+          type="meta_planner_node"
+          output="screen">
+      <!-- Load parameters for the demo. -->
+      <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
+
+      <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
+      <param name="meta/meta/max_connection_radius" value="$(arg max_meta_connection_radius)" />
+
+      <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
+      <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/sensor" value="$(arg sensor_topic)" />
     </node>
 
@@ -141,7 +165,7 @@
       <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
 
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
-      <param name="meta/frames/robot" value="$(arg robot_frame)" />
+      <param name="meta/frames/tracker" value="$(arg tracker_frame)" />
 
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/sensor" value="$(arg sensor_topic)" />

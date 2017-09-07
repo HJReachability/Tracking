@@ -36,87 +36,29 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Simulator class. Holds a BallsInBox environment and sends
-// simulated sensor measurements consisting of detected balls in range.
+// Defines the Planner abstract class interface. For now, all Planners must
+// operate within a Box. This is because of the way in which subspaces are
+// specified in the constructor.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef DEMO_SIMULATOR_H
-#define DEMO_SIMULATOR_H
-
-#include <demo/balls_in_box.h>
-#include <meta_planner/near_hover_quad_no_yaw.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
-
-#include <meta_planner_msgs/SensorMeasurement.h>
-
-#include <tf2_ros/transform_listener.h>
-
-#include <ros/ros.h>
-#include <visualization_msgs/Marker.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <string>
+#include <meta_planner/planner.h>
 
 namespace meta {
 
-class Sensor : private Uncopyable {
-public:
-  explicit Sensor();
-  ~Sensor();
+// Shortest possible time to go from start to stop for this planner.
+double Planner::
+BestPossibleTime(const Vector3d& start, const Vector3d& stop) const {
+  double time = 0.0;
 
-  // Initialize this class with all parameters and callbacks.
-  bool Initialize(const ros::NodeHandle& n);
+  // Take the max of the min times in each dimension.
+  for (size_t ii = 0; ii < 3; ii++) {
+    const double dim_time =
+      std::abs(stop(ii) - start(ii)) / value_->MaxPlannerSpeed(ii);
+    time = std::max(time, dim_time);
+  }
 
-private:
-  bool LoadParameters(const ros::NodeHandle& n);
-  bool RegisterCallbacks(const ros::NodeHandle& n);
-
-  // Timer callback for generating sensor measurements and updating
-  // state based on last received control signal.
-  void TimerCallback(const ros::TimerEvent& e);
-
-  // Sensor radius.
-  double sensor_radius_;
-
-  // State space.
-  BallsInBox::Ptr space_;
-  size_t num_obstacles_;
-  size_t state_dim_;
-  size_t control_dim_;
-  NearHoverQuadNoYaw::ConstPtr dynamics_;
-
-  std::vector<double> state_lower_;
-  std::vector<double> state_upper_;
-
-  // Set a recurring timer for a discrete-time controller.
-  ros::Timer timer_;
-  double time_step_;
-
-  // Publishers/subscribers and related topics.
-  ros::Publisher sensor_radius_pub_;
-  ros::Publisher environment_pub_;
-  ros::Publisher sensor_pub_;
-
-  std::string sensor_radius_topic_;
-  std::string environment_topic_;
-  std::string sensor_topic_;
-
-  // Frames of reference for reading current pose from tf tree.
-  std::string fixed_frame_id_;
-  std::string robot_frame_id_;
-
-  // TF stuff.
-  tf2_ros::TransformListener tf_listener_;
-  tf2_ros::Buffer tf_buffer_;
-
-  // Is this class initialized?
-  bool initialized_;
-
-  // Name of this class, for use in debug messages.
-  std::string name_;
-};
+  return time;
+}
 
 } //\namespace meta
-
-#endif

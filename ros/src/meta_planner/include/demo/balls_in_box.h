@@ -67,9 +67,11 @@ public:
   bool IsValid(const Vector3d& position,
                const ValueFunction::ConstPtr& value) const;
 
-  // Check for obstacles within a sensing radius.
-  bool SenseObstacle(const Vector3d& position, double sensor_radius,
-                     Vector3d& obstacle_position, double& obstacle_radius) const;
+  // Check for obstacles within a sensing radius. Returns true if at least
+  // one obstacle was sensed.
+  bool SenseObstacles(const Vector3d& position, double sensor_radius,
+                      std::vector<Vector3d>& obstacle_positions,
+                      std::vector<double>& obstacle_radii) const;
 
   // Check if a given obstacle is in the environment.
   bool IsObstacle(const Vector3d& obstacle_position,

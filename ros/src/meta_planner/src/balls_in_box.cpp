@@ -95,22 +95,22 @@ bool BallsInBox::IsValid(const Vector3d& position,
 }
 
 
-//Checks for obstacles within a sensing radius.
-bool BallsInBox::SenseObstacle(const Vector3d& position, double sensor_radius,
-                               Vector3d& obstacle_position,
-                               double& obstacle_radius) const{
+// Checks for obstacles within a sensing radius. Returns true if at least
+// one obstacle was found.
+bool BallsInBox::SenseObstacles(const Vector3d& position, double sensor_radius,
+                                std::vector<Vector3d>& obstacle_positions,
+                                std::vector<double>& obstacle_radii) const {
+  obstacle_positions.clear();
+  obstacle_radii.clear();
+
   for (size_t ii = 0; ii < points_.size(); ii++){
     if ((position - points_[ii]).norm() <= radii_[ii] + sensor_radius) {
-      obstacle_position(0) = points_[ii](0);
-      obstacle_position(1) = points_[ii](1);
-      obstacle_position(2) = points_[ii](2);
-
-      obstacle_radius = radii_[ii];
-      return true;
+      obstacle_positions.push_back(points_[ii]);
+      obstacle_radii.push_back(radii_[ii]);
     }
   }
 
-  return false;
+  return obstacle_positions.size() > 0;
 }
 
 // Checks if a given obstacle is in the environment.

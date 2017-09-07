@@ -52,19 +52,19 @@ namespace fs = boost::filesystem;
 // Note that this class is const-only, which means that once it is
 // instantiated it can never be changed.
 ValueFunction::ConstPtr ValueFunction::
-Create(const std::string& directory,
-       const Dynamics::ConstPtr& dynamics,
-       size_t x_dim, size_t u_dim) {
+Create(const std::string& directory, const Dynamics::ConstPtr& dynamics,
+       size_t x_dim, size_t u_dim, ValueFunctionId id) {
   ValueFunction::ConstPtr ptr(
-    new ValueFunction(directory, dynamics, x_dim, u_dim));
+    new ValueFunction(directory, dynamics, x_dim, u_dim, id));
   return ptr;
 }
 
 // Constructor. Don't use this. Use the factory method instead.
 ValueFunction::ValueFunction(const std::string& directory,
                              const Dynamics::ConstPtr& dynamics,
-                             size_t x_dim, size_t u_dim)
-  : x_dim_(x_dim),
+                             size_t x_dim, size_t u_dim, ValueFunctionId id)
+  : id_(id),
+    x_dim_(x_dim),
     u_dim_(u_dim),
     dynamics_(dynamics),
     initialized_(true) {
@@ -190,6 +190,19 @@ double ValueFunction::TrackingBound(size_t dimension) const {
            dimension);
 
   return std::numeric_limits<double>::infinity();
+}
+
+// Priority of the optimal control at the given state. This is a number
+// between 0 and 1, where 1 means the final control signal should be exactly
+// the optimal control signal computed by this value function.
+double ValueFunction::Priority(const VectorXd& state) const {
+  double priority = 0.0;
+
+  // Take the max priority among all subsystems.
+  for (const auto& subsystem : subsystems_)
+    priority = std::max(priority, subsystem->Priority(state));
+
+  return priority;
 }
 
 } //\namespace meta

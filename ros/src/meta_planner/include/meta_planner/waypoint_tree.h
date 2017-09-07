@@ -52,14 +52,14 @@
 
 #include <iostream>
 #include <list>
+#include <limits>
 
 namespace meta {
 
 class WaypointTree : private Uncopyable {
 public:
   ~WaypointTree() {}
-  explicit WaypointTree(const Vector3d& start, const Vector3d& stop,
-                        double start_time = 0.0);
+  explicit WaypointTree(const Vector3d& start, double start_time = 0.0);
 
   // Find nearest neighbors in the tree.
   inline std::vector<Waypoint::ConstPtr>
@@ -77,6 +77,10 @@ public:
 
   // Get best (fastest) trajectory (if it exists).
   Trajectory::Ptr BestTrajectory() const;
+
+  // Get best total time (seconds) of any valid trajectory.
+  // NOTE! Returns positive infinity if no valid trajectory exists.
+  double BestTime() const;
 
 private:
   // Root of the tree.

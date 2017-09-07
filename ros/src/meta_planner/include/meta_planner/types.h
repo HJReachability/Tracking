@@ -54,6 +54,9 @@ namespace meta {
     const double G = 9.81;
   } //\namespace constants
 
+  // Internal typedefs.
+  typedef size_t ValueFunctionId;
+
 // ------------------------ THIRD PARTY TYPEDEFS ---------------------------- //
 
 typedef Eigen::Matrix<double, 3, 4> Matrix34d;
