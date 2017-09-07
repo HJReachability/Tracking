@@ -95,11 +95,14 @@ private:
   void RequestNewTrajectory() const;
 
   // Send a hover control.
-  void Hover() const;
+  void Hover();
 
   // Current state and trajectory.
   VectorXd state_;
-  Trajectory::ConstPtr traj_;
+  Trajectory::Ptr traj_;
+
+  // Maximum runtime for meta planner.
+  double max_meta_runtime_;
 
   // Spaces and dimensions.
   size_t control_dim_;

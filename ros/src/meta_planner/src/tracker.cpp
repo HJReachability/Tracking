@@ -144,8 +144,10 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     }
   }
 
-  // Initialize trajectory to null.
+  // Initialize trajectory to null as a cue to Hover(). Hover will reset the
+  // trajectory to just hover in place.
   traj_ = nullptr;
+  Hover();
 
   // Wait a little for the simulator to begin.
   ros::Duration(0.5).sleep();
@@ -176,6 +178,7 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // Planner parameters.
+  if (!nl.getParam("meta/meta/max_runtime", max_meta_runtime_)) return false;
   if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
   if (!nl.getParam("meta/planners/value_directories", value_directories_))
     return false;
@@ -284,24 +287,19 @@ void Tracker::TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& 
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
   ros::Time current_time = ros::Time::now();
 
-  // Catch null trajectory.
-  if (traj_ == nullptr) {
-    ROS_WARN_THROTTLE(1.0, "%s: No valid trajectory has been received.", name_.c_str());
-    Hover();
-
-    return;
-  }
-
-  // (1) If current time is past the most recent trajectory, just hover and
+  // (1) If current time is near the end of the current trajectory, just hover and
   //     post a request for a new trajectory.
-  if (current_time.toSec() > traj_->LastTime()) {
-    ROS_WARN_THROTTLE(1.0, "%s: Current time is past the end of the planned trajectory.",
+  if (current_time.toSec() > traj_->LastTime() - max_meta_runtime_) {
+    ROS_WARN_THROTTLE(1.0, "%s: Nearing end of trajector. Replanning.",
              name_.c_str());
 
-    traj_ = nullptr;
-
-    RequestNewTrajectory();
+    // Set trajectory to be the remainder of this trajectory, then hovering
+    // at the end for a while.
     Hover();
+
+    // Request a new trajectory starting from the state we will be in after
+    // the max_meta_runtime_ has elapsed.
+    RequestNewTrajectory();
 
     return;
   }
@@ -403,24 +401,56 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 // Request a new trajectory from the meta planner.
 void Tracker::RequestNewTrajectory() const {
   ROS_INFO("%s: Requesting a new trajectory.", name_.c_str());
+
+  // TODO! Specify start point for where we'll be after max_meta_runtime_.
   request_traj_pub_.publish(std_msgs::Empty());
 }
 
-// Send a hover control.
-// NOTE: When LQR is operational, just send anything with zero priority
-// since the reference won't update and the LQR node should hover. For now,
-// just send thrust to counter gravity and hope we don't drift too much.
-void Tracker::Hover() const {
-  crazyflie_msgs::NoYawControlStamped control_msg;
-  control_msg.header.stamp = ros::Time::now();
+// Set the trajectory to continue the existing trajectory, then hover at the end.
+// If no current trajectory exists, simply hover at the current state.
+void Tracker::Hover() {
+  ROS_INFO("%s: Setting a hover trajectory.", name_.c_str());
 
-  control_msg.control.pitch = 0.0;
-  control_msg.control.roll = 0.0;
-  control_msg.control.thrust = constants::G;
-  control_msg.control.priority = 1.0;
+  // Get the current time.
+  const double now = ros::Time::now().toSec();
 
-  control_pub_.publish(control_msg);
+  // Catch null trajectory, which should only occur on startup.
+  // Hover at the current trajectory for max_meta_runtime_ + some small amount.
+  // Set the value function for this trajectory to be the one for the least
+  // aggressive planner, ie. for the smallest tracking bubble.
+  if (traj_ == nullptr) {
+    traj_ = Trajectory::Create();
+
+    // Get a zero-velocity version of the current state.
+    // HACK! Assuming state layout.
+    VectorXd hover_state = state_;
+    hover_state(3) = 0.0;
+    hover_state(4) = 0.0;
+    hover_state(5) = 0.0;
+
+    traj_->Add(now, hover_state, values_.back());
+    traj_->Add(now + max_meta_runtime_ + 1.0, hover_state, values_.back());
+    return;
+  }
+
+  // Non-null current trajectory.
+  // Copy over the remainder of the current trajectory.
+  Trajectory::Ptr hover = Trajectory::Create(traj_, now);
+
+  // Get the last state and make sure it has zero velocity.
+  // HACK! Assuming state layout.
+  VectorXd last_state = hover->LastState();
+  last_state(3) = 0.0;
+  last_state(4) = 0.0;
+  last_state(5) = 0.0;
+
+  // Hover at the last state.
+  // HACK! Assuming can hover using last value function. Is this true?
+  hover->Add(hover->LastTime() + max_meta_runtime_ + 1.0,
+             last_state,
+             hover->LastValueFunction());
+
+  traj_ = hover;
 }
-
 
 } //\namespace meta

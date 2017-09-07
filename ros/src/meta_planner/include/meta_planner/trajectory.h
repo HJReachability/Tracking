@@ -84,6 +84,10 @@ public:
   static Ptr Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
                     const std::vector<ValueFunction::ConstPtr>& values);
 
+  // Factory constructor to create a Trajectory as the remainder of the
+  // given Trajectory after the specified time point.
+  static Ptr Create(const ConstPtr& other, double start);
+
   // Clear out this Trajectory.
   void Clear();
 
@@ -109,6 +113,8 @@ public:
   const VectorXd& FirstState() const;
   double LastTime() const;
   double FirstTime() const;
+  ValueFunction::ConstPtr LastValueFunction() const;
+  ValueFunction::ConstPtr FirstValueFunction() const;
 
   // Find the state corresponding to a particular time via linear interpolation.
   VectorXd GetState(double time) const;
@@ -233,6 +239,28 @@ inline double Trajectory::FirstTime() const {
 
   return map_.begin()->first;
 }
+
+inline ValueFunction::ConstPtr Trajectory::LastValueFunction() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to get last ValueFunction of empty trajectory.");
+    throw std::underflow_error("Attempted last ValueFunction of empty trajectory.");
+  }
+#endif
+
+  return (--map_.end())->second.value_;
+}
+
+inline ValueFunction::ConstPtr Trajectory::FirstValueFunction() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+    if (IsEmpty()) {
+      ROS_WARN("Tried to get first ValueFunction of empty trajectory.");
+      throw std::underflow_error("Attempted first ValueFunction of empty trajectory.");
+    }
+#endif
+
+    return map_.begin()->second.value_;
+  }
 
 } //\namespace meta
 
