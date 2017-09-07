@@ -112,7 +112,7 @@ Plan(const Vector3d& start, const Vector3d& stop,
      double start_time, double budget) const {
   // Check that both start and stop are in bounds.
   if (!space_->IsValid(start, value_) || !space_->IsValid(stop, value_)) {
-    ROS_WARN("Start or stop point was in collision or out of bounds.");
+    ROS_WARN_THROTTLE(1.0, "Start or stop point was in collision or out of bounds.");
     return nullptr;
   }
 

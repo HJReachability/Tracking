@@ -286,7 +286,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   // Catch null trajectory.
   if (traj_ == nullptr) {
-    ROS_WARN("%s: No valid trajectory has been received.", name_.c_str());
+    ROS_WARN_THROTTLE(1.0, "%s: No valid trajectory has been received.", name_.c_str());
     Hover();
 
     return;
@@ -295,7 +295,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   // (1) If current time is past the most recent trajectory, just hover and
   //     post a request for a new trajectory.
   if (current_time.toSec() > traj_->LastTime()) {
-    ROS_WARN("%s: Current time is past the end of the planned trajectory.",
+    ROS_WARN_THROTTLE(1.0, "%s: Current time is past the end of the planned trajectory.",
              name_.c_str());
 
     traj_ = nullptr;
@@ -377,7 +377,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   }
 
   if (min_dist_to_bound <= 0.0) {
-    ROS_WARN_ONCE("%s: Leaving the tracking error bound.", name_.c_str());
+    ROS_WARN_THROTTLE(1.0, "%s: Leaving the tracking error bound.", name_.c_str());
     //    std::terminate();
   }
 

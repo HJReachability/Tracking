@@ -44,6 +44,8 @@
 
 #include <meta_planner/meta_planner.h>
 
+#include <ompl/util/Console.h>
+
 namespace meta {
 
 // Initialize this class from a ROS node.
@@ -146,6 +148,9 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
       planners_.push_back(planner);
     }
   }
+
+  // Set OMPL log level.
+  ompl::msg::setLogLevel(ompl::msg::LogLevel::LOG_ERROR);
 
   // Generate an initial trajectory and auto-publish.
   Plan(position_, goal_);
@@ -390,7 +395,6 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop) const {
 
       // Mark that we've found a valid trajectory.
       found = true;
-      ROS_INFO("%s: Found a valid trajectory.", name_.c_str());
     }
   }
 
