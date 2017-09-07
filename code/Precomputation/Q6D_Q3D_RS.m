@@ -1,6 +1,6 @@
 function [datas,tau,sD,trackingErrorBound]=Q6D_Q3D_RS(pMax, thrustRange, angleRange, gN, visualize)
 
-small = 0.1;
+small = 0.2;
 dims = 1:6;
 subDims = {[dims(1),dims(4)], [dims(2),dims(5)],[dims(3),dims(6)]};
 subDimNames = ['x','y','z'];
@@ -18,7 +18,7 @@ if nargin <3
 end
 
 if nargin < 4
-    gN = 275*ones(1,length(dims));
+    gN = 575*ones(1,length(dims));
 end
 
 if nargin < 5
@@ -38,10 +38,10 @@ min_planner_speed = -pMax*ones(length(subDims),1);
 max_planner_speed = pMax*ones(length(subDims),1);
 
 % min and max disturbance velocity
-dRangeV = [-.1; .1];
+dRangeV = [-.5; .5];
 
 % min and max disturbance acceleration
-dRangeA = [-.1; .1];
+dRangeA = [-.5; .5];
 
 dMin = [dRangeV(1)*ones(length(subDims),1); ...
     dRangeA(1)*ones(length(subDims),1)];
@@ -154,6 +154,25 @@ end
 trackingErrorBound = zeros(1,3);
 for ii = 1:length(subDims)
     trackingErrorBound(ii) = min(sqrt(datas{ii}(:)))+small;
+    insideBound{ii} = datas{ii}(datas{ii}<=trackingErrorBound(ii));
+    q{ii} = histogram(insideBound{ii}(:));
+    mass50 = sum(q{ii}.Values(:))/2;
+    mass95 = .95*sum(q{ii}.Values(:));
+    lower_test = 0;
+    upper_test = 0;
+    bin = 1;
+    while lower_test < mass50
+        lower_test = lower_test + q{ii}.Values(bin);
+        bin = bin + 1;
+    end
+    priority_lower_bound{ii} = q{ii}.BinEdges(bin);
+    
+    bin = 1;
+    while upper_test < mass95
+        upper_test = upper_test + q{ii}.Values(bin);
+        bin = bin + 1;
+    end
+    priority_upper_bound{ii} = q{ii}.BinEdges(bin);
 end
 
 if visualize
@@ -191,6 +210,7 @@ for ii = 1:length(sD)
     derivs{ii} = computeGradients(sD{ii}.grid,datas{ii});
 end
 
+
 for ii = 1:length(subDims)
     data = datas{ii};
     grid_min = gMin(subDims{ii})';
@@ -207,18 +227,22 @@ for ii = 1:length(subDims)
     d_max = sD{1}.dynSys.dMax(subDims{1});
     deriv0 = derivs{ii}{1};
     deriv1 = derivs{ii}{2};
+    priority_lower = priority_lower_bound{ii};
+    priority_upper = priority_upper_bound{ii};
     % note DON'T use -v7.3 extension for compression. it fucks up the C++
     % stuff
     save([speedFolder '/subsystem_' subDimNames(ii) '.mat'], ...
         'data','grid_min','grid_max','grid_N','teb','x_dims','u_dims',...
-        'u_min','u_max', 'max_planner_speed','deriv0', 'deriv1')
+        'u_min','u_max', 'max_planner_speed','deriv0', 'deriv1', ...
+        'priority_lower','priority_upper')
 end
 
 if ~exist([plannerFolderMatlab '/speed_' ...
     num2str(pMax*10) '_tenths.mat'], 'file')
       save([plannerFolderMatlab '/speed_' ...
     num2str(pMax*10) '_tenths.mat'], ...
-        'datas','tau','sD','trackingErrorBound','derivs');
+        'datas','tau','sD','trackingErrorBound','derivs', ...
+        'priority_lower_bound','priority_upper_bound');
 end
 end
 

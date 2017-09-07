@@ -1,15 +1,17 @@
 function [data_switch,tau,sD_switch]=Q6D_Q3D_Planner_Switch(planner_speed_small, planner_speed_big, visualize)
 if nargin <1 
-    planner_speed_small = .7;
+    planner_speed_small = .1;
 end
 
 if nargin <2
-    planner_speed_big = 1;
+    planner_speed_big = .4;
 end
 
 if nargin <3
     visualize = true;
 end
+
+small = .2;
 
 surfFig = 1;
 sliceFig = 2;
@@ -211,7 +213,7 @@ for ii = 1:length(sD_switch)
     k = find(inside);
     bound1 = abs(vfs_switch.gs{ii}.xs{1}(k(1)));
     bound2 = abs(vfs_switch.gs{ii}.xs{1}(k(end)));
-    teb_switch(ii) = max(bound1, bound2);
+    teb_switch(ii) = max(bound1, bound2)+small;
 end
 
 range_lower = [vfs0.gs{1}.min, vfs0.gs{2}.min, vfs0.gs{3}.min];
@@ -276,7 +278,7 @@ for ii = 1:length(sD_switch)
     teb = zeros(length(sD_switch{ii}.grid.N),1);
     idx = find(sD_switch{ii}.dynSys.dims==sD_switch{ii}.dynSys.pdim(ii));
     teb(idx) = teb_switch(ii);
-    x_dims = uint64(sD_switch{1}.dynSys.dims-1)'; %0-index
+    x_dims = uint64(sD_switch{ii}.dynSys.dims-1)'; %0-index
     u_dims = (uint64(ii)-1)';
     u_min = sD_switch{ii}.dynSys.uMin(ii)';
     u_max = sD_switch{ii}.dynSys.uMax(ii)';
