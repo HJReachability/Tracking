@@ -55,6 +55,8 @@
 #include <demo/balls_in_box.h>
 
 #include <meta_planner_msgs/Trajectory.h>
+#include <meta_planner_msgs/TrajectoryRequest.h>
+
 #include <crazyflie_msgs/PositionStateStamped.h>
 #include <crazyflie_msgs/ControlStamped.h>
 #include <crazyflie_msgs/NoYawControlStamped.h>
@@ -87,6 +89,10 @@ private:
 
   // Callback for processing trajectory updates.
   void TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg);
+
+  // Callback for when the MetaPlanner sees a new obstacle and wants the Tracker to
+  // hover and request a new trajectory.
+  void TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg);
 
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
@@ -144,6 +150,7 @@ private:
   ros::Publisher request_traj_pub_;
   ros::Subscriber state_sub_;
   ros::Subscriber traj_sub_;
+  ros::Subscriber trigger_replan_sub_;
 
   std::string control_topic_;
   std::string environment_topic_;
@@ -153,6 +160,7 @@ private:
   std::string state_topic_;
   std::string reference_topic_;
   std::string traj_vis_topic_;
+  std::string trigger_replan_topic_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;

@@ -70,6 +70,9 @@ meta:
     # Trajectory requests.
     request_traj: /request_traj
 
+    # Triggering a replan event.
+    trigger_replan: /replan
+
     # Visualization topics.
     vis:
       traj: /vis/traj

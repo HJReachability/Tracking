@@ -153,7 +153,7 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
   ompl::msg::setLogLevel(ompl::msg::LogLevel::LOG_ERROR);
 
   // Generate an initial trajectory and auto-publish.
-  Plan(position_, goal_);
+  Plan(position_, goal_, ros::Time::now().toSec());
 
   // Publish environment.
   space_->Visualize(env_pub_, fixed_frame_id_);
@@ -225,6 +225,7 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
   if (!nl.getParam("meta/topics/state", state_topic_)) return false;
   if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
+  if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
 
   if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
 
@@ -249,6 +250,10 @@ bool MetaPlanner::RegisterCallbacks(const ros::NodeHandle& n) {
   // Visualization publisher(s).
   env_pub_ = nl.advertise<visualization_msgs::Marker>(
     env_topic_.c_str(), 10, false);
+
+  // Triggering a replan event.
+  trigger_replan_pub_ = nl.advertise<std_msgs::Empty>(
+    trigger_replan_topic_.c_str(), 10, false);
 
   // Actual publishers.
   traj_pub_ = nl.advertise<meta_planner_msgs::Trajectory>(
@@ -284,8 +289,8 @@ SensorCallback(const meta_planner_msgs::SensorMeasurement::ConstPtr& msg) {
   }
 
   if (unseen_obstacle) {
-    // Replan and auto-publish.
-    Plan(position_, goal_);
+    // Trigger a replan.
+    trigger_replan_pub_.publish(std_msgs::Empty());
 
     // Publish environment.
     space_->Visualize(env_pub_, fixed_frame_id_);
@@ -293,17 +298,26 @@ SensorCallback(const meta_planner_msgs::SensorMeasurement::ConstPtr& msg) {
 }
 
 // Callback to handle requests for new trajectory.
-void MetaPlanner::RequestTrajectoryCallback(const std_msgs::Empty::ConstPtr& msg) {
+void MetaPlanner::RequestTrajectoryCallback(
+  const meta_planner_msgs::TrajectoryRequest::ConstPtr& msg) {
   ROS_INFO("%s: Recomputing trajectory.", name_.c_str());
+  const ros::Time current_time = ros::Time::now();
 
-  const ros::Time start_time = ros::Time::now();
-  while (!Plan(position_, goal_)) {
-    ROS_ERROR("%s: MetaPlanner failed. Retrying.", name_.c_str());
-    ros::Duration(0.1).sleep();
-  }
+  // Unpack msg.
+  const double start_time = msg->start_time;
+
+  VectorXd start_state(msg->start_state.dimension);
+  for (size_t ii = 0; ii < start_state.size(); ii++)
+    start_state(ii) = msg->start_state.state[ii];
+
+  const Vector3d start_position = dynamics_->Puncture(start_state);
+
+  if (!Plan(start_position, goal_, start_time))
+    ROS_ERROR("%s: MetaPlanner failed. Please come again.", name_.c_str());
+
 
   ROS_INFO("%s: MetaPlanner succeeded after %2.5f seconds.",
-           name_.c_str(), (ros::Time::now() - start_time).toSec());
+           name_.c_str(), (ros::Time::now() - current_time).toSec());
 }
 
 // Plan a trajectory using the given (ordered) list of Planners.
@@ -314,13 +328,14 @@ void MetaPlanner::RequestTrajectoryCallback(const std_msgs::Empty::ConstPtr& msg
 // (5) Try to connect to the goal point.
 // (6) Stop when we have a feasible trajectory. Otherwise go to (2).
 // (7) When finished, convert to a message and publish.
-bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop) const {
+bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
+                       double start_time) const {
   // (1) Set up a new RRT-like structure to hold the meta plan.
-  const ros::Time start_time = ros::Time::now();
-  WaypointTree tree(start, start_time.toSec());
+  const ros::Time current_time = ros::Time::now();
+  WaypointTree tree(start, start_time);
 
   bool found = false;
-  while ((ros::Time::now() - start_time).toSec() < max_runtime_) {
+  while ((ros::Time::now() - current_time).toSec() < max_runtime_) {
     // (2) Sample a new point in the state space.
     Vector3d sample = space_->Sample();
 

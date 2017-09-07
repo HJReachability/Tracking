@@ -58,6 +58,8 @@
 #include <meta_planner/uncopyable.h>
 
 #include <meta_planner_msgs/Trajectory.h>
+#include <meta_planner_msgs/TrajectoryRequest.h>
+
 #include <meta_planner_msgs/SensorMeasurement.h>
 #include <crazyflie_msgs/PositionStateStamped.h>
 
@@ -89,11 +91,13 @@ private:
   void SensorCallback(const meta_planner_msgs::SensorMeasurement::ConstPtr& msg);
 
   // Callback to handle requests for new trajectory.
-  void RequestTrajectoryCallback(const std_msgs::Empty::ConstPtr& msg);
+  void RequestTrajectoryCallback(
+    const meta_planner_msgs::TrajectoryRequest::ConstPtr& msg);
 
-  // Plan a trajectory from the given start to stop points and auto-publish.
-  // Returns whether meta planning was successful.
-  bool Plan(const Vector3d& start, const Vector3d& stop) const;
+  // Plan a trajectory from the given start to stop points, beginning at the
+  // specified start time. Auto-publishes the result and returns whether
+  // meta planning was successful.
+  bool Plan(const Vector3d& start, const Vector3d& stop, double start_time) const;
 
   // List of planners and flag for whether to load value functions from disk or
   // create analytic versions given parameters read from ROS.
@@ -134,6 +138,7 @@ private:
   // Publishers/subscribers and related topics.
   ros::Publisher traj_pub_;
   ros::Publisher env_pub_;
+  ros::Publisher trigger_replan_pub_;
   ros::Subscriber state_sub_;
   ros::Subscriber sensor_sub_;
   ros::Subscriber request_traj_sub_;
@@ -143,6 +148,7 @@ private:
   std::string state_topic_;
   std::string sensor_topic_;
   std::string request_traj_topic_;
+  std::string trigger_replan_topic_;
 
   // Frames.
   std::string fixed_frame_id_;

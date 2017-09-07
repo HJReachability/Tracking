@@ -215,6 +215,8 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/topics/control", control_topic_)) return false;
   if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
   if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
+  if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
+
   if (!nl.getParam("meta/topics/state", state_topic_)) return false;
   if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
   if (!nl.getParam("meta/topics/vis/traj", traj_vis_topic_)) return false;
@@ -239,6 +241,9 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   traj_sub_ = nl.subscribe(
     traj_topic_.c_str(), 10, &Tracker::TrajectoryCallback, this);
 
+  trigger_replan_sub_ = nl.subscribe(
+    trigger_replan_topic_.c_str(), 10, &Tracker::TriggerReplanCallback, this);
+
   // Visualization publisher(s).
   environment_pub_ = nl.advertise<visualization_msgs::Marker>(
     environment_topic_.c_str(), 10, false);
@@ -256,7 +261,7 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
     reference_topic_.c_str(), 10, false);
 
-  request_traj_pub_ = nl.advertise<std_msgs::Empty>(
+  request_traj_pub_ = nl.advertise<meta_planner_msgs::TrajectoryRequest>(
     request_traj_topic_.c_str(), 10, false);
 
   // Timer.
@@ -280,6 +285,18 @@ void Tracker::StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr
 // Callback for processing trajectory updates.
 void Tracker::TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg) {
   traj_ = Trajectory::Create(msg, values_);
+}
+
+// Callback for when the MetaPlanner sees a new obstacle and wants the Tracker to
+// hover and request a new trajectory.
+void Tracker::TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg) {
+  // Set trajectory to be the remainder of this trajectory, then hovering
+  // at the end for a while.
+  Hover();
+
+  // Request a new trajectory starting from the state we will be in after
+  // the max_meta_runtime_ has elapsed.
+  RequestNewTrajectory();
 }
 
 
@@ -402,8 +419,20 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 void Tracker::RequestNewTrajectory() const {
   ROS_INFO("%s: Requesting a new trajectory.", name_.c_str());
 
-  // TODO! Specify start point for where we'll be after max_meta_runtime_.
-  request_traj_pub_.publish(std_msgs::Empty());
+  // Determine time and state where we will receive the new trajectory.
+  // This is when/where the new trajectory should start from.
+  const double start_time = ros::Time::now().toSec() + max_meta_runtime_;
+  const VectorXd start_state = traj_->GetState(start_time);
+
+  // Populate request.
+  meta_planner_msgs::TrajectoryRequest msg;
+  msg.start_time = start_time;
+  msg.start_state.dimension = state_dim_;
+
+  for (size_t ii = 0; ii < start_state.size(); ii++)
+    msg.start_state.state.push_back(start_state(ii));
+
+  request_traj_pub_.publish(msg);
 }
 
 // Set the trajectory to continue the existing trajectory, then hover at the end.
