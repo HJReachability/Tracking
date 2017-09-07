@@ -73,7 +73,7 @@ Create(const Vector3d& max_planner_speed,
 // Analytically evaluate value/gradient at a particular state.
 double AnalyticalPointMassValueFunction::
 Value(const VectorXd& state) const {
-  double V = 0;
+  double V = -std::numeric_limits<double>::infinity();
   for (size_t dim = 0; dim < p_dim_; dim++){
     const double x = state(dim);
     const double v = state(p_dim_ + dim);
