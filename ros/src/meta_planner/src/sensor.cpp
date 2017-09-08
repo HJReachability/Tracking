@@ -87,7 +87,8 @@ bool Sensor::Initialize(const ros::NodeHandle& n) {
   // Add obstacles.
   std::random_device rd;
   std::default_random_engine rng(rd());
-  std::uniform_real_distribution<double> uniform_radius(1.5, 2.0);
+  std::uniform_real_distribution<double> uniform_radius(
+    min_obstacle_radius_, max_obstacle_radius_);
 
   // Add an obstacle with a random radius at a random location.
   for (size_t ii = 0; ii < num_obstacles_; ii++)
@@ -111,6 +112,10 @@ bool Sensor::LoadParameters(const ros::NodeHandle& n) {
   int num_obstacles = 1;
   if (!nl.getParam("meta/sensor/num_obstacles", num_obstacles)) return false;
   num_obstacles_ = static_cast<size_t>(num_obstacles);
+
+  // Obstacle size.
+  if (!nl.getParam("meta/sensor/max_obstacle_radius", max_obstacle_radius_)) return false;
+  if (!nl.getParam("meta/sensor/min_obstacle_radius", min_obstacle_radius_)) return false;
 
   // Time step.
   if (!nl.getParam("meta/sensor/time_step", time_step_)) return false;

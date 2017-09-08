@@ -67,7 +67,7 @@ public:
 
   // Initialize this class with all parameters and callbacks.
   bool Initialize(const ros::NodeHandle& n);
-
+  
 private:
   bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
@@ -88,6 +88,10 @@ private:
 
   std::vector<double> state_lower_;
   std::vector<double> state_upper_;
+
+  // Max/min obstacle size.
+  double max_obstacle_radius_;
+  double min_obstacle_radius_;
 
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;

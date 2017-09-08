@@ -1,9 +1,17 @@
 <launch>
 
   <!-- Top level arguments. -->
-  <arg name="fixed_frame" default="/world" />
-  <arg name="tracker_frame" default="/tracker" />
-  <arg name="planner_frame" default="/planner" />
+  <arg name="fixed_frame" default="world" />
+  <arg name="tracker_frame" default="tracker" />
+  <arg name="planner_frame" default="planner" />
+
+  <arg name="state_lower_bound" default="[-2.0, -2.0, 0.1, -1.0, -1.0, -1.0]" />
+  <arg name="state_upper_bound" default="[2.0, 2.0, 2.0, 1.0, 1.0, 1.0]" />
+
+  <arg name="sensor_radius" default="1.0" />
+  <arg name="num_obstacles" default="1" />
+  <arg name="min_obstacle_radius" default="0.4" />
+  <arg name="max_obstacle_radius" default="0.5" />
 
   <arg name="dubins_state_topic" default="/state/dubins" />
   <arg name="position_state_topic" default="/state/position" />
@@ -23,11 +31,11 @@
   <arg name="max_meta_connection_radius" default="5.0" />
 
   <arg name="tracker_x_dim" default="6" />
-  <arg name="lqr_x_dim" default="7" />
   <arg name="tracker_u_dim" default="3" />
+  <arg name="lqr_x_dim" default="7" />
   <arg name="lqr_u_dim" default="4" />
 
-  <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_manual.txt" />
+  <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_lqr.txt" />
   <arg name="lqr_x_ref_file" default="$(find crazyflie_lqr)/references/x_ref_hover_sim.txt" />
   <arg name="lqr_u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt" />
 
@@ -39,13 +47,13 @@
   <node pkg="tf"
         type="static_transform_publisher"
         name="tracker_base_link_publisher"
-        args="0 0 0 0 0 0 1 $(arg tracker_frame) $(arg tracker_frame)/base_link 100">
+        args="0 0 0 0 0 0 1 $(arg tracker_frame) /$(arg tracker_frame)/base_link 100">
   </node>
 
   <node pkg="tf"
         type="static_transform_publisher"
         name="tracker_mocap_publisher"
-        args="0 0 0 0 0 0 1 $(arg tracker_frame) $(arg mocap_frame) 100">
+        args="0 0 0 0 0 0 1 $(arg mocap_frame) $(arg tracker_frame) 100">
   </node>
 
   <!-- Crazyflie interface. -->
@@ -62,7 +70,6 @@
       <arg name="enable_logging" value="True" />
     </include>
 
-    <!--
     <node name="joy" pkg="joy" type="joy_node" output="screen">
       <param name="dev" value="$(arg joy_dev)" />
     </node>
@@ -71,6 +78,7 @@
       <param name="use_crazyflie_controller" value="True" />
     </node>
 
+    <!--
     <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
       <arg name="frame" value="$(arg frame)" />
     </include>
@@ -171,7 +179,7 @@
         output="screen">
 
     <param name="topics/control" value="$(arg merged_control_topic)" />
-    <param name="topics/cmd_vel" value="$(arg tracker_frame)/cmd_vel" />
+    <param name="topics/cmd_vel" value="/$(arg tracker_frame)/cmd_vel" />
   </node>
 
   <!-- Tracker and sensor nodes. -->
@@ -183,6 +191,12 @@
 
       <!-- Load parameters for the demo. -->
       <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
+
+      <param name="meta/sensor/sensor_radius" value="$(arg sensor_radius)" />
+      <param name="meta/sensor/num_obstacles" value="$(arg num_obstacles)" />
+
+      <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
+      <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
 
       <param name="meta/control/time_step" value="$(arg tracker_dt)" />
 
@@ -206,6 +220,12 @@
       <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
       <param name="meta/meta/max_connection_radius" value="$(arg max_meta_connection_radius)" />
 
+      <param name="meta/sensor/sensor_radius" value="$(arg sensor_radius)" />
+      <param name="meta/sensor/num_obstacles" value="$(arg num_obstacles)" />
+
+      <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
+      <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
+
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/sensor" value="$(arg sensor_topic)" />
@@ -218,6 +238,14 @@
 
       <!-- Load parameters for the demo. -->
       <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
+
+      <param name="meta/sensor/sensor_radius" value="$(arg sensor_radius)" />
+      <param name="meta/sensor/num_obstacles" value="$(arg num_obstacles)" />
+      <param name="meta/sensor/min_obstacle_radius" value="$(arg min_obstacle_radius)" />
+      <param name="meta/sensor/max_obstacle_radius" value="$(arg max_obstacle_radius)" />
+
+      <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
+      <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
 
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/frames/tracker" value="$(arg tracker_frame)" />
