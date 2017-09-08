@@ -1,14 +1,13 @@
 % !TEX root = tracking.tex
 \section{Problem Formulation \label{sec:formulation}}
-In this paper we seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online and in real time. The planning is done using a kinematic or dynamic planning model. The tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known a priori or can be observed by the system within a limited sensing range (see Section \ref{sec:online}).
+We seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online in real time. Planning is done using a kinematic or dynamic planning model. Tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known a priori or can be observed by the system within a limited sensing range (see Section \ref{sec:online}).
 
 \subsection{Tracking Model}
 The tracking model represents the autonomous system dynamics, and in general may be nonlinear and high-dimensional. Let $\tstate$ represent the state variables of the tracking model, which evolves according to
 \begin{equation}
 \begin{aligned}
 \label{eq:tdyn}
-\frac{d\tstate}{d\tvar} = \dot{\tstate} = \tdyn(\tstate, \tctrl, \dstb), \tvar \in [0, \thor] \\
-\tstate \in \tset, \tctrl \in \tcset, \dstb \in \dset
+\frac{d\tstate}{d\tvar} = \dot{\tstate} = \tdyn(\tstate, \tctrl, \dstb), \tvar \in [0, \thor], \tstate \in \tset, \tctrl \in \tcset, \dstb \in \dset
 \end{aligned}
 \end{equation}
 We assume that the system dynamics $\tdyn : \tset\ \times\ \tcset \times \dset \rightarrow \tset$ are uniformly continuous, bounded, and Lipschitz continuous in $\tstate$ for fixed control $\tctrl$. The control function $\tctrl(\cdot)$ and disturbance function $\dstb(\cdot)$ are drawn from the following sets:
@@ -18,7 +17,7 @@ We assume that the system dynamics $\tdyn : \tset\ \times\ \tcset \times \dset \
 \dstb(\cdot) \in \dfset(t) = \{\phi: [0, \thor] \rightarrow \dset: \phi(\cdot) \text{ is measurable}\}
 \end{aligned}
 \end{equation}
-where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn}) for a given $\tctrl(\cdot) \in \tcset$ \cite{Coddington84}. The trajectories of (\ref{eq:tdyn}) that solve this ODE will be denoted as $\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot))$, where $\tvar_0,\tvar \in [0, \thor]$ and $\tvar_0 \leq \tvar$. These trajectories will satisfy the initial condition and the ODE (\ref{eq:tdyn}) almost everywhere:
+where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn}) for a given $\tctrl(\cdot) \in \tcset$ \cite{Coddington84}. The trajectories of (\ref{eq:tdyn}) that solve this ODE will be denoted as $\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot))$, where $\tvar_0,\tvar \in [0, \thor]$ and $\tvar_0 \leq \tvar$. These trajectories satisfy
 \begin{equation}
 \label{eq:fdyn_traj}
 \begin{aligned}
