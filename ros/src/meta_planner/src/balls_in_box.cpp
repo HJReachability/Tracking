@@ -80,7 +80,13 @@ bool BallsInBox::IsValid(const Vector3d& position,
   for (size_t ii = 0; ii < points_.size(); ii++) {
     const Vector3d& p = points_[ii];
 
+    // Start by checking this position directly against the obstacle center.
+    if ((position - p).norm() <= radii_[ii])
+      return false;
+
     // Find the corner of the tracking bound which is closest to this obstacle.
+    // NOTE: this check assumes that the tracking bubble is not greater than
+    // twice the obstacle diameter.
     Vector3d corner;
     for (size_t jj = 0; jj < 3; jj++)
       corner(jj) = (position(jj) - p(jj) > 0.0) ?

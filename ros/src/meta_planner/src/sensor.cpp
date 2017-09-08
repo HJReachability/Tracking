@@ -87,14 +87,14 @@ bool Sensor::Initialize(const ros::NodeHandle& n) {
   // Add obstacles.
   std::random_device rd;
   std::default_random_engine rng(rd());
-  std::uniform_real_distribution<double> uniform_radius(0.5, 2.0);
+  std::uniform_real_distribution<double> uniform_radius(1.5, 2.0);
 
   // Add an obstacle with a random radius at a random location.
   for (size_t ii = 0; ii < num_obstacles_; ii++)
     space_->AddObstacle(space_->Sample(), uniform_radius(rng));
 
   // Sleep for a little while to let other nodes start up.
-  ros::Duration(1.0).sleep();
+  //  ros::Duration(1.0).sleep();
 
   initialized_ = true;
   return true;
