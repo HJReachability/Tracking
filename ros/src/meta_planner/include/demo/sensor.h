@@ -67,10 +67,15 @@ public:
 
   // Initialize this class with all parameters and callbacks.
   bool Initialize(const ros::NodeHandle& n);
-  
+
 private:
   bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
+
+  // Update in flight status.
+  inline void InFlightCallback(const std_msgs::Empty::ConstPtr& msg) {
+    in_flight_ = true;
+  }
 
   // Timer callback for generating sensor measurements and updating
   // state based on last received control signal.
@@ -101,10 +106,15 @@ private:
   ros::Publisher sensor_radius_pub_;
   ros::Publisher environment_pub_;
   ros::Publisher sensor_pub_;
+  ros::Subscriber in_flight_sub_;
 
   std::string sensor_radius_topic_;
   std::string environment_topic_;
   std::string sensor_topic_;
+  std::string in_flight_topic_;
+
+  /// Don't start sensing until we are in flight.
+  bool in_flight_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;

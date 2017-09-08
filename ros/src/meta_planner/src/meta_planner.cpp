@@ -226,6 +226,7 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/topics/state", state_topic_)) return false;
   if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
   if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
+  if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
 
   if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
 
@@ -246,6 +247,8 @@ bool MetaPlanner::RegisterCallbacks(const ros::NodeHandle& n) {
   request_traj_sub_ = nl.subscribe(
     request_traj_topic_.c_str(), 10, &MetaPlanner::RequestTrajectoryCallback, this);
 
+  in_flight_sub_ = nl.subscribe(
+    in_flight_topic_.c_str(), 10, &MetaPlanner::InFlightCallback, this);
 
   // Visualization publisher(s).
   env_pub_ = nl.advertise<visualization_msgs::Marker>(
@@ -273,6 +276,9 @@ StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg) {
 // Callback for processing sensor measurements. Replan trajectory.
 void MetaPlanner::
 SensorCallback(const meta_planner_msgs::SensorMeasurement::ConstPtr& msg) {
+  if (!in_flight_)
+    return;
+
   bool unseen_obstacle = false;
 
   for (size_t ii = 0; ii < msg->num_obstacles; ii++) {

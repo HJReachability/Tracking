@@ -97,6 +97,11 @@ private:
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
 
+  // Process in flight notifications.
+  inline void InFlightCallback(const std_msgs::Empty::ConstPtr& msg) {
+    in_flight_ = true;
+  }
+
   // Request a new trajectory from the meta planner.
   void RequestNewTrajectory() const;
 
@@ -151,6 +156,7 @@ private:
   ros::Subscriber state_sub_;
   ros::Subscriber traj_sub_;
   ros::Subscriber trigger_replan_sub_;
+  ros::Subscriber in_flight_sub_;
 
   std::string control_topic_;
   std::string environment_topic_;
@@ -161,11 +167,15 @@ private:
   std::string reference_topic_;
   std::string traj_vis_topic_;
   std::string trigger_replan_topic_;
+  std::string in_flight_topic_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;
   std::string tracker_frame_id_;
   std::string planner_frame_id_;
+
+  // Are we in flight?
+  bool in_flight_;
 
   // Is this class initialized?
   bool initialized_;

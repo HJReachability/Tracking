@@ -74,7 +74,8 @@ class MetaPlanner : private Uncopyable {
 public:
   ~MetaPlanner() {}
   explicit MetaPlanner()
-    : initialized_(false) {}
+    : in_flight_(false),
+      initialized_(false) {}
 
   // Initialize this class from a ROS node.
   bool Initialize(const ros::NodeHandle& n);
@@ -89,6 +90,11 @@ private:
 
   // Callback for processing sensor measurements.
   void SensorCallback(const meta_planner_msgs::SensorMeasurement::ConstPtr& msg);
+
+  // Callback for updating in flight status.
+  inline void InFlightCallback(const std_msgs::Empty::ConstPtr& msg) {
+    in_flight_ = true;
+  }
 
   // Callback to handle requests for new trajectory.
   void RequestTrajectoryCallback(
@@ -142,6 +148,7 @@ private:
   ros::Subscriber state_sub_;
   ros::Subscriber sensor_sub_;
   ros::Subscriber request_traj_sub_;
+  ros::Subscriber in_flight_sub_;
 
   std::string traj_topic_;
   std::string env_topic_;
@@ -149,9 +156,13 @@ private:
   std::string sensor_topic_;
   std::string request_traj_topic_;
   std::string trigger_replan_topic_;
+  std::string in_flight_topic_;
 
   // Frames.
   std::string fixed_frame_id_;
+
+  // Are we in flight?
+  bool in_flight_;
 
   // Initialization and naming.
   bool initialized_;

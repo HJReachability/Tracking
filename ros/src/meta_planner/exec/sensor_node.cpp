@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
   meta::Sensor sensor;
 
   if (!sensor.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize Simulator.",
+    ROS_ERROR("%s: Failed to initialize sensor.",
               ros::this_node::getName().c_str());
     return EXIT_FAILURE;
   }

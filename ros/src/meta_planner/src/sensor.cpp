@@ -48,6 +48,7 @@ namespace meta {
 
 Sensor::Sensor()
   : tf_listener_(tf_buffer_),
+    in_flight_(false),
     initialized_(false) {}
 
 Sensor::~Sensor() {}
@@ -133,6 +134,7 @@ bool Sensor::LoadParameters(const ros::NodeHandle& n) {
 
   // Topics and frame ids.
   if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
+  if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
   if (!nl.getParam("meta/topics/vis/sensor_radius", sensor_radius_topic_)) return false;
   if (!nl.getParam("meta/topics/vis/true_environment", environment_topic_)) return false;
 
@@ -156,6 +158,10 @@ bool Sensor::RegisterCallbacks(const ros::NodeHandle& n) {
   sensor_pub_ = nl.advertise<meta_planner_msgs::SensorMeasurement>(
     sensor_topic_.c_str(), 10, false);
 
+  // Subscriber.
+  in_flight_sub_ = nl.subscribe(
+    in_flight_topic_.c_str(), 10, &Sensor::InFlightCallback, this);
+
   // Timer.
   timer_ = nl.createTimer(
     ros::Duration(time_step_), &Sensor::TimerCallback, this);
@@ -166,6 +172,9 @@ bool Sensor::RegisterCallbacks(const ros::NodeHandle& n) {
 // Timer callback for generating sensor measurements and updating
 // state based on last received control signal.
 void Sensor::TimerCallback(const ros::TimerEvent& e) {
+  if (!in_flight_)
+    return;
+
   // Read position from TF.
   const ros::Time right_now = ros::Time::now();
 

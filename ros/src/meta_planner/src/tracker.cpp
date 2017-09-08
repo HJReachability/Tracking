@@ -48,7 +48,8 @@
 namespace meta {
 
 Tracker::Tracker()
-  : initialized_(false) {}
+  : in_flight_(false),
+    initialized_(false) {}
 
 Tracker::~Tracker() {}
 
@@ -216,6 +217,7 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
   if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
   if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
+  if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
 
   if (!nl.getParam("meta/topics/state", state_topic_)) return false;
   if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
@@ -243,6 +245,9 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 
   trigger_replan_sub_ = nl.subscribe(
     trigger_replan_topic_.c_str(), 10, &Tracker::TriggerReplanCallback, this);
+
+  in_flight_sub_ = nl.subscribe(
+    in_flight_topic_.c_str(), 10, &Tracker::InFlightCallback, this);
 
   // Visualization publisher(s).
   environment_pub_ = nl.advertise<visualization_msgs::Marker>(
@@ -290,6 +295,9 @@ void Tracker::TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& 
 // Callback for when the MetaPlanner sees a new obstacle and wants the Tracker to
 // hover and request a new trajectory.
 void Tracker::TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg) {
+  if (!in_flight_)
+    return;
+
   // Set trajectory to be the remainder of this trajectory, then hovering
   // at the end for a while.
   Hover();
@@ -302,6 +310,9 @@ void Tracker::TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg) {
 
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
+  if (!in_flight_)
+    return;
+
   ros::Time current_time = ros::Time::now();
 
   // (1) If current time is near the end of the current trajectory, just hover and
@@ -448,6 +459,7 @@ void Tracker::Hover() {
   // Set the value function for this trajectory to be the one for the least
   // aggressive planner, ie. for the smallest tracking bubble.
   if (traj_ == nullptr) {
+    ROS_INFO("%s: No existing trajectory. Hovering in place.", name_.c_str());
     traj_ = Trajectory::Create();
 
     // Get a zero-velocity version of the current state.
@@ -458,9 +470,11 @@ void Tracker::Hover() {
     hover_state(5) = 0.0;
 
     traj_->Add(now, hover_state, values_.back());
-    traj_->Add(now + max_meta_runtime_ + 1.0, hover_state, values_.back());
+    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state, values_.back());
     return;
   }
+
+  ROS_INFO("%s: Hovering at the end of the current trajectory.", name_.c_str());
 
   // Non-null current trajectory.
   // Copy over the remainder of the current trajectory.
@@ -475,7 +489,7 @@ void Tracker::Hover() {
 
   // Hover at the last state.
   // HACK! Assuming can hover using last value function. Is this true?
-  hover->Add(hover->LastTime() + max_meta_runtime_ + 1.0,
+  hover->Add(hover->LastTime() + max_meta_runtime_ + 10.0,
              last_state,
              hover->LastValueFunction());
 
