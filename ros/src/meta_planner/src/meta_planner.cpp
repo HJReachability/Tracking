@@ -89,7 +89,7 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
                     dynamics_->Puncture(state_upper_vec));
 
   // Set the initial state and goal.
-  const double kSmallNumber = 1.5;
+  const double kSmallNumber = 0.5;
 
   position_ = Vector3d::Zero();//0.5 * (dynamics_->Puncture(state_lower_vec) +
               //       dynamics_->Puncture(state_upper_vec));

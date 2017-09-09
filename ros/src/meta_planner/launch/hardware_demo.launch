@@ -5,11 +5,11 @@
   <arg name="tracker_frame" default="tracker" />
   <arg name="planner_frame" default="planner" />
 
-  <arg name="state_lower_bound" default="[-2.0, -2.0, 0.1, -1.0, -1.0, -1.0]" />
-  <arg name="state_upper_bound" default="[2.0, 2.0, 2.0, 1.0, 1.0, 1.0]" />
+  <arg name="state_lower_bound" default="[-2.0, -2.0, 0.0, -5.0, -5.0, -5.0]" />
+  <arg name="state_upper_bound" default="[2.0, 2.0, 2.0, 5.0, 5.0, 5.0]" />
 
   <arg name="sensor_radius" default="1.0" />
-  <arg name="num_obstacles" default="1" />
+  <arg name="num_obstacles" default="0" />
   <arg name="min_obstacle_radius" default="0.4" />
   <arg name="max_obstacle_radius" default="0.5" />
 
@@ -24,11 +24,11 @@
   <arg name="in_flight_topic" default="/in_flight" />
 
   <arg name="estimator_dt" default="0.01" />
-  <arg name="lqr_dt" default="0.02" />
-  <arg name="tracker_dt" default="0.02" />
+  <arg name="lqr_dt" default="0.01" />
+  <arg name="tracker_dt" default="0.05" />
   <arg name="merger_dt" default="0.01" />
 
-  <arg name="max_meta_runtime" default="0.1" />
+  <arg name="max_meta_runtime" default="0.2" />
   <arg name="max_meta_connection_radius" default="5.0" />
 
   <arg name="tracker_x_dim" default="6" />
@@ -36,13 +36,23 @@
   <arg name="lqr_x_dim" default="7" />
   <arg name="lqr_u_dim" default="4" />
 
-  <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_lqr.txt" />
+  <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_manual.txt" />
   <arg name="lqr_x_ref_file" default="$(find crazyflie_lqr)/references/x_ref_hover_sim.txt" />
   <arg name="lqr_u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt" />
 
   <arg name="uri" default="radio://0/25/2M/E7E7E7E701" />
   <arg name="mocap_frame" default="/vicon/cf7/cf7" />
   <arg name="joy_dev" default="/dev/input/js0" />
+
+  <arg name="record" default="true" />
+
+  <!-- Record a rosbag. -->
+  <node pkg="rosbag"
+	type="record"
+	name="recorder"
+	args="-a -o $(find meta_planner)/bagfiles/hw_demo_recording.bag"
+	if="$(arg record)">
+  </node>
 
   <!-- TF static publisher to create a base_link frame for the tracker. -->
   <node pkg="tf"
@@ -58,10 +68,6 @@
   </node>
 
   <!-- Crazyflie interface. -->
-<!--  <arg name="x" default="0" />
-  <arg name="y" default="0" />
-  <arg name="z" default="0.5" />
--->
   <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch" />
 
   <group ns="crazyflie">
@@ -79,40 +85,7 @@
       <param name="use_crazyflie_controller" value="True" />
     </node>
 
-    <!--
-    <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
-      <arg name="frame" value="$(arg frame)" />
-    </include>
-
-    <node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
-      <param name="name" value="goal" />
-      <param name="rate" value="30" />
-      <param name="x" value="$(arg x)" />
-      <param name="y" value="$(arg y)" />
-      <param name="z" value="$(arg z)" />
-      </node>
-    -->
   </group>
-
-
-  <!-- Crazyflie dynamics simulator. -->
-<!--
-  <node name="simulator"
-        pkg="crazyflie_simulator"
-        type="near_hover_simulator_node"
-        output="screen">
-
-    <param name="time_step" value="$(arg simulator_dt)" />
-    <param name="init/x" value="$(arg sim_init_x)" />
-    <param name="init/y" value="$(arg sim_init_y)" />
-    <param name="init/z" value="$(arg sim_init_z)" />
-
-    <param name="frames/fixed" value="$(arg fixed_frame)" />
-    <param name="frames/robot" value="$(arg tracker_frame)" />
-
-    <param name="topics/control" value="$(arg merged_control_topic)" />
-  </node>
--->
 
   <!-- State estimators. -->
   <node name="dubins_state_estimator"
