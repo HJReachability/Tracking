@@ -1,7 +1,7 @@
 <launch>
 
   <!-- Top level arguments. -->
-  <arg name="fixed_frame" default="fixed" />
+  <arg name="fixed_frame" default="world" />
   <arg name="tracker_frame" default="tracker" />
   <arg name="planner_frame" default="planner" />
 
