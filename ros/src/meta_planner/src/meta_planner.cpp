@@ -91,9 +91,8 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
   // Set the initial state and goal.
   const double kSmallNumber = 1.5;
 
-  been_updated_ = false;
-  position_ = 0.5 * (dynamics_->Puncture(state_lower_vec) +
-                     dynamics_->Puncture(state_upper_vec));
+  position_ = Vector3d::Zero();//0.5 * (dynamics_->Puncture(state_lower_vec) +
+              //       dynamics_->Puncture(state_upper_vec));
   goal_ = dynamics_->Puncture(state_upper_vec) -
     Vector3d::Constant(kSmallNumber);
 
@@ -153,7 +152,7 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
   ompl::msg::setLogLevel(ompl::msg::LogLevel::LOG_ERROR);
 
   // Generate an initial trajectory and auto-publish.
-  Plan(position_, goal_, ros::Time::now().toSec());
+  //  Plan(position_, goal_, ros::Time::now().toSec());
 
   // Publish environment.
   space_->Visualize(env_pub_, fixed_frame_id_);
@@ -271,6 +270,8 @@ StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg) {
   position_(0) = msg->state.x;
   position_(1) = msg->state.y;
   position_(2) = msg->state.z;
+
+  been_updated_ = true;
 }
 
 // Callback for processing sensor measurements. Replan trajectory.
@@ -306,6 +307,10 @@ SensorCallback(const meta_planner_msgs::SensorMeasurement::ConstPtr& msg) {
 // Callback to handle requests for new trajectory.
 void MetaPlanner::RequestTrajectoryCallback(
   const meta_planner_msgs::TrajectoryRequest::ConstPtr& msg) {
+  // Only plan if position has been updated.
+  if (!been_updated_)
+    return;
+
   ROS_INFO("%s: Recomputing trajectory.", name_.c_str());
   const ros::Time current_time = ros::Time::now();
 
@@ -336,6 +341,10 @@ void MetaPlanner::RequestTrajectoryCallback(
 // (7) When finished, convert to a message and publish.
 bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
                        double start_time) const {
+  // Only plan if position has been updated.
+  if (!been_updated_)
+    return false;
+
   // (1) Set up a new RRT-like structure to hold the meta plan.
   const ros::Time current_time = ros::Time::now();
   WaypointTree tree(start, start_time);

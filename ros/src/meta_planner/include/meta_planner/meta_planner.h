@@ -75,6 +75,7 @@ public:
   ~MetaPlanner() {}
   explicit MetaPlanner()
     : in_flight_(false),
+      been_updated_(false),
       initialized_(false) {}
 
   // Initialize this class from a ROS node.

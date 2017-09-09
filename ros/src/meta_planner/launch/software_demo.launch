@@ -5,6 +5,14 @@
   <arg name="tracker_frame" default="tracker" />
   <arg name="planner_frame" default="planner" />
 
+  <arg name="state_lower_bound" default="[-10.0, -10.0, 0.0, -1.0, -1.0, -1.0]" />
+  <arg name="state_upper_bound" default="[10.0, 10.0, 10.0, 1.0, 1.0, 1.0]" />
+
+  <arg name="sensor_radius" default="1.0" />
+  <arg name="num_obstacles" default="25" />
+  <arg name="min_obstacle_radius" default="1.5" />
+  <arg name="max_obstacle_radius" default="2.0" />
+
   <arg name="dubins_state_topic" default="/state/dubins" />
   <arg name="position_state_topic" default="/state/position" />
 
@@ -35,7 +43,7 @@
 
   <arg name="sim_init_x" default="0.0" />
   <arg name="sim_init_y" default="0.0" />
-  <arg name="sim_init_z" default="5.0" />
+  <arg name="sim_init_z" default="0.0" />
 
   <!-- TF static publisher to create a base_link frame for the tracker. -->
   <node pkg="tf"
@@ -134,6 +142,9 @@
 
       <param name="meta/control/time_step" value="$(arg tracker_dt)" />
 
+      <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
+      <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
+
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/frames/tracker" value="$(arg tracker_frame)" />
       <param name="meta/frames/planner" value="$(arg planner_frame)" />
@@ -155,6 +166,9 @@
       <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
       <param name="meta/meta/max_connection_radius" value="$(arg max_meta_connection_radius)" />
 
+      <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
+      <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
+
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/sensor" value="$(arg sensor_topic)" />
@@ -171,6 +185,14 @@
 
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/frames/tracker" value="$(arg tracker_frame)" />
+
+      <param name="meta/sensor/sensor_radius" value="$(arg sensor_radius)" />
+      <param name="meta/sensor/num_obstacles" value="$(arg num_obstacles)" />
+      <param name="meta/sensor/min_obstacle_radius" value="$(arg min_obstacle_radius)" />
+      <param name="meta/sensor/max_obstacle_radius" value="$(arg max_obstacle_radius)" />
+
+      <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
+      <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
 
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/sensor" value="$(arg sensor_topic)" />

@@ -177,6 +177,9 @@ private:
   // Are we in flight?
   bool in_flight_;
 
+  // Has the state been updated.
+  bool been_updated_;
+
   // Is this class initialized?
   bool initialized_;
 

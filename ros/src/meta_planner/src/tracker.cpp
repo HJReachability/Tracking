@@ -49,6 +49,7 @@ namespace meta {
 
 Tracker::Tracker()
   : in_flight_(false),
+    been_updated_(false),
     initialized_(false) {}
 
 Tracker::~Tracker() {}
@@ -86,21 +87,8 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     state_lower_vec(ii) = state_lower_[ii];
   }
 
-  // Set the initial state and goal.
-  // HACK! Assuming state layout.
-  const size_t kXDim = 0;
-  const size_t kYDim = 1;
-  const size_t kZDim = 2;
-  const size_t kVxDim = 3;
-  const size_t kVyDim = 4;
-  const size_t kVzDim = 5;
-
-  const double kSmallNumber = 1.5;
-
-  state_ = 0.5 * (state_lower_vec + state_upper_vec);
-  state_(kVxDim) = 0.0;
-  state_(kVyDim) = 0.0;
-  state_(kVzDim) = 0.0;
+  // Set the initial state to zero.
+  state_ = VectorXd::Zero(state_dim_);
 
   // Create value functions.
   if (numerical_mode_) {
@@ -148,10 +136,9 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // Initialize trajectory to null as a cue to Hover(). Hover will reset the
   // trajectory to just hover in place.
   traj_ = nullptr;
-  Hover();
 
   // Wait a little for the simulator to begin.
-  ros::Duration(0.5).sleep();
+  //  ros::Duration(0.5).sleep();
 
   initialized_ = true;
   return true;
@@ -285,6 +272,8 @@ void Tracker::StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr
   state_(3) = msg->state.x_dot;
   state_(4) = msg->state.y_dot;
   state_(5) = msg->state.z_dot;
+
+  been_updated_ = true;
 }
 
 // Callback for processing trajectory updates.
@@ -295,7 +284,9 @@ void Tracker::TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& 
 // Callback for when the MetaPlanner sees a new obstacle and wants the Tracker to
 // hover and request a new trajectory.
 void Tracker::TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg) {
-  if (!in_flight_)
+  ROS_INFO("%s: Replan callback triggered.", name_.c_str());
+
+  if (!in_flight_ || !been_updated_)
     return;
 
   // Set trajectory to be the remainder of this trajectory, then hovering
@@ -310,14 +301,15 @@ void Tracker::TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg) {
 
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
-  if (!in_flight_)
+  if (!in_flight_ || !been_updated_)
     return;
 
   ros::Time current_time = ros::Time::now();
 
   // (1) If current time is near the end of the current trajectory, just hover and
   //     post a request for a new trajectory.
-  if (current_time.toSec() > traj_->LastTime() - max_meta_runtime_) {
+  if (traj_ == nullptr || 
+      current_time.toSec() > traj_->LastTime() - max_meta_runtime_) {
     ROS_WARN_THROTTLE(1.0, "%s: Nearing end of trajector. Replanning.",
              name_.c_str());
 
@@ -429,6 +421,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 // Request a new trajectory from the meta planner.
 void Tracker::RequestNewTrajectory() const {
   ROS_INFO("%s: Requesting a new trajectory.", name_.c_str());
+
+  if (!been_updated_)
+    return;
 
   // Determine time and state where we will receive the new trajectory.
   // This is when/where the new trajectory should start from.

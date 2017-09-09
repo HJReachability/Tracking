@@ -21,6 +21,7 @@
   <arg name="optimal_control_topic" default="/control/optimal" />
   <arg name="merged_control_topic" default="/control/merged" />
   <arg name="sensor_topic" default="/sensor" />
+  <arg name="in_flight_topic" default="/in_flight" />
 
   <arg name="estimator_dt" default="0.01" />
   <arg name="lqr_dt" default="0.02" />
@@ -158,6 +159,7 @@
     <param name="topics/reference" value="$(arg reference_state_topic)" />
     <param name="topics/state" value="$(arg dubins_state_topic)" />
     <param name="topics/control" value="$(arg lqr_control_topic)" />
+    <param name="topics/in_flight" value="$(arg in_flight_topic)" />
   </node>
 
   <!-- Merger node. -->
@@ -170,6 +172,7 @@
     <param name="topics/control" value="$(arg lqr_control_topic)" />
     <param name="topics/prioritized_control" value="$(arg optimal_control_topic)" />
     <param name="topics/merged" value="$(arg merged_control_topic)" />
+    <param name="topics/in_flight" value="$(arg in_flight_topic)" />
   </node>
 
   <!-- CmdVelConverter node. -->
@@ -192,9 +195,6 @@
       <!-- Load parameters for the demo. -->
       <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
 
-      <param name="meta/sensor/sensor_radius" value="$(arg sensor_radius)" />
-      <param name="meta/sensor/num_obstacles" value="$(arg num_obstacles)" />
-
       <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
       <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
 
@@ -204,6 +204,7 @@
       <param name="meta/frames/tracker" value="$(arg tracker_frame)" />
       <param name="meta/frames/planner" value="$(arg planner_frame)" />
 
+      <param name="meta/topics/in_flight" value="$(arg in_flight_topic)" />
       <param name="meta/topics/reference" value="$(arg reference_state_topic)" />
 
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
@@ -220,15 +221,13 @@
       <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
       <param name="meta/meta/max_connection_radius" value="$(arg max_meta_connection_radius)" />
 
-      <param name="meta/sensor/sensor_radius" value="$(arg sensor_radius)" />
-      <param name="meta/sensor/num_obstacles" value="$(arg num_obstacles)" />
-
       <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
       <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
 
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/sensor" value="$(arg sensor_topic)" />
+      <param name="meta/topics/in_flight" value="$(arg in_flight_topic)" />
     </node>
 
     <node name="sensor"
@@ -252,6 +251,7 @@
 
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/sensor" value="$(arg sensor_topic)" />
+      <param name="meta/topics/in_flight" value="$(arg in_flight_topic)" />
     </node>
   </group>
 </launch>
