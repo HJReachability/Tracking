@@ -236,9 +236,9 @@ void Trajectory::Visualize(const ros::Publisher& pub,
   spheres.type = visualization_msgs::Marker::SPHERE_LIST;
   spheres.action = visualization_msgs::Marker::ADD;
 
-  spheres.scale.x = 0.5;
-  spheres.scale.y = 0.5;
-  spheres.scale.z = 0.5;
+  spheres.scale.x = 0.1;
+  spheres.scale.y = 0.1;
+  spheres.scale.z = 0.1;
 
 #if 0
   spheres.color.a = 0.5;
@@ -256,8 +256,7 @@ void Trajectory::Visualize(const ros::Publisher& pub,
   lines.type = visualization_msgs::Marker::LINE_STRIP;
   lines.action = visualization_msgs::Marker::ADD;
 
-  lines.scale.x = 0.1;
-
+  lines.scale.x = 0.05;
 #if 0
   lines.color.a = 0.5;
   lines.color.r = 0.0;

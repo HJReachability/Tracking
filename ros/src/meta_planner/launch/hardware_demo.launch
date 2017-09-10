@@ -5,12 +5,12 @@
   <arg name="tracker_frame" default="tracker" />
   <arg name="planner_frame" default="planner" />
 
-  <arg name="state_lower_bound" default="[-2.0, -2.0, 0.0, -5.0, -5.0, -5.0]" />
-  <arg name="state_upper_bound" default="[2.0, 2.0, 2.0, 5.0, 5.0, 5.0]" />
+  <arg name="state_lower_bound" default="[-1.0, -2.0, 0.0, -5.0, -5.0, -5.0]" />
+  <arg name="state_upper_bound" default="[1.0, 2.0, 1.5, 5.0, 5.0, 5.0]" />
 
   <arg name="sensor_radius" default="1.0" />
   <arg name="num_obstacles" default="5" />
-  <arg name="min_obstacle_radius" default="0.2" />
+  <arg name="min_obstacle_radius" default="0.25" />
   <arg name="max_obstacle_radius" default="0.3" />
 
   <arg name="dubins_state_topic" default="/state/dubins" />
@@ -30,6 +30,12 @@
 
   <arg name="max_meta_runtime" default="0.2" />
   <arg name="max_meta_connection_radius" default="5.0" />
+
+  <arg name="numerical_mode" default="false" />
+  <arg name="value_directories" default="[speed_1_tenths]" />
+  <arg name="max_speeds" default="[0.2, 0.1]" />
+  <arg name="max_velocity_disturbances" default="[0.5, 0.5]" />
+  <arg name="max_acceleration_disturbances" default="[0.5, 0.5]" />
 
   <arg name="tracker_x_dim" default="6" />
   <arg name="tracker_u_dim" default="3" />
@@ -193,6 +199,12 @@
 
       <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
       <param name="meta/meta/max_connection_radius" value="$(arg max_meta_connection_radius)" />
+
+      <param name="meta/planners/numerical_mode" value="$(arg numerical_mode)" />
+      <rosparam param="meta/planners/value_directories" subst_value="True">$(arg value_directories)</rosparam>
+      <rosparam param="meta/planners/max_speeds" subst_value="True">$(arg max_speeds)</rosparam>
+      <rosparam param="meta/planners/max_velocity_disturbances" subst_value="True">$(arg max_velocity_disturbances)</rosparam>
+      <rosparam param="meta/planners/max_acceleration_disturbances" subst_value="True">$(arg max_acceleration_disturbances)</rosparam>
 
       <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
       <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
