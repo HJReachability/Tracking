@@ -152,6 +152,7 @@
     <param name="topics/prioritized_control" value="$(arg optimal_control_topic)" />
     <param name="topics/merged" value="$(arg merged_control_topic)" />
     <param name="topics/in_flight" value="$(arg in_flight_topic)" />
+    <param name="topics/reference" value="$(arg reference_state_topic)" />
   </node>
 
   <!-- CmdVelConverter node. -->

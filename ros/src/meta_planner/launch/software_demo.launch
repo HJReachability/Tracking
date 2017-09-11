@@ -34,9 +34,9 @@
 
   <arg name="numerical_mode" default="false" />
   <arg name="value_directories" default="[speed_1_tenths]" />
-  <arg name="max_speeds" default="[0.2, 0.1]" />
-  <arg name="max_velocity_disturbances" default="[0.5, 0.5]" />
-  <arg name="max_acceleration_disturbances" default="[0.5, 0.5]" />
+  <arg name="max_speeds" default="[0.5, 0.1]" />
+  <arg name="max_velocity_disturbances" default="[0.1, 0.1]" />
+  <arg name="max_acceleration_disturbances" default="[1.0, 1.0]" />
 
   <arg name="tracker_x_dim" default="6" />
   <arg name="lqr_x_dim" default="7" />
@@ -134,6 +134,7 @@
     <param name="topics/prioritized_control" value="$(arg optimal_control_topic)" />
     <param name="topics/merged" value="$(arg merged_control_topic)" />
     <param name="topics/in_flight" value="$(arg in_flight_topic)" />
+    <param name="topics/reference" value="$(arg reference_state_topic)" />
   </node>
 
   <!-- Tracker and sensor nodes. -->
