@@ -28,6 +28,8 @@
   <arg name="tracker_dt" default="0.001" />
   <arg name="merger_dt" default="0.001" />
 
+  <arg name="merger_mode" default="OPTIMAL" />
+
   <arg name="max_meta_runtime" default="0.2" />
   <arg name="max_meta_connection_radius" default="5.0" />
 
@@ -127,6 +129,8 @@
         output="screen">
 
     <param name="time_step" value="$(arg merger_dt)" />
+    <param name="mode" value="$(arg merger_mode)" />
+
     <param name="topics/control" value="$(arg lqr_control_topic)" />
     <param name="topics/prioritized_control" value="$(arg optimal_control_topic)" />
     <param name="topics/merged" value="$(arg merged_control_topic)" />
