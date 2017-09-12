@@ -390,6 +390,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   for (size_t ii = 0; ii < 3; ii++) {
     const double signed_dist = value->TrackingBound(ii) -
       std::abs(relative_state(dynamics_->SpatialDimension(ii)));
+      // std::cout << "TrackingBound:" << value->TrackingBound(ii) << std::endl;
 
     min_dist_to_bound = std::min(min_dist_to_bound, signed_dist);
   }
