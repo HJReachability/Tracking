@@ -225,36 +225,36 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Subscribers.
   state_sub_ = nl.subscribe(
-    state_topic_.c_str(), 10, &Tracker::StateCallback, this);
+    state_topic_.c_str(), 1, &Tracker::StateCallback, this);
 
   traj_sub_ = nl.subscribe(
-    traj_topic_.c_str(), 10, &Tracker::TrajectoryCallback, this);
+    traj_topic_.c_str(), 1, &Tracker::TrajectoryCallback, this);
 
   trigger_replan_sub_ = nl.subscribe(
-    trigger_replan_topic_.c_str(), 10, &Tracker::TriggerReplanCallback, this);
+    trigger_replan_topic_.c_str(), 1, &Tracker::TriggerReplanCallback, this);
 
   in_flight_sub_ = nl.subscribe(
-    in_flight_topic_.c_str(), 10, &Tracker::InFlightCallback, this);
+    in_flight_topic_.c_str(), 1, &Tracker::InFlightCallback, this);
 
   // Visualization publisher(s).
   environment_pub_ = nl.advertise<visualization_msgs::Marker>(
-    environment_topic_.c_str(), 10, false);
+    environment_topic_.c_str(), 1, false);
 
   traj_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
-    traj_vis_topic_.c_str(), 10, false);
+    traj_vis_topic_.c_str(), 1, false);
 
   tracking_bound_pub_ = nl.advertise<visualization_msgs::Marker>(
-    tracking_bound_topic_.c_str(), 10, false);
+    tracking_bound_topic_.c_str(), 1, false);
 
   // Actual publishers.
   control_pub_ = nl.advertise<crazyflie_msgs::NoYawControlStamped>(
-    control_topic_.c_str(), 10, false);
+    control_topic_.c_str(), 1, false);
 
   reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
-    reference_topic_.c_str(), 10, false);
+    reference_topic_.c_str(), 1, false);
 
   request_traj_pub_ = nl.advertise<meta_planner_msgs::TrajectoryRequest>(
-    request_traj_topic_.c_str(), 10, false);
+    request_traj_topic_.c_str(), 1, false);
 
   // Timer.
   timer_ =
@@ -308,7 +308,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   // (1) If current time is near the end of the current trajectory, just hover and
   //     post a request for a new trajectory.
-  if (traj_ == nullptr || 
+  if (traj_ == nullptr ||
       current_time.toSec() > traj_->LastTime() - max_meta_runtime_) {
     ROS_WARN_THROTTLE(1.0, "%s: Nearing end of trajector. Replanning.",
              name_.c_str());
@@ -364,6 +364,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   // (2) Get corresponding value function.
   const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
+  const double priority = value->Priority(relative_state);
 
   // Visualize the tracking bound.
   visualization_msgs::Marker tracking_bound_marker;
@@ -379,9 +380,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.scale.z = 2.0 * value->TrackingBound(2);
 
   tracking_bound_marker.color.a = 0.3;
-  tracking_bound_marker.color.r = 0.9;
-  tracking_bound_marker.color.g = 0.2;
-  tracking_bound_marker.color.b = 0.9;
+  tracking_bound_marker.color.r = priority;
+  tracking_bound_marker.color.g = 0.0;
+  tracking_bound_marker.color.b = 1.0 - priority;
 
   tracking_bound_pub_.publish(tracking_bound_marker);
 
@@ -411,7 +412,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   control_msg.control.pitch = crazyflie_utils::angles::WrapAngleRadians(optimal_control(0));
   control_msg.control.roll = crazyflie_utils::angles::WrapAngleRadians(optimal_control(1));
   control_msg.control.thrust = optimal_control(2);
-  control_msg.control.priority = value->Priority(relative_state);
+  control_msg.control.priority = priority;
 
   control_pub_.publish(control_msg);
 

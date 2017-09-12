@@ -238,28 +238,28 @@ bool MetaPlanner::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Subscribers.
   sensor_sub_ = nl.subscribe(
-    sensor_topic_.c_str(), 10, &MetaPlanner::SensorCallback, this);
+    sensor_topic_.c_str(), 1, &MetaPlanner::SensorCallback, this);
 
   state_sub_ = nl.subscribe(
-    state_topic_.c_str(), 10, &MetaPlanner::StateCallback, this);
+    state_topic_.c_str(), 1, &MetaPlanner::StateCallback, this);
 
   request_traj_sub_ = nl.subscribe(
-    request_traj_topic_.c_str(), 10, &MetaPlanner::RequestTrajectoryCallback, this);
+    request_traj_topic_.c_str(), 1, &MetaPlanner::RequestTrajectoryCallback, this);
 
   in_flight_sub_ = nl.subscribe(
-    in_flight_topic_.c_str(), 10, &MetaPlanner::InFlightCallback, this);
+    in_flight_topic_.c_str(), 1, &MetaPlanner::InFlightCallback, this);
 
   // Visualization publisher(s).
   env_pub_ = nl.advertise<visualization_msgs::Marker>(
-    env_topic_.c_str(), 10, false);
+    env_topic_.c_str(), 1, false);
 
   // Triggering a replan event.
   trigger_replan_pub_ = nl.advertise<std_msgs::Empty>(
-    trigger_replan_topic_.c_str(), 10, false);
+    trigger_replan_topic_.c_str(), 1, false);
 
   // Actual publishers.
   traj_pub_ = nl.advertise<meta_planner_msgs::Trajectory>(
-    traj_topic_.c_str(), 10, false);
+    traj_topic_.c_str(), 1, false);
 
   return true;
 }

@@ -150,17 +150,17 @@ bool Sensor::RegisterCallbacks(const ros::NodeHandle& n) {
 
    // Publishers.
   environment_pub_ = nl.advertise<visualization_msgs::Marker>(
-    environment_topic_.c_str(), 10, false);
+    environment_topic_.c_str(), 1, false);
 
   sensor_radius_pub_ = nl.advertise<visualization_msgs::Marker>(
-    sensor_radius_topic_.c_str(), 10, false);
+    sensor_radius_topic_.c_str(), 1, false);
 
   sensor_pub_ = nl.advertise<meta_planner_msgs::SensorMeasurement>(
-    sensor_topic_.c_str(), 10, false);
+    sensor_topic_.c_str(), 1, false);
 
   // Subscriber.
   in_flight_sub_ = nl.subscribe(
-    in_flight_topic_.c_str(), 10, &Sensor::InFlightCallback, this);
+    in_flight_topic_.c_str(), 1, &Sensor::InFlightCallback, this);
 
   // Timer.
   timer_ = nl.createTimer(
