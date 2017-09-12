@@ -165,11 +165,12 @@ OptimalControl(const VectorXd& state) const {
 // Priority of the optimal control at the given state. This is a number
 // between 0 and 1, where 1 means the final control signal should be exactly
 // the optimal control signal computed by this value function.
-double AnalyticalPointMassValueFunction::Priority(const VectorXd& state) const {
+double AnalyticalPointMassValueFunction::
+Priority(const VectorXd& state) const {
   const double V = Value(state);
 
   // HACK! The threshold should probably be externally set via config.
-  const double relative_high = 0.50; // 50% of max inside value
+  const double relative_high = 0.10; // 10% of max inside value
   const double relative_low  = 0.05; // 5% of max inside value
 
   const double V_safest = Value(VectorXd::Zero(6));
@@ -188,6 +189,8 @@ TrackingBound(size_t dim) const {
   // Return a single positive number (semi-length of interval centered on 0)
   // This is equal to the position at the intersection between parabolas.
   const double v_ref = max_planner_speed_(dim);
+  // std::cout << "v_ref:" << v_ref << "   a_max:" << a_max_(dim)  << "   d_a:" << d_a_(dim) << std::endl;
+  // std::cout << "bound:" << 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) / (a_max_(dim) - d_a_(dim)) << std::endl;
   return 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) / (a_max_(dim) - d_a_(dim));
 }
 
@@ -205,16 +208,15 @@ AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
     u_min_(min_tracker_control),
     d_v_(max_vel_disturbance),
     d_a_(max_acc_disturbance) {
-
   // Compute max acceleration (NOTE: assumed symmetric even if u_max != -u_min).
   const VectorXd x_dot_max = dynamics_->Evaluate(VectorXd::Zero(6), u_max_);
   a_max_ = x_dot_max.tail<3>().cwiseAbs();
+
   // Compute control gains.
   u2a_ = x_dot_max.tail<3>().cwiseQuotient( 0.5 * (u_max_ - u_min_) );
 
-  // Set max planner speed.
-  max_planner_speed_ = max_planner_speed; // v_ref is a duplicate of this
-
+  // Set max planner speed
+  max_planner_speed_ = max_planner_speed;
 }
 
 } //\namespace meta

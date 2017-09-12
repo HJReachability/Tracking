@@ -23,15 +23,15 @@
   <arg name="sensor_topic" default="/sensor" />
   <arg name="in_flight_topic" default="/in_flight" />
 
-  <arg name="estimator_dt" default="0.01" />
-  <arg name="tracker_dt" default="0.05" />
+  <arg name="estimator_dt" default="0.005" />
+  <arg name="tracker_dt" default="0.001" />
   <arg name="merger_dt" default="0.01" />
 
   <arg name="max_meta_runtime" default="0.2" />
   <arg name="max_meta_connection_radius" default="5.0" />
 
-  <arg name="numerical_mode" default="false" />
-  <arg name="value_directories" default="[speed_1_tenths]" />
+  <arg name="numerical_mode" default="true" />
+  <arg name="value_directories" default="[speed_1_tenths/]" />
   <arg name="max_speeds" default="[0.2, 0.1]" />
   <arg name="max_velocity_disturbances" default="[0.5, 0.5]" />
   <arg name="max_acceleration_disturbances" default="[0.5, 0.5]" />
@@ -149,6 +149,7 @@
     <param name="topics/prioritized_control" value="$(arg optimal_control_topic)" />
     <param name="topics/merged" value="$(arg merged_control_topic)" />
     <param name="topics/in_flight" value="$(arg in_flight_topic)" />
+    <param name="topics/reference" value="$(arg reference_state_topic)" />
   </node>
 
   <!-- Takeoff node. -->
@@ -202,6 +203,13 @@
 
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/control" value="$(arg optimal_control_topic)" />
+
+      <param name="meta/planners/numerical_mode" value="$(arg numerical_mode)" />
+      <rosparam param="meta/planners/value_directories" subst_value="True">$(arg value_directories)</rosparam>
+      <rosparam param="meta/planners/max_speeds" subst_value="True">$(arg max_speeds)</rosparam>
+      <rosparam param="meta/planners/max_velocity_disturbances" subst_value="True">$(arg max_velocity_disturbances)</rosparam>
+      <rosparam param="meta/planners/max_acceleration_disturbances" subst_value="True">$(arg max_acceleration_disturbances)</rosparam>
+
     </node>
 
     <node name="meta_planner"
