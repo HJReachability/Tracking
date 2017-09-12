@@ -150,14 +150,21 @@ OptimalControl(const VectorXd& state) const {
     const double V_B = x -
       (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref) /
       (a_max_(dim) - d_a_(dim));
-    if (V_A > V_B) {
-      // If on A side, accelerate.
-      u_opt(dim) = u2a_(dim) > 0.0 ? u_max_(dim) : u_min_(dim);
-    } else {
-      // If on B side, brake.
-      u_opt(dim) = u2a_(dim) > 0.0 ? u_min_(dim) : u_max_(dim);
-    }
-  }
+    const double V = std::max(V_A,V_B);
+    // Determine acceleration and deceleration input in this dimension
+    const double u_acc = u2a_(dim) > 0.0 ? u_max_(dim) : u_min_(dim);
+    const double u_dec = u2a_(dim) > 0.0 ? u_min_(dim) : u_max_(dim);
+    // Inside rule
+    if (V <= 0)
+      u_opt(dim) = (V_A > V_B) ? u_acc : u_dec;
+    // Outside rule
+    else {
+      if (x >= 0) // If A-curve can catch you brake, else accelerate.
+        u_opt(dim) = (V_A > 0) ? u_dec : u_acc;
+      else // If B-curve can catch you accelerate, else brake.
+        u_opt(dim) = (V_B > 0) ? u_acc : u_dec;
+    } // if V <= 0, else
+  } // for dim
 
   return u_opt;
 }
