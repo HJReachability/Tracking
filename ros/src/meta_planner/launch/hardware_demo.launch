@@ -24,7 +24,6 @@
   <arg name="in_flight_topic" default="/in_flight" />
 
   <arg name="estimator_dt" default="0.01" />
-  <arg name="lqr_dt" default="0.01" />
   <arg name="tracker_dt" default="0.05" />
   <arg name="merger_dt" default="0.01" />
 
@@ -43,7 +42,6 @@
   <arg name="lqr_u_dim" default="4" />
 
   <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_manual.txt" />
-  <arg name="lqr_x_ref_file" default="$(find crazyflie_lqr)/references/x_ref_hover_sim.txt" />
   <arg name="lqr_u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt" />
 
   <arg name="uri" default="radio://0/25/2M/E7E7E7E701" />
@@ -132,7 +130,6 @@
     <param name="u_dim" value="$(arg lqr_u_dim)" />
 
     <param name="K_file" value="$(arg lqr_K_file)" />
-    <param name="x_ref_file" value="$(arg lqr_x_ref_file)" />
     <param name="u_ref_file" value="$(arg lqr_u_ref_file)" />
 
     <param name="topics/reference" value="$(arg reference_state_topic)" />
@@ -151,6 +148,17 @@
     <param name="topics/control" value="$(arg lqr_control_topic)" />
     <param name="topics/prioritized_control" value="$(arg optimal_control_topic)" />
     <param name="topics/merged" value="$(arg merged_control_topic)" />
+    <param name="topics/in_flight" value="$(arg in_flight_topic)" />
+  </node>
+
+  <!-- Takeoff node. -->
+  <node name="takeoff"
+        pkg="crazyflie_control_merger"
+        type="takeoff_node"
+        output="screen">
+
+    <param name="topics/reference" value="$(arg reference_state_topic)" />
+    <param name="topics/control" value="$(arg merged_control_topic)" />
     <param name="topics/in_flight" value="$(arg in_flight_topic)" />
   </node>
 
@@ -178,6 +186,12 @@
       <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
 
       <param name="meta/control/time_step" value="$(arg tracker_dt)" />
+
+      <param name="meta/planners/numerical_mode" value="$(arg numerical_mode)" />
+      <rosparam param="meta/planners/value_directories" subst_value="True">$(arg value_directories)</rosparam>
+      <rosparam param="meta/planners/max_speeds" subst_value="True">$(arg max_speeds)</rosparam>
+      <rosparam param="meta/planners/max_velocity_disturbances" subst_value="True">$(arg max_velocity_disturbances)</rosparam>
+      <rosparam param="meta/planners/max_acceleration_disturbances" subst_value="True">$(arg max_acceleration_disturbances)</rosparam>
 
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/frames/tracker" value="$(arg tracker_frame)" />
