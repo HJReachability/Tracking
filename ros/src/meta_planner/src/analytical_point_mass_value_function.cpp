@@ -83,14 +83,14 @@ Value(const VectorXd& state) const {
 
     // Value surface A: + for x "below" convex Acceleration parabola.
     const double V_A = -x +
-      (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref*(1 + expand_(dim)) /
+      (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref*(1.0 + expand_(dim))) /
       (a_max_(dim) - d_a_(dim));
     //    const double V_A = ( 1/2*pow(v-v_ref,2) - pow(v_ref,2) )
     //      /   ( a_max_(dim) - d_a_(dim) ) - x;
 
     // Value surface B: + for x "above" concave Braking parabola.
     const double V_B = x -
-      (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref*(1 + expand_(dim)) /
+      (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref*(1.0 + expand_(dim))) /
       (a_max_(dim) - d_a_(dim));
     //    const double V_B = x - ( -1/2*pow(v+v_ref,2) + pow(v_ref,2) )
     //      /   ( a_max_(dim) - d_a_(dim) );
@@ -115,11 +115,11 @@ Gradient(const VectorXd& state) const {
 
     // Value surface A: + for x "below" convex Acceleration parabola.
     const double V_A = -x +
-      (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref*(1 + expand_(dim)) /
+      (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref*(1.0 + expand_(dim))) /
       (a_max_(dim) - d_a_(dim));
     // Value surface B: + for x "above" concave Braking parabola.
     const double V_B = x -
-      (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref*(1 + expand_(dim)) /
+      (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref*(1.0 + expand_(dim))) /
       (a_max_(dim) - d_a_(dim));
     if (V_A > V_B) {
       grad_V(dim) = -1.0;         // if on A side, grad points towards -pos
@@ -146,18 +146,19 @@ OptimalControl(const VectorXd& state) const {
 
     // Value surface A: + for x "below" convex Acceleration parabola.
     const double V_A = -x +
-      (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref*(1 + expand_(dim)) /
+      (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref*(1.0 + expand_(dim))) /
       (a_max_(dim) - d_a_(dim));
     // Value surface B: + for x "above" concave Braking parabola.
     const double V_B = x -
-      (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref*(1 + expand_(dim)) /
+      (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref*(1.0 + expand_(dim))) /
       (a_max_(dim) - d_a_(dim));
     const double V = std::max(V_A,V_B);
     // Determine acceleration and deceleration input in this dimension
     const double u_acc = u2a_(dim) > 0.0 ? u_max_(dim) : u_min_(dim);
     const double u_dec = u2a_(dim) > 0.0 ? u_min_(dim) : u_max_(dim);
     // Inside rule
-    if (V <= 0)
+    //    if (V <= 0)
+    if (false)
       u_opt(dim) = (V_A > V_B) ? u_acc : u_dec;
     // Outside rule
     else {
@@ -200,7 +201,7 @@ TrackingBound(size_t dim) const {
   const double v_ref = max_planner_speed_(dim);
   // std::cout << "v_ref:" << v_ref << "   a_max:" << a_max_(dim)  << "   d_a:" << d_a_(dim) << std::endl;
   // std::cout << "bound:" << 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) / (a_max_(dim) - d_a_(dim)) << std::endl;
-  return 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) / (a_max_(dim) - d_a_(dim));
+  return 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) * (1.0 + expand_(dim)) / (a_max_(dim) - d_a_(dim));
 }
 
 // Constructor.
@@ -218,7 +219,7 @@ AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
     u_min_(min_tracker_control),
     d_v_(max_vel_disturbance),
     d_a_(max_acc_disturbance),
-    expand_(dim(set_expansion_factor) {
+    expand_(set_expansion_factor) {
   // Compute max acceleration (NOTE: assumed symmetric even if u_max != -u_min).
   const VectorXd x_dot_max = dynamics_->Evaluate(VectorXd::Zero(6), u_max_);
   a_max_ = x_dot_max.tail<3>().cwiseAbs();
