@@ -75,6 +75,7 @@ public:
                          const Vector3d& min_tracker_control,
                          const Vector3d& max_vel_disturbance,
                          const Vector3d& max_acc_disturbance,
+                         const Vector3d& set_expansion_factor,
                          const Dynamics::ConstPtr& dynamics,
                          ValueFunctionId id);
 
@@ -99,6 +100,7 @@ private:
                                             const Vector3d& min_tracker_control,
                                             const Vector3d& max_vel_disturbance,
                                             const Vector3d& max_acc_disturbance,
+                                            const Vector3d& set_expansion_factor,
                                             const Dynamics::ConstPtr& dynamics,
                                             ValueFunctionId id);
 
