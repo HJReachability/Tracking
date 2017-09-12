@@ -170,7 +170,7 @@ Priority(const VectorXd& state) const {
   const double V = Value(state);
 
   // HACK! The threshold should probably be externally set via config.
-  const double relative_high = 0.10; // 10% of max inside value
+  const double relative_high = 0.20; // 10% of max inside value
   const double relative_low  = 0.05; // 5% of max inside value
 
   const double V_safest = Value(VectorXd::Zero(6));

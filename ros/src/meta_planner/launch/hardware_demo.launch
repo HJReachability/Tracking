@@ -32,7 +32,7 @@
   <arg name="max_meta_runtime" default="0.2" />
   <arg name="max_meta_connection_radius" default="5.0" />
 
-  <arg name="numerical_mode" default="true" />
+  <arg name="numerical_mode" default="false" />
   <arg name="value_directories" default="[speed_4_tenths/, speed_1_tenths/]" />
   <arg name="max_speeds" default="[0.4, 0.1]" />
   <arg name="max_velocity_disturbances" default="[0.4, 0.4]" />

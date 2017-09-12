@@ -18,6 +18,7 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  rospy
   visualization_msgs
   geometry_msgs
   std_msgs
@@ -33,6 +34,7 @@ catkin_package(
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
     roscpp
+    rospy
     visualization_msgs
     geometry_msgs
     std_msgs
