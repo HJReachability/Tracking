@@ -52,6 +52,11 @@ namespace meta {
 bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
   name_ = ros::names::append(n.getNamespace(), "meta_planner");
 
+  // Set the initial position and goal to zero. Position will be updated
+  // via a message and goal will be read from the parameter server.
+  position_ = Vector3d::Zero();
+  goal_ = Vector3d::Zero();
+
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
     return false;
@@ -87,14 +92,6 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
 
   space_->SetBounds(dynamics_->Puncture(state_lower_vec),
                     dynamics_->Puncture(state_upper_vec));
-
-  // Set the initial state and goal.
-  const double kSmallNumber = 0.5;
-
-  position_ = Vector3d::Zero();//0.5 * (dynamics_->Puncture(state_lower_vec) +
-              //       dynamics_->Puncture(state_upper_vec));
-  goal_ = dynamics_->Puncture(state_upper_vec) -
-    Vector3d::Constant(kSmallNumber);
 
   // Create planners.
   if (numerical_mode_) {
@@ -220,6 +217,13 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/state/upper", state_upper_)) return false;
   if (!nl.getParam("meta/state/lower", state_lower_)) return false;
 
+  // Goal position.
+  double goal_x, goal_y, goal_z;
+  if (!nl.getParam("meta/goal/x", goal_x)) return false;
+  if (!nl.getParam("meta/goal/y", goal_y)) return false;
+  if (!nl.getParam("meta/goal/z", goal_z)) return false;
+  goal_ = Vector3d(goal_x, goal_y, goal_z);
+
   // Topics and frame ids.
   if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
   if (!nl.getParam("meta/topics/vis/known_environment", env_topic_)) return false;
@@ -325,9 +329,10 @@ void MetaPlanner::RequestTrajectoryCallback(
 
   const Vector3d start_position = dynamics_->Puncture(start_state);
 
-  if (!Plan(start_position, goal_, start_time))
+  if (!Plan(start_position, goal_, start_time)) {
     ROS_ERROR("%s: MetaPlanner failed. Please come again.", name_.c_str());
-
+    return;
+  }
 
   ROS_INFO("%s: MetaPlanner succeeded after %2.5f seconds.",
            name_.c_str(), (ros::Time::now() - current_time).toSec());

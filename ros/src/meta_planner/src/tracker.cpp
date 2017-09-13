@@ -313,7 +313,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   //     post a request for a new trajectory.
   if (traj_ == nullptr ||
       current_time.toSec() > traj_->LastTime() - max_meta_runtime_) {
-    ROS_WARN_THROTTLE(1.0, "%s: Nearing end of trajector. Replanning.",
+    ROS_WARN_THROTTLE(1.0, "%s: Nearing end of trajectory. Replanning.",
              name_.c_str());
 
     // Set trajectory to be the remainder of this trajectory, then hovering
