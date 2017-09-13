@@ -82,6 +82,11 @@ public:
   // Get the tracking error bound in this spatial dimension.
   virtual double TrackingBound(size_t dimension) const;
 
+  // Get the tracking error bound in this spatial dimension for a planner
+  // switching INTO this one with the specified max speed.
+  virtual double SwitchingTrackingBound(size_t dimension,
+                                        double incoming_max_speed) const;
+
   // Priority of the optimal control at the given state. This is a number
   // between 0 and 1, where 1 means the final control signal should be exactly
   // the optimal control signal computed by this value function.

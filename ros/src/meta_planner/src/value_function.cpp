@@ -192,6 +192,16 @@ double ValueFunction::TrackingBound(size_t dimension) const {
   return std::numeric_limits<double>::infinity();
 }
 
+// Get the tracking error bound in this spatial dimension for a planner
+// switching INTO this one with the specified max speed.
+double ValueFunction::
+SwitchingTrackingBound(size_t dimension, double incoming_max_speed) const {
+  // HACK! For now, just assume we have loaded the ValueFunction corresponding
+  // to the switching controller and take the regular tracking bound.
+  return TrackingBound(dimension);
+}
+
+
 // Priority of the optimal control at the given state. This is a number
 // between 0 and 1, where 1 means the final control signal should be exactly
 // the optimal control signal computed by this value function.

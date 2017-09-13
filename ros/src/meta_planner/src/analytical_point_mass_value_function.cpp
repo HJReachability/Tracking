@@ -212,8 +212,6 @@ SwitchingTrackingBound(size_t dimension, double incoming_max_speed) const {
   return 0.0;
 }
 
-
-
 // Constructor.
 AnalyticalPointMassValueFunction::
 AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,

@@ -18,9 +18,6 @@ from crazyflie_msgs.msg import PositionStateStamped
 planner_x = 0.0
 planner_y = 0.0
 planner_z = 0.0
-planner_vx = 0.0
-planner_vy = 0.0
-planner_vz = 0.0
 
 received_reference = False
 
@@ -64,6 +61,7 @@ ax[2].set_ylim(-2, 2)
 
 # Callback to plot a new state in each of the three subsystem plots.
 def StateCallback(msg):
+    global planner_x, planner_y, planner_z
     global points, ax
     global received_reference
 
@@ -74,11 +72,11 @@ def StateCallback(msg):
 
     # Unpack msg.
     x = msg.state.x - planner_x
-    vx = msg.state.x_dot - planner_vx
+    vx = msg.state.x_dot
     y = msg.state.y - planner_y
-    vy = msg.state.y_dot - planner_vy
+    vy = msg.state.y_dot
     z = msg.state.z - planner_z
-    vz = msg.state.z_dot - planner_vz
+    vz = msg.state.z_dot
 
     # X subsystem.
     points = plots[0].get_offsets()
@@ -115,15 +113,12 @@ def StateCallback(msg):
 
 # Callback to update the planner state.
 def ReferenceCallback(msg):
-    global planner_x, planner_y, planner_z, planner_vx, planner_vy, planner_vz
+    global planner_x, planner_y, planner_z
     global received_reference
 
     planner_x = msg.state.x
     planner_y = msg.state.y
     planner_z = msg.state.z
-    planner_vx = msg.state.x_dot
-    planner_vy = msg.state.y_dot
-    planner_vz = msg.state.z_dot
 
     received_reference = True
 
@@ -132,10 +127,10 @@ if __name__ == "__main__":
     rospy.init_node("state_plotter")
     rospy.Subscriber("/state/position", PositionStateStamped, StateCallback)
     rospy.Subscriber("/ref/planner", PositionStateStamped, ReferenceCallback)
-    
+
     while not rospy.is_shutdown():
         # Update the figure.
         fig.canvas.draw()
-        
+
         # Go to sleep.
         rospy.sleep(1.0)

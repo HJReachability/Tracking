@@ -63,8 +63,10 @@ public:
 
   // Derived classes must provide a collision checker which returns true if
   // and only if the provided position is a valid collision-free configuration.
+  // Takes in incoming and outgoing value functions. See planner.h for details.
   virtual bool IsValid(const Vector3d& position,
-                       const ValueFunction::ConstPtr& value) const = 0;
+                       const ValueFunction::ConstPtr& incoming_value,
+                       const ValueFunction::ConstPtr& outgoing_value) const = 0;
 
   // Derived classes must have some sort of visualization through RVIZ.
   virtual void Visualize(const ros::Publisher& pub,

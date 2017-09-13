@@ -93,21 +93,17 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
   space_->SetBounds(dynamics_->Puncture(state_lower_vec),
                     dynamics_->Puncture(state_upper_vec));
 
-  // Create planners.
+  // Create value functions.
+  std::vector<ValueFunction::ConstPtr> values;
+
   if (numerical_mode_) {
     for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-      // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
-      // Load up the value function.
       const ValueFunction::ConstPtr value =
         ValueFunction::Create(value_directories_[ii], dynamics_,
                               state_dim_, control_dim_,
                               static_cast<ValueFunctionId>(ii));
 
-      // Create the planner.
-      const Planner::ConstPtr planner =
-        OmplPlanner<og::BITstar>::Create(value, space_);
-
-      planners_.push_back(planner);
+      values.push_back(value);
     }
   } else {
     for (size_t ii = 0; ii < max_planner_speeds_.size(); ii++) {
@@ -135,16 +131,25 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
                                                  max_tracker_acceleration,
                                                  max_velocity_disturbance,
                                                  max_acceleration_disturbance,
-						 expansion_factor,
+                                                 expansion_factor,
                                                  dynamics_,
                                                  static_cast<ValueFunctionId>(ii));
 
-      // Create the planner.
-      const Planner::ConstPtr planner =
-        OmplPlanner<og::BITstar>::Create(value, space_);
-
-      planners_.push_back(planner);
+      values.push_back(value);
     }
+  }
+
+  if (values.size() % 2 != 0) {
+    ROS_ERROR("%s: Must provide value functions in pairs.", name_.c_str());
+    return false;
+  }
+
+  // Create planners.
+  for (size_t ii = 0; ii < value_directories_.size() - 1; ii += 2) {
+    const Planner::ConstPtr planner =
+      OmplPlanner<og::BITstar>::Create(values[ii], values[ii + 1], space_);
+
+    planners_.push_back(planner);
   }
 
   // Set OMPL log level.
@@ -379,13 +384,20 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
         (neighbors[0]->point_ - sample).norm() > max_connection_radius_)
       continue;
 
-    //    const ValueFunction::ConstPtr&
+    // Extract value function and ID from last waypoint. If value is null,
+    // (i.e. at root) then set to planners_.size() since any planner is valid
+    // from the root.
+    const ValueFunction::ConstPtr& neighbor_val = neighbors[0]->value_;
+    const size_t neighbor_id = (neighbor_val == nullptr) ?
+      planners_.size() : neighbor_val->Id();
 
     // (4) Plan a trajectory (starting with the most aggressive planner and ending
     // with the next-most cautious planner).
     Trajectory::Ptr traj = nullptr;
-    for (size_t ii = 0; ii < planners_.size(); ii++) {
+    ValueFunction::ConstPtr value_used = nullptr;
+    for (size_t ii = 0; ii < std::min(neighbor_id + 1, planners_.size()); ii++) {
       const Planner::ConstPtr planner = planners_[ii];
+      value_used = planner->GetValueFunction();
 
       // Plan using 10% of the available total runtime.
       // NOTE! This is just a heuristic and could easily be changed.
@@ -400,11 +412,19 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
     if (traj == nullptr)
       continue;
 
+    // Insert the sample.
+    const Waypoint::ConstPtr waypoint = Waypoint::Create(
+      sample, traj->LastTime(), value_used, traj, neighbors[0]);
+
+    tree.Insert(waypoint, false);
+
     // (5) Try to connect to the goal point.
     Trajectory::Ptr goal_traj = nullptr;
     if ((sample - stop).norm() <= max_connection_radius_) {
-      for (size_t ii = 0; ii < planners_.size(); ii++) {
+      for (size_t ii = 0;
+           ii < std::min(value_used->Id() + 1, planners_.size()); ii++) {
         const Planner::ConstPtr planner = planners_[ii];
+        value_used = planner->GetValueFunction();
 
         // Plan using 10% of the available total runtime.
         // NOTE! This is just a heuristic and could easily be changed.
@@ -416,12 +436,6 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
       }
     }
 
-    // Insert the sample.
-    const Waypoint::ConstPtr waypoint = Waypoint::Create(
-      sample, traj->LastTime(), traj, neighbors[0]);
-
-    tree.Insert(waypoint, false);
-
     // (6) If this sample was connected to the goal, update the tree terminus.
     if (goal_traj != nullptr) {
       // Connect to the goal.
@@ -429,7 +443,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
       // traj, but when we merge the two trajectories the std::map insertion
       // rules will prevent duplicates.
       const Waypoint::ConstPtr goal = Waypoint::Create(
-        stop, goal_traj->LastTime(), goal_traj, waypoint);
+        stop, goal_traj->LastTime(), value_used, goal_traj, waypoint);
 
       tree.Insert(goal, true);
 

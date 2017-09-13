@@ -90,11 +90,9 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // Set the initial state to zero.
   state_ = VectorXd::Zero(state_dim_);
 
-  // Create value functions.
+  // Populate list of value functions.
   if (numerical_mode_) {
     for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-      // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
-      // Load up the value function.
       const ValueFunction::ConstPtr value =
         ValueFunction::Create(value_directories_[ii], dynamics_,
                               state_dim_, control_dim_,
@@ -105,35 +103,40 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   } else {
     for (size_t ii = 0; ii < max_planner_speeds_.size(); ii++) {
       // Generate inputs for AnalyticalPointMassValueFunction.
-      // SEMI-HACK! Manually feeding control/disturbance bounds.
+      // HACK! Assuming knowledge of the control/dynamics.
       const Vector3d max_planner_speed =
         Vector3d::Constant(max_planner_speeds_[ii]);
       const Vector3d max_tracker_control(control_upper_[0],
                                          control_upper_[1],
                                          control_upper_[2]);
-      const Vector3d min_tracker_control(control_lower_[0],
-                                         control_lower_[1],
-                                         control_lower_[2]);
+      const Vector3d max_tracker_acceleration(
+        constants::G * std::tan(control_upper_[0]),
+        constants::G * std::tan(control_upper_[1]),
+        control_upper_[2] - constants::G);
       const Vector3d max_velocity_disturbance =
         Vector3d::Constant(max_velocity_disturbances_[ii]);
       const Vector3d max_acceleration_disturbance =
         Vector3d::Constant(max_acceleration_disturbances_[ii]);
       const Vector3d expansion_factor = Vector3d::Constant(1.0);
 
-
       // Create analytical value function.
       const AnalyticalPointMassValueFunction::ConstPtr value =
         AnalyticalPointMassValueFunction::Create(max_planner_speed,
                                                  max_tracker_control,
-                                                 min_tracker_control,
+                                                 max_tracker_acceleration,
                                                  max_velocity_disturbance,
                                                  max_acceleration_disturbance,
-						 expansion_factor,
+                                                 expansion_factor,
                                                  dynamics_,
                                                  static_cast<ValueFunctionId>(ii));
 
       values_.push_back(value);
     }
+  }
+
+  if (values_.size() % 2 != 0) {
+    ROS_ERROR("%s: Must provide pairs of value functions.", name_.c_str());
+    return false;
   }
 
   // Initialize trajectory to null as a cue to Hover(). Hover will reset the
@@ -170,6 +173,9 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
 
   // Planner parameters.
   if (!nl.getParam("meta/meta/max_runtime", max_meta_runtime_)) return false;
+  if (!nl.getParam("meta/meta/switching_lookahead", switching_lookahead_))
+    return false;
+
   if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
   if (!nl.getParam("meta/planners/value_directories", value_directories_))
     return false;
@@ -366,8 +372,20 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   reference_pub_.publish(reference);
 
   // (2) Get corresponding value function.
-  const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
-  const double priority = value->Priority(relative_state);
+  const ValueFunction::ConstPtr value =
+    traj_->GetValueFunction(current_time.toSec());
+
+  // Check the value a short time into the future.
+  // NOTE! This lookahead should really be the precise minimum switching time
+  // between this planner and the next-most cautious one.
+  const ValueFunction::ConstPtr next_value =
+    traj_->GetValueFunction(current_time.toSec() + switching_lookahead_);
+
+  // HACK! Computing priority for switching as priority of regular next value
+  // optimal controller. That should be at least as high priority as the switch.
+  // @JFF is this right?
+  const double priority = (next_value->Id() <= value->Id()) ?
+    value->Priority(relative_state) : next_value->Priority(relative_state);
 
   // Visualize the tracking bound.
   visualization_msgs::Marker tracking_bound_marker;
@@ -378,9 +396,18 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.type = visualization_msgs::Marker::CUBE;
   tracking_bound_marker.action = visualization_msgs::Marker::ADD;
 
-  tracking_bound_marker.scale.x = 2.0 * value->TrackingBound(0);
-  tracking_bound_marker.scale.y = 2.0 * value->TrackingBound(1);
-  tracking_bound_marker.scale.z = 2.0 * value->TrackingBound(2);
+  if (next_value->Id() <= value->Id()) {
+    tracking_bound_marker.scale.x = 2.0 * value->TrackingBound(0);
+    tracking_bound_marker.scale.y = 2.0 * value->TrackingBound(1);
+    tracking_bound_marker.scale.z = 2.0 * value->TrackingBound(2);
+  } else {
+    tracking_bound_marker.scale.x =
+      2.0 * next_value->SwitchingTrackingBound(0, value->MaxPlannerSpeed(0));
+    tracking_bound_marker.scale.y =
+      2.0 * next_value->SwitchingTrackingBound(1, value->MaxPlannerSpeed(1));
+    tracking_bound_marker.scale.z =
+      2.0 * next_value->SwitchingTrackingBound(2, value->MaxPlannerSpeed(2));
+  }
 
   tracking_bound_marker.color.a = 0.3;
   tracking_bound_marker.color.r = priority;
@@ -392,20 +419,23 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   // Warn if outside tracking error bound.
   double min_dist_to_bound = std::numeric_limits<double>::infinity();
   for (size_t ii = 0; ii < 3; ii++) {
-    const double signed_dist = value->TrackingBound(ii) -
-      std::abs(relative_state(dynamics_->SpatialDimension(ii)));
-      // std::cout << "TrackingBound:" << value->TrackingBound(ii) << std::endl;
+    const double signed_dist = (next_value->Id() <= value->Id()) ?
+      value->TrackingBound(ii) -
+        std::abs(relative_state(dynamics_->SpatialDimension(ii))) :
+      next_value->SwitchingTrackingBound(ii, value->MaxPlannerSpeed(ii)) -
+        std::abs(relative_state(dynamics_->SpatialDimension(ii)));
 
     min_dist_to_bound = std::min(min_dist_to_bound, signed_dist);
   }
 
   if (min_dist_to_bound <= 0.0) {
     ROS_WARN_THROTTLE(1.0, "%s: Leaving the tracking error bound.", name_.c_str());
-    //    std::terminate();
   }
 
   // (3) Interpolate gradient to get optimal control.
-  const VectorXd optimal_control = value->OptimalControl(relative_state);
+  const VectorXd optimal_control = (next_value->Id() <= value->Id()) ?
+    value->OptimalControl(relative_state) :
+    next_value->OptimalControl(relative_state);
 
   // (4) Publish optimal control with priority in (0, 1).
   crazyflie_msgs::NoYawControlStamped control_msg;

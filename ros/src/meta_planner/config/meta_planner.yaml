@@ -48,7 +48,7 @@ meta:
 
     # Planner max speed and velocity/acceleration disturbances. All values are
     # assumed to be the same in eadh dimension, so each entry in these lists is
-    # for a different 
+    # for a different
     max_speeds: [0.7, 0.4]
     max_velocity_disturbances: [0.2, 0.2]
     max_acceleration_disturbances: [0.1, 0.1]
@@ -59,6 +59,11 @@ meta:
 
     # Max connection radius for meta planner.
     max_connection_radius: 5.0
+
+    # Amount of time to look ahead to detect switching to more cautious planner.
+    # NOTE! This lookahead should really be the precise minimum switching time
+    # between this planner and the next-most cautious one.
+    switching_lookahead: 0.5
 
   topics:
     # Sensor publication topic.

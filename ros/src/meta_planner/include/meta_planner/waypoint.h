@@ -44,6 +44,7 @@
 #define META_PLANNER_WAYPOINT_H
 
 #include <meta_planner/trajectory.h>
+#include <meta_planner/value_function.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
 
@@ -58,14 +59,16 @@ public:
   // Member variables.
   const Vector3d point_;
   const double time_;
+  const ValueFunction::ConstPtr value_;
   const Trajectory::ConstPtr traj_;
   const ConstPtr parent_;
 
   // Factory method. Use this instead of the constructor.
   static inline ConstPtr Create(const Vector3d& point, double time,
+                                const ValueFunction::ConstPtr& value,
                                 const Trajectory::ConstPtr& traj,
                                 const ConstPtr& parent) {
-    ConstPtr ptr(new Waypoint(point, time, traj, parent));
+    ConstPtr ptr(new Waypoint(point, time, value, traj, parent));
     return ptr;
   }
 
@@ -74,10 +77,12 @@ public:
 
 private:
   explicit Waypoint(const Vector3d& point, double time,
+                    const ValueFunction::ConstPtr& value,
                     const Trajectory::ConstPtr& traj,
                     const ConstPtr& parent)
     : point_(point),
       time_(time),
+      value_(value),
       traj_(traj),
       parent_(parent) {}
 };

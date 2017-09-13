@@ -143,6 +143,12 @@ private:
   ros::Timer timer_;
   double time_step_;
 
+  // Amount of time (seconds) to look ahead in order to start switching
+  // into a smaller bubble.
+  // NOTE! This lookahead should really be the precise minimum switching time
+  // between this planner and the next-most cautious one.
+  double switching_lookahead_;
+
   // TF interfacing.
   tf2_ros::TransformBroadcaster br_;
 

@@ -72,7 +72,8 @@ class OmplPlanner : public Planner {
 public:
   ~OmplPlanner() {}
 
-  static Planner::ConstPtr Create(const ValueFunction::ConstPtr& value,
+  static Planner::ConstPtr Create(const ValueFunction::ConstPtr& incoming_value,
+                                  const ValueFunction::ConstPtr& outgoing_value,
                                   const Box::ConstPtr& space);
 
   // Derived classes must plan trajectories between two points.
@@ -82,7 +83,8 @@ public:
                        double budget = 1.0) const;
 
 private:
-  explicit OmplPlanner(const ValueFunction::ConstPtr& value,
+  explicit OmplPlanner(const ValueFunction::ConstPtr& incoming_value,
+                       const ValueFunction::ConstPtr& outgoing_value,
                        const Box::ConstPtr& space);
 
   // Convert between OMPL states and Vector3ds.
@@ -92,16 +94,19 @@ private:
 // ------------------------------- IMPLEMENTATION --------------------------- //
 
 template<typename PlannerType>
-OmplPlanner<PlannerType>::OmplPlanner(const ValueFunction::ConstPtr& value,
+OmplPlanner<PlannerType>::OmplPlanner(const ValueFunction::ConstPtr& incoming_value,
+                                      const ValueFunction::ConstPtr& outgoing_value,
                                       const Box::ConstPtr& space)
-  : Planner(value, space) {}
+  : Planner(incoming_value, outgoing_value, space) {}
 
 // Create OmplPlanner pointer.
 template<typename PlannerType>
 inline Planner::ConstPtr OmplPlanner<PlannerType>::
-Create(const ValueFunction::ConstPtr& value,
+Create(const ValueFunction::ConstPtr& incoming_value,
+       const ValueFunction::ConstPtr& outgoing_value,
        const Box::ConstPtr& space) {
-  Planner::ConstPtr ptr(new OmplPlanner<PlannerType>(value, space));
+  Planner::ConstPtr ptr(
+    new OmplPlanner<PlannerType>(incoming_value, outgoing_value, space));
   return ptr;
 }
 
@@ -111,12 +116,12 @@ Trajectory::Ptr OmplPlanner<PlannerType>::
 Plan(const Vector3d& start, const Vector3d& stop,
      double start_time, double budget) const {
   // Check that both start and stop are in bounds.
-  if (!space_->IsValid(start, value_)) {
+  if (!space_->IsValid(start, incoming_value_, outgoing_value_)) {
     ROS_WARN_THROTTLE(1.0, "Start point was in collision or out of bounds.");
     return nullptr;
   }
 
-  if (!space_->IsValid(stop, value_)) {
+  if (!space_->IsValid(stop, incoming_value_, outgoing_value_)) {
     ROS_WARN_THROTTLE(1.0, "Stop point was in collision or out of bounds.");
     return nullptr;
   }
@@ -141,7 +146,8 @@ Plan(const Vector3d& start, const Vector3d& stop,
   // Create a SimpleSetup instance and set the state validity checker function.
   og::SimpleSetup ompl_setup(ompl_space);
   ompl_setup.setStateValidityChecker([&](const ob::State* state) {
-      return space_->IsValid(FromOmplState(state), value_); });
+      return space_->IsValid(FromOmplState(state),
+                             incoming_value_, outgoing_value_); });
 
   // Set the start and stop states.
   ob::ScopedState<ob::RealVectorStateSpace> ompl_start(ompl_space);
@@ -181,12 +187,12 @@ Plan(const Vector3d& start, const Vector3d& stop,
 
       times.push_back(time);
       positions.push_back(position);
-      values.push_back(value_);
+      values.push_back(outgoing_value_);
     }
 
     // Convert to full state space.
     std::vector<VectorXd> full_states =
-      value_->GetDynamics()->LiftGeometricTrajectory(positions, times);
+      outgoing_value_->GetDynamics()->LiftGeometricTrajectory(positions, times);
 
     return Trajectory::Create(times, full_states, values);
   }
