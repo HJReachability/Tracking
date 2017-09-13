@@ -379,7 +379,10 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
         (neighbors[0]->point_ - sample).norm() > max_connection_radius_)
       continue;
 
-    // (4) Plan a trajectory (starting with most aggressive planner).
+    //    const ValueFunction::ConstPtr&
+
+    // (4) Plan a trajectory (starting with the most aggressive planner and ending
+    // with the next-most cautious planner).
     Trajectory::Ptr traj = nullptr;
     for (size_t ii = 0; ii < planners_.size(); ii++) {
       const Planner::ConstPtr planner = planners_[ii];

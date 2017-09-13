@@ -94,6 +94,10 @@ public:
   // Get the tracking error bound in this spatial dimension.
   double TrackingBound(size_t dimension) const;
 
+  // Get the tracking error bound in this spatial dimension for a planner
+  // switching INTO this one with the specified max speed.
+  double SwitchingTrackingBound(size_t dimension, double incoming_max_speed) const;
+
 private:
   explicit AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
                                             const Vector3d& max_tracker_control,
