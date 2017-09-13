@@ -208,8 +208,9 @@ TrackingBound(size_t dim) const {
 // switching INTO this one with the specified max speed.
 double AnalyticalPointMassValueFunction::
 SwitchingTrackingBound(size_t dimension, double incoming_max_speed) const {
-  ROS_ERROR("Unimplemented method SwitchingTrackingBound.");
-  return 0.0;
+  ROS_ERROR_THROTTLE(1.0, "Unimplemented method SwitchingTrackingBound.");
+  // HACK! For now, just return the regular tracking bound.
+  return TrackingBound(dimension);
 }
 
 // Constructor.
