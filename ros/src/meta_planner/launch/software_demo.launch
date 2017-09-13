@@ -40,10 +40,10 @@
 
   <arg name="numerical_mode" default="false" />
   <arg name="value_directories"
-       default="[speed_4_tenths/, speed_4_tenths_to_1_tenths]" />
-  <arg name="max_speeds" default="[0.4, 0.1]" />
-  <arg name="max_velocity_disturbances" default="[0.1, 0.1]" />
-  <arg name="max_acceleration_disturbances" default="[0.1, 0.1]" />
+       default="[speed_7_tenths/, speed_4_tenths/, speed_4_tenths/, speed_1_tenths/]" />
+  <arg name="max_speeds" default="[0.7, 0.4, 0.4, 0.1]" />
+  <arg name="max_velocity_disturbances" default="[0.2, 0.2, 0.2, 0.2]" />
+  <arg name="max_acceleration_disturbances" default="[0.1, 0.1, 0.1, 0.1]" />
 
   <arg name="tracker_x_dim" default="6" />
   <arg name="lqr_x_dim" default="7" />
