@@ -407,6 +407,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
     const std::vector<Waypoint::ConstPtr> neighbors =
       tree.KnnSearch(sample, kNumNeighbors);
 
+    // Throw out this sample if too far from the nearest point.
     if (neighbors.size() != kNumNeighbors ||
         (neighbors[0]->point_ - sample).norm() > max_connection_radius_)
       continue;
@@ -414,7 +415,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
     // Extract value function and ID from last waypoint. If value is null,
     // (i.e. at root) then set to planners_.size() since any planner is valid
     // from the root.
-    const ValueFunction::ConstPtr& neighbor_val = neighbors[0]->value_;
+    const ValueFunction::ConstPtr neighbor_val = neighbors[0]->value_;
     const size_t neighbor_id = (neighbor_val == nullptr) ?
       planners_.size() : neighbor_val->Id();
 
@@ -425,6 +426,17 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
     for (size_t ii = 0; ii < std::min(neighbor_id + 1, planners_.size()); ii++) {
       const Planner::ConstPtr planner = planners_[ii];
       value_used = planner->GetValueFunction();
+
+      // If we're trying to switch, then make sure the sample is not too close
+      // to the neighboring point.
+      if (ii > neighbor_id &&
+          std::abs(neighbors[0]->point_(0) - sample(0)) <
+          value_used->GuaranteedSwitchingDistance(0, neighbor_val) &&
+          std::abs(neighbors[0]->point_(1) - sample(1)) <
+          value_used->GuaranteedSwitchingDistance(1, neighbor_val) &&
+          std::abs(neighbors[0]->point_(2) - sample(2)) <
+          value_used->GuaranteedSwitchingDistance(2, neighbor_val))
+        break;
 
       // Plan using 10% of the available total runtime.
       // NOTE! This is just a heuristic and could easily be changed.
@@ -447,11 +459,23 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
 
     // (5) Try to connect to the goal point.
     Trajectory::Ptr goal_traj = nullptr;
+    ValueFunction::ConstPtr goal_value_used = nullptr;
     if ((sample - stop).norm() <= max_connection_radius_) {
       for (size_t ii = 0;
            ii < std::min(value_used->Id() + 1, planners_.size()); ii++) {
         const Planner::ConstPtr planner = planners_[ii];
-        value_used = planner->GetValueFunction();
+        goal_value_used = planner->GetValueFunction();
+
+        // If we're trying to switch, then make sure the sample is not too close
+        // to the neighboring point.
+        if (ii > value_used->Id() &&
+            std::abs(stop(0) - sample(0)) <
+            goal_value_used->GuaranteedSwitchingDistance(0, value_used) &&
+            std::abs(stop(1) - sample(1)) <
+            goal_value_used->GuaranteedSwitchingDistance(1, value_used) &&
+            std::abs(stop(2) - sample(2)) <
+            goal_value_used->GuaranteedSwitchingDistance(2, value_used))
+          break;
 
         // Plan using 10% of the available total runtime.
         // NOTE! This is just a heuristic and could easily be changed.

@@ -91,6 +91,13 @@ size_t LinearDynamics::SpatialDimension(size_t dimension) const {
   return dimension;
 }
 
+// Get the max acceleration in the given spatial dimension.
+double LinearDynamics::MaxAcceleration(size_t dimension) const {
+  ROS_WARN("MaxAcceleration is unimplemented.");
+
+  return 0.0;
+}
+
 // Derived classes must be able to translate a geometric trajectory
 // (i.e. through Euclidean space) into a full state space trajectory.
 std::vector<VectorXd> LinearDynamics::LiftGeometricTrajectory(
