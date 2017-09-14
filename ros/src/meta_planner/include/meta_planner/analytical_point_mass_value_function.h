@@ -71,8 +71,6 @@ public:
   // instantiated it can never be changed. Note that we must pass in
   // the maximum planner speed in each geometric dimension.
   static ConstPtr Create(const Vector3d& max_planner_speed,
-                         const Vector3d& max_tracker_control,
-                         const Vector3d& min_tracker_control,
                          const Vector3d& max_vel_disturbance,
                          const Vector3d& max_acc_disturbance,
                          const Vector3d& expansion_vel,

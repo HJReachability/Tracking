@@ -111,27 +111,18 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
       // SEMI-HACK! Manually feeding control/disturbance bounds.
       const Vector3d max_planner_speed =
         Vector3d::Constant(max_planner_speeds_[ii]);
-      const Vector3d max_tracker_control(control_upper_[0],
-                                         control_upper_[1],
-                                         control_upper_[2]);
-      const Vector3d min_tracker_control(control_lower_[0],
-                                         control_lower_[1],
-                                         control_lower_[2]);
       const Vector3d max_velocity_disturbance =
         Vector3d::Constant(max_velocity_disturbances_[ii]);
       const Vector3d max_acceleration_disturbance =
         Vector3d::Constant(max_acceleration_disturbances_[ii]);
-      const Vector3d expansion_factor = Vector3d::Constant(1.0);
-
+      const Vector3d velocity_expansion = Vector3d::Constant(0.1);
 
       // Create analytical value function.
       const AnalyticalPointMassValueFunction::ConstPtr value =
         AnalyticalPointMassValueFunction::Create(max_planner_speed,
-                                                 max_tracker_control,
-                                                 min_tracker_control,
                                                  max_velocity_disturbance,
                                                  max_acceleration_disturbance,
-						 expansion_factor,
+                                                 velocity_expansion,
                                                  dynamics_,
                                                  static_cast<ValueFunctionId>(ii));
 
