@@ -29,8 +29,7 @@ J.~J. Kuffner and S.~M. LaValle, ``Rrt-connect: An efficient approach to
 \bibitem{Kavraki1996}
 L.~E. Kavraki, P.~Svestka, J.-C. Latombe, and M.~H. Overmars, ``Probabilistic
   roadmaps for path planning in high-dimensional configuration spaces,''
-  \emph{IEEE Trans. Robotics and Automation}, vol.~12, no.~4, pp. 566--580,
-  1996.
+  \emph{IEEE Trans. Robot. Autom.}, vol.~12, no.~4, pp. 566--580, 1996.
 
 \bibitem{Janson2015}
 L.~Janson, E.~Schmerling, A.~Clark, and M.~Pavone, ``Fast marching tree: A fast
@@ -75,36 +74,14 @@ M.~Vitus, V.~Pradeep, G.~Hoffmann, S.~Waslander, and C.~Tomlin, ``Tunnel-milp:
 \bibitem{Zeilinger2011}
 M.~N. Zeilinger, C.~N. Jones, and M.~Morari, ``Real-time suboptimal model
   predictive control using a combination of explicit mpc and online
-  optimization,'' \emph{IEEE Trans. Automatic Control}, vol.~56, no.~7, pp.
+  optimization,'' \emph{IEEE Trans. Autom. Control}, vol.~56, no.~7, pp.
   1524--1534, 2011.
 
 \bibitem{Richter2012}
 S.~Richter, C.~N. Jones, and M.~Morari, ``Computational complexity
   certification for real-time mpc with input constraints based on the fast
-  gradient method,'' \emph{IEEE Trans. Automatic Control}, vol.~57, no.~6, pp.
+  gradient method,'' \emph{IEEE Trans. Autom. Control}, vol.~57, no.~6, pp.
   1391--1403, 2012.
-
-\bibitem{Diehl2002}
-M.~Diehl, H.~G. Bock, J.~P. Schl{\"o}der, R.~Findeisen, Z.~Nagy, and
-  F.~Allg{\"o}wer, ``Real-time optimization and nonlinear model predictive
-  control of processes governed by differential-algebraic equations,'' \emph{J.
-  Process Control}, vol.~12, no.~4, pp. 577--585, 2002.
-
-\bibitem{Schildbach2016}
-G.~Schildbach and F.~Borrelli, ``A dynamic programming approach for
-  nonholonomic vehicle maneuvering in tight environments,'' in \emph{Proc. IEEE
-  Intelligent Vehicles Symposium}, 2016.
-
-\bibitem{Diehl2009}
-M.~Diehl, H.~J. Ferreau, and N.~Haverbeke, ``Efficient numerical methods for
-  nonlinear mpc and moving horizon estimation,'' in \emph{Nonlinear Model
-  Predictive Control}, 2009, pp. 391--417.
-
-\bibitem{Neunert2016}
-M.~Neunert, C.~de~Crousaz, F.~Furrer, M.~Kamel, F.~Farshidian, R.~Siegwart, and
-  J.~Buchli, ``Fast nonlinear model predictive control for unified trajectory
-  optimization and tracking,'' in \emph{Proc. IEEE Int. Conf. Robotics and
-  Automation}, 2016.
 
 \bibitem{Gillula2010}
 J.~H. Gillula, H.~Huang, M.~P. Vitus, and C.~J. Tomlin, ``Design of guaranteed
@@ -126,13 +103,12 @@ M.~Kalakrishnan, S.~Chitta, E.~Theodorou, P.~Pastor, and S.~Schaal, ``Stomp:
 \bibitem{Schwesinger2013}
 U.~Schwesinger, M.~Rufli, P.~Furgale, and R.~Siegwart, ``A sampling-based
   partial motion planning framework for system-compliant navigation along a
-  reference path,'' in \emph{Proc. IEEE Intelligent Vehicles Symposium (IV)},
-  2013.
+  reference path,'' in \emph{Proc. IEEE Intelligent Vehicles Symp. (IV)}, 2013.
 
 \bibitem{Bansal2017}
 S.~Bansal, M.~Chen, J.~F. Fisac, and C.~J. Tomlin, ``{Safe Sequential Path
   Planning of Multi-Vehicle Systems Under Presence of Disturbances and
-  Imperfect Information},'' \emph{Proc. American Control Conference}, 2017.
+  Imperfect Information},'' \emph{Proc. Amer. Control Conf.}, 2017.
 
 \bibitem{Singh2017}
 S.~Singh, A.~Majumdar, J.-J. Slotine, and M.~Pavone, ``Robust online motion
@@ -151,8 +127,8 @@ A.~Richards and J.~P. How, ``Robust variable horizon model predictive control
 
 \bibitem{DiCairano2016}
 S.~Di~Cairano and F.~Borrelli, ``Reference tracking with guaranteed error bound
-  for constrained linear systems,'' \emph{IEEE Trans. Automatic Control},
-  vol.~61, no.~8, pp. 2245--2250, 2016.
+  for constrained linear systems,'' \emph{IEEE Trans. Autom. Control}, vol.~61,
+  no.~8, pp. 2245--2250, 2016.
 
 \bibitem{Hoy2015}
 M.~Hoy, A.~S. Matveev, and A.~V. Savkin, ``Algorithms for collision-free
@@ -175,13 +151,13 @@ H.~Huang, J.~Ding, W.~Zhang, and C.~Tomlin, ``A differential game approach to
 
 \bibitem{Chen17}
 M.~Chen, Z.~Zhou, and C.~J. Tomlin, ``{Multiplayer Reach-Avoid Games via
-  Pairwise Outcomes},'' \emph{IEEE Trans.Automatic Control}, vol.~62, no.~3,
-  pp. 1451--1457, Mar. 2017.
+  Pairwise Outcomes},'' \emph{IEEE Trans. Autom. Control}, vol.~62, no.~3, pp.
+  1451--1457, Mar. 2017.
 
 \bibitem{Mitchell05}
 I.~Mitchell, A.~Bayen, and C.~Tomlin, ``A time-dependent {Hamilton-Jacobi}
   formulation of reachable sets for continuous dynamic games,'' \emph{IEEE
-  Trans. Automatic Control}, vol.~50, no.~7, pp. 947--957, 2005.
+  Trans. Autom. Control}, vol.~50, no.~7, pp. 947--957, 2005.
 
 \bibitem{Fisac15}
 J.~F. Fisac, M.~Chen, C.~J. Tomlin, and S.~S. Shankar, ``Reach-avoid problems
@@ -189,12 +165,9 @@ J.~F. Fisac, M.~Chen, C.~J. Tomlin, and S.~S. Shankar, ``Reach-avoid problems
   Int. Conf. Hybrid Systems: Computation and Control}, 2015.
 
 \bibitem{ChenThesis}
-\BIBentryALTinterwordspacing
 M.~Chen, ``High dimensional reachability analysis: Addressing the curse of
   dimensionality in formal verification,'' Ph.D. dissertation, EECS Department,
-  University of California, Berkeley, Jul 2017. [Online]. Available:
-  \url{http://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-132.html}
-\BIBentrySTDinterwordspacing
+  University of California, Berkeley.
 
 \bibitem{Akametalu2014}
 A.~K. Akametalu, J.~F. Fisac, J.~H. Gillula, S.~Kaynama, M.~N. Zeilinger, and
@@ -214,7 +187,7 @@ I.~M. Mitchell, S.~Kaynama, M.~Chen, and M.~Oishi, ``{Safety preserving control
 \bibitem{Dabadie2014}
 C.~Dabadie, S.~Kaynama, and C.~J. Tomlin, ``{A practical reachability-based
   collision avoidance algorithm for sampled-data systems: Application to ground
-  robots},'' in \emph{Proc. IEEE Int. Conf. on Intelligent Robots and Systems},
+  robots},'' in \emph{Proc. IEEE Int. Conf. Intelligent Robots and Systems},
   2014.
 
 \bibitem{Bouffard12}
@@ -230,7 +203,7 @@ M.~Chen, S.~Herbert, and C.~J. Tomlin, ``Exact and efficient
 \bibitem{Chen2016DecouplingJournal}
 M.~Chen, S.~L. Herbert, M.~S. Vashishtha, S.~Bansal, and C.~J. Tomlin,
   ``Decomposition of reachable sets and tubes for a class of nonlinear
-  systems,'' \emph{arXiv preprint arXiv:1611.00122}, 2016.
+  systems,'' \emph{IEEE Trans. Autom. Control (to appear)}, 2016.
 
 \bibitem{Gavin2013}
 \BIBentryALTinterwordspacing

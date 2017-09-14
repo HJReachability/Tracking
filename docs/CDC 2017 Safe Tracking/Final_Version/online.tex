@@ -18,23 +18,23 @@
 		\STATE $\obsAug \leftarrow \obsSense + \TEB_\pstate(\tstate)$ \label{ln:obsEnd}
 		
 		\STATE \textbf{Path Planner Block}:\label{ln:plannerStart}
-		\STATE $\pstate_{next} \leftarrow \plannerfunc(\pstate, \obsAug)$\label{ln:plannerEnd}
+		\STATE $\pstate^+ \leftarrow \plannerfunc(\pstate, \obsAug)$\label{ln:plannerEnd}
 		
 		\STATE \textbf{Hybrid Tracking Controller Block}:\label{ln:controllerStart}
-		\STATE $\rstate_{next} = \tstate - \ptmat\pstate_{next}$
+		\STATE $\rstate^+ = \tstate - \ptmat\pstate^+$
 		
-		\IF{$\rstate_{next}$ is on boundary $\TEB_\pstate(\tstate)$} 
+		\IF{$\rstate^+$ is on boundary $\TEB_\pstate(\tstate)$} 
 		\STATE {use safety controller: $\tctrl \leftarrow \tctrl^*$ in \eqref{eq:opt_ctrl}}
 		\ELSE \STATE{use performance controller: } 
           \STATE{$\tctrl \leftarrow$ desired controller} \ENDIF \label{ln:controllerEnd}
 		
 		\STATE \textbf{Tracking Model Block}: \label{ln:trackingStart}
-		\STATE apply control $\tctrl$ to vehicle for a time step of $\dt$, save next state as $\tstate_{next}$ \label{ln:trackingEnd}
+		\STATE apply control $\tctrl$ to vehicle for a time step of $\dt$, save next state as $\tstate^+$ \label{ln:trackingEnd}
 		
 		\STATE \textbf{Planning Model Block}:\label{ln:planningStart}
-		\STATE $\pstate = \tpmat\tstate_{next}$
+		\STATE $\pstate = \tpmat\tstate^+$
 		\STATE check if $\pstate$ is at planning goal
-		\STATE reset states $\tstate = \tstate_{next}, \rstate = 0$ \label{ln:planningEnd}
+		\STATE reset states $\tstate = \tstate^+, \rstate = 0$ \label{ln:planningEnd}
 		\ENDWHILE
 	\end{algorithmic}
 \end{algorithm}
@@ -44,11 +44,11 @@ Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the tr
 
 %\SHnote{The planning distance is the distance that the path planner (and thus the planning model) may take for each iteration of the online algorithm, and is chosen to be $0< \dx \leq \TEB$. This in turn determines the time step of each iteration (as shown on line \ref{ln:dt}): , where $v_{max}$ is the maximum speed of the planning model.}
 
- The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented obstacles $\obsAug$, and outputs the next state of the planning system $\pstate_{next}$. The hybrid tracking controller block (lines \ref{ln:controllerStart}-\ref{ln:controllerEnd}) first computes the updated relative state $\rstate_{next}$. If the $\rstate_{next}$ is on the tracking bound $\TEB_\pstate(0)$, the safety controller must be used to remain within the safe bound. The safety control is given by:
+ The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented obstacles $\obsAug$, and outputs the next state of the planning system $\pstate^+$. The hybrid tracking controller block (lines \ref{ln:controllerStart}-\ref{ln:controllerEnd}) first computes the updated relative state $\rstate^+$. If the $\rstate^+$ is on the tracking bound $\TEB_\pstate(0)$, the safety controller must be used to remain within the safe bound. The safety control is given by:
 \begin{equation}
   \label{eq:opt_ctrl}
-	\tctrl^* = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate_{next}) \cdot \rdyn(\rstate_{next},\tctrl,\pctrl,\dstb)
+	\tctrl^* = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate^+) \cdot \rdyn(\rstate^+,\tctrl,\pctrl,\dstb)
 \end{equation}
 For many practical systems (such as control affine systems), this minimization can be found extremely quickly. If the relative state is not on the tracking boundary, a performance controller may be used. For the example in Section \ref{sec:results} the these controllers are identical, but in general the performance controller can suit the needs of the individual applications.
 
-The control $\tctrl^*$ is then applied to the physical system in the tracking block (lines \ref{ln:trackingStart}-\ref{ln:trackingEnd}) for a time period of $\dt$. The next state is saved as $\tstate_{next}$. We repeat this process until the planning goal has been reached.
+The control $\tctrl^*$ is then applied to the physical system in the tracking block (lines \ref{ln:trackingStart}-\ref{ln:trackingEnd}) for a time period of $\dt$. The next state is saved as $\tstate^+$. We repeat this process until the planning goal has been reached.
