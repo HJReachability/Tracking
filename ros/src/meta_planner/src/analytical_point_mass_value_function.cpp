@@ -61,13 +61,13 @@ Create(const Vector3d& max_planner_speed,
        const Vector3d& min_tracker_control,
        const Vector3d& max_vel_disturbance,
        const Vector3d& max_acc_disturbance,
-       const Vector3d& set_expansion_factor,
+       const Vector3d& expansion_vel,
        const Dynamics::ConstPtr& dynamics,
        ValueFunctionId id) {
   AnalyticalPointMassValueFunction::ConstPtr ptr(
     new AnalyticalPointMassValueFunction(max_planner_speed, max_tracker_control,
                                          min_tracker_control, max_vel_disturbance,
-                                         max_acc_disturbance, set_expansion_factor,
+                                         max_acc_disturbance, expansion_vel,
                                          dynamics, id));
   return ptr;
 }
@@ -189,7 +189,8 @@ Priority(const VectorXd& state) const {
   const double V_high = relative_high * V_safest;
   const double V_low = relative_low * V_safest;
 
-  const double priority = 1.0 - std::min(std::max(0.0,(V-V_low)/(V_high-V_low)),1.0);
+  const double priority = 1.0 - 
+                          std::min(std::max(0.0,(V-V_low)/(V_high-V_low)),1.0);
   return priority;
 }
 
@@ -199,9 +200,9 @@ TrackingBound(size_t dim) const {
   // Return a single positive number (semi-length of interval centered on 0)
   // This is equal to the position at the intersection between parabolas.
   const double v_ref = max_planner_speed_(dim);
-  // std::cout << "v_ref:" << v_ref << "   a_max:" << a_max_(dim)  << "   d_a:" << d_a_(dim) << std::endl;
-  // std::cout << "bound:" << 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) / (a_max_(dim) - d_a_(dim)) << std::endl;
-  return 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) * (1.0 + expand_(dim)) / (a_max_(dim) - d_a_(dim));
+
+  return 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) * (1.0 + expand_(dim))
+          / (a_max_(dim) - d_a_(dim));
 }
 
 // Get the tracking error bound in this spatial dimension for a planner
@@ -220,24 +221,27 @@ AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
                                  const Vector3d& min_tracker_control,
                                  const Vector3d& max_vel_disturbance,
                                  const Vector3d& max_acc_disturbance,
-                                 const Vector3d& set_expansion_factor,
+                                 const Vector3d& expansion_vel,
                                  const Dynamics::ConstPtr& dynamics,
                                  ValueFunctionId id)
   : ValueFunction(dynamics, 6, 3, id),
     u_max_(max_tracker_control),
     u_min_(min_tracker_control),
     d_v_(max_vel_disturbance),
-    d_a_(max_acc_disturbance),
-    expand_(set_expansion_factor) {
-  // Compute max acceleration (NOTE: assumed symmetric even if u_max != -u_min).
+    d_a_(max_acc_disturbance) {
+  // Compute max acceleration (NOTE: assumed symmetric even if u_max != -u_min)
   const VectorXd x_dot_max = dynamics_->Evaluate(VectorXd::Zero(6), u_max_);
   a_max_ = x_dot_max.tail<3>().cwiseAbs();
 
   // Compute control gains.
   u2a_ = x_dot_max.tail<3>().cwiseQuotient( 0.5 * (u_max_ - u_min_) );
 
-  // Set max planner speed
+  // Max planner speed
   max_planner_speed_ = max_planner_speed;
+
+  // Expansion of set boundaries in the position dimension
+  expand_ = expansion_vel.cwiseProduct(2*max_planner_speed + 0.5*expansion_vel)
+            .cwiseQuotient(a_max_ - d_a_);
 }
 
 } //\namespace meta
