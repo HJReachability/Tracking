@@ -101,8 +101,6 @@ public:
 
 private:
   explicit AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
-                                            const Vector3d& max_tracker_control,
-                                            const Vector3d& min_tracker_control,
                                             const Vector3d& max_vel_disturbance,
                                             const Vector3d& max_acc_disturbance,
                                             const Vector3d& expansion_vel,

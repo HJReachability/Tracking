@@ -217,22 +217,25 @@ SwitchingTrackingBound(size_t dim, const ValueFunction::ConstPtr& value) const {
 // Constructor.
 AnalyticalPointMassValueFunction::
 AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
-                                 const Vector3d& max_tracker_control,
-                                 const Vector3d& min_tracker_control,
                                  const Vector3d& max_vel_disturbance,
                                  const Vector3d& max_acc_disturbance,
                                  const Vector3d& expansion_vel,
                                  const Dynamics::ConstPtr& dynamics,
                                  ValueFunctionId id)
   : ValueFunction(dynamics, 6, 3, id),
-    u_max_(max_tracker_control),
-    u_min_(min_tracker_control),
+    u_max_(Vector3d(dynamics->MaxControl[0],
+                    dynamics->MaxControl[1],
+                    dynamics->MaxControl[2])),
+    u_min_(Vector3d(dynamics->MinControl[0],
+                    dynamics->MinControl[1],
+                    dynamics->MinControl[2])),
     d_v_(max_vel_disturbance),
     d_a_(max_acc_disturbance),
     v_exp_(expansion_vel) {
   // Compute max acceleration (NOTE: assumed symmetric even if u_max != -u_min)
-  const VectorXd x_dot_max = dynamics_->Evaluate(VectorXd::Zero(6), u_max_);
-  a_max_ = x_dot_max.tail<3>().cwiseAbs();
+  a_max_(0) = dynamics->MaxAcceleration(0);
+  a_max_(1) = dynamics->MaxAcceleration(1);
+  a_max_(2) = dynamics->MaxAcceleration(2);
 
   // Compute control gains.
   u2a_ = x_dot_max.tail<3>().cwiseQuotient( 0.5 * (u_max_ - u_min_) );
