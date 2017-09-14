@@ -5,8 +5,18 @@
   <arg name="tracker_frame" default="tracker" />
   <arg name="planner_frame" default="planner" />
 
-  <arg name="state_lower_bound" default="[-1.0, -2.0, 0.0, -5.0, -5.0, -5.0]" />
-  <arg name="state_upper_bound" default="[1.0, 2.0, 1.5, 5.0, 5.0, 5.0]" />
+  <arg name="state_lower_bound" default="[-1.5, -2.0, 0.0, -5.0, -5.0, -5.0]" />
+  <arg name="state_upper_bound" default="[0.75, 2.0, 1.5, 5.0, 5.0, 5.0]" />
+
+  <arg name="goal_x" default="0.25" />
+  <arg name="goal_y" default="1.5" />
+  <arg name="goal_z" default="1.0" />
+
+  <arg name="random_seed" default="0" />
+
+  <arg name="takeoff_hover_x" default="0.0" />
+  <arg name="takeoff_hover_y" default="0.0" />
+  <arg name="takeoff_hover_z" default="0.75" />
 
   <arg name="sensor_radius" default="1.0" />
   <arg name="num_obstacles" default="5" />
@@ -23,18 +33,22 @@
   <arg name="sensor_topic" default="/sensor" />
   <arg name="in_flight_topic" default="/in_flight" />
 
-  <arg name="estimator_dt" default="0.005" />
+  <arg name="estimator_dt" default="0.01" />
   <arg name="tracker_dt" default="0.001" />
   <arg name="merger_dt" default="0.01" />
 
+  <arg name="merger_mode" default="OPTIMAL" />
+
   <arg name="max_meta_runtime" default="0.2" />
   <arg name="max_meta_connection_radius" default="5.0" />
+  <arg name="switching_lookahead" default="0.5" />
 
-  <arg name="numerical_mode" default="true" />
-  <arg name="value_directories" default="[speed_4_tenths/, speed_1_tenths/]" />
-  <arg name="max_speeds" default="[0.4, 0.1]" />
-  <arg name="max_velocity_disturbances" default="[0.4, 0.4]" />
-  <arg name="max_acceleration_disturbances" default="[0.0, 0.0]" />
+  <arg name="numerical_mode" default="false" />
+  <arg name="value_directories"
+       default="[speed_7_tenths/, speed_7_tenths_to_4_tenths/, speed_4_tenths/, speed_4_tenths_to_1_tenths]" />
+  <arg name="max_speeds" default="[0.75, 0.5, 0.5, 0.25]" />
+  <arg name="max_velocity_disturbances" default="[0.5, 0.5, 0.5, 0.5]" />
+  <arg name="max_acceleration_disturbances" default="[0.1, 0.1, 0.1, 0.1]" />
 
   <arg name="tracker_x_dim" default="6" />
   <arg name="tracker_u_dim" default="3" />
@@ -145,6 +159,8 @@
         output="screen">
 
     <param name="time_step" value="$(arg merger_dt)" />
+    <param name="mode" value="$(arg merger_mode)" />
+
     <param name="topics/control" value="$(arg lqr_control_topic)" />
     <param name="topics/prioritized_control" value="$(arg optimal_control_topic)" />
     <param name="topics/merged" value="$(arg merged_control_topic)" />
@@ -161,6 +177,10 @@
     <param name="topics/reference" value="$(arg reference_state_topic)" />
     <param name="topics/control" value="$(arg merged_control_topic)" />
     <param name="topics/in_flight" value="$(arg in_flight_topic)" />
+
+    <param name="hover/x" value="$(arg takeoff_hover_x)" />
+    <param name="hover/y" value="$(arg takeoff_hover_y)" />
+    <param name="hover/z" value="$(arg takeoff_hover_z)" />
   </node>
 
   <!-- CmdVelConverter node. -->
@@ -173,7 +193,7 @@
     <param name="topics/cmd_vel" value="/$(arg tracker_frame)/cmd_vel" />
   </node>
 
-  <!-- Tracker and sensor nodes. -->
+  <!-- Tracker, meta planner, and sensor nodes. -->
   <group ns="meta">
     <node name="tracker"
           pkg="meta_planner"
@@ -187,6 +207,7 @@
       <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
 
       <param name="meta/control/time_step" value="$(arg tracker_dt)" />
+      <param name="meta/meta/switching_lookahead" value="$(arg switching_lookahead)" />
 
       <param name="meta/planners/numerical_mode" value="$(arg numerical_mode)" />
       <rosparam param="meta/planners/value_directories" subst_value="True">$(arg value_directories)</rosparam>
@@ -222,6 +243,12 @@
       <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
       <param name="meta/meta/max_connection_radius" value="$(arg max_meta_connection_radius)" />
 
+      <param name="meta/random/seed" value="$(arg random_seed)" />
+
+      <param name="meta/goal/x" value="$(arg goal_x)" />
+      <param name="meta/goal/y" value="$(arg goal_y)" />
+      <param name="meta/goal/z" value="$(arg goal_z)" />
+
       <param name="meta/planners/numerical_mode" value="$(arg numerical_mode)" />
       <rosparam param="meta/planners/value_directories" subst_value="True">$(arg value_directories)</rosparam>
       <rosparam param="meta/planners/max_speeds" subst_value="True">$(arg max_speeds)</rosparam>
@@ -252,6 +279,8 @@
 
       <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
       <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
+
+      <param name="meta/random/seed" value="$(arg random_seed)" />
 
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/frames/tracker" value="$(arg tracker_frame)" />

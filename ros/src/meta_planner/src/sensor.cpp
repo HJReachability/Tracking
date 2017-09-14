@@ -85,6 +85,8 @@ bool Sensor::Initialize(const ros::NodeHandle& n) {
   space_->SetBounds(dynamics_->Puncture(state_lower_vec),
                     dynamics_->Puncture(state_upper_vec));
 
+  space_->Seed(seed_);
+
   // Add obstacles.
   std::random_device rd;
   std::default_random_engine rng(rd());
@@ -108,6 +110,11 @@ bool Sensor::LoadParameters(const ros::NodeHandle& n) {
 
   // Sensor radius.
   if (!nl.getParam("meta/sensor/sensor_radius", sensor_radius_)) return false;
+
+  // Random seed.
+  int seed = 0;
+  if (!nl.getParam("meta/random/seed", seed)) return false;
+  seed_ = static_cast<unsigned int>(seed);
 
   // Number of obstacles.
   int num_obstacles = 1;
@@ -150,17 +157,17 @@ bool Sensor::RegisterCallbacks(const ros::NodeHandle& n) {
 
    // Publishers.
   environment_pub_ = nl.advertise<visualization_msgs::Marker>(
-    environment_topic_.c_str(), 10, false);
+    environment_topic_.c_str(), 1, false);
 
   sensor_radius_pub_ = nl.advertise<visualization_msgs::Marker>(
-    sensor_radius_topic_.c_str(), 10, false);
+    sensor_radius_topic_.c_str(), 1, false);
 
   sensor_pub_ = nl.advertise<meta_planner_msgs::SensorMeasurement>(
-    sensor_topic_.c_str(), 10, false);
+    sensor_topic_.c_str(), 1, false);
 
   // Subscriber.
   in_flight_sub_ = nl.subscribe(
-    in_flight_topic_.c_str(), 10, &Sensor::InFlightCallback, this);
+    in_flight_topic_.c_str(), 1, &Sensor::InFlightCallback, this);
 
   // Timer.
   timer_ = nl.createTimer(

@@ -73,6 +73,13 @@ public:
   // Get the corresponding full state dimension to the given spatial dimension.
   virtual size_t SpatialDimension(size_t dimension) const = 0;
 
+  // Get the min and max control in each (control) dimension.
+  inline double MinControl(size_t dimension) const { return lower_u_(dimension); }
+  inline double MaxControl(size_t dimension) const { return upper_u_(dimension); }
+
+  // Get the max acceleration in the given spatial dimension.
+  virtual double MaxAcceleration(size_t dimension) const = 0;
+
   // Derived classes must be able to translate a geometric trajectory
   // (i.e. through Euclidean space) into a full state space trajectory.
   virtual std::vector<VectorXd> LiftGeometricTrajectory(

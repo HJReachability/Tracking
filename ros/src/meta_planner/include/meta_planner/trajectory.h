@@ -77,12 +77,13 @@ public:
   // Factory constructor from times, states, values.
   static Ptr Create(const std::vector<double>& times,
                     const std::vector<VectorXd>& states,
-                    const std::vector<ValueFunction::ConstPtr>& values);
+                    const std::vector<ValueFunction::ConstPtr>& control_values,
+		    const std::vector<ValueFunction::ConstPtr>& bound_values);
 
   // Factory constructor from ROS message and an ordered list of all
   // possible ValueFunctions.
   static Ptr Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
-                    const std::vector<ValueFunction::ConstPtr>& values);
+		    const std::vector<ValueFunction::ConstPtr>& value_registry);
 
   // Factory constructor to create a Trajectory as the remainder of the
   // given Trajectory after the specified time point.
@@ -94,7 +95,8 @@ public:
   // Add a (state, time) tuple to this Trajectory.
   void Add(double time,
            const VectorXd& state,
-           const ValueFunction::ConstPtr& value);
+           const ValueFunction::ConstPtr& control_value,
+	   const ValueFunction::ConstPtr& bound_value);
 
   // Add a whole other Trajectory to this one.
   void Add(const ConstPtr& other);
@@ -107,20 +109,30 @@ public:
 
   // Total time length of the trajectory.
   double Time() const;
+  
+  // Swap out the control value function in this trajectory and update time
+  // stamps accordingly.
+  void ExecuteSwitch(const ValueFunction::ConstPtr& value);
+
+  // Adjust the time stamps for this trajectory to start at the given time.
+  void ResetStartTime(double start);
 
   // Accessors.
   const VectorXd& LastState() const;
   const VectorXd& FirstState() const;
   double LastTime() const;
   double FirstTime() const;
-  ValueFunction::ConstPtr LastValueFunction() const;
-  ValueFunction::ConstPtr FirstValueFunction() const;
+  ValueFunction::ConstPtr LastControlValueFunction() const;
+  ValueFunction::ConstPtr FirstControlValueFunction() const;
+  ValueFunction::ConstPtr LastBoundValueFunction() const;
+  ValueFunction::ConstPtr FirstBoundValueFunction() const;
 
   // Find the state corresponding to a particular time via linear interpolation.
   VectorXd GetState(double time) const;
 
   // Return a pointer to the value function being used at this time.
-  const ValueFunction::ConstPtr& GetValueFunction(double time) const;
+  const ValueFunction::ConstPtr& GetControlValueFunction(double time) const;
+  const ValueFunction::ConstPtr& GetBoundValueFunction(double time) const;
 
   // Convert to ROS message.
   meta_planner_msgs::Trajectory ToRosMessage() const;
@@ -142,11 +154,15 @@ private:
   // Private struct to hold a state and a value function.
   struct StateValue {
     VectorXd state_;
-    ValueFunction::ConstPtr value_;
+    ValueFunction::ConstPtr control_value_;
+    ValueFunction::ConstPtr bound_value_;
 
-    StateValue(const VectorXd& state, const ValueFunction::ConstPtr& value)
+    StateValue(const VectorXd& state, 
+	       const ValueFunction::ConstPtr& control_value,
+	       const ValueFunction::ConstPtr& bound_value)
       : state_(state),
-        value_(value) {}
+        control_value_(control_value),
+	bound_value_(bound_value) {}
     ~StateValue() {}
   };
 
@@ -164,8 +180,9 @@ inline void Trajectory::Clear() {
 // Add a (state, time) tuple to this Trajectory.
 inline void Trajectory::Add(double time,
                             const VectorXd& state,
-                            const ValueFunction::ConstPtr& value) {
-  map_.insert({time, StateValue(state, value)});
+                            const ValueFunction::ConstPtr& control_value,
+			    const ValueFunction::ConstPtr& bound_value) {
+  map_.insert({ time, StateValue(state, control_value, bound_value) });
 }
 
 // Add a whole other Trajectory to this one.
@@ -240,7 +257,7 @@ inline double Trajectory::FirstTime() const {
   return map_.begin()->first;
 }
 
-inline ValueFunction::ConstPtr Trajectory::LastValueFunction() const {
+inline ValueFunction::ConstPtr Trajectory::LastControlValueFunction() const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (IsEmpty()) {
     ROS_WARN("Tried to get last ValueFunction of empty trajectory.");
@@ -248,10 +265,10 @@ inline ValueFunction::ConstPtr Trajectory::LastValueFunction() const {
   }
 #endif
 
-  return (--map_.end())->second.value_;
+  return (--map_.end())->second.control_value_;
 }
 
-inline ValueFunction::ConstPtr Trajectory::FirstValueFunction() const {
+inline ValueFunction::ConstPtr Trajectory::FirstControlValueFunction() const {
 #ifdef ENABLE_DEBUG_MESSAGES
     if (IsEmpty()) {
       ROS_WARN("Tried to get first ValueFunction of empty trajectory.");
@@ -259,7 +276,29 @@ inline ValueFunction::ConstPtr Trajectory::FirstValueFunction() const {
     }
 #endif
 
-    return map_.begin()->second.value_;
+    return map_.begin()->second.control_value_;
+  }
+
+inline ValueFunction::ConstPtr Trajectory::LastBoundValueFunction() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to get last ValueFunction of empty trajectory.");
+    throw std::underflow_error("Attempted last ValueFunction of empty trajectory.");
+  }
+#endif
+
+  return (--map_.end())->second.bound_value_;
+}
+
+inline ValueFunction::ConstPtr Trajectory::FirstBoundValueFunction() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+    if (IsEmpty()) {
+      ROS_WARN("Tried to get first ValueFunction of empty trajectory.");
+      throw std::underflow_error("Attempted first ValueFunction of empty trajectory.");
+    }
+#endif
+
+    return map_.begin()->second.bound_value_;
   }
 
 } //\namespace meta

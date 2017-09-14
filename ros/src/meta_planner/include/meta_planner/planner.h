@@ -40,6 +40,21 @@
 // operate within a Box. This is because of the way in which subspaces are
 // specified in the constructor.
 //
+// Planners take in two different ValueFunctions: one for the waypoint prior
+// to this plan, and one for the waypoint at the end of this plan.
+// These ValueFunctions should be set such that the outgoing ID is precisely
+// 1 + the incoming ID. In the numerical case, value functions will be ordered:
+// (1), (1 -> 2), (2 -> 3), ... so that planner 1 gets values (1) and (1 -> 2),
+// planner 2 gets values (1 -> 2) and (2 -> 3), etc. In the analytic case,
+// value functions will be ordered (1), (2), (3), ... so that planner 1 gets
+// values (1) and (2), planner 2 gets values (2) and (3), etc. This way,
+// collision checking may be done using the SwitchingTrackingBound() function
+// provided by the outgoing value function for both numeric/analytic cases.
+//
+// In short, the outgoing value function is what is typically meant by _the_
+// value function associated with this Planner. The incoming value function
+// is only used for generating switching tracking bounds.
+//
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef META_PLANNER_PLANNER_H
@@ -75,14 +90,31 @@ public:
   // Shortest possible time to go from start to stop for this planner.
   double BestPossibleTime(const Vector3d& start, const Vector3d& stop) const;
 
-protected:
-  explicit Planner(const ValueFunction::ConstPtr& value,
-                   const Box::ConstPtr& space)
-    : value_(value),
-      space_(space) {}
+  // Get the value function associated to this planner. The way incoming and
+  // outgoing value functions are intended to be used, this corresponds to
+  // the outgoing value function.
+  inline ValueFunction::ConstPtr GetIncomingValueFunction() const {
+    return incoming_value_;
+  }
 
-  // Value function.
-  const ValueFunction::ConstPtr value_;
+  inline ValueFunction::ConstPtr GetOutgoingValueFunction() const {
+    return outgoing_value_;
+  }
+
+protected:
+  explicit Planner(const ValueFunction::ConstPtr& incoming_value,
+                   const ValueFunction::ConstPtr& outgoing_value,
+                   const Box::ConstPtr& space)
+    : incoming_value_(incoming_value),
+      outgoing_value_(outgoing_value),
+      space_(space) {
+    if (incoming_value_->Id() + 1!= outgoing_value_->Id())
+      ROS_ERROR("Outgoing value function not successor to incoming one.");
+  }
+
+  // Value functions.
+  const ValueFunction::ConstPtr incoming_value_;
+  const ValueFunction::ConstPtr outgoing_value_;
 
   // State space (with collision checking).
   const Box::ConstPtr space_;

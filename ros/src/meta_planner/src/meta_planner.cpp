@@ -52,6 +52,11 @@ namespace meta {
 bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
   name_ = ros::names::append(n.getNamespace(), "meta_planner");
 
+  // Set the initial position and goal to zero. Position will be updated
+  // via a message and goal will be read from the parameter server.
+  position_ = Vector3d::Zero();
+  goal_ = Vector3d::Zero();
+
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
     return false;
@@ -88,64 +93,56 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
   space_->SetBounds(dynamics_->Puncture(state_lower_vec),
                     dynamics_->Puncture(state_upper_vec));
 
-  // Set the initial state and goal.
-  const double kSmallNumber = 0.5;
+  space_->Seed(seed_);
 
-  position_ = Vector3d::Zero();//0.5 * (dynamics_->Puncture(state_lower_vec) +
-              //       dynamics_->Puncture(state_upper_vec));
-  goal_ = dynamics_->Puncture(state_upper_vec) -
-    Vector3d::Constant(kSmallNumber);
+  // Create value functions.
+  std::vector<ValueFunction::ConstPtr> values;
 
-  // Create planners.
   if (numerical_mode_) {
     for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-      // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
-      // Load up the value function.
       const ValueFunction::ConstPtr value =
         ValueFunction::Create(value_directories_[ii], dynamics_,
                               state_dim_, control_dim_,
                               static_cast<ValueFunctionId>(ii));
 
-      // Create the planner.
-      const Planner::ConstPtr planner =
-        OmplPlanner<og::BITstar>::Create(value, space_);
-
-      planners_.push_back(planner);
+      values.push_back(value);
     }
   } else {
     for (size_t ii = 0; ii < max_planner_speeds_.size(); ii++) {
       // Generate inputs for AnalyticalPointMassValueFunction.
-      // HACK! Assuming knowledge of the control/dynamics.
+      // SEMI-HACK! Manually feeding control/disturbance bounds.
       const Vector3d max_planner_speed =
         Vector3d::Constant(max_planner_speeds_[ii]);
-      const Vector3d max_tracker_control(control_upper_[0],
-                                         control_upper_[1],
-                                         control_upper_[2]);
-      const Vector3d max_tracker_acceleration(
-        constants::G * std::tan(control_upper_[0]),
-        constants::G * std::tan(control_upper_[1]),
-        control_upper_[2] - constants::G);
       const Vector3d max_velocity_disturbance =
         Vector3d::Constant(max_velocity_disturbances_[ii]);
       const Vector3d max_acceleration_disturbance =
         Vector3d::Constant(max_acceleration_disturbances_[ii]);
+      const Vector3d velocity_expansion = Vector3d::Constant(0.225);
 
       // Create analytical value function.
       const AnalyticalPointMassValueFunction::ConstPtr value =
         AnalyticalPointMassValueFunction::Create(max_planner_speed,
-                                                 max_tracker_control,
-                                                 max_tracker_acceleration,
                                                  max_velocity_disturbance,
                                                  max_acceleration_disturbance,
+                                                 velocity_expansion,
                                                  dynamics_,
                                                  static_cast<ValueFunctionId>(ii));
 
-      // Create the planner.
-      const Planner::ConstPtr planner =
-        OmplPlanner<og::BITstar>::Create(value, space_);
-
-      planners_.push_back(planner);
+      values.push_back(value);
     }
+  }
+
+  if (values.size() % 2 != 0) {
+    ROS_ERROR("%s: Must provide value functions in pairs.", name_.c_str());
+    return false;
+  }
+
+  // Create planners.
+  for (size_t ii = 0; ii < values.size() - 1; ii += 2) {
+    const Planner::ConstPtr planner =
+      OmplPlanner<og::BITstar>::Create(values[ii], values[ii + 1], space_);
+
+    planners_.push_back(planner);
   }
 
   // Set OMPL log level.
@@ -164,6 +161,11 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
 // Load parameters.
 bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
+
+  // Random seed.
+  int seed = 0;
+  if (!nl.getParam("meta/random/seed", seed)) return false;
+  seed_ = static_cast<unsigned int>(seed);
 
   // Meta planning parameters.
   if (!nl.getParam("meta/meta/max_runtime", max_runtime_))
@@ -218,6 +220,13 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/state/upper", state_upper_)) return false;
   if (!nl.getParam("meta/state/lower", state_lower_)) return false;
 
+  // Goal position.
+  double goal_x, goal_y, goal_z;
+  if (!nl.getParam("meta/goal/x", goal_x)) return false;
+  if (!nl.getParam("meta/goal/y", goal_y)) return false;
+  if (!nl.getParam("meta/goal/z", goal_z)) return false;
+  goal_ = Vector3d(goal_x, goal_y, goal_z);
+
   // Topics and frame ids.
   if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
   if (!nl.getParam("meta/topics/vis/known_environment", env_topic_)) return false;
@@ -238,28 +247,28 @@ bool MetaPlanner::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Subscribers.
   sensor_sub_ = nl.subscribe(
-    sensor_topic_.c_str(), 10, &MetaPlanner::SensorCallback, this);
+    sensor_topic_.c_str(), 1, &MetaPlanner::SensorCallback, this);
 
   state_sub_ = nl.subscribe(
-    state_topic_.c_str(), 10, &MetaPlanner::StateCallback, this);
+    state_topic_.c_str(), 1, &MetaPlanner::StateCallback, this);
 
   request_traj_sub_ = nl.subscribe(
-    request_traj_topic_.c_str(), 10, &MetaPlanner::RequestTrajectoryCallback, this);
+    request_traj_topic_.c_str(), 1, &MetaPlanner::RequestTrajectoryCallback, this);
 
   in_flight_sub_ = nl.subscribe(
-    in_flight_topic_.c_str(), 10, &MetaPlanner::InFlightCallback, this);
+    in_flight_topic_.c_str(), 1, &MetaPlanner::InFlightCallback, this);
 
   // Visualization publisher(s).
   env_pub_ = nl.advertise<visualization_msgs::Marker>(
-    env_topic_.c_str(), 10, false);
+    env_topic_.c_str(), 1, false);
 
   // Triggering a replan event.
   trigger_replan_pub_ = nl.advertise<std_msgs::Empty>(
-    trigger_replan_topic_.c_str(), 10, false);
+    trigger_replan_topic_.c_str(), 1, false);
 
   // Actual publishers.
   traj_pub_ = nl.advertise<meta_planner_msgs::Trajectory>(
-    traj_topic_.c_str(), 10, false);
+    traj_topic_.c_str(), 1, false);
 
   return true;
 }
@@ -323,9 +332,56 @@ void MetaPlanner::RequestTrajectoryCallback(
 
   const Vector3d start_position = dynamics_->Puncture(start_state);
 
-  if (!Plan(start_position, goal_, start_time))
-    ROS_ERROR("%s: MetaPlanner failed. Please come again.", name_.c_str());
+  // Check if the start position is close to the goal. If so, just return
+  // a hover trajectory at the goal (assuming the least aggressive planner).
+  if (reached_goal_ ||
+      (std::abs(start_position(0) - goal_(0)) <
+       planners_.back()->GetOutgoingValueFunction()->TrackingBound(0) &&
+       std::abs(start_position(1) - goal_(1)) <
+       planners_.back()->GetOutgoingValueFunction()->TrackingBound(1) &&
+       std::abs(start_position(2) - goal_(2)) <
+       planners_.back()->GetOutgoingValueFunction()->TrackingBound(2)))
+    reached_goal_ = true;
 
+  if (reached_goal_) {
+    ROS_INFO("%s: Reached end of trajectory. Hovering in place.", name_.c_str());
+
+    // Same point == goal, but three times. 
+    // NOTE! The middle one should be set using a function called
+    // GuaranteedSwitchingTime which is not yet implemented.
+    const std::vector<Vector3d> positions = { goal_, goal_, goal_ };
+    const std::vector<double> times =
+      { current_time.toSec(), current_time.toSec() + 10.0, current_time.toSec() + 100.0 };
+
+    // Get the bound value.
+    const ValueFunction::ConstPtr bound_value = (traj_ == nullptr) ?
+      planners_.front()->GetIncomingValueFunction() : 
+      traj_->GetControlValueFunction(current_time.toSec());
+
+    // Get control value.
+    const ValueFunction::ConstPtr control_value = 
+      planners_.back()->GetOutgoingValueFunction();
+  
+    const std::vector<ValueFunction::ConstPtr> bound_values =
+      { bound_value, control_value, control_value };
+    const std::vector<ValueFunction::ConstPtr> control_values =
+      { control_value, control_value, control_value };
+    const std::vector<VectorXd> states =
+      dynamics_->LiftGeometricTrajectory(positions, times);
+
+    // Construct trajectory and publish.
+    const Trajectory::Ptr hover = 
+      Trajectory::Create(times, states, control_values, bound_values);
+    traj_ = hover;
+
+    traj_pub_.publish(hover->ToRosMessage());
+    return;
+  }
+
+  if (!Plan(start_position, goal_, start_time)) {
+    ROS_ERROR("%s: MetaPlanner failed. Please come again.", name_.c_str());
+    return;
+  }
 
   ROS_INFO("%s: MetaPlanner succeeded after %2.5f seconds.",
            name_.c_str(), (ros::Time::now() - current_time).toSec());
@@ -340,7 +396,7 @@ void MetaPlanner::RequestTrajectoryCallback(
 // (6) Stop when we have a feasible trajectory. Otherwise go to (2).
 // (7) When finished, convert to a message and publish.
 bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
-                       double start_time) const {
+                       double start_time) {
   // Only plan if position has been updated.
   if (!been_updated_)
     return false;
@@ -368,49 +424,134 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
     const std::vector<Waypoint::ConstPtr> neighbors =
       tree.KnnSearch(sample, kNumNeighbors);
 
+    // Throw out this sample if too far from the nearest point.
     if (neighbors.size() != kNumNeighbors ||
         (neighbors[0]->point_ - sample).norm() > max_connection_radius_)
       continue;
 
-    // (4) Plan a trajectory (starting with most aggressive planner).
+    Waypoint::ConstPtr neighbor = neighbors[0];
+
+    // Extract value function and corresponding planner ID from last waypoint. 
+    // If value is null, (i.e. at root) then set to planners_.size() since 
+    // any planner is valid from the root. Convert value ID to planner ID
+    // by dividing by 2 since each planner has two value functions.
+    const ValueFunction::ConstPtr neighbor_val = neighbor->value_;
+    const size_t neighbor_planner_id = (neighbor_val == nullptr) ?
+      planners_.size() : neighbor_val->Id() / 2;
+
+    // (4) Plan a trajectory (starting with the most aggressive planner and ending
+    // with the next-most cautious planner).
     Trajectory::Ptr traj = nullptr;
-    for (size_t ii = 0; ii < planners_.size(); ii++) {
+    ValueFunction::ConstPtr value_used = nullptr;
+    for (size_t ii = 0; 
+	 ii < std::min(neighbor_planner_id + 2, planners_.size()); ii++) {
       const Planner::ConstPtr planner = planners_[ii];
+      value_used = planner->GetIncomingValueFunction();
+
+      // Since we might always end up switching, make sure this point
+      // is not closer than the guaranteed switching distance.
+      if (std::abs(neighbor->point_(0) - sample(0)) <
+          value_used->GuaranteedSwitchingDistance(0, neighbor_val) &&
+          std::abs(neighbor->point_(1) - sample(1)) <
+          value_used->GuaranteedSwitchingDistance(1, neighbor_val) &&
+          std::abs(neighbor->point_(2) - sample(2)) <
+          value_used->GuaranteedSwitchingDistance(2, neighbor_val))
+        break;
 
       // Plan using 10% of the available total runtime.
       // NOTE! This is just a heuristic and could easily be changed.
-      traj = planner->Plan(neighbors[0]->point_, sample,
-                           neighbors[0]->time_, 0.1 * max_runtime_);
+      const double time = (neighbor->traj_ == nullptr) ? 
+	start_time : neighbor->traj_->LastTime();
 
-      if (traj != nullptr)
-        break;
+      traj = planner->Plan(neighbor->point_, sample,
+                           time, 0.1 * max_runtime_);
+
+      if (traj != nullptr) {
+	// When we succeed...
+	// If we just planned with a more cautious planner than the one used
+	// by the nearest neighbor, do a 1-step backtrack.
+	if (ii > neighbor_planner_id) {
+	  // Clone the neighbor.
+	  const Vector3d jittered(neighbor->point_(0) + 1e-4, 
+				  neighbor->point_(1) + 1e-4,
+				  neighbor->point_(2) + 1e-4);
+
+	  const double time = (neighbor->traj_ == nullptr) ? 
+	    start_time : neighbor->traj_->FirstTime();
+
+	  if (time <= start_time + 1e-8)
+	    ROS_ERROR("%s: Tried to clone the root.", name_.c_str());
+
+	  Waypoint::ConstPtr clone = Waypoint::Create(
+	    jittered, 
+	    neighbor->value_, 
+	    Trajectory::Create(neighbor->traj_, time),
+	    neighbor->parent_);
+
+	  // Swap out the control value function in the neighbor's trajectory
+	  // and update time stamps accordingly.
+	  clone->traj_->ExecuteSwitch(value_used);
+
+	  // Insert the clone.
+	  tree.Insert(clone, false);
+
+	  // Adjust the time stamps for the new trajectory to occur after the
+	  // updated neighbor's trajectory.
+	  traj->ResetStartTime(clone->traj_->LastTime());
+
+	  // Neighbor is now clone.
+	  neighbor = clone;
+	}
+
+	break;
+      }
     }
 
     // Check if we could found a trajectory to this sample.
     if (traj == nullptr)
       continue;
 
+    // Insert the sample.
+    const Waypoint::ConstPtr waypoint = Waypoint::Create(
+      sample, value_used, traj, neighbor);
+
+    tree.Insert(waypoint, false);
+
     // (5) Try to connect to the goal point.
     Trajectory::Ptr goal_traj = nullptr;
-    if ((sample - stop).norm() <= max_connection_radius_) {
-      for (size_t ii = 0; ii < planners_.size(); ii++) {
-        const Planner::ConstPtr planner = planners_[ii];
+    ValueFunction::ConstPtr goal_value_used = nullptr;
+    const size_t planner_used_id = value_used->Id() / 2;
 
+    if ((sample - stop).norm() <= max_connection_radius_) {
+      for (size_t ii = 0;
+           ii < std::min(planner_used_id + 2, planners_.size()); ii++) {
+        const Planner::ConstPtr planner = planners_[ii];
+        goal_value_used = planner->GetIncomingValueFunction();
+
+	// We are never gonna need to switch if this succeeds.
         // Plan using 10% of the available total runtime.
         // NOTE! This is just a heuristic and could easily be changed.
         goal_traj =
           planner->Plan(sample, stop, traj->LastTime(), 0.1 * max_runtime_);
 
-        if (goal_traj != nullptr)
-          break;
+        if (goal_traj != nullptr) {
+	  // When we succeed...
+	  // If we just planned with a more cautious planner than the one used
+	  // by the nearest neighbor, do a 1-step backtrack.
+	  if (ii > neighbor_planner_id) {
+	    // Swap out the control value function in the neighbor's trajectory
+	    // and update time stamps accordingly.
+	    waypoint->traj_->ExecuteSwitch(goal_value_used);
+	
+	    // Adjust the time stamps for the new trajectory to occur after the
+	    // updated neighbor's trajectory.
+	    goal_traj->ResetStartTime(waypoint->traj_->LastTime());
+	  }
+
+	  break;
+	}
       }
     }
-
-    // Insert the sample.
-    const Waypoint::ConstPtr waypoint = Waypoint::Create(
-      sample, traj->LastTime(), traj, neighbors[0]);
-
-    tree.Insert(waypoint, false);
 
     // (6) If this sample was connected to the goal, update the tree terminus.
     if (goal_traj != nullptr) {
@@ -419,7 +560,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
       // traj, but when we merge the two trajectories the std::map insertion
       // rules will prevent duplicates.
       const Waypoint::ConstPtr goal = Waypoint::Create(
-        stop, goal_traj->LastTime(), goal_traj, waypoint);
+        stop, value_used, goal_traj, waypoint);
 
       tree.Insert(goal, true);
 
@@ -434,6 +575,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
     ROS_INFO("%s: Publishing trajectory of length %zu.",
              name_.c_str(), best->Size());
 
+    traj_ = best;
     traj_pub_.publish(best->ToRosMessage());
     return true;
   }

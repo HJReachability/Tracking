@@ -90,11 +90,9 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // Set the initial state to zero.
   state_ = VectorXd::Zero(state_dim_);
 
-  // Create value functions.
+  // Populate list of value functions.
   if (numerical_mode_) {
     for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-      // NOTE: Assuming the 6D quadrotor model and geometric planner in 3D.
-      // Load up the value function.
       const ValueFunction::ConstPtr value =
         ValueFunction::Create(value_directories_[ii], dynamics_,
                               state_dim_, control_dim_,
@@ -108,29 +106,28 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
       // SEMI-HACK! Manually feeding control/disturbance bounds.
       const Vector3d max_planner_speed =
         Vector3d::Constant(max_planner_speeds_[ii]);
-      const Vector3d max_tracker_control(control_upper_[0],
-                                         control_upper_[1],
-                                         control_upper_[2]);
-      const Vector3d min_tracker_control(control_lower_[0],
-                                         control_lower_[1],
-                                         control_lower_[2]);
       const Vector3d max_velocity_disturbance =
         Vector3d::Constant(max_velocity_disturbances_[ii]);
       const Vector3d max_acceleration_disturbance =
         Vector3d::Constant(max_acceleration_disturbances_[ii]);
+      const Vector3d velocity_expansion = Vector3d::Constant(0.225);
 
       // Create analytical value function.
       const AnalyticalPointMassValueFunction::ConstPtr value =
         AnalyticalPointMassValueFunction::Create(max_planner_speed,
-                                                 max_tracker_control,
-                                                 min_tracker_control,
                                                  max_velocity_disturbance,
                                                  max_acceleration_disturbance,
+                                                 velocity_expansion,
                                                  dynamics_,
                                                  static_cast<ValueFunctionId>(ii));
 
       values_.push_back(value);
     }
+  }
+
+  if (values_.size() % 2 != 0) {
+    ROS_ERROR("%s: Must provide pairs of value functions.", name_.c_str());
+    return false;
   }
 
   // Initialize trajectory to null as a cue to Hover(). Hover will reset the
@@ -167,6 +164,9 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
 
   // Planner parameters.
   if (!nl.getParam("meta/meta/max_runtime", max_meta_runtime_)) return false;
+  if (!nl.getParam("meta/meta/switching_lookahead", switching_lookahead_))
+    return false;
+
   if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
   if (!nl.getParam("meta/planners/value_directories", value_directories_))
     return false;
@@ -225,36 +225,36 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Subscribers.
   state_sub_ = nl.subscribe(
-    state_topic_.c_str(), 10, &Tracker::StateCallback, this);
+    state_topic_.c_str(), 1, &Tracker::StateCallback, this);
 
   traj_sub_ = nl.subscribe(
-    traj_topic_.c_str(), 10, &Tracker::TrajectoryCallback, this);
+    traj_topic_.c_str(), 1, &Tracker::TrajectoryCallback, this);
 
   trigger_replan_sub_ = nl.subscribe(
-    trigger_replan_topic_.c_str(), 10, &Tracker::TriggerReplanCallback, this);
+    trigger_replan_topic_.c_str(), 1, &Tracker::TriggerReplanCallback, this);
 
   in_flight_sub_ = nl.subscribe(
-    in_flight_topic_.c_str(), 10, &Tracker::InFlightCallback, this);
+    in_flight_topic_.c_str(), 1, &Tracker::InFlightCallback, this);
 
   // Visualization publisher(s).
   environment_pub_ = nl.advertise<visualization_msgs::Marker>(
-    environment_topic_.c_str(), 10, false);
+    environment_topic_.c_str(), 1, false);
 
   traj_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
-    traj_vis_topic_.c_str(), 10, false);
+    traj_vis_topic_.c_str(), 1, false);
 
   tracking_bound_pub_ = nl.advertise<visualization_msgs::Marker>(
-    tracking_bound_topic_.c_str(), 10, false);
+    tracking_bound_topic_.c_str(), 1, false);
 
   // Actual publishers.
   control_pub_ = nl.advertise<crazyflie_msgs::NoYawControlStamped>(
-    control_topic_.c_str(), 10, false);
+    control_topic_.c_str(), 1, false);
 
   reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
-    reference_topic_.c_str(), 10, false);
+    reference_topic_.c_str(), 1, false);
 
   request_traj_pub_ = nl.advertise<meta_planner_msgs::TrajectoryRequest>(
-    request_traj_topic_.c_str(), 10, false);
+    request_traj_topic_.c_str(), 1, false);
 
   // Timer.
   timer_ =
@@ -308,9 +308,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   // (1) If current time is near the end of the current trajectory, just hover and
   //     post a request for a new trajectory.
-  if (traj_ == nullptr || 
+  if (traj_ == nullptr ||
       current_time.toSec() > traj_->LastTime() - max_meta_runtime_) {
-    ROS_WARN_THROTTLE(1.0, "%s: Nearing end of trajector. Replanning.",
+    ROS_WARN_THROTTLE(1.0, "%s: Nearing end of trajectory. Replanning.",
              name_.c_str());
 
     // Set trajectory to be the remainder of this trajectory, then hovering
@@ -362,8 +362,13 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   reference_pub_.publish(reference);
 
-  // (2) Get corresponding value function.
-  const ValueFunction::ConstPtr value = traj_->GetValueFunction(current_time.toSec());
+  // (2) Get corresponding control and bound value function.
+  const ValueFunction::ConstPtr control_value =
+    traj_->GetControlValueFunction(current_time.toSec());
+  const ValueFunction::ConstPtr bound_value =
+    traj_->GetBoundValueFunction(current_time.toSec());
+
+  const double priority = control_value->Priority(relative_state);
 
   // Visualize the tracking bound.
   visualization_msgs::Marker tracking_bound_marker;
@@ -374,34 +379,32 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.type = visualization_msgs::Marker::CUBE;
   tracking_bound_marker.action = visualization_msgs::Marker::ADD;
 
-  tracking_bound_marker.scale.x = 2.0 * value->TrackingBound(0);
-  tracking_bound_marker.scale.y = 2.0 * value->TrackingBound(1);
-  tracking_bound_marker.scale.z = 2.0 * value->TrackingBound(2);
+  tracking_bound_marker.scale.x = 2.0 * bound_value->TrackingBound(0);
+  tracking_bound_marker.scale.y = 2.0 * bound_value->TrackingBound(1);
+  tracking_bound_marker.scale.z = 2.0 * bound_value->TrackingBound(2);
 
   tracking_bound_marker.color.a = 0.3;
-  tracking_bound_marker.color.r = 0.9;
-  tracking_bound_marker.color.g = 0.2;
-  tracking_bound_marker.color.b = 0.9;
+  tracking_bound_marker.color.r = priority;
+  tracking_bound_marker.color.g = 0.0;
+  tracking_bound_marker.color.b = 1.0 - priority;
 
   tracking_bound_pub_.publish(tracking_bound_marker);
 
   // Warn if outside tracking error bound.
   double min_dist_to_bound = std::numeric_limits<double>::infinity();
   for (size_t ii = 0; ii < 3; ii++) {
-    const double signed_dist = value->TrackingBound(ii) -
+    const double signed_dist =  bound_value->TrackingBound(ii) -
       std::abs(relative_state(dynamics_->SpatialDimension(ii)));
-      // std::cout << "TrackingBound:" << value->TrackingBound(ii) << std::endl;
 
     min_dist_to_bound = std::min(min_dist_to_bound, signed_dist);
   }
 
   if (min_dist_to_bound <= 0.0) {
     ROS_WARN_THROTTLE(1.0, "%s: Leaving the tracking error bound.", name_.c_str());
-    //    std::terminate();
   }
 
   // (3) Interpolate gradient to get optimal control.
-  const VectorXd optimal_control = value->OptimalControl(relative_state);
+  const VectorXd optimal_control = control_value->OptimalControl(relative_state);
 
   // (4) Publish optimal control with priority in (0, 1).
   crazyflie_msgs::NoYawControlStamped control_msg;
@@ -411,7 +414,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   control_msg.control.pitch = crazyflie_utils::angles::WrapAngleRadians(optimal_control(0));
   control_msg.control.roll = crazyflie_utils::angles::WrapAngleRadians(optimal_control(1));
   control_msg.control.thrust = optimal_control(2);
-  control_msg.control.priority = value->Priority(relative_state);
+  control_msg.control.priority = priority;
 
   control_pub_.publish(control_msg);
 
@@ -465,8 +468,8 @@ void Tracker::Hover() {
     hover_state(4) = 0.0;
     hover_state(5) = 0.0;
 
-    traj_->Add(now, hover_state, values_.back());
-    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state, values_.back());
+    traj_->Add(now, hover_state, values_.back(), values_.front());
+    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state, values_.back(), values_.front());
     return;
   }
 
@@ -487,7 +490,8 @@ void Tracker::Hover() {
   // HACK! Assuming can hover using last value function. Is this true?
   hover->Add(hover->LastTime() + max_meta_runtime_ + 10.0,
              last_state,
-             hover->LastValueFunction());
+             hover->LastControlValueFunction(),
+	     hover->LastControlValueFunction());
 
   traj_ = hover;
 }

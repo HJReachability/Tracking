@@ -49,16 +49,7 @@ namespace meta {
 // Shortest possible time to go from start to stop for this planner.
 double Planner::
 BestPossibleTime(const Vector3d& start, const Vector3d& stop) const {
-  double time = 0.0;
-
-  // Take the max of the min times in each dimension.
-  for (size_t ii = 0; ii < 3; ii++) {
-    const double dim_time =
-      std::abs(stop(ii) - start(ii)) / value_->MaxPlannerSpeed(ii);
-    time = std::max(time, dim_time);
-  }
-
-  return time;
+  return incoming_value_->BestPossibleTime(start, stop);
 }
 
 } //\namespace meta

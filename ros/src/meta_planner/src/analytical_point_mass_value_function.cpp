@@ -57,17 +57,21 @@ const size_t AnalyticalPointMassValueFunction::p_dim_ = 3;
 // the maximum planner speed in each geometric dimension.
 AnalyticalPointMassValueFunction::ConstPtr AnalyticalPointMassValueFunction::
 Create(const Vector3d& max_planner_speed,
-       const Vector3d& max_tracker_control,
-       const Vector3d& min_tracker_control,
        const Vector3d& max_vel_disturbance,
        const Vector3d& max_acc_disturbance,
+       const Vector3d& expansion_vel,
        const Dynamics::ConstPtr& dynamics,
        ValueFunctionId id) {
   AnalyticalPointMassValueFunction::ConstPtr ptr(
-    new AnalyticalPointMassValueFunction(max_planner_speed, max_tracker_control,
-                                         min_tracker_control, max_vel_disturbance,
-                                         max_acc_disturbance, dynamics, id));
+    new AnalyticalPointMassValueFunction(max_planner_speed, max_vel_disturbance,
+                                         max_acc_disturbance, expansion_vel,
+                                         dynamics, id));
   return ptr;
+}
+
+// Get velocity expansion in the subsystem containing the given spatial dim.
+double AnalyticalPointMassValueFunction::VelocityExpansion(size_t dimension) const {
+  return v_exp_(dimension);
 }
 
 // Analytically evaluate value/gradient at a particular state.
@@ -82,14 +86,14 @@ Value(const VectorXd& state) const {
     // Value surface A: + for x "below" convex Acceleration parabola.
     const double V_A = -x +
       (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref) /
-      (a_max_(dim) - d_a_(dim));
+      (a_max_(dim) - d_a_(dim)) - x_exp_(dim);
     //    const double V_A = ( 1/2*pow(v-v_ref,2) - pow(v_ref,2) )
     //      /   ( a_max_(dim) - d_a_(dim) ) - x;
 
     // Value surface B: + for x "above" concave Braking parabola.
     const double V_B = x -
       (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref) /
-      (a_max_(dim) - d_a_(dim));
+      (a_max_(dim) - d_a_(dim)) + x_exp_(dim);
     //    const double V_B = x - ( -1/2*pow(v+v_ref,2) + pow(v_ref,2) )
     //      /   ( a_max_(dim) - d_a_(dim) );
 
@@ -114,11 +118,11 @@ Gradient(const VectorXd& state) const {
     // Value surface A: + for x "below" convex Acceleration parabola.
     const double V_A = -x +
       (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref) /
-      (a_max_(dim) - d_a_(dim));
+      (a_max_(dim) - d_a_(dim)) - x_exp_(dim);
     // Value surface B: + for x "above" concave Braking parabola.
     const double V_B = x -
       (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref) /
-      (a_max_(dim) - d_a_(dim));
+      (a_max_(dim) - d_a_(dim)) + x_exp_(dim);
     if (V_A > V_B) {
       grad_V(dim) = -1.0;         // if on A side, grad points towards -pos
       grad_V(p_dim_ + dim) = (v - v_ref) / (a_max_(dim) - d_a_(dim));
@@ -145,19 +149,27 @@ OptimalControl(const VectorXd& state) const {
     // Value surface A: + for x "below" convex Acceleration parabola.
     const double V_A = -x +
       (0.5 * (v - v_ref)*(v - v_ref) - v_ref*v_ref) /
-      (a_max_(dim) - d_a_(dim));
+      (a_max_(dim) - d_a_(dim)) - x_exp_(dim);
     // Value surface B: + for x "above" concave Braking parabola.
     const double V_B = x -
       (-0.5 * (v + v_ref)*(v + v_ref) + v_ref*v_ref) /
-      (a_max_(dim) - d_a_(dim));
-    if (V_A > V_B) {
-      // If on A side, accelerate.
-      u_opt(dim) = u2a_(dim) > 0.0 ? u_max_(dim) : u_min_(dim);
-    } else {
-      // If on B side, brake.
-      u_opt(dim) = u2a_(dim) > 0.0 ? u_min_(dim) : u_max_(dim);
-    }
-  }
+      (a_max_(dim) - d_a_(dim)) + x_exp_(dim);
+    const double V = std::max(V_A,V_B);
+    // Determine acceleration and deceleration input in this dimension
+    const double u_acc = u2a_(dim) > 0.0 ? u_max_(dim) : u_min_(dim);
+    const double u_dec = u2a_(dim) > 0.0 ? u_min_(dim) : u_max_(dim);
+    // Inside rule
+    //    if (V <= 0)
+    if (false)
+      u_opt(dim) = (V_A > V_B) ? u_acc : u_dec;
+    // Outside rule
+    else {
+      if (x >= 0) // If A-curve can catch you brake, else accelerate.
+        u_opt(dim) = (V_A < 0) ? u_dec : u_acc;
+      else // If B-curve can catch you accelerate, else brake.
+        u_opt(dim) = (V_B < 0) ? u_acc : u_dec;
+    } // if V <= 0, else
+  } // for dim
 
   return u_opt;
 }
@@ -170,7 +182,7 @@ Priority(const VectorXd& state) const {
   const double V = Value(state);
 
   // HACK! The threshold should probably be externally set via config.
-  const double relative_high = 0.10; // 10% of max inside value
+  const double relative_high = 0.20; // 10% of max inside value
   const double relative_low  = 0.05; // 5% of max inside value
 
   const double V_safest = Value(VectorXd::Zero(6));
@@ -179,7 +191,8 @@ Priority(const VectorXd& state) const {
   const double V_high = relative_high * V_safest;
   const double V_low = relative_low * V_safest;
 
-  const double priority = 1.0 - std::min(std::max(0.0,(V-V_low)/(V_high-V_low)),1.0);
+  const double priority = 1.0 -
+                          std::min(std::max(0.0,(V-V_low)/(V_high-V_low)),1.0);
   return priority;
 }
 
@@ -189,34 +202,63 @@ TrackingBound(size_t dim) const {
   // Return a single positive number (semi-length of interval centered on 0)
   // This is equal to the position at the intersection between parabolas.
   const double v_ref = max_planner_speed_(dim);
-  // std::cout << "v_ref:" << v_ref << "   a_max:" << a_max_(dim)  << "   d_a:" << d_a_(dim) << std::endl;
-  // std::cout << "bound:" << 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) / (a_max_(dim) - d_a_(dim)) << std::endl;
-  return 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) / (a_max_(dim) - d_a_(dim));
+
+  return 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim)) * (1.0 + x_exp_(dim))
+          / (a_max_(dim) - d_a_(dim));
+}
+
+// Get the tracking error bound in this spatial dimension for a planner
+// switching INTO this one with the specified max speed.
+double AnalyticalPointMassValueFunction::
+SwitchingTrackingBound(size_t dim, const ValueFunction::ConstPtr& value) const {
+  // For point-mass-to-point-mass the switching error bound is the same in
+  // position dimensions as the tracking error bound of the incoming planner.
+  return value->TrackingBound(dim);
+}
+
+// Guaranteed distance in which a planner with the specified value function
+// can switch into this value function's safe set.
+double AnalyticalPointMassValueFunction::
+GuaranteedSwitchingDistance(size_t dimension,
+                            const ValueFunction::ConstPtr& incoming_value) const {
+  ROS_ERROR_THROTTLE(1.0, "Unimplemented method GuaranteedSwitchingDistance.");
+  return TrackingBound(dimension);
 }
 
 // Constructor.
 AnalyticalPointMassValueFunction::
 AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
-                                 const Vector3d& max_tracker_control,
-                                 const Vector3d& min_tracker_control,
                                  const Vector3d& max_vel_disturbance,
                                  const Vector3d& max_acc_disturbance,
+                                 const Vector3d& expansion_vel,
                                  const Dynamics::ConstPtr& dynamics,
                                  ValueFunctionId id)
   : ValueFunction(dynamics, 6, 3, id),
-    u_max_(max_tracker_control),
-    u_min_(min_tracker_control),
+    u_max_(Vector3d(dynamics->MaxControl(0),
+                    dynamics->MaxControl(1),
+                    dynamics->MaxControl(2))),
+    u_min_(Vector3d(dynamics->MinControl(0),
+                    dynamics->MinControl(1),
+                    dynamics->MinControl(2))),
     d_v_(max_vel_disturbance),
-    d_a_(max_acc_disturbance) {
-  // Compute max acceleration (NOTE: assumed symmetric even if u_max != -u_min).
-  const VectorXd x_dot_max = dynamics_->Evaluate(VectorXd::Zero(6), u_max_);
-  a_max_ = x_dot_max.tail<3>().cwiseAbs();
+    d_a_(max_acc_disturbance),
+    v_exp_(expansion_vel) {
+  // Compute max acceleration.
+  a_max_(0) = dynamics->MaxAcceleration(0);
+  a_max_(1) = dynamics->MaxAcceleration(1);
+  a_max_(2) = dynamics->MaxAcceleration(2);
 
   // Compute control gains.
+  // NOTE: assumed symmetric even if u_max != -u_min.
+  const VectorXd x_dot_max = dynamics_->Evaluate(VectorXd::Zero(6), u_max_);
   u2a_ = x_dot_max.tail<3>().cwiseQuotient( 0.5 * (u_max_ - u_min_) );
 
-  // Set max planner speed
+  // Max planner speed
   max_planner_speed_ = max_planner_speed;
+
+  // Expansion of set boundaries in the position dimension
+  x_exp_ = expansion_vel.cwiseProduct(2*max_planner_speed + 0.5*expansion_vel)
+            .cwiseQuotient(a_max_ - d_a_);
 }
 
 } //\namespace meta

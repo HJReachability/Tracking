@@ -70,6 +70,9 @@ public:
                          const Dynamics::ConstPtr& dynamics,
                          size_t x_dim, size_t u_dim, ValueFunctionId id);
 
+  // Get velocity expansion in the subsystem containing the given spatial dim.
+  virtual double VelocityExpansion(size_t dimension) const;
+
   // Linearly interpolate to get the value/gradient at a particular state.
   virtual double Value(const VectorXd& state) const;
   virtual VectorXd Gradient(const VectorXd& state) const;
@@ -82,6 +85,16 @@ public:
   // Get the tracking error bound in this spatial dimension.
   virtual double TrackingBound(size_t dimension) const;
 
+  // Get the tracking error bound in this spatial dimension for a planner
+  // switching INTO this one with the specified max speed.
+  virtual double SwitchingTrackingBound(
+    size_t dimension, const ValueFunction::ConstPtr& value) const;
+
+  // Guaranteed distance in which a planner with the specified value function
+  // can switch into this value function's safe set.
+  virtual double GuaranteedSwitchingDistance(
+    size_t dimension, const ValueFunction::ConstPtr& incoming_value) const;
+
   // Priority of the optimal control at the given state. This is a number
   // between 0 and 1, where 1 means the final control signal should be exactly
   // the optimal control signal computed by this value function.
@@ -93,6 +106,21 @@ public:
   // Max planner speed in the given spatial dimension.
   inline double MaxPlannerSpeed(size_t ii) const {
     return max_planner_speed_(ii);
+  }
+
+  // Compute the shortest possible time to go from start to stop for a
+  // geometric planner with the max planner speed for this value function.
+  inline double BestPossibleTime(const Vector3d& start, const Vector3d& stop) const {
+    double time = 0.0;
+
+    // Take the max of the min times in each dimension.
+    for (size_t ii = 0; ii < 3; ii++) {
+      const double dim_time =
+	std::abs(stop(ii) - start(ii)) / max_planner_speed_(ii);
+      time = std::max(time, dim_time);
+    }
+
+    return time;
   }
 
   // Get the ID of this value function.

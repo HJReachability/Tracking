@@ -110,6 +110,14 @@ size_t NearHoverDynamics::SpatialDimension(size_t dimension) const {
   return 0;
 }
 
+// Get the max acceleration in the given spatial dimension.
+double NearHoverDynamics::MaxAcceleration(size_t dimension) const {
+  ROS_WARN("Unimplemented method MaxAcceleration.");
+
+  return 0.0;
+}
+
+
 // Derived classes must be able to translate a geometric trajectory
 // (i.e. through Euclidean space) into a full state space trajectory.
 std::vector<VectorXd> NearHoverDynamics::

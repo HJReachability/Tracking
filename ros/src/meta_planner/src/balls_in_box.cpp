@@ -57,10 +57,12 @@ BallsInBox::BallsInBox()
   : Box() {}
 
 // Inherited collision checker from Box needs to be overwritten.
+// Takes in incoming and outgoing value functions. See planner.h for details.
 bool BallsInBox::IsValid(const Vector3d& position,
-                         const ValueFunction::ConstPtr& value) const {
+                         const ValueFunction::ConstPtr& incoming_value,
+                         const ValueFunction::ConstPtr& outgoing_value) const {
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (!value.get()) {
+  if (!incoming_value.get() || !outgoing_value.get()) {
     ROS_ERROR("Value function pointer was null.");
     return false;
   }
@@ -68,7 +70,8 @@ bool BallsInBox::IsValid(const Vector3d& position,
 
   // Check bounds.
   for (size_t ii = 0; ii < 3; ii++) {
-    const double bound = value->TrackingBound(ii);
+    const double bound = outgoing_value->
+      SwitchingTrackingBound(ii, incoming_value);
 
     if (position(ii) < lower_(ii) + bound ||
         position(ii) > upper_(ii) - bound)
@@ -88,10 +91,13 @@ bool BallsInBox::IsValid(const Vector3d& position,
     // NOTE: this check assumes that the tracking bubble is not greater than
     // twice the obstacle diameter.
     Vector3d corner;
-    for (size_t jj = 0; jj < 3; jj++)
+    for (size_t jj = 0; jj < 3; jj++) {
+      const double bound = outgoing_value->
+        SwitchingTrackingBound(jj, incoming_value);
+
       corner(jj) = (position(jj) - p(jj) > 0.0) ?
-        position(jj) - value->TrackingBound(jj) :
-        position(jj) + value->TrackingBound(jj);
+        position(jj) - bound : position(jj) + bound;
+    }
 
     if ((corner - p).norm() <= radii_[ii])
       return false;

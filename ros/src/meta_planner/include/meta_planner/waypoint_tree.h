@@ -89,6 +89,9 @@ private:
   // Best terminal waypoint.
   Waypoint::ConstPtr terminus_;
 
+  // Start time.
+  const double start_time_;
+
   // Kdtree storing all waypoints for easy nearest neighbor searching.
   FlannTree kdtree_;
 };

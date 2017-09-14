@@ -71,12 +71,14 @@ public:
   // instantiated it can never be changed. Note that we must pass in
   // the maximum planner speed in each geometric dimension.
   static ConstPtr Create(const Vector3d& max_planner_speed,
-                         const Vector3d& max_tracker_control,
-                         const Vector3d& min_tracker_control,
                          const Vector3d& max_vel_disturbance,
                          const Vector3d& max_acc_disturbance,
+                         const Vector3d& expansion_vel,
                          const Dynamics::ConstPtr& dynamics,
                          ValueFunctionId id);
+
+  // Get velocity expansion in the subsystem containing the given spatial dim.
+  double VelocityExpansion(size_t dimension) const;
 
   // Analytically evaluate value/gradient at a particular state.
   double Value(const VectorXd& state) const;
@@ -93,12 +95,21 @@ public:
   // Get the tracking error bound in this spatial dimension.
   double TrackingBound(size_t dimension) const;
 
+  // Get the tracking error bound in this spatial dimension for a planner
+  // switching INTO this one with the specified max speed.
+  double SwitchingTrackingBound(
+    size_t dim, const ValueFunction::ConstPtr& value) const;
+
+  // Guaranteed distance in which a planner with the specified value function
+  // can switch into this value function's safe set.
+  double GuaranteedSwitchingDistance(
+    size_t dimension, const ValueFunction::ConstPtr& incoming_value) const;
+
 private:
   explicit AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
-                                            const Vector3d& max_tracker_control,
-                                            const Vector3d& min_tracker_control,
                                             const Vector3d& max_vel_disturbance,
                                             const Vector3d& max_acc_disturbance,
+                                            const Vector3d& expansion_vel,
                                             const Dynamics::ConstPtr& dynamics,
                                             ValueFunctionId id);
 
@@ -107,6 +118,8 @@ private:
   const Vector3d u_min_;            // minimum control input (not symmetric)
   const Vector3d d_v_;              // velocity disturbance
   const Vector3d d_a_;              // acceleration disturbance
+  const Vector3d v_exp_;            // set expansion in velocity dimensions
+  Vector3d x_exp_;                  // set expansion in position dimensions
   Vector3d a_max_;                  // maximum absolute acceleration
   Vector3d u2a_;                    // bang-bang control-to-acceleration gain
 

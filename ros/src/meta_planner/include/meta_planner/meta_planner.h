@@ -75,6 +75,7 @@ public:
   ~MetaPlanner() {}
   explicit MetaPlanner()
     : in_flight_(false),
+      reached_goal_(false),
       been_updated_(false),
       initialized_(false) {}
 
@@ -104,7 +105,10 @@ private:
   // Plan a trajectory from the given start to stop points, beginning at the
   // specified start time. Auto-publishes the result and returns whether
   // meta planning was successful.
-  bool Plan(const Vector3d& start, const Vector3d& stop, double start_time) const;
+  bool Plan(const Vector3d& start, const Vector3d& stop, double start_time);
+
+  // Remember the last trajectory we sent.
+  Trajectory::ConstPtr traj_;
 
   // List of planners and flag for whether to load value functions from disk or
   // create analytic versions given parameters read from ROS.
@@ -127,6 +131,7 @@ private:
   size_t state_dim_;
   size_t control_dim_;
   BallsInBox::Ptr space_;
+  unsigned int seed_;
 
   std::vector<double> state_upper_;
   std::vector<double> state_lower_;
@@ -164,6 +169,9 @@ private:
 
   // Are we in flight?
   bool in_flight_;
+
+  // Have we reached the goal?
+  bool reached_goal_;
 
   // Initialization and naming.
   bool initialized_;

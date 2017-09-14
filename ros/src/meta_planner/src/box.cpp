@@ -72,10 +72,12 @@ Vector3d Box::Sample() const {
 
 // Inherited from Environment, but can be overwritten by child classes.
 // Returns true if the state is a valid configuration.
+// Takes in incoming and outgoing value functions. See planner.h for details.
 bool Box::IsValid(const Vector3d& position,
-                  const ValueFunction::ConstPtr& value) const {
+                  const ValueFunction::ConstPtr& incoming_value,
+                  const ValueFunction::ConstPtr& outgoing_value) const {
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (!value.get()) {
+  if (!incoming_value.get() || !outgoing_value.get()) {
     ROS_ERROR("Value function pointer was null.");
     return false;
   }
@@ -83,7 +85,8 @@ bool Box::IsValid(const Vector3d& position,
 
   // No obstacles. Just check bounds.
   for (size_t ii = 0; ii < 3; ii++) {
-    const double bound = value->TrackingBound(ii);
+    const double bound = outgoing_value->
+      SwitchingTrackingBound(ii, incoming_value);
 
     if (position(ii) < lower_(ii) + bound ||
         position(ii) > upper_(ii) - bound)
