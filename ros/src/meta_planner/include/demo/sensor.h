@@ -86,6 +86,7 @@ private:
 
   // State space.
   BallsInBox::Ptr space_;
+  unsigned int seed_;
   size_t num_obstacles_;
   size_t state_dim_;
   size_t control_dim_;

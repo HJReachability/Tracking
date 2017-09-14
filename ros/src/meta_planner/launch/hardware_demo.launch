@@ -12,6 +12,8 @@
   <arg name="goal_y" default="1.5" />
   <arg name="goal_z" default="1.0" />
 
+  <arg name="random_seed" default="0" />
+
   <arg name="takeoff_hover_x" default="0.0" />
   <arg name="takeoff_hover_y" default="0.0" />
   <arg name="takeoff_hover_z" default="0.5" />
@@ -191,7 +193,7 @@
     <param name="topics/cmd_vel" value="/$(arg tracker_frame)/cmd_vel" />
   </node>
 
-  <!-- Tracker and sensor nodes. -->
+  <!-- Tracker, meta planner, and sensor nodes. -->
   <group ns="meta">
     <node name="tracker"
           pkg="meta_planner"
@@ -241,6 +243,8 @@
       <param name="meta/meta/max_runtime" value="$(arg max_meta_runtime)" />
       <param name="meta/meta/max_connection_radius" value="$(arg max_meta_connection_radius)" />
 
+      <param name="meta/random/seed" value="$(arg random_seed)" />
+
       <param name="meta/goal/x" value="$(arg goal_x)" />
       <param name="meta/goal/y" value="$(arg goal_y)" />
       <param name="meta/goal/z" value="$(arg goal_z)" />
@@ -275,6 +279,8 @@
 
       <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
       <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
+
+      <param name="meta/random/seed" value="$(arg random_seed)" />
 
       <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
       <param name="meta/frames/tracker" value="$(arg tracker_frame)" />

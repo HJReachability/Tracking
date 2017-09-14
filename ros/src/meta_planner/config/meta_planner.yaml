@@ -13,6 +13,10 @@ meta:
     min_obstacle_radius: 0.4
     max_obstacle_radius: 0.5
 
+  random:
+    # Random seed for environment.
+    seed: 0
+
   control:
     # Interval (seconds) of the discrete-time control update.
     time_step: 0.01
