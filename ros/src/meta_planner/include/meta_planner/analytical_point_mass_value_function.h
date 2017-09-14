@@ -95,6 +95,9 @@ public:
   // Get the tracking error bound in this spatial dimension.
   double TrackingBound(size_t dimension) const;
 
+  // Get the tracker velocity bounds in this spatial dimension.
+  double VelocityBound(size_t dimension) const;
+
   // Get the tracking error bound in this spatial dimension for a planner
   // switching INTO this one with the specified max speed.
   double SwitchingTrackingBound(

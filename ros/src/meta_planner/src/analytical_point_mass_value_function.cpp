@@ -207,6 +207,15 @@ TrackingBound(size_t dim) const {
           / (a_max_(dim) - d_a_(dim));
 }
 
+// Get the tracker velocity bounds in this spatial dimension.
+double VelocityBound(size_t dim) const{
+  // Return a single positive number (semi-length of interval centered on 0)
+  // This is equal to the position at the intersection between parabolas.
+  const double v_ref = max_planner_speed_(dim);
+
+  return std::sqrt(v_ref*v_ref + 2*(a_max_(dim) - d_a_(dim))*x_exp_(dim));
+}
+
 // Get the tracking error bound in this spatial dimension for a planner
 // switching INTO this one with the specified max speed.
 double AnalyticalPointMassValueFunction::
