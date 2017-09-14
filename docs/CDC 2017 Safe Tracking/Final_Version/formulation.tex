@@ -7,7 +7,7 @@ The tracking model represents the autonomous system dynamics, and in general may
 \begin{equation}
 \begin{aligned}
 \label{eq:tdyn}
-\frac{d\tstate}{d\tvar} = \dot{\tstate} = \tdyn(\tstate, \tctrl, \dstb), \tvar \in [0, \thor], \tstate \in \tset, \tctrl \in \tcset, \dstb \in \dset
+\dot{\tstate} = \tdyn(\tstate, \tctrl, \dstb), \tvar \in [0, \thor], \tstate \in \tset, \tctrl \in \tcset, \dstb \in \dset
 \end{aligned}
 \end{equation}
 We assume that the system dynamics $\tdyn : \tset\ \times\ \tcset \times \dset \rightarrow \tset$ are uniformly continuous, bounded, and Lipschitz continuous in $\tstate$ for fixed control $\tctrl$. The control function $\tctrl(\cdot)$ and disturbance function $\dstb(\cdot)$ are drawn from the following sets:
@@ -21,7 +21,7 @@ where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under the
 \begin{equation}
 \label{eq:fdyn_traj}
 \begin{aligned}
-\frac{d}{d\tvar}\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot)) &= \tdyn(\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot)), \tctrl(\tvar)) \\
+\dot\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot)) &= \tdyn(\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot)), \tctrl(\tvar)) \\
 \ttraj(\tvar; \tstate, \tvar, \tctrl(\cdot)) &= \tstate
 \end{aligned}
 \end{equation}
@@ -31,7 +31,7 @@ The planning model is used by the path or trajectory planner to determine a desi
 \begin{equation}
 \begin{aligned}
 \label{eq:pdyn}
-\frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \pstate \in \pset, \ \underline{\pctrl} \leq \pctrl \leq \overline{\pctrl}
+\dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \pstate \in \pset, \ \underline{\pctrl} \leq \pctrl \leq \overline{\pctrl}
 \end{aligned}
 \end{equation}
 Note that the planning model does not involve a disturbance input. This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances.

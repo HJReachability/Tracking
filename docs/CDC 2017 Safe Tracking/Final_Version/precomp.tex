@@ -1,9 +1,9 @@
 % !TEX root = tracking.tex
 \section{Offline Computation \label{sec:precomp}}
-The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking system and the planning system, which we then analyze using HJ reachability. In this game, the tracking system will try to ``capture" the planning system, while the planning system is doing everything it can to avoid capture. In reality the planner is typically not actively trying to avoid the tracking system, but this allows us to account for worst-case scenarios. If both systems are acting optimally in this way, we want to determine the largest relative distance that may occur over time. This distance is the maximum possible tracking error ($\TEB$) between the two systems.
+The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking system and the planning system, which we then analyze using HJ reachability. In this game, the tracking system is the pursuer, and the planning system is the evader. In reality the planner is typically not actively trying to avoid the tracking system, but this allows us to account for worst-case scenarios. Assuming both systems act optimally, we want to determine the largest relative distance that may occur over time. This distance is the maximum possible tracking error ($\TEB$).
 
 \subsection{Relative Dynamics}
-To determine the relative distance that may occur over time we must first define the relative states and dynamics between the tracking and planning models. The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). The relative system is found by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model, as shown below.
+To determine the relative distance that may occur over time we first define relative states and dynamics between the tracking and planning models. The individual dynamics are defined in (\ref{eq:tdyn}) and (\ref{eq:pdyn}). The relative system is found by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model:
 
 \begin{equation}
 \label{eq:rdyn}
@@ -15,7 +15,8 @@ To determine the relative distance that may occur over time we must first define
 \noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}). The relative states $\rstate$ now represent the tracking states relative to the planning states. Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. This will be used to update the planning model in the online algorithm.
 
 \subsection{Formalizing the Pursuit-Evasion Game}
-Now that we have the relative dynamics between the two systems we must define a metric for the tracking error bound between these systems. We do this by defining a cost function $\errfunc(\rstate)$ in the new frame of reference. Because the metric we care about is distance to the origin (and thus distance to the planning system), this cost function can be as simple as distance in position space to the origin. The tracking system will try to minimize this cost to reduce the relative distance, while the planning system will do the opposite.
+Next we define a cost function $\errfunc(\rstate)$ in the new reference frame as the distance in position space to the origin. The tracking system tries to minimize this cost, while the planning system tries to maximize. As in \cite{Mitchell05}, we define a strategy for planning system as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a control for the planning model based on the control of the planning model. We restrict $\gamma$ to draw from only non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$. We similarly define the disturbance strategy $\gamma_{\dstb}: \tcset \rightarrow \dset$, $\gamma_{\dstb} \in \Gamma_\dstb(t)$.
+
 %\begin{figure}
 %	\centering
 %	\includegraphics[width=0.5\textwidth]{fig/test}%quad4D_example}
@@ -24,14 +25,13 @@ Now that we have the relative dynamics between the two systems we must define a 
 %	\vspace{-.2in}
 %\end{figure} 
 
-Before constructing the differential game we must first determine the method each player must use for making decisions. We define a strategy for planning system as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a control for the planning model based on the control of the planning model. We restrict $\gamma$ to draw from only non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$, as defined in \cite{Mitchell05}. We similarly define the disturbance strategy $\gamma_{\dstb}: \tcset \rightarrow \dset$, $\gamma_{\dstb} \in \Gamma_\dstb(t)$.
 
 We want to find the farthest distance (and thus highest cost) that this game will ever reach when both players are acting optimally. Therefore we want to find a mapping between the initial relative state of the system and the maximum possible cost achieved over the time horizon. This mapping is through the value function, defined as
 \begin{equation}
  \begin{aligned}
  \label{eq:valfunc}
  	&V(\rstate,\thor)= \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t), \gamma_{\dstb} \in \Gamma_\dstb(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
-  &\qquad\qquad \max_{\tvar\in [0, \thor]} \errfunc\Big(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))\Big)\big\}
+  &\quad\qquad \max_{\tvar\in [0, \thor]} \errfunc\Big(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))\Big)\big\}
  	\end{aligned}
  \end{equation} 
 
