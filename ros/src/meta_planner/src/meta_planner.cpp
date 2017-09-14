@@ -117,7 +117,7 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
         Vector3d::Constant(max_velocity_disturbances_[ii]);
       const Vector3d max_acceleration_disturbance =
         Vector3d::Constant(max_acceleration_disturbances_[ii]);
-      const Vector3d velocity_expansion = Vector3d::Constant(0.1);
+      const Vector3d velocity_expansion = Vector3d::Constant(0.225);
 
       // Create analytical value function.
       const AnalyticalPointMassValueFunction::ConstPtr value =
@@ -351,7 +351,7 @@ void MetaPlanner::RequestTrajectoryCallback(
     // GuaranteedSwitchingTime which is not yet implemented.
     const std::vector<Vector3d> positions = { goal_, goal_, goal_ };
     const std::vector<double> times =
-      { current_time.toSec(), current_time.toSec() + 3.0, current_time.toSec() + 100.0 };
+      { current_time.toSec(), current_time.toSec() + 10.0, current_time.toSec() + 100.0 };
 
     // Get the bound value.
     const ValueFunction::ConstPtr bound_value = (traj_ == nullptr) ?
@@ -512,11 +512,11 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
 	  if (ii > neighbor_planner_id) {
 	    // Swap out the control value function in the neighbor's trajectory
 	    // and update time stamps accordingly.
-	    neighbors[0]->traj_->ExecuteSwitch(value_used);
+	    waypoint->traj_->ExecuteSwitch(goal_value_used);
 	
 	    // Adjust the time stamps for the new trajectory to occur after the
 	    // updated neighbor's trajectory.
-	    traj->ResetStartTime(neighbors[0]->traj_->LastTime());
+	    goal_traj->ResetStartTime(waypoint->traj_->LastTime());
 	  }
 
 	  break;
