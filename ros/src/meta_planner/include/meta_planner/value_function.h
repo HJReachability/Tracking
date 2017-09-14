@@ -70,6 +70,9 @@ public:
                          const Dynamics::ConstPtr& dynamics,
                          size_t x_dim, size_t u_dim, ValueFunctionId id);
 
+  // Get velocity expansion in the subsystem containing the given spatial dim.
+  virtual double VelocityExpansion(size_t dimension) const;
+
   // Linearly interpolate to get the value/gradient at a particular state.
   virtual double Value(const VectorXd& state) const;
   virtual VectorXd Gradient(const VectorXd& state) const;
@@ -86,6 +89,11 @@ public:
   // switching INTO this one with the specified max speed.
   virtual double SwitchingTrackingBound(
     size_t dimension, const ValueFunction::ConstPtr& value) const;
+
+  // Guaranteed distance in which a planner with the specified value function
+  // can switch into this value function's safe set.
+  virtual double GuaranteedSwitchingDistance(
+    size_t dimension, const ValueFunction::ConstPtr& incoming_value) const;
 
   // Priority of the optimal control at the given state. This is a number
   // between 0 and 1, where 1 means the final control signal should be exactly

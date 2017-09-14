@@ -79,6 +79,9 @@ public:
                          const Dynamics::ConstPtr& dynamics,
                          ValueFunctionId id);
 
+  // Get velocity expansion in the subsystem containing the given spatial dim.
+  double VelocityExpansion(size_t dimension) const;
+
   // Analytically evaluate value/gradient at a particular state.
   double Value(const VectorXd& state) const;
   VectorXd Gradient(const VectorXd& state) const;
@@ -98,6 +101,11 @@ public:
   // switching INTO this one with the specified max speed.
   double SwitchingTrackingBound(
     size_t dim, const ValueFunction::ConstPtr& value) const;
+
+  // Guaranteed distance in which a planner with the specified value function
+  // can switch into this value function's safe set.
+  double GuaranteedSwitchingDistance(
+    size_t dimension, const ValueFunction::ConstPtr& incoming_value) const;
 
 private:
   explicit AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,

@@ -103,6 +103,22 @@ Vector3d NearHoverQuadNoYaw::Puncture(const VectorXd& x) const {
   return Vector3d(x(0), x(1), x(2));
 }
 
+// Get the max acceleration in the given spatial dimension.
+double NearHoverQuadNoYaw::MaxAcceleration(size_t dimension) const {
+  if (dimension == 0)
+    return constants::G * std::max(std::abs(std::tan(upper_u_(0))),
+                                   std::abs(std::tan(lower_u_(0))));
+  if (dimension == 1)
+    return constants::G * std::max(std::abs(std::tan(upper_u_(1))),
+                                   std::abs(std::tan(lower_u_(1))));
+  if (dimension == 2)
+    return std::max(std::abs(upper_u_(2) - constants::G),
+                    std::abs(lower_u_(2) - constants::G));
+
+  ROS_ERROR("Invalid spatial dimension.");
+  return 0.0;
+}
+
 // Derived classes must be able to translate a geometric trajectory
 // (i.e. through Euclidean space) into a full state space trajectory.
 std::vector<VectorXd> NearHoverQuadNoYaw::LiftGeometricTrajectory(

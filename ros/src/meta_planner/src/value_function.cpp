@@ -141,6 +141,13 @@ ValueFunction::ValueFunction(const std::string& directory,
   }
 }
 
+// Get velocity expansion in the subsystem containing the given spatial dim.
+double ValueFunction::VelocityExpansion(size_t dimension) const {
+  ROS_ERROR("Unimplemented method VelocityExpansion.");
+
+  return 0.0;
+}
+
 // Combine values of different subsystems.
 double ValueFunction::Value(const VectorXd& state) const {
   double max_value = -std::numeric_limits<double>::infinity();
@@ -202,6 +209,15 @@ SwitchingTrackingBound(
   return TrackingBound(dimension);
 }
 
+// Guaranteed distance in which a planner with the specified value function
+// can switch into this value function's safe set.
+double ValueFunction::GuaranteedSwitchingDistance(
+  size_t dimension, const ValueFunction::ConstPtr& incoming_value) const {
+  ROS_ERROR_THROTTLE(1.0, "Unimplemented method GuaranteedSwitchingDistance.");
+  // HACK! For now just return the tracking bound for this value function
+  // since this IS the switching value function.
+  return TrackingBound(dimension);
+}
 
 // Priority of the optimal control at the given state. This is a number
 // between 0 and 1, where 1 means the final control signal should be exactly

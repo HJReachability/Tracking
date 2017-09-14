@@ -72,6 +72,11 @@ Create(const Vector3d& max_planner_speed,
   return ptr;
 }
 
+// Get velocity expansion in the subsystem containing the given spatial dim.
+double AnalyticalPointMassValueFunction::VelocityExpansion(size_t dimension) const {
+  return v_exp_(dimension);
+}
+
 // Analytically evaluate value/gradient at a particular state.
 double AnalyticalPointMassValueFunction::
 Value(const VectorXd& state) const {
@@ -189,7 +194,7 @@ Priority(const VectorXd& state) const {
   const double V_high = relative_high * V_safest;
   const double V_low = relative_low * V_safest;
 
-  const double priority = 1.0 - 
+  const double priority = 1.0 -
                           std::min(std::max(0.0,(V-V_low)/(V_high-V_low)),1.0);
   return priority;
 }
@@ -212,6 +217,15 @@ SwitchingTrackingBound(size_t dim, const ValueFunction::ConstPtr& value) const {
   // For point-mass-to-point-mass the switching error bound is the same in
   // position dimensions as the tracking error bound of the incoming planner.
   return value->TrackingBound(dim);
+}
+
+// Guaranteed distance in which a planner with the specified value function
+// can switch into this value function's safe set.
+double AnalyticalPointMassValueFunction::
+GuaranteedSwitchingDistance(size_t dimension,
+                            const ValueFunction::ConstPtr& incoming_value) const {
+  ROS_ERROR("Unimplemented method GuaranteedSwitchingDistance.");
+  return TrackignBound(dimension);
 }
 
 // Constructor.

@@ -79,6 +79,9 @@ public:
   // Get the corresponding full state dimension to the given spatial dimension.
   virtual size_t SpatialDimension(size_t dimension) const;
 
+  // Get the max acceleration in the given spatial dimension.
+  virtual double MaxAcceleration(size_t dimension) const;
+
   // Derived classes must be able to translate a geometric trajectory
   // (i.e. through Euclidean space) into a full state space trajectory.
   // Should be overridden by derived classes.
