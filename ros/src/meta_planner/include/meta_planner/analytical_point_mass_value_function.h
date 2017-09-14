@@ -114,7 +114,8 @@ private:
   const Vector3d u_min_;            // minimum control input (not symmetric)
   const Vector3d d_v_;              // velocity disturbance
   const Vector3d d_a_;              // acceleration disturbance
-  Vector3d expand_;                 // set expansion factor
+  const Vector3d v_exp_;            // set expansion in velocity dimensions
+  Vector3d x_exp_;                  // set expansion in position dimensions
   Vector3d a_max_;                  // maximum absolute acceleration
   Vector3d u2a_;                    // bang-bang control-to-acceleration gain
 
