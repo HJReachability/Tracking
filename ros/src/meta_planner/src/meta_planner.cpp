@@ -463,7 +463,6 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
       const double time = (neighbor->traj_ == nullptr) ? 
 	start_time : neighbor->traj_->LastTime();
 
-      std::cout << "Got here: time was " << time << std::endl;
       traj = planner->Plan(neighbor->point_, sample,
                            time, 0.1 * max_runtime_);
 
@@ -472,7 +471,6 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
 	// If we just planned with a more cautious planner than the one used
 	// by the nearest neighbor, do a 1-step backtrack.
 	if (ii > neighbor_planner_id) {
-	  std::cout << "Jittering..." << std::endl;
 	  // Clone the neighbor.
 	  const Vector3d jittered(neighbor->point_(0) + 1e-4, 
 				  neighbor->point_(1) + 1e-4,
@@ -490,24 +488,16 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
 	    Trajectory::Create(neighbor->traj_, time),
 	    neighbor->parent_);
 
-	  std::cout << "Created the clone..." << std::endl;
-
 	  // Swap out the control value function in the neighbor's trajectory
 	  // and update time stamps accordingly.
 	  clone->traj_->ExecuteSwitch(value_used);
 
-	  std::cout << "Executed switch..." << std::endl;
-
 	  // Insert the clone.
 	  tree.Insert(clone, false);
-
-	  std::cout << "Inserted clone..." << std::endl;
 
 	  // Adjust the time stamps for the new trajectory to occur after the
 	  // updated neighbor's trajectory.
 	  traj->ResetStartTime(clone->traj_->LastTime());
-
-	  std::cout << "Reset start of clone..." << std::endl;
 
 	  // Neighbor is now clone.
 	  neighbor = clone;
