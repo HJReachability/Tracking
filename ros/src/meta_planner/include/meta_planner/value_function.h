@@ -108,6 +108,21 @@ public:
     return max_planner_speed_(ii);
   }
 
+  // Compute the shortest possible time to go from start to stop for a
+  // geometric planner with the max planner speed for this value function.
+  inline double BestPossibleTime(const Vector3d& start, const Vector3d& stop) const {
+    double time = 0.0;
+
+    // Take the max of the min times in each dimension.
+    for (size_t ii = 0; ii < 3; ii++) {
+      const double dim_time =
+	std::abs(stop(ii) - start(ii)) / max_planner_speed_(ii);
+      time = std::max(time, dim_time);
+    }
+
+    return time;
+  }
+
   // Get the ID of this value function.
   inline ValueFunctionId Id() const { return id_; }
 

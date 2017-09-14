@@ -105,7 +105,10 @@ private:
   // Plan a trajectory from the given start to stop points, beginning at the
   // specified start time. Auto-publishes the result and returns whether
   // meta planning was successful.
-  bool Plan(const Vector3d& start, const Vector3d& stop, double start_time) const;
+  bool Plan(const Vector3d& start, const Vector3d& stop, double start_time);
+
+  // Remember the last trajectory we sent.
+  Trajectory::ConstPtr traj_;
 
   // List of planners and flag for whether to load value functions from disk or
   // create analytic versions given parameters read from ROS.

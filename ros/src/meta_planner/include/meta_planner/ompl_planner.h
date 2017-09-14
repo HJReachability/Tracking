@@ -187,14 +187,14 @@ Plan(const Vector3d& start, const Vector3d& stop,
 
       times.push_back(time);
       positions.push_back(position);
-      values.push_back(outgoing_value_);
+      values.push_back(incoming_value_);
     }
 
-    // Convert to full state space.
+    // Convert to full state space. Make sure to use the INCOMING VALUE!
     std::vector<VectorXd> full_states =
-      outgoing_value_->GetDynamics()->LiftGeometricTrajectory(positions, times);
+      incoming_value_->GetDynamics()->LiftGeometricTrajectory(positions, times);
 
-    return Trajectory::Create(times, full_states, values);
+    return Trajectory::Create(times, full_states, values, values);
   }
 
   ROS_WARN("OMPL Planner could not compute a solution.");

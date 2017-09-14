@@ -48,22 +48,27 @@ namespace meta {
 Trajectory::Ptr Trajectory::
 Create(const std::vector<double>& times,
        const std::vector<VectorXd>& states,
-       const std::vector<ValueFunction::ConstPtr>& values) {
+       const std::vector<ValueFunction::ConstPtr>& control_values,
+       const std::vector<ValueFunction::ConstPtr>& bound_values) {
   Trajectory::Ptr ptr(new Trajectory());
 
   // Number of entries in trajectory.
   size_t num_waypoints = states.size();
 
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (states.size() != times.size() || states.size() != values.size()) {
+  if (states.size() != times.size() || 
+      states.size() != control_values.size() ||
+      states.size() != bound_values.size()) {
     ROS_WARN("Inconsistent number of states, times, and values.");
     num_waypoints = std::min(states.size(),
-                             std::min(times.size(), values.size()));
+                             std::min(times.size(), 
+				      std::min(control_values.size(),
+					       bound_values.size())));
   }
 #endif
 
   for (size_t ii = 0; ii < num_waypoints; ii++)
-    ptr->Add(times[ii], states[ii], values[ii]);
+    ptr->Add(times[ii], states[ii], control_values[ii], bound_values[ii]);
 
   return ptr;
 }
@@ -84,7 +89,9 @@ Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
       state(jj) = msg->states[ii].state[jj];
 
     // Add to this trajectory.
-    ptr->Add(msg->times[ii], state, values[ msg->value_function_ids[ii] ]);
+    ptr->Add(msg->times[ii], state, 
+	     values[ msg->control_value_function_ids[ii] ],
+	     values[ msg->bound_value_function_ids[ii] ]);
   }
 
   return ptr;
@@ -97,7 +104,9 @@ Create(const Trajectory::ConstPtr& other, double start) {
   Trajectory::Ptr traj = Trajectory::Create();
 
   // Insert the current state at the start time.
-  traj->Add(start, other->GetState(start), other->GetValueFunction(start));
+  traj->Add(start, other->GetState(start), 
+	    other->GetControlValueFunction(start),
+	    other->GetBoundValueFunction(start));
 
   // Insert the rest of the states in the other trajectory.
   // Get a const iterator to a time in the other trajectory >= start time.
@@ -114,7 +123,8 @@ Create(const Trajectory::ConstPtr& other, double start) {
 
   // Iterate through all remaining states.
   while (iter != other->map_.end()) {
-    traj->Add(iter->first, iter->second.state_, iter->second.value_);
+    traj->Add(iter->first, iter->second.state_, 
+	      iter->second.control_value_, iter->second.bound_value_);
     iter++;
   }
 
@@ -138,7 +148,8 @@ meta_planner_msgs::Trajectory Trajectory::ToRosMessage() const {
     // Update message.
     traj_msg.states.push_back(state_msg);
     traj_msg.times.push_back(pair.first);
-    traj_msg.value_function_ids.push_back(pair.second.value_->Id());
+    traj_msg.control_value_function_ids.push_back(pair.second.control_value_->Id());
+    traj_msg.bound_value_function_ids.push_back(pair.second.bound_value_->Id());
   }
 
   return traj_msg;
@@ -181,7 +192,7 @@ VectorXd Trajectory::GetState(double time) const {
 }
 
 // Return a pointer to the value function being used at this time.
-const ValueFunction::ConstPtr& Trajectory::GetValueFunction(double time) const {
+const ValueFunction::ConstPtr& Trajectory::GetControlValueFunction(double time) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (IsEmpty()) {
     ROS_WARN("Tried to interpolate an empty trajectory.");
@@ -195,22 +206,101 @@ const ValueFunction::ConstPtr& Trajectory::GetValueFunction(double time) const {
   // Catch end.
   if (iter == map_.end()) {
     ROS_WARN("This time occurred after the trajectory.");
-    return (--iter)->second.value_;
+    return (--iter)->second.control_value_;
   }
 
   // Catch equality.
   if (iter->first == time)
-    return iter->second.value_;
+    return iter->second.control_value_;
 
   // Catch beginning. Note this occurs after equality check, so if this is
   // true then the specified time must occur before the start of the trajectory.
   if (iter == map_.begin()) {
     ROS_WARN("This time occurred before the trajectory.");
-    return iter->second.value_;
+    return iter->second.control_value_;
   }
 
   // Regular case: iter is after the specified time.
-  return (--iter)->second.value_;
+  return (--iter)->second.control_value_;
+}
+
+// Return a pointer to the value function being used at this time.
+const ValueFunction::ConstPtr& Trajectory::GetBoundValueFunction(double time) const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to interpolate an empty trajectory.");
+    throw std::underflow_error("Tried to interpolate an empty trajectory.");
+  }
+#endif
+
+  // Get a const iterator to a time not less than this one.
+  std::map<double, StateValue>::const_iterator iter = map_.lower_bound(time);
+
+  // Catch end.
+  if (iter == map_.end()) {
+    ROS_WARN("This time occurred after the trajectory.");
+    return (--iter)->second.bound_value_;
+  }
+
+  // Catch equality.
+  if (iter->first == time)
+    return iter->second.bound_value_;
+
+  // Catch beginning. Note this occurs after equality check, so if this is
+  // true then the specified time must occur before the start of the trajectory.
+  if (iter == map_.begin()) {
+    ROS_WARN("This time occurred before the trajectory.");
+    return iter->second.bound_value_;
+  }
+
+  // Regular case: iter is after the specified time.
+  return (--iter)->second.bound_value_;
+}
+
+// Swap out the control value function in this trajectory and update time
+// stamps accordingly.
+void Trajectory::ExecuteSwitch(const ValueFunction::ConstPtr& value) {
+  std::map<double, StateValue> switched;
+
+  double last_time = FirstTime();
+  VectorXd last_state = FirstState();
+  Vector3d last_position = value->GetDynamics()->Puncture(last_state);
+  for (const auto& pair : map_) {
+    // (1) Compute time for this state from last_time.
+    const ValueFunction::ConstPtr bound = pair.second.bound_value_;
+    const VectorXd state = pair.second.state_;
+    const Vector3d position = value->GetDynamics()->Puncture(state);
+    const double time = last_time + value->BestPossibleTime(last_position, position);
+
+    // (2) Insert this tuple into 'switched'.
+    switched.insert({ time, StateValue(state, value, bound) });
+    
+    // (3) Update last_state and last_position.
+    last_state = state;
+    last_position = position;
+  }
+
+  // Swap out map_ for switched.
+  map_ = switched;
+}
+
+// Adjust the time stamps for this trajectory to start at the given time.
+void Trajectory::ResetStartTime(double start) {
+  std::map<double, StateValue> reset;
+
+  // Compute difference between this start time and current start time.
+  const double delay = start - FirstTime();
+
+  // Loop over all pairs in the map and update time in reset.
+  for (const auto& pair : map_) {
+    const double time = pair.first + delay;
+
+    // Insert into reset.
+    reset.insert({ time, pair.second });
+  }
+
+  // Swap out map_ for reset.
+  map_ = reset;
 }
 
 // Visualize this trajectory in RVIZ.

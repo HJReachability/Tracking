@@ -93,7 +93,11 @@ public:
   // Get the value function associated to this planner. The way incoming and
   // outgoing value functions are intended to be used, this corresponds to
   // the outgoing value function.
-  inline ValueFunction::ConstPtr GetValueFunction() const {
+  inline ValueFunction::ConstPtr GetIncomingValueFunction() const {
+    return incoming_value_;
+  }
+
+  inline ValueFunction::ConstPtr GetOutgoingValueFunction() const {
     return outgoing_value_;
   }
 

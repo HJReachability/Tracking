@@ -362,22 +362,13 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   reference_pub_.publish(reference);
 
-  // (2) Get corresponding value function.
-  const ValueFunction::ConstPtr value =
-    traj_->GetValueFunction(current_time.toSec());
+  // (2) Get corresponding control and bound value function.
+  const ValueFunction::ConstPtr control_value =
+    traj_->GetControlValueFunction(current_time.toSec());
+  const ValueFunction::ConstPtr bound_value =
+    traj_->GetBoundValueFunction(current_time.toSec());
 
-  // Check the value a short time into the future.
-  // NOTE! This lookahead should really be the precise minimum switching time
-  // between this planner and the next-most cautious one.
-  const ValueFunction::ConstPtr next_value = value;
-  //    traj_->GetValueFunction(current_time.toSec() + switching_lookahead_);
-
-  // HACK! Computing priority for switching as priority of regular next value
-  // optimal controller. That should be at least as high priority as the switch.
-  // @JFF is this right?
-  //  const double priority = (next_value->Id() <= value->Id()) ?
-  //    value->Priority(relative_state) : next_value->Priority(relative_state);
-  const double priority = value->Priority(relative_state);
+  const double priority = control_value->Priority(relative_state);
 
   // Visualize the tracking bound.
   visualization_msgs::Marker tracking_bound_marker;
@@ -388,19 +379,9 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.type = visualization_msgs::Marker::CUBE;
   tracking_bound_marker.action = visualization_msgs::Marker::ADD;
 
-  if (true) {
-  //  if (next_value->Id() <= value->Id()) {
-    tracking_bound_marker.scale.x = 2.0 * value->TrackingBound(0);
-    tracking_bound_marker.scale.y = 2.0 * value->TrackingBound(1);
-    tracking_bound_marker.scale.z = 2.0 * value->TrackingBound(2);
-  } else {
-    tracking_bound_marker.scale.x =
-      2.0 * next_value->SwitchingTrackingBound(0, value);
-    tracking_bound_marker.scale.y =
-      2.0 * next_value->SwitchingTrackingBound(1, value);
-    tracking_bound_marker.scale.z =
-      2.0 * next_value->SwitchingTrackingBound(2, value);
-  }
+  tracking_bound_marker.scale.x = 2.0 * bound_value->TrackingBound(0);
+  tracking_bound_marker.scale.y = 2.0 * bound_value->TrackingBound(1);
+  tracking_bound_marker.scale.z = 2.0 * bound_value->TrackingBound(2);
 
   tracking_bound_marker.color.a = 0.3;
   tracking_bound_marker.color.r = priority;
@@ -412,14 +393,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   // Warn if outside tracking error bound.
   double min_dist_to_bound = std::numeric_limits<double>::infinity();
   for (size_t ii = 0; ii < 3; ii++) {
-#if 0
-    const double signed_dist = (next_value->Id() <= value->Id()) ?
-      value->TrackingBound(ii) -
-        std::abs(relative_state(dynamics_->SpatialDimension(ii))) :
-      next_value->SwitchingTrackingBound(ii, value) -
-        std::abs(relative_state(dynamics_->SpatialDimension(ii)));
-#endif
-    const double signed_dist =  value->TrackingBound(ii) -
+    const double signed_dist =  bound_value->TrackingBound(ii) -
       std::abs(relative_state(dynamics_->SpatialDimension(ii)));
 
     min_dist_to_bound = std::min(min_dist_to_bound, signed_dist);
@@ -430,13 +404,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   }
 
   // (3) Interpolate gradient to get optimal control.
-#if 0
-  const VectorXd optimal_control = (next_value->Id() <= value->Id()) ?
-    value->OptimalControl(relative_state) :
-    next_value->OptimalControl(relative_state);
-#endif
-
-  const VectorXd optimal_control = value->OptimalControl(relative_state);
+  const VectorXd optimal_control = control_value->OptimalControl(relative_state);
 
   // (4) Publish optimal control with priority in (0, 1).
   crazyflie_msgs::NoYawControlStamped control_msg;
@@ -500,8 +468,8 @@ void Tracker::Hover() {
     hover_state(4) = 0.0;
     hover_state(5) = 0.0;
 
-    traj_->Add(now, hover_state, values_.back());
-    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state, values_.back());
+    traj_->Add(now, hover_state, values_.back(), values_.front());
+    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state, values_.back(), values_.front());
     return;
   }
 
@@ -522,7 +490,8 @@ void Tracker::Hover() {
   // HACK! Assuming can hover using last value function. Is this true?
   hover->Add(hover->LastTime() + max_meta_runtime_ + 10.0,
              last_state,
-             hover->LastValueFunction());
+             hover->LastControlValueFunction(),
+	     hover->LastControlValueFunction());
 
   traj_ = hover;
 }
