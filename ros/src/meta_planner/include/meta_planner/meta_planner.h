@@ -128,6 +128,7 @@ private:
   size_t state_dim_;
   size_t control_dim_;
   BallsInBox::Ptr space_;
+  unsigned int seed_;
 
   std::vector<double> state_upper_;
   std::vector<double> state_lower_;

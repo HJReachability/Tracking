@@ -93,6 +93,8 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
   space_->SetBounds(dynamics_->Puncture(state_lower_vec),
                     dynamics_->Puncture(state_upper_vec));
 
+  space_->Seed(seed_);
+
   // Create value functions.
   std::vector<ValueFunction::ConstPtr> values;
 
@@ -159,6 +161,11 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
 // Load parameters.
 bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
+
+  // Random seed.
+  int seed = 0;
+  if (!nl.getParam("meta/random/seed", seed)) return false;
+  seed_ = static_cast<unsigned int>(seed);
 
   // Meta planning parameters.
   if (!nl.getParam("meta/meta/max_runtime", max_runtime_))

@@ -85,6 +85,8 @@ bool Sensor::Initialize(const ros::NodeHandle& n) {
   space_->SetBounds(dynamics_->Puncture(state_lower_vec),
                     dynamics_->Puncture(state_upper_vec));
 
+  space_->Seed(seed_);
+
   // Add obstacles.
   std::random_device rd;
   std::default_random_engine rng(rd());
@@ -108,6 +110,11 @@ bool Sensor::LoadParameters(const ros::NodeHandle& n) {
 
   // Sensor radius.
   if (!nl.getParam("meta/sensor/sensor_radius", sensor_radius_)) return false;
+
+  // Random seed.
+  int seed = 0;
+  if (!nl.getParam("meta/random/seed", seed)) return false;
+  seed_ = static_cast<unsigned int>(seed);
 
   // Number of obstacles.
   int num_obstacles = 1;

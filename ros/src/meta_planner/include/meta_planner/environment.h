@@ -58,6 +58,9 @@ class Environment : private Uncopyable {
 public:
   virtual ~Environment() {}
 
+  // Re-seed the random engine.
+  inline void Seed(unsigned int seed) const { rng_.seed(seed); }
+
   // Derived classes must be able to sample uniformly from the state space.
   virtual Vector3d Sample() const = 0;
 
@@ -74,7 +77,7 @@ public:
 
 protected:
   explicit Environment()
-    : rd_(), rng_(rd_()) {}
+    : rng_(rd_()) {}
 
   // Random number generation.
   std::random_device rd_;
