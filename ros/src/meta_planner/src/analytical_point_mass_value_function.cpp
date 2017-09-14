@@ -221,7 +221,7 @@ SwitchingTrackingBound(size_t dim, const ValueFunction::ConstPtr& value) const {
 double AnalyticalPointMassValueFunction::
 GuaranteedSwitchingDistance(size_t dimension,
                             const ValueFunction::ConstPtr& incoming_value) const {
-  ROS_ERROR("Unimplemented method GuaranteedSwitchingDistance.");
+  ROS_ERROR_THROTTLE(1.0, "Unimplemented method GuaranteedSwitchingDistance.");
   return TrackingBound(dimension);
 }
 
