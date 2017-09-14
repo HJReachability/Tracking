@@ -66,7 +66,7 @@ velDims = sD{1}.dynSys.vdim;
 
 trackErr = max(trackingErrorBound);
 virt_v = sD{1}.dynSys.pMax(1);
-dt = 0.03;
+dt = 0.1;
 delta_x = virt_v*dt;
 senseRange = 2*trackErr+delta_x;
 
