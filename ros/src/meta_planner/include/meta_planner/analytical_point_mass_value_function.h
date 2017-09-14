@@ -96,7 +96,8 @@ public:
 
   // Get the tracking error bound in this spatial dimension for a planner
   // switching INTO this one with the specified max speed.
-  double SwitchingTrackingBound(size_t dimension, double incoming_max_speed) const;
+  double SwitchingTrackingBound(
+    size_t dim, const ValueFunction::ConstPtr& value) const;
 
 private:
   explicit AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,
@@ -113,7 +114,7 @@ private:
   const Vector3d u_min_;            // minimum control input (not symmetric)
   const Vector3d d_v_;              // velocity disturbance
   const Vector3d d_a_;              // acceleration disturbance
-  Vector3d expand_;               // set expansion factor
+  Vector3d expand_;                 // set expansion factor
   Vector3d a_max_;                  // maximum absolute acceleration
   Vector3d u2a_;                    // bang-bang control-to-acceleration gain
 

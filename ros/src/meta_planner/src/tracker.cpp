@@ -404,11 +404,11 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
     tracking_bound_marker.scale.z = 2.0 * value->TrackingBound(2);
   } else {
     tracking_bound_marker.scale.x =
-      2.0 * next_value->SwitchingTrackingBound(0, value->MaxPlannerSpeed(0));
+      2.0 * next_value->SwitchingTrackingBound(0, value);
     tracking_bound_marker.scale.y =
-      2.0 * next_value->SwitchingTrackingBound(1, value->MaxPlannerSpeed(1));
+      2.0 * next_value->SwitchingTrackingBound(1, value);
     tracking_bound_marker.scale.z =
-      2.0 * next_value->SwitchingTrackingBound(2, value->MaxPlannerSpeed(2));
+      2.0 * next_value->SwitchingTrackingBound(2, value);
   }
 
   tracking_bound_marker.color.a = 0.3;
@@ -425,7 +425,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
     const double signed_dist = (next_value->Id() <= value->Id()) ?
       value->TrackingBound(ii) -
         std::abs(relative_state(dynamics_->SpatialDimension(ii))) :
-      next_value->SwitchingTrackingBound(ii, value->MaxPlannerSpeed(ii)) -
+      next_value->SwitchingTrackingBound(ii, value) -
         std::abs(relative_state(dynamics_->SpatialDimension(ii)));
 #endif
     const double signed_dist =  value->TrackingBound(ii) -

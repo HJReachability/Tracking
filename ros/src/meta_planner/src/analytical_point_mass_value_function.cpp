@@ -208,10 +208,10 @@ TrackingBound(size_t dim) const {
 // Get the tracking error bound in this spatial dimension for a planner
 // switching INTO this one with the specified max speed.
 double AnalyticalPointMassValueFunction::
-SwitchingTrackingBound(size_t dimension, double incoming_max_speed) const {
-  ROS_ERROR_THROTTLE(1.0, "Unimplemented method SwitchingTrackingBound.");
-  // HACK! For now, just return the regular tracking bound.
-  return TrackingBound(dimension);
+SwitchingTrackingBound(size_t dim, const ValueFunction::ConstPtr& value) const {
+  // For point-mass-to-point-mass the switching error bound is the same in
+  // position dimensions as the tracking error bound of the incoming planner.
+  return value->TrackingBound(dim);
 }
 
 // Constructor.

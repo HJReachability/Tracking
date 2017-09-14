@@ -195,7 +195,8 @@ double ValueFunction::TrackingBound(size_t dimension) const {
 // Get the tracking error bound in this spatial dimension for a planner
 // switching INTO this one with the specified max speed.
 double ValueFunction::
-SwitchingTrackingBound(size_t dimension, double incoming_max_speed) const {
+SwitchingTrackingBound(
+  size_t dimension, const ValueFunction::ConstPtr& value) const {
   // HACK! For now, just assume we have loaded the ValueFunction corresponding
   // to the switching controller and take the regular tracking bound.
   return TrackingBound(dimension);
