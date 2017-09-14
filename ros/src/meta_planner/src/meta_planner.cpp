@@ -429,11 +429,13 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
         (neighbors[0]->point_ - sample).norm() > max_connection_radius_)
       continue;
 
+    Waypoint::ConstPtr neighbor = neighbors[0];
+
     // Extract value function and corresponding planner ID from last waypoint. 
     // If value is null, (i.e. at root) then set to planners_.size() since 
     // any planner is valid from the root. Convert value ID to planner ID
     // by dividing by 2 since each planner has two value functions.
-    const ValueFunction::ConstPtr neighbor_val = neighbors[0]->value_;
+    const ValueFunction::ConstPtr neighbor_val = neighbor->value_;
     const size_t neighbor_planner_id = (neighbor_val == nullptr) ?
       planners_.size() : neighbor_val->Id() / 2;
 
@@ -448,31 +450,67 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
 
       // Since we might always end up switching, make sure this point
       // is not closer than the guaranteed switching distance.
-      if (std::abs(neighbors[0]->point_(0) - sample(0)) <
+      if (std::abs(neighbor->point_(0) - sample(0)) <
           value_used->GuaranteedSwitchingDistance(0, neighbor_val) &&
-          std::abs(neighbors[0]->point_(1) - sample(1)) <
+          std::abs(neighbor->point_(1) - sample(1)) <
           value_used->GuaranteedSwitchingDistance(1, neighbor_val) &&
-          std::abs(neighbors[0]->point_(2) - sample(2)) <
+          std::abs(neighbor->point_(2) - sample(2)) <
           value_used->GuaranteedSwitchingDistance(2, neighbor_val))
         break;
 
       // Plan using 10% of the available total runtime.
       // NOTE! This is just a heuristic and could easily be changed.
-      traj = planner->Plan(neighbors[0]->point_, sample,
-                           neighbors[0]->time_, 0.1 * max_runtime_);
+      const double time = (neighbor->traj_ == nullptr) ? 
+	start_time : neighbor->traj_->LastTime();
+
+      std::cout << "Got here: time was " << time << std::endl;
+      traj = planner->Plan(neighbor->point_, sample,
+                           time, 0.1 * max_runtime_);
 
       if (traj != nullptr) {
 	// When we succeed...
 	// If we just planned with a more cautious planner than the one used
 	// by the nearest neighbor, do a 1-step backtrack.
 	if (ii > neighbor_planner_id) {
+	  std::cout << "Jittering..." << std::endl;
+	  // Clone the neighbor.
+	  const Vector3d jittered(neighbor->point_(0) + 1e-4, 
+				  neighbor->point_(1) + 1e-4,
+				  neighbor->point_(2) + 1e-4);
+
+	  const double time = (neighbor->traj_ == nullptr) ? 
+	    start_time : neighbor->traj_->FirstTime();
+
+	  if (time <= start_time + 1e-8)
+	    ROS_ERROR("%s: Tried to clone the root.", name_.c_str());
+
+	  Waypoint::ConstPtr clone = Waypoint::Create(
+	    jittered, 
+	    neighbor->value_, 
+	    Trajectory::Create(neighbor->traj_, time),
+	    neighbor->parent_);
+
+	  std::cout << "Created the clone..." << std::endl;
+
 	  // Swap out the control value function in the neighbor's trajectory
 	  // and update time stamps accordingly.
-	  neighbors[0]->traj_->ExecuteSwitch(value_used);
-	
+	  clone->traj_->ExecuteSwitch(value_used);
+
+	  std::cout << "Executed switch..." << std::endl;
+
+	  // Insert the clone.
+	  tree.Insert(clone, false);
+
+	  std::cout << "Inserted clone..." << std::endl;
+
 	  // Adjust the time stamps for the new trajectory to occur after the
 	  // updated neighbor's trajectory.
-	  traj->ResetStartTime(neighbors[0]->traj_->LastTime());
+	  traj->ResetStartTime(clone->traj_->LastTime());
+
+	  std::cout << "Reset start of clone..." << std::endl;
+
+	  // Neighbor is now clone.
+	  neighbor = clone;
 	}
 
 	break;
@@ -485,7 +523,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
 
     // Insert the sample.
     const Waypoint::ConstPtr waypoint = Waypoint::Create(
-      sample, traj->LastTime(), value_used, traj, neighbors[0]);
+      sample, value_used, traj, neighbor);
 
     tree.Insert(waypoint, false);
 
@@ -493,6 +531,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
     Trajectory::Ptr goal_traj = nullptr;
     ValueFunction::ConstPtr goal_value_used = nullptr;
     const size_t planner_used_id = value_used->Id() / 2;
+
     if ((sample - stop).norm() <= max_connection_radius_) {
       for (size_t ii = 0;
            ii < std::min(planner_used_id + 2, planners_.size()); ii++) {
@@ -531,7 +570,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
       // traj, but when we merge the two trajectories the std::map insertion
       // rules will prevent duplicates.
       const Waypoint::ConstPtr goal = Waypoint::Create(
-        stop, goal_traj->LastTime(), value_used, goal_traj, waypoint);
+        stop, value_used, goal_traj, waypoint);
 
       tree.Insert(goal, true);
 

@@ -113,14 +113,6 @@ Create(const Trajectory::ConstPtr& other, double start) {
   std::map<double, StateValue>::const_iterator iter =
     other->map_.lower_bound(start);
 
-#ifdef ENABLE_DEBUG_MESSAGES
-  if (iter == other->map_.end() || iter == other->map_.begin()) {
-    // NOTE! Should never get here.
-    ROS_WARN("Could not add future states. Time was out of range.");
-    throw std::out_of_range("Could not add future states. Time was out of range.");
-  }
-#endif
-
   // Iterate through all remaining states.
   while (iter != other->map_.end()) {
     traj->Add(iter->first, iter->second.state_, 
@@ -168,9 +160,14 @@ VectorXd Trajectory::GetState(double time) const {
   std::map<double, StateValue>::const_iterator iter = map_.lower_bound(time);
 
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (iter == map_.end() || iter == map_.begin()) {
-    ROS_WARN("Could not interpolate. Time was out of range.");
-    throw std::out_of_range("Could not interpolate. Time was out of range.");
+  if (iter == map_.end()) {
+    ROS_WARN("Could not interpolate. Time was too late.");
+    return LastState();
+  }
+
+  if (iter == map_.begin()) {
+    ROS_WARN("Could not interpolate. Time was too early.");
+    return FirstState();
   }
 #endif
 
@@ -265,23 +262,25 @@ void Trajectory::ExecuteSwitch(const ValueFunction::ConstPtr& value) {
   double last_time = FirstTime();
   VectorXd last_state = FirstState();
   Vector3d last_position = value->GetDynamics()->Puncture(last_state);
-  for (const auto& pair : map_) {
+  for (auto iter = map_.begin(); iter != map_.end(); iter++) {
     // (1) Compute time for this state from last_time.
-    const ValueFunction::ConstPtr bound = pair.second.bound_value_;
-    const VectorXd state = pair.second.state_;
+    const ValueFunction::ConstPtr bound = iter->second.bound_value_;
+    const VectorXd state = iter->second.state_;
     const Vector3d position = value->GetDynamics()->Puncture(state);
     const double time = last_time + value->BestPossibleTime(last_position, position);
 
     // (2) Insert this tuple into 'switched'.
     switched.insert({ time, StateValue(state, value, bound) });
     
-    // (3) Update last_state and last_position.
+    // (3) Update last_state, last_time, and last_position.
     last_state = state;
     last_position = position;
+    last_time = time;
   }
 
   // Swap out map_ for switched.
-  map_ = switched;
+  map_.clear();
+  map_.insert(switched.begin(), switched.end());
 }
 
 // Adjust the time stamps for this trajectory to start at the given time.
@@ -300,7 +299,8 @@ void Trajectory::ResetStartTime(double start) {
   }
 
   // Swap out map_ for reset.
-  map_ = reset;
+  map_.clear();
+  map_.insert(reset.begin(), reset.end());
 }
 
 // Visualize this trajectory in RVIZ.
