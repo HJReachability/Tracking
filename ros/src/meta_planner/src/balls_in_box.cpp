@@ -71,7 +71,7 @@ bool BallsInBox::IsValid(const Vector3d& position,
   // Check bounds.
   for (size_t ii = 0; ii < 3; ii++) {
     const double bound = outgoing_value->
-      SwitchingTrackingBound(ii, incoming_value->MaxPlannerSpeed(ii));
+      SwitchingTrackingBound(ii, incoming_value);
 
     if (position(ii) < lower_(ii) + bound ||
         position(ii) > upper_(ii) - bound)
@@ -93,7 +93,7 @@ bool BallsInBox::IsValid(const Vector3d& position,
     Vector3d corner;
     for (size_t jj = 0; jj < 3; jj++) {
       const double bound = outgoing_value->
-        SwitchingTrackingBound(jj, incoming_value->MaxPlannerSpeed(jj));
+        SwitchingTrackingBound(jj, incoming_value);
 
       corner(jj) = (position(jj) - p(jj) > 0.0) ?
         position(jj) - bound : position(jj) + bound;

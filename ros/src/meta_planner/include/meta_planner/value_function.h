@@ -87,8 +87,8 @@ public:
 
   // Get the tracking error bound in this spatial dimension for a planner
   // switching INTO this one with the specified max speed.
-  virtual double SwitchingTrackingBound(size_t dimension,
-                                        double incoming_max_speed) const;
+  virtual double SwitchingTrackingBound(
+    size_t dimension, const ValueFunction::ConstPtr& value) const;
 
   // Guaranteed distance in which a planner with the specified value function
   // can switch into this value function's safe set.

@@ -86,7 +86,7 @@ bool Box::IsValid(const Vector3d& position,
   // No obstacles. Just check bounds.
   for (size_t ii = 0; ii < 3; ii++) {
     const double bound = outgoing_value->
-      SwitchingTrackingBound(ii, incoming_value->MaxPlannerSpeed(ii));
+      SwitchingTrackingBound(ii, incoming_value);
 
     if (position(ii) < lower_(ii) + bound ||
         position(ii) > upper_(ii) - bound)
