@@ -334,6 +334,33 @@ void MetaPlanner::RequestTrajectoryCallback(
 
   const Vector3d start_position = dynamics_->Puncture(start_state);
 
+  // Check if the start position is close to the goal. If so, just return
+  // a hover trajectory at the goal (assuming the least aggressive planner).
+  if (reached_goal_ ||
+      (std::abs(start_position(0) - goal_(0)) <
+       planners_.back()->GetValueFunction()->TrackingBound(0) &&
+       std::abs(start_position(1) - goal_(1)) <
+       planners_.back()->GetValueFunction()->TrackingBound(1) &&
+       std::abs(start_position(2) - goal_(2)) <
+       planners_.back()->GetValueFunction()->TrackingBound(2)))
+    reached_goal_ = true;
+
+  if (reached_goal_) {
+    ROS_INFO("%s: Reached end of trajectory. Hovering in place.", name_.c_str());
+    const std::vector<Vector3d> positions = { goal_, goal_ };
+    const std::vector<double> times =
+      { current_time.toSec(), current_time.toSec() + 100.0 };
+    const std::vector<ValueFunction::ConstPtr> values =
+      { planners_.back()->GetValueFunction(), planners_.back()->GetValueFunction() };
+    const std::vector<VectorXd> states =
+      dynamics_->LiftGeometricTrajectory(positions, times);
+
+    // Construct trajectory and publish.
+    const Trajectory::Ptr hover = Trajectory::Create(times, states, values);
+    traj_pub_.publish(hover->ToRosMessage());
+    return;
+  }
+
   if (!Plan(start_position, goal_, start_time)) {
     ROS_ERROR("%s: MetaPlanner failed. Please come again.", name_.c_str());
     return;

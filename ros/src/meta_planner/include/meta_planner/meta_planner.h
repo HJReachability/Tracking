@@ -75,6 +75,7 @@ public:
   ~MetaPlanner() {}
   explicit MetaPlanner()
     : in_flight_(false),
+      reached_goal_(false),
       been_updated_(false),
       initialized_(false) {}
 
@@ -164,6 +165,9 @@ private:
 
   // Are we in flight?
   bool in_flight_;
+
+  // Have we reached the goal?
+  bool reached_goal_;
 
   // Initialization and naming.
   bool initialized_;

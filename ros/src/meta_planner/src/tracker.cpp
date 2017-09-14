@@ -126,7 +126,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
                                                  min_tracker_control,
                                                  max_velocity_disturbance,
                                                  max_acceleration_disturbance,
-						 expansion_factor,
+                                                 expansion_factor,
                                                  dynamics_,
                                                  static_cast<ValueFunctionId>(ii));
 
@@ -396,7 +396,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.id = 0;
   tracking_bound_marker.type = visualization_msgs::Marker::CUBE;
   tracking_bound_marker.action = visualization_msgs::Marker::ADD;
-  
+
   if (true) {
   //  if (next_value->Id() <= value->Id()) {
     tracking_bound_marker.scale.x = 2.0 * value->TrackingBound(0);
