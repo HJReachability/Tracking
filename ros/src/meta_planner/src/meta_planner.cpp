@@ -597,7 +597,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
           planner->Plan(sample, stop, traj->LastTime(), 0.1 * max_runtime_);
 
         if (goal_traj != nullptr) {
-          // When we succeed...
+          // When we succeed... don't need to clone because waypoint has no kids.
           // If we just planned with a more cautious planner than the one used
           // by the nearest neighbor, do a 1-step backtrack.
           if (ii > neighbor_planner_id) {
