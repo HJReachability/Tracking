@@ -208,7 +208,8 @@ TrackingBound(size_t dim) const {
 }
 
 // Get the tracker velocity bounds in this spatial dimension.
-double VelocityBound(size_t dim) const{
+double AnalyticalPointMassValueFunction::
+VelocityBound(size_t dim) const{
   // Return a single positive number (semi-length of interval centered on 0)
   // This is equal to the position at the intersection between parabolas.
   const double v_ref = max_planner_speed_(dim);
@@ -225,13 +226,47 @@ SwitchingTrackingBound(size_t dim, const ValueFunction::ConstPtr& value) const {
   return value->TrackingBound(dim);
 }
 
-// Guaranteed distance in which a planner with the specified value function
-// can switch into this value function's safe set.
+// Guaranteed time in which a planner with the specified value function
+// can switch into this value function's tracking error bound.
 double AnalyticalPointMassValueFunction::
-GuaranteedSwitchingDistance(size_t dimension,
-                            const ValueFunction::ConstPtr& incoming_value) const {
-  ROS_ERROR_THROTTLE(1.0, "Unimplemented method GuaranteedSwitchingDistance.");
-  return TrackingBound(dimension);
+GuaranteedSwitchingTime(
+            size_t dim,
+            const AnalyticalPointMassValueFunction::ConstPtr& value_in) const {
+  const double a_max = a_max_(dim);
+  const double d_a = d_a_(dim);
+  const double v_ref = max_planner_speed_(dim);
+  const double v_exp = v_exp_(dim);
+  const double x_exp = x_exp_(dim);
+  const double v_ref_in = value_in->max_planner_speed_(dim);
+  const double a_max_in = value_in->a_max_(dim);
+  const double d_a_in = value_in->d_a_(dim);
+  const double v_bound_in = value_in->VelocityBound(dim);
+
+  // Velocity coordinate at which to switch into entry parabola starting on
+  // the boundary of the incoming tracking error bound (worst case).
+  const double v_switch = std::sqrt(
+               (a_max - d_a)*(x_exp + v_ref_in*v_bound_in)/(a_max_in - d_a_in)
+               +  0.5 * (v_bound_in + v_ref) * (v_bound_in + v_ref) );
+
+  // Upper bound on time to reach the entry parabola and switch onto it.
+  const double t_switch = (v_bound_in + v_switch) / ((a_max- d_a));
+  // Upper bound on time to ride the entry parabola into the set.
+  const double t_ride = (value_in->TrackingBound(dim) - TrackingBound(dim))
+    / v_exp;
+
+  return t_switch + t_ride;
+}
+
+// Guaranteed distance in which a planner with the specified value function
+// can switch into this value function's tracking error bound.
+double AnalyticalPointMassValueFunction::
+GuaranteedSwitchingDistance(
+            size_t dim,
+            const AnalyticalPointMassValueFunction::ConstPtr& value_in) const {
+  //HACK! Assume value_in is of class analytic_point_mass_value_function
+  // so that private max_planner_speed_ can be read from this function
+  return value_in->max_planner_speed_(dim) *
+         GuaranteedSwitchingTime(dim, value_in);
 }
 
 // Constructor.
