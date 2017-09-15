@@ -106,14 +106,14 @@ public:
   // Guaranteed time in which a planner with the specified value function
   // can switch into this value function's tracking error bound.
   double GuaranteedSwitchingTime(
-    size_t dimension, 
-           const AnalyticalPointMassValueFunction::ConstPtr& incoming_value) const;
+    size_t dimension,
+    const AnalyticalPointMassValueFunction::ConstPtr& incoming_value) const;
 
   // Guaranteed distance in which a planner with the specified value function
   // can switch into this value function's safe set.
   double GuaranteedSwitchingDistance(
-    size_t dimension, 
-           const AnalyticalPointMassValueFunction::ConstPtr& incoming_value) const;
+    size_t dimension,
+    const AnalyticalPointMassValueFunction::ConstPtr& incoming_value) const;
 
 private:
   explicit AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,

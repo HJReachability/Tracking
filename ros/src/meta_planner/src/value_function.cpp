@@ -211,6 +211,16 @@ SwitchingTrackingBound(
 
 // Guaranteed distance in which a planner with the specified value function
 // can switch into this value function's safe set.
+double ValueFunction::
+GuaranteedSwitchingTime(
+  size_t dimension, const ValueFunction::ConstPtr& incoming_value) const {
+  ROS_ERROR_THROTTLE(1.0, "Unimplemented method GuaranteedSwitchingTime.");
+  // HACK! Just returning a long time for now.
+  return 10.0;
+}
+
+// Guaranteed distance in which a planner with the specified value function
+// can switch into this value function's safe set.
 double ValueFunction::GuaranteedSwitchingDistance(
   size_t dimension, const ValueFunction::ConstPtr& incoming_value) const {
   ROS_ERROR_THROTTLE(1.0, "Unimplemented method GuaranteedSwitchingDistance.");

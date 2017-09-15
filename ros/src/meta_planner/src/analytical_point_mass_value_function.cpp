@@ -230,8 +230,8 @@ SwitchingTrackingBound(size_t dim, const ValueFunction::ConstPtr& value) const {
 // can switch into this value function's tracking error bound.
 double AnalyticalPointMassValueFunction::
 GuaranteedSwitchingTime(
-            size_t dim,
-            const AnalyticalPointMassValueFunction::ConstPtr& value_in) const {
+  size_t dim,
+  const AnalyticalPointMassValueFunction::ConstPtr& value_in) const {
   const double a_max = a_max_(dim);
   const double d_a = d_a_(dim);
   const double v_ref = max_planner_speed_(dim);
