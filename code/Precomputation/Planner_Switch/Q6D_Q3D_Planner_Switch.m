@@ -1,10 +1,10 @@
 function [data_switch,tau,sD_switch]=Q6D_Q3D_Planner_Switch(planner_speed_small, planner_speed_big, visualize)
 if nargin <1 
-    planner_speed_small = .1;
+    planner_speed_small = .4;
 end
 
 if nargin <2
-    planner_speed_big = .4;
+    planner_speed_big = 1;
 end
 
 if nargin <3
