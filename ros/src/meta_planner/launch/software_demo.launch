@@ -14,10 +14,10 @@
 
   <arg name="random_seed" default="0" />
 
-  <arg name="sensor_radius" default="2.0" />
+  <arg name="sensor_radius" default="2.5" />
   <arg name="num_obstacles" default="25" />
-  <arg name="min_obstacle_radius" default="1.5" />
-  <arg name="max_obstacle_radius" default="2.0" />
+  <arg name="min_obstacle_radius" default="1.0" />
+  <arg name="max_obstacle_radius" default="1.5" />
 
   <arg name="dubins_state_topic" default="/state/dubins" />
   <arg name="position_state_topic" default="/state/position" />
@@ -36,7 +36,7 @@
 
   <arg name="merger_mode" default="OPTIMAL" />
 
-  <arg name="max_meta_runtime" default="0.2" />
+  <arg name="max_meta_runtime" default="0.25" />
   <arg name="max_meta_connection_radius" default="5.0" />
   <arg name="switching_lookahead" default="0.5" />
 
@@ -62,6 +62,17 @@
   <arg name="sim_init_x" default="0.0" />
   <arg name="sim_init_y" default="0.0" />
   <arg name="sim_init_z" default="0.0" />
+
+  <arg name="record" default="false" />
+
+  <!-- Record a rosbag. -->
+  <node pkg="rosbag"
+	      type="record"
+	      name="recorder"
+	      args="-a -o $(find meta_planner)/bagfiles/sw_demo_recording.bag"
+	      if="$(arg record)">
+  </node>
+
 
   <!-- TF static publisher to create a base_link frame for the tracker. -->
   <node pkg="tf"

@@ -150,6 +150,7 @@ double ValueFunction::VelocityExpansion(size_t dimension) const {
 
 // Combine values of different subsystems.
 double ValueFunction::Value(const VectorXd& state) const {
+  ROS_ERROR("Calling ValueFunction::Value.");
   double max_value = -std::numeric_limits<double>::infinity();
 
   for (const auto& subsystem : subsystems_)
@@ -160,6 +161,7 @@ double ValueFunction::Value(const VectorXd& state) const {
 
 // Combine gradients from different subsystems.
 VectorXd ValueFunction::Gradient(const VectorXd& state) const {
+  ROS_ERROR("Calling ValueFunction::Gradient.");
   VectorXd gradient(state.size());
 
   for (const auto& subsystem : subsystems_) {
@@ -176,6 +178,7 @@ VectorXd ValueFunction::Gradient(const VectorXd& state) const {
 
 // Get the tracking error bound in this spatial dimension.
 double ValueFunction::TrackingBound(size_t dimension) const {
+  ROS_ERROR("Calling ValueFunction::TrackingBound.");
   bool found = false;
 
   // Get corresponding full state dimension.
@@ -204,9 +207,20 @@ double ValueFunction::TrackingBound(size_t dimension) const {
 double ValueFunction::
 SwitchingTrackingBound(
   size_t dimension, const ValueFunction::ConstPtr& value) const {
+  ROS_ERROR("Calling ValueFunction::SwitchingTrackingBound.");
   // HACK! For now, just assume we have loaded the ValueFunction corresponding
   // to the switching controller and take the regular tracking bound.
   return TrackingBound(dimension);
+}
+
+// Guaranteed distance in which a planner with the specified value function
+// can switch into this value function's safe set.
+double ValueFunction::
+GuaranteedSwitchingTime(
+  size_t dimension, const ValueFunction::ConstPtr& incoming_value) const {
+  ROS_ERROR_THROTTLE(1.0, "Unimplemented method GuaranteedSwitchingTime.");
+  // HACK! Just returning a long time for now.
+  return 10.0;
 }
 
 // Guaranteed distance in which a planner with the specified value function
@@ -223,6 +237,7 @@ double ValueFunction::GuaranteedSwitchingDistance(
 // between 0 and 1, where 1 means the final control signal should be exactly
 // the optimal control signal computed by this value function.
 double ValueFunction::Priority(const VectorXd& state) const {
+  ROS_ERROR("Calling ValueFunction::Priority.");
   double priority = 0.0;
 
   // Take the max priority among all subsystems.

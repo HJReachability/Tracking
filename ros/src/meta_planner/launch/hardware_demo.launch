@@ -66,10 +66,10 @@
 
   <!-- Record a rosbag. -->
   <node pkg="rosbag"
-	type="record"
-	name="recorder"
-	args="-a -o $(find meta_planner)/bagfiles/hw_demo_recording.bag"
-	if="$(arg record)">
+	      type="record"
+	      name="recorder"
+	      args="-a -o $(find meta_planner)/bagfiles/hw_demo_recording.bag"
+	      if="$(arg record)">
   </node>
 
   <!-- TF static publisher to create a base_link frame for the tracker. -->
