@@ -117,7 +117,7 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
         Vector3d::Constant(max_velocity_disturbances_[ii]);
       const Vector3d max_acceleration_disturbance =
         Vector3d::Constant(max_acceleration_disturbances_[ii]);
-      const Vector3d velocity_expansion = Vector3d::Constant(0.225);
+      const Vector3d velocity_expansion = Vector3d::Constant(0.1);
 
       // Create analytical value function.
       const AnalyticalPointMassValueFunction::ConstPtr value =
