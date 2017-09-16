@@ -203,7 +203,7 @@ TrackingBound(size_t dim) const {
   // This is equal to the position at the intersection between parabolas.
   const double v_ref = max_planner_speed_(dim);
 
-  return 0.5 * (v_ref+d_v_(dim))*(v_ref+d_v_(dim))
+  return (v_ref+d_v_(dim))*(v_ref+d_v_(dim))
           / (a_max_(dim) - d_a_(dim)) + x_exp_(dim);
 }
 

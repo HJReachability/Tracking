@@ -161,12 +161,12 @@ VectorXd Trajectory::GetState(double time) const {
 
 #ifdef ENABLE_DEBUG_MESSAGES
   if (iter == map_.end()) {
-    ROS_WARN("Could not interpolate. Time was too late.");
+    ROS_WARN_THROTTLE(1.0, "Could not interpolate. Time was too late.");
     return LastState();
   }
 
   if (iter == map_.begin()) {
-    ROS_WARN("Could not interpolate. Time was too early.");
+    ROS_WARN_THROTTLE(1.0, "Could not interpolate. Time was too early.");
     return FirstState();
   }
 #endif
