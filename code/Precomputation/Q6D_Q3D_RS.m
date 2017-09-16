@@ -10,15 +10,15 @@ if nargin <1
 end
 
 if nargin <2
-    thrustRange = [4 16];
+    thrustRange = [9.8-2 9.8+2];
 end
 
 if nargin <3
-    angleRange = [-15 15];% in degrees
+    angleRange = [-.1 .1];% in radians
 end
 
 if nargin < 4
-    gN = 575*ones(1,length(dims));
+    gN = 301*ones(1,length(dims));
 end
 
 if nargin < 5
@@ -28,7 +28,8 @@ end
 %% Dynamical system
 
 % min and max controls for the tracker
-angleRangeRad = deg2rad(angleRange);
+%angleRangeRad = deg2rad(angleRange);
+angleRangeRad = angleRange;
 uMin = [angleRangeRad(1); angleRangeRad(1); thrustRange(1)];
 uMax = [angleRangeRad(2); angleRangeRad(2); thrustRange(2)];
 
@@ -38,10 +39,10 @@ min_planner_speed = -pMax*ones(length(subDims),1);
 max_planner_speed = pMax*ones(length(subDims),1);
 
 % min and max disturbance velocity
-dRangeV = [-.5; .5];
+dRangeV = [-pMax/2; pMax/2];
 
 % min and max disturbance acceleration
-dRangeA = [-.5; .5];
+dRangeA = [-.1; .1];
 
 dMin = [dRangeV(1)*ones(length(subDims),1); ...
     dRangeA(1)*ones(length(subDims),1)];

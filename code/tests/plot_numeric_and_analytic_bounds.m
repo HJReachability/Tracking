@@ -45,36 +45,105 @@
 fprintf(['\nEnsure correct data file has been loaded into workspace.\n'...
         'If no data file is loaded, only the analytic set will be plotted.\n\n'])
 
+%% user input
+
 % prompt user for reference velocity
-v_ref = input('Enter v_ref: ');
-d_acc = input('Enter d_acc: ');
+v_ref = input('Enter v_ref: '); if isempty(v_ref),  v_ref = .4; end
+u_max = input('Enter u_max: '); if isempty(u_max),  u_max = .1; end
+d_a   = input('Enter d_a: ');   if isempty(d_a),    d_a   = .1; end
+d_v   = input('Enter d_v: ');   if isempty(d_v),    d_v   = max(.2, v_ref/2); end
+v_exp = input('Enter v_exp: '); if isempty(v_exp),  v_exp = .225; end
+
+switching = input('Plot switching bound? (0/1)');
+
+if switching
+    v_ref_in = input('v_ref_in: '); if isempty(v_ref_in),  v_ref_in = .7; end
+    u_max_in = input('u_max_in: '); if isempty(u_max_in),  u_max_in = .1; end
+    d_a_in   = input('Enter d_a_in: '); if isempty(d_a_in),d_a_in = .1; end
+    d_v_in = input('d_v_in: '); if isempty(d_v_in), d_v_in = max(.2, v_ref_in/2); end
+    v_exp_in = input('Enter v_exp_in: '); if isempty(v_exp_in),  v_exp_in = .225; end
+end
+
+% if exist('data','var')
+%     levels = 0:0.1:1;
+%     [c,~] = contour(linspace(grid_min(1),grid_max(1),grid_N(1)),...
+%                 linspace(grid_min(2),grid_max(2),grid_N(2)),...
+%                 data,...
+%                 levels); % plots dim 1 on vertical axis, dim 2 on horizontal
+% else
+%    g = 9.81;
+%     u_max = deg2rad(15); % default tilt value for roll and pitch
+% end
+
+
+%% value computation
+
+% tracking control authority (assumes subsystem x or y)
+g = 9.81;
+a_max = g*tan(u_max);
+if switching, a_max_in = g*tan(u_max_in); end
+
+% disturbed reference velocity
+v_ref_d = v_ref + d_v;
+if switching, v_ref_d_in = v_ref_in + d_v_in; end
+
+% expansion of set boundaries in the position dimension
+x_exp = v_exp*(2*v_ref_d + 0.5*v_exp) /(a_max - d_a);
+if switching
+    x_exp_in = v_exp_in*(2*v_ref_d_in + 0.5*v_exp_in) /(a_max_in - d_a_in); 
+end
+
+% velocity bound
+v_bound = sqrt(v_ref_d^2 + 2*(a_max - d_a)*x_exp);
+if switching, v_bound_in = sqrt(v_ref_d_in^2 + 2*(a_max_in - d_a_in)*x_exp_in); end
+
+% switching velocity and position
+if switching
+    x_switch = v_ref_d_in * v_bound_in / (a_max_in-d_a_in);
+    k_switch = x_switch + 1/2*(-v_bound_in+v_ref_d).^2/(a_max - d_a);
+    v_switch = sqrt( (a_max - d_a)*(x_exp + k_switch ));
+end
+
+% analytic equations of critical characteristics (invariant set boundaries)
+X_A = @(v) ( 1/2*(v-v_ref_d).^2 - v_ref_d^2)./(a_max - d_a) - x_exp;
+X_B = @(v) (-1/2*(v+v_ref_d).^2 + v_ref_d^2)./(a_max - d_a) + x_exp;
+if switching
+    X_A_in = @(v) ( 1/2*(v-v_ref_d_in).^2 - v_ref_d_in^2)./(a_max_in - d_a_in) - x_exp_in;
+    X_B_in = @(v) (-1/2*(v+v_ref_d_in).^2 + v_ref_d_in^2)./(a_max_in - d_a_in) + x_exp_in;
+    % pre-switch approach parabola
+
+    X_A_a = @(v)  1/2*(v-v_ref_d).^2./(a_max - d_a) - k_switch;
+    % X_B_a = @(v) -1/2*(v+v_ref_d).^2./(a_max - d_a) ...
+    %               + (v_ref_d_in.*v_bound_in)./(a_max_in - d_a_in) ...
+    %               + 1/2*(v_bound_in+v_ref_d).^2./(a_max - d_a);
+    X_B_a = @(v) - 1/2*(v+v_ref_d).^2/(a_max - d_a) + k_switch;
+end
+
+
+%% plotting
 
 % plot numeric value contours if data is available in workspace
 figure('Position',[500,500,800,600]);
 hold on
 
-if exist('data','var')
-    levels = 0:0.1:1;
-    [c,~] = contour(linspace(grid_min(1),grid_max(1),grid_N(1)),...
-                linspace(grid_min(2),grid_max(2),grid_N(2)),...
-                data,...
-                levels); % plots dim 1 on vertical axis, dim 2 on horizontal
-else
-    g = 9.81;
-    u_max = deg2rad(15); % default tilt value for roll and pitch
-end
-
-% tracking control authority (assumes subsystem x or y)
-a_max = g*tan(u_max);
-
-% analytic equations of critical characteristics (invariant set boundaries)
-X_A = @(v) (1/2*(v-v_ref).^2 - v_ref^2)./(a_max - d_acc);
-X_B = @(v) (-1/2*(v+v_ref).^2 + v_ref^2)./(a_max - d_acc);
-
 % plot analytic boundaries (exact zero level set of value function)
-fplot(X_B,[-v_ref,v_ref],'LineWidth',2.5);
-fplot(X_A,[-v_ref,v_ref],'LineWidth',2.5);
-
+fplot(X_A,[-v_bound,v_bound],'LineWidth',2.5);
+fplot(X_B,[-v_bound,v_bound],'LineWidth',2.5);
+if switching
+    % incoming set boundaries
+    fplot(X_A_in,[-v_bound_in,v_bound_in],'LineWidth',2.5);
+    fplot(X_B_in,[-v_bound_in,v_bound_in],'LineWidth',2.5);
+    % DEBUG: plot switching point
+    plot(-v_bound_in, x_switch, 'x');
+    plot(-v_bound_in, X_A_in(-v_bound_in),'o');
+    plot(-v_bound_in, k_switch -1/2*(-v_bound_in+v_ref_d).^2./(a_max - d_a) , 's');
+    % cruise parabola (pre-switch)
+    fplot(X_A_a, [ v_bound_in, v_switch],'--','LineWidth', 1.5);
+    fplot(X_B_a, [-v_switch,-v_bound_in],'--','LineWidth', 1.5);
+    % entry parabola (post-switch)
+    fplot(X_A, [-v_switch,-v_bound],'--','LineWidth', 1.5);
+    fplot(X_B, [ v_bound, v_switch],'--','LineWidth', 1.5);
+end
 %axis([-2*v_ref, 2*v_ref, -1, 1]);
 %axis equal
 
