@@ -95,15 +95,25 @@ public:
   // Get the tracking error bound in this spatial dimension.
   double TrackingBound(size_t dimension) const;
 
+  // Get the tracker velocity bounds in this spatial dimension.
+  double VelocityBound(size_t dimension) const;
+
   // Get the tracking error bound in this spatial dimension for a planner
   // switching INTO this one with the specified max speed.
   double SwitchingTrackingBound(
     size_t dim, const ValueFunction::ConstPtr& value) const;
 
+  // Guaranteed time in which a planner with the specified value function
+  // can switch into this value function's tracking error bound.
+  double GuaranteedSwitchingTime(
+    size_t dimension,
+    const AnalyticalPointMassValueFunction::ConstPtr& incoming_value) const;
+
   // Guaranteed distance in which a planner with the specified value function
   // can switch into this value function's safe set.
   double GuaranteedSwitchingDistance(
-    size_t dimension, const ValueFunction::ConstPtr& incoming_value) const;
+    size_t dimension,
+    const AnalyticalPointMassValueFunction::ConstPtr& incoming_value) const;
 
 private:
   explicit AnalyticalPointMassValueFunction(const Vector3d& max_planner_speed,

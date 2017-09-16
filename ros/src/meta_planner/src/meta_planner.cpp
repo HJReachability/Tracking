@@ -346,22 +346,42 @@ void MetaPlanner::RequestTrajectoryCallback(
   if (reached_goal_) {
     ROS_INFO("%s: Reached end of trajectory. Hovering in place.", name_.c_str());
 
-    // Same point == goal, but three times. 
+    // Same point == goal, but three times.
     // NOTE! The middle one should be set using a function called
     // GuaranteedSwitchingTime which is not yet implemented.
     const std::vector<Vector3d> positions = { goal_, goal_, goal_ };
-    const std::vector<double> times =
-      { current_time.toSec(), current_time.toSec() + 10.0, current_time.toSec() + 100.0 };
 
     // Get the bound value.
     const ValueFunction::ConstPtr bound_value = (traj_ == nullptr) ?
-      planners_.front()->GetIncomingValueFunction() : 
+      planners_.front()->GetIncomingValueFunction() :
       traj_->GetControlValueFunction(current_time.toSec());
 
     // Get control value.
-    const ValueFunction::ConstPtr control_value = 
+    const ValueFunction::ConstPtr control_value =
       planners_.back()->GetOutgoingValueFunction();
-  
+
+    // Get times.
+    double switching_time = 10.0;
+    if (!numerical_mode_) {
+      const AnalyticalPointMassValueFunction::ConstPtr analytic_control =
+        std::static_pointer_cast<const AnalyticalPointMassValueFunction>(control_value);
+
+      const AnalyticalPointMassValueFunction::ConstPtr analytic_bound =
+        std::static_pointer_cast<const AnalyticalPointMassValueFunction>(bound_value);
+
+      switching_time = analytic_control->GuaranteedSwitchingTime(0, analytic_bound);
+      switching_time = std::max(switching_time,
+        analytic_control->GuaranteedSwitchingTime(1, analytic_bound));
+      switching_time = std::max(switching_time,
+        analytic_control->GuaranteedSwitchingTime(2, analytic_bound));
+    }
+
+    const std::vector<double> times =
+      { current_time.toSec(),
+        current_time.toSec() + switching_time + 0.1,
+        current_time.toSec() + switching_time + 100.0 };
+
+    // Set up values.
     const std::vector<ValueFunction::ConstPtr> bound_values =
       { bound_value, control_value, control_value };
     const std::vector<ValueFunction::ConstPtr> control_values =
@@ -370,7 +390,7 @@ void MetaPlanner::RequestTrajectoryCallback(
       dynamics_->LiftGeometricTrajectory(positions, times);
 
     // Construct trajectory and publish.
-    const Trajectory::Ptr hover = 
+    const Trajectory::Ptr hover =
       Trajectory::Create(times, states, control_values, bound_values);
     traj_ = hover;
 
@@ -403,7 +423,11 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
 
   // (1) Set up a new RRT-like structure to hold the meta plan.
   const ros::Time current_time = ros::Time::now();
-  WaypointTree tree(start, start_time);
+  const ValueFunction::ConstPtr start_value = (traj_ == nullptr) ?
+    planners_.back()->GetOutgoingValueFunction() :
+    traj_->GetBoundValueFunction(start_time);
+
+  WaypointTree tree(start, start_value, start_time);
 
   bool found = false;
   while ((ros::Time::now() - current_time).toSec() < max_runtime_) {
@@ -431,79 +455,117 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
 
     Waypoint::ConstPtr neighbor = neighbors[0];
 
-    // Extract value function and corresponding planner ID from last waypoint. 
-    // If value is null, (i.e. at root) then set to planners_.size() since 
+    // Extract value function and corresponding planner ID from last waypoint.
+    // If value is null, (i.e. at root) then set to planners_.size() since
     // any planner is valid from the root. Convert value ID to planner ID
     // by dividing by 2 since each planner has two value functions.
+    const Trajectory::ConstPtr neighbor_traj = neighbor->traj_;
     const ValueFunction::ConstPtr neighbor_val = neighbor->value_;
-    const size_t neighbor_planner_id = (neighbor_val == nullptr) ?
-      planners_.size() : neighbor_val->Id() / 2;
+
+    const size_t neighbor_planner_id = neighbor_val->Id() / 2;
 
     // (4) Plan a trajectory (starting with the most aggressive planner and ending
     // with the next-most cautious planner).
     Trajectory::Ptr traj = nullptr;
     ValueFunction::ConstPtr value_used = nullptr;
-    for (size_t ii = 0; 
-	 ii < std::min(neighbor_planner_id + 2, planners_.size()); ii++) {
+    for (size_t ii = 0;
+         ii < std::min(neighbor_planner_id + 2, planners_.size()); ii++) {
       const Planner::ConstPtr planner = planners_[ii];
+
       value_used = planner->GetIncomingValueFunction();
+      const ValueFunction::ConstPtr possible_next_value =
+        planner->GetOutgoingValueFunction();
 
       // Since we might always end up switching, make sure this point
       // is not closer than the guaranteed switching distance.
-      if (std::abs(neighbor->point_(0) - sample(0)) <
-          value_used->GuaranteedSwitchingDistance(0, neighbor_val) &&
-          std::abs(neighbor->point_(1) - sample(1)) <
-          value_used->GuaranteedSwitchingDistance(1, neighbor_val) &&
-          std::abs(neighbor->point_(2) - sample(2)) <
-          value_used->GuaranteedSwitchingDistance(2, neighbor_val))
-        break;
+      // NOTE! This enforces backtracking only one planner at a time.
+      // In full generality, we would just need to replace possible_next_value
+      // with the most cautious value.
+      bool sample_too_close = false;
+      if (!numerical_mode_) {
+        const AnalyticalPointMassValueFunction::ConstPtr analytic_used =
+          std::static_pointer_cast<
+          const AnalyticalPointMassValueFunction>(value_used);
+        const AnalyticalPointMassValueFunction::ConstPtr analytic_next =
+          std::static_pointer_cast<
+            const AnalyticalPointMassValueFunction>(possible_next_value);
+
+
+        if (std::abs(neighbor->point_(0) - sample(0)) <
+            analytic_next->GuaranteedSwitchingDistance(0, analytic_used) &&
+            std::abs(neighbor->point_(1) - sample(1)) <
+            analytic_next->GuaranteedSwitchingDistance(1, analytic_used) &&
+            std::abs(neighbor->point_(2) - sample(2)) <
+            analytic_next->GuaranteedSwitchingDistance(2, analytic_used))
+          sample_too_close = true;
+      } else {
+        if (std::abs(neighbor->point_(0) - sample(0)) <
+            possible_next_value->GuaranteedSwitchingDistance(0, value_used) &&
+            std::abs(neighbor->point_(1) - sample(1)) <
+            possible_next_value->GuaranteedSwitchingDistance(1, value_used) &&
+            std::abs(neighbor->point_(2) - sample(2)) <
+            possible_next_value->GuaranteedSwitchingDistance(2, value_used))
+          sample_too_close = true;
+      }
+
+      if (sample_too_close)
+        continue;
 
       // Plan using 10% of the available total runtime.
       // NOTE! This is just a heuristic and could easily be changed.
-      const double time = (neighbor->traj_ == nullptr) ? 
-	start_time : neighbor->traj_->LastTime();
+      const double time = (neighbor_traj == nullptr) ?
+        start_time : neighbor_traj->LastTime();
 
-      traj = planner->Plan(neighbor->point_, sample,
-                           time, 0.1 * max_runtime_);
+      traj = planner->Plan(neighbor->point_, sample, time, 0.1 * max_runtime_);
 
       if (traj != nullptr) {
-	// When we succeed...
-	// If we just planned with a more cautious planner than the one used
-	// by the nearest neighbor, do a 1-step backtrack.
-	if (ii > neighbor_planner_id) {
-	  // Clone the neighbor.
-	  const Vector3d jittered(neighbor->point_(0) + 1e-4, 
-				  neighbor->point_(1) + 1e-4,
-				  neighbor->point_(2) + 1e-4);
+        // When we succeed...
+        // If we just planned with a more cautious planner than the one used
+        // by the nearest neighbor, do a 1-step backtrack.
+        if (ii > neighbor_planner_id) {
+#if 0
+          std::cout << "Switched from planner " << neighbor_planner_id
+                    << " with value id " << neighbor_val->Id()
+                    << " to planner " << ii
+                    << " with value id " << value_used->Id() << std::endl;
+#endif
+          // Clone the neighbor.
+          const Vector3d jittered(neighbor->point_(0) + 1e-4,
+                                  neighbor->point_(1) + 1e-4,
+                                  neighbor->point_(2) + 1e-4);
 
-	  const double time = (neighbor->traj_ == nullptr) ? 
-	    start_time : neighbor->traj_->FirstTime();
+          const double time = (neighbor_traj == nullptr) ?
+            start_time : neighbor_traj->FirstTime();
 
-	  if (time <= start_time + 1e-8)
-	    ROS_ERROR("%s: Tried to clone the root.", name_.c_str());
+          if (time <= start_time + 1e-8) {
+            ROS_INFO_THROTTLE(1.0, "%s: Tried to clone the root.", name_.c_str());
 
-	  Waypoint::ConstPtr clone = Waypoint::Create(
-	    jittered, 
-	    neighbor->value_, 
-	    Trajectory::Create(neighbor->traj_, time),
-	    neighbor->parent_);
+            // Didn't really succeed. Can't clone the root in general.
+            traj = nullptr;
+          } else {
+            Waypoint::ConstPtr clone =
+              Waypoint::Create(jittered,
+                               value_used,
+                               Trajectory::Create(neighbor_traj, time),
+                               neighbor->parent_);
 
-	  // Swap out the control value function in the neighbor's trajectory
-	  // and update time stamps accordingly.
-	  clone->traj_->ExecuteSwitch(value_used);
+            // Swap out the control value function in the neighbor's trajectory
+            // and update time stamps accordingly.
+            clone->traj_->ExecuteSwitch(value_used);
 
-	  // Insert the clone.
-	  tree.Insert(clone, false);
+            // Insert the clone.
+            tree.Insert(clone, false);
 
-	  // Adjust the time stamps for the new trajectory to occur after the
-	  // updated neighbor's trajectory.
-	  traj->ResetStartTime(clone->traj_->LastTime());
+            // Adjust the time stamps for the new trajectory to occur after the
+            // updated neighbor's trajectory.
+            traj->ResetStartTime(clone->traj_->LastTime());
 
-	  // Neighbor is now clone.
-	  neighbor = clone;
-	}
+            // Neighbor is now clone.
+            neighbor = clone;
+          }
+        }
 
-	break;
+        break;
       }
     }
 
@@ -528,28 +590,28 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
         const Planner::ConstPtr planner = planners_[ii];
         goal_value_used = planner->GetIncomingValueFunction();
 
-	// We are never gonna need to switch if this succeeds.
+        // We are never gonna need to switch if this succeeds.
         // Plan using 10% of the available total runtime.
         // NOTE! This is just a heuristic and could easily be changed.
         goal_traj =
           planner->Plan(sample, stop, traj->LastTime(), 0.1 * max_runtime_);
 
         if (goal_traj != nullptr) {
-	  // When we succeed...
-	  // If we just planned with a more cautious planner than the one used
-	  // by the nearest neighbor, do a 1-step backtrack.
-	  if (ii > neighbor_planner_id) {
-	    // Swap out the control value function in the neighbor's trajectory
-	    // and update time stamps accordingly.
-	    waypoint->traj_->ExecuteSwitch(goal_value_used);
-	
-	    // Adjust the time stamps for the new trajectory to occur after the
-	    // updated neighbor's trajectory.
-	    goal_traj->ResetStartTime(waypoint->traj_->LastTime());
-	  }
+          // When we succeed... don't need to clone because waypoint has no kids.
+          // If we just planned with a more cautious planner than the one used
+          // by the nearest neighbor, do a 1-step backtrack.
+          if (ii > neighbor_planner_id) {
+            // Swap out the control value function in the neighbor's trajectory
+            // and update time stamps accordingly.
+            waypoint->traj_->ExecuteSwitch(goal_value_used);
 
-	  break;
-	}
+            // Adjust the time stamps for the new trajectory to occur after the
+            // updated neighbor's trajectory.
+            goal_traj->ResetStartTime(waypoint->traj_->LastTime());
+          }
+
+          break;
+        }
       }
     }
 

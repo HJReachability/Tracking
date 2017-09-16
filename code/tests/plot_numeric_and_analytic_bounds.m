@@ -48,9 +48,11 @@ fprintf(['\nEnsure correct data file has been loaded into workspace.\n'...
 % prompt user for reference velocity
 v_ref = input('Enter v_ref: ');
 d_acc = input('Enter d_acc: ');
+d_vel = input('Enter d_vel: ');
+v_entry = input('Enter v_entry (0 for ideal): ');
 
 % plot numeric value contours if data is available in workspace
-figure('Position',[500,500,800,600]);
+%figure('Position',[500,500,800,600]);
 hold on
 
 if exist('data','var')
@@ -61,19 +63,27 @@ if exist('data','var')
                 levels); % plots dim 1 on vertical axis, dim 2 on horizontal
 else
     g = 9.81;
-    u_max = deg2rad(15); % default tilt value for roll and pitch
+    u_max = .1;%deg2rad(15); % default tilt value for roll and pitch
 end
 
 % tracking control authority (assumes subsystem x or y)
 a_max = g*tan(u_max);
 
+% set expansion in position dimension to allow non-zero entry velocity
+x_exp = v_entry * (2*(v_ref+d_vel) + 0.5*v_entry) / (a_max - d_acc)
+
+% velocity bound (extreme of the set)
+v_bound = sqrt ( (v_ref+d_vel)^2 + 2*(a_max - d_acc)*x_exp )
+
 % analytic equations of critical characteristics (invariant set boundaries)
-X_A = @(v) (1/2*(v-v_ref).^2 - v_ref^2)./(a_max - d_acc);
-X_B = @(v) (-1/2*(v+v_ref).^2 + v_ref^2)./(a_max - d_acc);
+X_A = @(v) (1/2*(v-v_ref-d_vel).^2 - (v_ref+d_vel)^2)./...
+            (a_max - d_acc) - x_exp;
+X_B = @(v) (-1/2*(v+v_ref+d_vel).^2 + (v_ref+d_vel)^2)./...
+            (a_max - d_acc) + x_exp;
 
 % plot analytic boundaries (exact zero level set of value function)
-fplot(X_B,[-v_ref,v_ref],'LineWidth',2.5);
-fplot(X_A,[-v_ref,v_ref],'LineWidth',2.5);
+h1 = fplot(X_B,[-v_bound,v_bound],'LineWidth',2.5);
+h2 = fplot(X_A,[-v_bound,v_bound],'LineWidth',2.5);
 
 %axis([-2*v_ref, 2*v_ref, -1, 1]);
 %axis equal
@@ -94,5 +104,5 @@ if exist('data','var')
 else
     legend_ = legend_(2:end);
 end
-legend(legend_);
+%legend(legend_);
        
