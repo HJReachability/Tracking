@@ -19,34 +19,45 @@ bound_zs = csvread('bound_zs.csv');
 
 times = csvread('times.csv');
 
+FIRST_TIME = 0.2;
+LAST_TIME = 10.0;
+indices = (times > FIRST_TIME) & (times < LAST_TIME);
+
 %% Plot subfigures, sharing the same x-axis (time).
-set(gca, 'fontsize', 20);
+FONT_SIZE = 24;
+LINE_WIDTH = 2;
 
 figure;
+
 subplot(3, 1, 1);
-hold on; grid on;
-plot(times, planner_xs, 'k', 'LineWidth', 2);
-plot(times, tracker_xs, 'b-', 'LineWidth', 2);
-plot(times, planner_xs + bound_xs, 'r.', 'LineWidth', 2);
-plot(times, planner_xs - bound_xs, 'r.', 'LineWidth', 2);
-hold off; grid off;
+set(gca, 'fontsize', FONT_SIZE);
+grid on;
+hold on;
+plot(times(indices), planner_xs(indices), 'k', 'LineWidth', LINE_WIDTH);
+plot(times(indices), tracker_xs(indices), 'b--', 'LineWidth', LINE_WIDTH);
+plot(times(indices), planner_xs(indices) + bound_xs(indices), 'r:', 'LineWidth', LINE_WIDTH);
+plot(times(indices), planner_xs(indices) - bound_xs(indices), 'r:', 'LineWidth', LINE_WIDTH);
+hold off;
+legend('Planner', 'Tracker', 'TEB');
 ylabel('$x$ (m)', 'Interpreter', 'latex');
 
 subplot(3, 1, 2);
+set(gca, 'fontsize', FONT_SIZE);
 hold on; grid on;
-plot(times, planner_ys, 'k', 'LineWidth', 2);
-plot(times, tracker_ys, 'b-', 'LineWidth', 2);
-plot(times, planner_ys + bound_ys, 'r.', 'LineWidth', 2);
-plot(times, planner_ys - bound_ys, 'r.', 'LineWidth', 2);
-hold off; grid off;
+plot(times(indices), planner_ys(indices), 'k', 'LineWidth', LINE_WIDTH);
+plot(times(indices), tracker_ys(indices), 'b--', 'LineWidth', LINE_WIDTH);
+plot(times(indices), planner_ys(indices) + bound_ys(indices), 'r:', 'LineWidth', LINE_WIDTH);
+plot(times(indices), planner_ys(indices) - bound_ys(indices), 'r:', 'LineWidth', LINE_WIDTH);
+hold off; 
 ylabel('$y$ (m)', 'Interpreter', 'latex');
 
 subplot(3, 1, 3);
+set(gca, 'fontsize', FONT_SIZE);
 hold on; grid on;
-plot(times, planner_zs, 'k', 'LineWidth', 2);
-plot(times, tracker_zs, 'b-', 'LineWidth', 2);
-plot(times, planner_zs + bound_zs, 'r.', 'LineWidth', 2);
-plot(times, planner_zs - bound_zs, 'r.', 'LineWidth', 2);
-hold off; grid off;
+plot(times(indices), planner_zs(indices), 'k', 'LineWidth', LINE_WIDTH);
+plot(times(indices), tracker_zs(indices), 'b--', 'LineWidth', LINE_WIDTH);
+plot(times(indices), planner_zs(indices) + bound_zs(indices), 'r:', 'LineWidth', LINE_WIDTH);
+plot(times(indices), planner_zs(indices) - bound_zs(indices), 'r:', 'LineWidth', LINE_WIDTH);
+hold off; 
 ylabel('$z$ (m)', 'Interpreter', 'latex');
 xlabel('Time (s)');
