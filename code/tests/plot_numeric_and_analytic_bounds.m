@@ -42,26 +42,40 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% constants and data files
+
+g = 9.81;
+
 fprintf(['\nEnsure correct data file has been loaded into workspace.\n'...
         'If no data file is loaded, only the analytic set will be plotted.\n\n'])
+
 
 %% user input
 
 % prompt user for reference velocity
+vertical_dim = input('Are we doing vertical dynamics? (0/1) ');
 v_ref = input('Enter v_ref: '); if isempty(v_ref),  v_ref = .4; end
-u_max = input('Enter u_max: '); if isempty(u_max),  u_max = .1; end
+if vertical_dim
+    T_max = input('Enter T_max: '); if isempty(T_max),  T_max = g+2; end
+else
+    u_max = input('Enter u_max: '); if isempty(u_max),  u_max = .1; end
+end
 d_a   = input('Enter d_a: ');   if isempty(d_a),    d_a   = .1; end
 d_v   = input('Enter d_v: ');   if isempty(d_v),    d_v   = max(.2, v_ref/2); end
-v_exp = input('Enter v_exp: '); if isempty(v_exp),  v_exp = .225; end
+v_exp = input('Enter v_exp: '); if isempty(v_exp),  v_exp = .1; end
 
-switching = input('Plot switching bound? (0/1)');
+switching = input('Plot switching bound? (0/1) ');
 
 if switching
     v_ref_in = input('v_ref_in: '); if isempty(v_ref_in),  v_ref_in = .7; end
-    u_max_in = input('u_max_in: '); if isempty(u_max_in),  u_max_in = .1; end
+    if vertical_dim
+        T_max_in = input('Enter T_max_in: '); if isempty(T_max_in),  T_max_in = g+2; end
+    else
+        u_max_in = input('Enter u_max_in: '); if isempty(u_max_in),  u_max_in = .1; end
+    end
     d_a_in   = input('Enter d_a_in: '); if isempty(d_a_in),d_a_in = .1; end
     d_v_in = input('d_v_in: '); if isempty(d_v_in), d_v_in = max(.2, v_ref_in/2); end
-    v_exp_in = input('Enter v_exp_in: '); if isempty(v_exp_in),  v_exp_in = .225; end
+    v_exp_in = input('Enter v_exp_in: '); if isempty(v_exp_in),  v_exp_in = .1; end
 end
 
 % if exist('data','var')
@@ -79,9 +93,13 @@ end
 %% value computation
 
 % tracking control authority (assumes subsystem x or y)
-g = 9.81;
-a_max = g*tan(u_max);
-if switching, a_max_in = g*tan(u_max_in); end
+if vertical_dim
+    a_max = T_max - g;
+    if switching, a_max_in = T_max_in - g; end
+else
+    a_max = g*tan(u_max);
+    if switching, a_max_in = g*tan(u_max_in); end
+end
 
 % disturbed reference velocity
 v_ref_d = v_ref + d_v;
@@ -93,6 +111,12 @@ if switching
     x_exp_in = v_exp_in*(2*v_ref_d_in + 0.5*v_exp_in) /(a_max_in - d_a_in); 
 end
 
+% position error bound
+
+x_bound = v_ref_d.^2./ (a_max - d_a) + x_exp;
+if switching
+    x_bound_in = v_ref_d_in.^2./ (a_max_in - d_a_in) + x_exp_in;
+end
 % velocity bound
 v_bound = sqrt(v_ref_d^2 + 2*(a_max - d_a)*x_exp);
 if switching, v_bound_in = sqrt(v_ref_d_in^2 + 2*(a_max_in - d_a_in)*x_exp_in); end
@@ -134,9 +158,9 @@ if switching
     fplot(X_A_in,[-v_bound_in,v_bound_in],'LineWidth',2.5);
     fplot(X_B_in,[-v_bound_in,v_bound_in],'LineWidth',2.5);
     % DEBUG: plot switching point
-    plot(-v_bound_in, x_switch, 'x');
-    plot(-v_bound_in, X_A_in(-v_bound_in),'o');
-    plot(-v_bound_in, k_switch -1/2*(-v_bound_in+v_ref_d).^2./(a_max - d_a) , 's');
+    % plot(-v_bound_in, x_switch, 'x');
+    % plot(-v_bound_in, X_A_in(-v_bound_in),'o');
+    % plot(-v_bound_in, k_switch -1/2*(-v_bound_in+v_ref_d).^2./(a_max - d_a) , 's');
     % cruise parabola (pre-switch)
     fplot(X_A_a, [ v_bound_in, v_switch],'--','LineWidth', 1.5);
     fplot(X_B_a, [-v_switch,-v_bound_in],'--','LineWidth', 1.5);
