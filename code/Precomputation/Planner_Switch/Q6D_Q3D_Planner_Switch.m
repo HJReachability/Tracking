@@ -1,6 +1,6 @@
 function [data_switch,tau,sD_switch]=Q6D_Q3D_Planner_Switch(planner_speed_small, planner_speed_big, visualize)
 if nargin <1 
-    planner_speed_small = .7;
+    planner_speed_small = .4;
 end
 
 if nargin <2
@@ -11,10 +11,10 @@ if nargin <3
     visualize = true;
 end
 
-small = .2;
+small = 0;
 
 surfFig = 1;
-sliceFig = 2;
+sliceFig = 10;
 boxFig = 3;
 surfFigAxis = [-.8 .8 -.8 .8 -.8 .8];
 level = 0;
@@ -126,7 +126,7 @@ end
 dt = 0.01;
 
 % Max time
-tMax = 10;
+tMax = 50;
 
 % Vector of times
 tau = 0:dt:tMax;

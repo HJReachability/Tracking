@@ -1,6 +1,6 @@
 function [datas,tau,sD,trackingErrorBound]=Q6D_Q3D_RS(pMax, thrustRange, angleRange, gN, visualize)
 
-small = 0.2;
+small = .3449;%0.1414;
 dims = 1:6;
 subDims = {[dims(1),dims(4)], [dims(2),dims(5)],[dims(3),dims(6)]};
 subDimNames = ['x','y','z'];
@@ -18,7 +18,7 @@ if nargin <3
 end
 
 if nargin < 4
-    gN = 301*ones(1,length(dims));
+    gN = 275*ones(1,length(dims));
 end
 
 if nargin < 5
@@ -39,7 +39,7 @@ min_planner_speed = -pMax*ones(length(subDims),1);
 max_planner_speed = pMax*ones(length(subDims),1);
 
 % min and max disturbance velocity
-dRangeV = [-pMax/2; pMax/2];
+dRangeV = [-max(.2,pMax/2); max(.2,pMax/2)];
 
 % min and max disturbance acceleration
 dRangeA = [-.1; .1];
@@ -139,7 +139,7 @@ tau = 0:dt:tMax;
 extraArgs.stopConverge = true;
 
 % converges when function doesn't change by more than dt each time step
-extraArgs.convergeThreshold = dt;
+extraArgs.convergeThreshold = dt/2;
 
 extraArgs.keepLast = 1;
 
