@@ -83,23 +83,30 @@ bool BallsInBox::IsValid(const Vector3d& position,
   for (size_t ii = 0; ii < points_.size(); ii++) {
     const Vector3d& p = points_[ii];
 
-    // Start by checking this position directly against the obstacle center.
-    if ((position - p).norm() <= radii_[ii])
-      return false;
+    // Compute signed distance between position and obstacle center.
+    const Vector3d signed_distance = p - position;
 
-    // Find the corner of the tracking bound which is closest to this obstacle.
-    // NOTE: this check assumes that the tracking bubble is not greater than
-    // twice the obstacle diameter.
-    Vector3d corner;
+    // Find closest point in the tracking bound to the obstacle center.
+    Vector3d closest_point;
     for (size_t jj = 0; jj < 3; jj++) {
       const double bound = outgoing_value->
         SwitchingTrackingBound(jj, incoming_value);
 
-      corner(jj) = (position(jj) - p(jj) > 0.0) ?
-        position(jj) - bound : position(jj) + bound;
+      if (signed_distance(jj) >= 0.0) {
+        if (signed_distance(jj) >= bound)
+          closest_point(jj) = position(jj) + bound;
+        else
+          closest_point(jj) = p(jj);
+      } else {
+        if (signed_distance(jj) <= -bound)
+          closest_point(jj) = position(jj) - bound;
+        else
+          closest_point(jj) = p(jj);
+      }
     }
 
-    if ((corner - p).norm() <= radii_[ii])
+    // Check distance to closest point.
+    if ((closest_point - p).norm() <= radii_[ii])
       return false;
   }
 
