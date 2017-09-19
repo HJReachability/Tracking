@@ -1,1 +1,2 @@
 hw_demo_recording_2017-09-09-13-18-27.bag filter=lfs diff=lfs merge=lfs -text
+hw_demo_video_best.bag filter=lfs diff=lfs merge=lfs -text

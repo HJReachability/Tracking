@@ -5,21 +5,21 @@
   <arg name="tracker_frame" default="tracker" />
   <arg name="planner_frame" default="planner" />
 
-  <arg name="state_lower_bound" default="[-2.0, -2.5, 0.0, -5.0, -5.0, -5.0]" />
-  <arg name="state_upper_bound" default="[1.25, 2.5, 2.0, 5.0, 5.0, 5.0]" />
+  <arg name="state_lower_bound" default="[-2.5, -3.5, 0.0, -5.0, -5.0, -5.0]" />
+  <arg name="state_upper_bound" default="[2.0, 3.5, 3.0, 5.0, 5.0, 5.0]" />
 
-  <arg name="goal_x" default="0.25" />
-  <arg name="goal_y" default="1.5" />
-  <arg name="goal_z" default="1.0" />
+  <arg name="goal_x" default="1.0" />
+  <arg name="goal_y" default="2.3" />
+  <arg name="goal_z" default="1.5" />
 
   <arg name="random_seed" default="0" />
 
-  <arg name="takeoff_hover_x" default="0.0" />
-  <arg name="takeoff_hover_y" default="0.0" />
+  <arg name="takeoff_hover_x" default="-1.1" />
+  <arg name="takeoff_hover_y" default="-0.7" />
   <arg name="takeoff_hover_z" default="0.75" />
 
-  <arg name="sensor_radius" default="1.0" />
-  <arg name="num_obstacles" default="5" />
+  <arg name="sensor_radius" default="2.0" />
+  <arg name="num_obstacles" default="8" />
   <arg name="min_obstacle_radius" default="0.25" />
   <arg name="max_obstacle_radius" default="0.3" />
 
@@ -46,7 +46,7 @@
   <arg name="numerical_mode" default="false" />
   <arg name="value_directories"
        default="[speed_7_tenths/, speed_7_tenths_to_4_tenths/, speed_4_tenths/, speed_4_tenths_to_1_tenths]" />
-  <arg name="max_speeds" default="[0.5, 0.4, 0.4, 0.3]" />
+  <arg name="max_speeds" default="[0.4, 0.3, 0.3, 0.2]" />
   <arg name="max_velocity_disturbances" default="[0.6, 0.6, 0.6, 0.6]" />
   <arg name="max_acceleration_disturbances" default="[0.1, 0.1, 0.1, 0.1]" />
 
