@@ -1,12 +1,12 @@
-function [datas,tau,sD,trackingErrorBound]=Q6D_Q3D_RS(pMax, thrustRange, angleRange, gN, visualize)
+function [datas,tau,sD,trackingErrorBound]=Q6D_Q3D_RS_video(pMax, thrustRange, angleRange, gN, visualize)
 
-small = .3449;%0.1414;
+small = 0.1414;
 dims = 1:6;
 subDims = {[dims(1),dims(4)], [dims(2),dims(5)],[dims(3),dims(6)]};
 subDimNames = ['x','y','z'];
 
 if nargin <1
-    pMax = .6;
+    pMax = .4;
 end
 
 if nargin <2
@@ -18,7 +18,7 @@ if nargin <3
 end
 
 if nargin < 4
-    gN = 275*ones(1,length(dims));
+    gN = 475*ones(1,length(dims));
 end
 
 if nargin < 5
@@ -130,27 +130,32 @@ end
 dt = 0.01;
 
 % Max time
-tMax = 10;
+tMax = 6;
 
 % Vector of times
 tau = 0:dt:tMax;
 
 % stop when function has converged
-extraArgs.stopConverge = true;
+%extraArgs.stopConverge = true;
 
 % converges when function doesn't change by more than dt each time step
-extraArgs.convergeThreshold = dt/2;
+%extraArgs.convergeThreshold = dt/2;
 
-extraArgs.keepLast = 1;
+%extraArgs.keepLast = 1;
 
 extraArgs.quiet = 1;
 
 % solve backwards reachable set
 datas = cell(1,length(subDims));
-for ii = 1:length(subDims)
-    [datas{ii}, ~] = HJIPDE_solve(data0{ii}, tau, ...
-        sD{ii}, 'max_data0', extraArgs);
-end
+[datas{1}, ~] = HJIPDE_solve(data0{1}, tau, ...
+    sD{1}, 'max_data0', extraArgs);
+datas{2} = datas{1};
+[datas{3}, ~] = HJIPDE_solve(data0{3}, tau, ...
+    sD{3}, 'max_data0', extraArgs);
+% for ii = 1:length(subDims)
+%     [datas{ii}, ~] = HJIPDE_solve(data0{ii}, tau, ...
+%         sD{ii}, 'max_data0', extraArgs);
+% end
 
 trackingErrorBound = zeros(1,3);
 for ii = 1:length(subDims)
@@ -190,7 +195,7 @@ if visualize
 end
 
 matlabFolder = '/Users/sylvia/Documents/MATLAB';
-plannerFolder = sprintf('%s/planner_RRT3D', matlabFolder);
+plannerFolder = sprintf('%s/planner_RRT3D_video', matlabFolder);
 if ~exist(plannerFolder, 'dir')
   mkdir(plannerFolder);
 end
@@ -201,7 +206,7 @@ if ~exist(speedFolder, 'dir')
   mkdir(speedFolder);
 end
 
-plannerFolderMatlab = sprintf('%s/planner_RRT3D_Matlab', matlabFolder);
+plannerFolderMatlab = sprintf('%s/planner_RRT3D_Matlab_video', matlabFolder);
 if ~exist(plannerFolderMatlab, 'dir')
   mkdir(plannerFolderMatlab);
 end
@@ -246,4 +251,3 @@ if ~exist([plannerFolderMatlab '/speed_' ...
         'priority_lower_bound','priority_upper_bound');
 end
 end
-
