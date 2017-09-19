@@ -52,7 +52,7 @@
   <arg name="tracker_u_dim" default="3" />
   <arg name="lqr_u_dim" default="4" />
 
-  <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_small.txt" />
+  <arg name="lqr_K_file" default="$(find crazyflie_lqr)/references/K_poor.txt" />
   <arg name="lqr_u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt" />
 
   <arg name="takeoff_hover_x" default="0.0" />
