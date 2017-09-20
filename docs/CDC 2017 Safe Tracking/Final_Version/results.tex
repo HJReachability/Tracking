@@ -50,7 +50,7 @@ g \tan \theta_y\\
 v_z + d_z\\
 k_T a_z - g
 \end{array}
-\right],
+\right],\;\;
 \left[
 \begin{array}{c}
 \dot{x}\\
@@ -65,8 +65,8 @@ b_x\\
 b_y\\
 b_z \\
 \end{array}
-\right]
-\end{array},\\
+\right],
+\end{array}\\
 \end{aligned}
 \end{equation}
 where $(x, y, z)$ denote the position, $(v_x, v_y, v_z)$ velocity, $(\theta_x, \theta_y)$ the pitch and roll, and $(\omega_x, \omega_y)$ the pitch and roll rates. The controls of the 10D system are $(a_x, a_y, a_z)$, where $a_x$ and $a_y$ represent the desired pitch and roll angle ($|a_x|,|a_y|\leq10$ degrees), and $a_z$ represents the vertical thrust ($0\leq a_z\leq 1.5g$ m/s$^{2}$). The 3D system controls are $(b_x, b_y, b_z)$, and represent the velocity in each positional dimension ($|b_x|,|b_y|,|b_z|\leq0.5$ m/s). The disturbances in the 10D system $(d_x, d_y, d_z)$ are caused by wind, which acts on the velocity in each dimension ($|d_x|,|d_y|,|d_z|\leq0.1$ m/s). The values for parameters $d_0,d_1,n_0,k_T,g$ used were: $d_0=10,d_1=8,n_0=10,k_T=0.91,g=9.81$ m/s$^2$.
