@@ -71,11 +71,11 @@ In the context of the online framework, $\valfunc_\infty(\rstate)$ is the tracki
 
 Proposition \ref{prop:main} proves that every level set of $\valfunc_\infty(\rstate)$ is invariant under the following conditions:
 \begin{enumerate}
-  \item The tracking system applies the optimal control which tries to track the planning system;
-  \item The planning system applies (at worst) the optimal control that tries to escape from the tracking system; \label{ln:plan}
+  \item The tracking system applies the optimal control which tries to track the planning system.
+  \item The planning system applies (at worst) the optimal control that tries to escape from the tracking system. \label{ln:plan}
   \item The tracking system experiences (at worst) the optimal disturbance that tries to prevent successful tracking. \label{ln:dist}
 \end{enumerate}
-In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking system and will make it easier to stay within its current level set of $\valfunc_\infty(\rstate)$, or to move to a smaller invariant level set of $\valfunc_\infty(\rstate)$. The smallest invariant level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. The tracking error bound is given by\footnote{In practice, since $\valfunc_\infty$ is obtained numerically, we set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc + \epsilon\}$ for some suitably small $\epsilon>0$} the set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc\}$. This tracking error bound in the planner's frame of reference is given by:
+In practice, the worst case in conditions \ref{ln:plan} and \ref{ln:dist} may not occur; the result of this is only advantageous to the tracking system and will make it easier to stay within its current level set of $\valfunc_\infty(\rstate)$, or to move to a smaller invariant level set of $\valfunc_\infty(\rstate)$. The smallest invariant level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. The tracking error bound is given by\footnote{In practice, since $\valfunc_\infty$ is obtained numerically, we set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc + \epsilon\}$ for some suitably small $\epsilon>0$} the set $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc\}$. This tracking error bound in the planner's frame of reference is given by:
 \begin{equation} \label{eq:TEBp}
 \TEB_\pstate(\tstate) = \{\pstate: \valfunc_\infty(\tstate-\ptmat\pstate) \le \underline\valfunc\}.
 \end{equation}
