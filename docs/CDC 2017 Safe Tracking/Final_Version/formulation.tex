@@ -1,9 +1,9 @@
 % !TEX root = tracking.tex
 \section{Problem Formulation \label{sec:formulation}}
-We seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online in real time. Planning is done using a kinematic or dynamic planning model. Tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known a priori or can be observed by the system within a limited sensing range (see Section \ref{sec:online}).
+We seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online in real time. Planning is done using a planner that can be represented by a kinematic or dynamic planning model. Tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known \textit{a priori }or can be observed by the system within a limited sensing range (see Section \ref{sec:online}).
 
 \subsection{Tracking Model}
-The tracking model represents the autonomous system dynamics, and in general may be nonlinear and high-dimensional. Let $\tstate$ represent the state variables of the tracking model, which evolves according to
+The tracking model represents the autonomous system dynamics, and in general may be nonlinear and high-dimensional. Let $\tstate$ represent the state variables of the tracking model, which evolve according to
 \begin{equation}
 \begin{aligned}
 \label{eq:tdyn}
@@ -25,7 +25,7 @@ where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under the
 \end{equation}
 
 \subsection{Planning Model}
-The planning model is used by the path or trajectory planner to determine a desired path online. Kinematics or low-dimensional dynamics are typically used depending on the requirements of the planner. Let $\pstate$ represent the state variables of the planning model, with control $\pctrl$. The planning states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$. The dynamics similarly satisfy 
+The planning model represents the path or trajectory planner that is used online. Kinematics or low-dimensional dynamics are typically used depending on the requirements of the planner. Let $\pstate$ represent the state variables of the planning model, with control $\pctrl$. The states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$. The dynamics satisfy 
 \begin{equation}
 \begin{aligned}
 \label{eq:pdyn}
