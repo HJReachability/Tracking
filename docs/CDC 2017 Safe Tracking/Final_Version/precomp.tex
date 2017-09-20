@@ -27,13 +27,11 @@ Next we define a cost function $\errfunc(\rstate)$ in the new reference frame as
 
 
 We want to find the farthest distance (and thus highest cost) that this game will ever reach when both players are acting optimally. Therefore we want to find a mapping between the initial relative state of the system and the maximum possible cost achieved over the time horizon. This mapping is through the value function, defined as
-\begin{equation}
- \begin{aligned}
+ \begin{align}
  \label{eq:valfunc}
- 	&V(\rstate,\thor)= \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t), \gamma_{\dstb} \in \Gamma_\dstb(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
-  &\quad\qquad \max_{\tvar\in [0, \thor]} \errfunc\Big(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))\Big)\big\}.
- 	\end{aligned}
- \end{equation} 
+ 	V(\rstate,&\,\thor)= \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t), \gamma_{\dstb} \in \Gamma_\dstb(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\notag\\
+ &\;\;\;\max_{\tvar\in [0, \thor]} \errfunc\Big(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))\Big)\big\}.
+ 	\end{align}
 
 The tracking error function can be computed using dynamic programming by solving a corresponding HJ PDE over some time horizon \cite{Mitchell05, Fisac15}. If the control authority of the tracking system is powerful enough to always eventually reach the planning system, this value function will converge, $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. In the next section we will prove that the sub-level sets of this value function will map initial relative states to the guaranteed furthest possible tracking error over all time, as seen in Fig. \ref{fig:quad10D_example}.
  
@@ -44,29 +42,18 @@ In the context of the online framework, $\valfunc_\infty(\rstate)$ is the tracki
    \label{prop:main}
    Suppose that the value function converges, and define $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty}\valfunc(\rstate, T)$. Then $\forall \tvar_1, \tvar_2$ with $\tvar_2 \ge \tvar_1$, $\valfunc_\infty(\rstate) \ge \valfunc_\infty\Big(\rtraj^*(\tvar_2; \rstate, \tvar_1)\Big)$, where
 
-   \begin{equation}
-   \begin{aligned}
-   \rtraj^*(\tvar; \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))), \\
-   \end{aligned}
-   \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\\
+   \begin{align}
+   &\rtraj^*(\tvar; \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))), \\
+   %%%
+   &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\notag\\
    & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \big\},\\
-    \end{aligned}
-   \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \\
+    %%%
+   & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\notag \\
    & \qquad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \dstb^*(\cdot))) \big\}, \\
-    \end{aligned}
-   \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
+    %%%
+   & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\notag\\
    & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))) \big\}.
-   \end{aligned}
-   \end{equation}
+   \end{align}
  \end{prop}
 
 Proposition \ref{prop:main} proves that every level set of $\valfunc_\infty(\rstate)$ is invariant under the following conditions:
