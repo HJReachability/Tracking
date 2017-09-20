@@ -47,7 +47,7 @@ Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the tr
  The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented obstacles $\obsAug$, and outputs the next state of the planning system $\pstate^+$. The hybrid tracking controller block (lines \ref{ln:controllerStart}-\ref{ln:controllerEnd}) first computes the updated relative state $\rstate^+$. If the $\rstate^+$ is on the tracking bound $\TEB_\pstate(0)$, the safety controller must be used to remain within the safe bound. The safety control is given by:
 \begin{equation}
   \label{eq:opt_ctrl}
-	\tctrl^* = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate^+) \cdot \rdyn(\rstate^+,\tctrl,\pctrl,\dstb)
+	\tctrl^* = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate^+) \cdot \rdyn(\rstate^+,\tctrl,\pctrl,\dstb).
 \end{equation}
 For many practical systems (such as control affine systems), this minimization can be found extremely quickly. If the relative state is not on the tracking boundary, a performance controller may be used. For the example in Section \ref{sec:results} the these controllers are identical, but in general the performance controller can suit the needs of the individual applications.
 
