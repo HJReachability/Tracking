@@ -49,6 +49,6 @@ Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the tr
   \label{eq:opt_ctrl}
 	\tctrl^* = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate^+) \cdot \rdyn(\rstate^+,\tctrl,\pctrl,\dstb).
 \end{equation}
-For many practical systems (such as control affine systems), this minimization can be found extremely quickly. If the relative state is not on the tracking boundary, a performance controller may be used. For the example in Section \ref{sec:results} the these controllers are identical, but in general the performance controller can suit the needs of the individual applications.
+For many practical systems (such as control-affine systems), this minimization can be performed extremely quickly. If the relative state is not on the tracking boundary, a performance controller may be used. For the example in Section \ref{sec:results} these controllers are identical, but in general the performance controller can suit the needs of the individual applications.
 
 The control $\tctrl^*$ is then applied to the physical system in the tracking block (lines \ref{ln:trackingStart}-\ref{ln:trackingEnd}) for a time period of $\dt$. The next state is saved as $\tstate^+$. We repeat this process until the planning goal has been reached.
