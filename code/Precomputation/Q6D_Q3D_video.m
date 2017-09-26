@@ -4,7 +4,7 @@ avi_out_filename = './visualize_Q6D_Q3D_tracking.avi';
 v = VideoWriter(avi_out_filename);
 v.FrameRate = 30;
 open(v)
-%clear
+% clear
 % load('/Users/sylvia/Documents/MATLAB/planner_RRT3D_video/speed_4_tenths/subsystem_x.mat',...
 %     'data','grid_min','grid_max','grid_N');
 % datas{1} = data;
@@ -35,7 +35,7 @@ ind = 1;
 fontsize = 30;
 az = 140;
 el = 30;
-linewidth = 3;
+linewidth = 7;
 color = [0.5843 0.8157 0.9882]; %line color
 
 figure(1)
@@ -53,6 +53,9 @@ hsurf_x.FaceAlpha = trans;
 cx = camlight;
 %cx.Position = cameraPos;
 set(gca,'FontSize',fontsize)
+set(gca,'xtick',[])
+set(gca,'ytick',[])
+set(gca,'ztick',[])
 %view(az,el)
 %axis square
 hold on
@@ -60,8 +63,8 @@ hold on
 hcontour_x = visSetIm(sD{1}.grid,datas{1}(:,:,ind)', color,teb(1));
 hcontour_x.ContourZLevel = teb(1);
 hcontour_x.LineWidth = linewidth;
-xlabel('$$r_{vx}$$','Interpreter','Latex')
-ylabel('$$r_{x}$$','Interpreter','Latex')
+%xlabel('$$r_{vx}$$','Interpreter','Latex')
+%ylabel('$$r_{x}$$','Interpreter','Latex')
 %zlabel('Value function')
 set(gca,'FontSize',fontsize)
 
@@ -69,10 +72,12 @@ subplot(3,2,2)
 hslice_x = visSetIm(sD{1}.grid,datas{1}(:,:,ind)',color,teb(1));
 hslice_x.LineWidth = linewidth;
 %hslice_x0 = visSetIm(sD{1}.grid,data0{1},?k?,teb(1));
-xlabel('$$r_{vx}$$','Interpreter','Latex')
-ylabel('$$r_{x}$$','Interpreter','Latex')
+%xlabel('$$r_{vx}$$','Interpreter','Latex')
+%ylabel('$$r_{x}$$','Interpreter','Latex')
 set(gca,'FontSize',fontsize)
 axis(axis_val_2)
+set(gca,'xtick',[])
+set(gca,'ytick',[])
 
 % Y DIMENSION
 subplot(3,2,3)
@@ -90,19 +95,24 @@ hold on
 hcontour_y = visSetIm(sD{2}.grid,datas{2}(:,:,ind)', color,teb(2));
 hcontour_y.ContourZLevel = teb(2);
 hcontour_y.LineWidth = linewidth;
-xlabel('$$r_{vy}$$','Interpreter','Latex')
-ylabel('$$r_{y}$$','Interpreter','Latex')
+%xlabel('$$r_{vy}$$','Interpreter','Latex')
+%ylabel('$$r_{y}$$','Interpreter','Latex')
 %zlabel('error function')
 set(gca,'FontSize',fontsize)
+set(gca,'xtick',[])
+set(gca,'ytick',[])
+set(gca,'ztick',[])
 
 subplot(3,2,4)
 hslice_y = visSetIm(sD{2}.grid,datas{2}(:,:,ind)',color,teb(2));
 hslice_y.LineWidth = linewidth;
 %hslice_y0 = visSetIm(sD{2}.grid,data0{2},?k?,teb(2));
-xlabel('$$r_{vy}$$','Interpreter','Latex')
-ylabel('$$r_{y}$$','Interpreter','Latex')
+%xlabel('$$r_{vy}$$','Interpreter','Latex')
+%ylabel('$$r_{y}$$','Interpreter','Latex')
 set(gca,'FontSize',fontsize)
 axis(axis_val_2)
+set(gca,'xtick',[])
+set(gca,'ytick',[])
 
 % Z DIMENSION
 subplot(3,2,5)
@@ -120,18 +130,23 @@ hold on
 hcontour_z = visSetIm(sD{3}.grid,datas{3}(:,:,ind)', color,teb(3));
 hcontour_z.ContourZLevel = teb(3);
 hcontour_z.LineWidth = linewidth;
-xlabel('$$r_{vz}$$','Interpreter','Latex')
-ylabel('$$r_{z}$$','Interpreter','Latex')
+%xlabel('$$r_{vz}$$','Interpreter','Latex')
+%ylabel('$$r_{z}$$','Interpreter','Latex')
 %zlabel('error function')
 set(gca,'FontSize',fontsize)
+set(gca,'xtick',[])
+set(gca,'ytick',[])
+set(gca,'ztick',[])
 
 subplot(3,2,6)
 hslice_z = visSetIm(sD{3}.grid,datas{3}(:,:,ind)',color,teb(3));
 hslice_z.LineWidth = linewidth;
 %hslice_z0 = visSetIm(sD{3}.grid,data0{3},?k?,teb(3));
-xlabel('$$r_{vz}$$','Interpreter','Latex')
-ylabel('$$r_{z}$$','Interpreter','Latex')
+%xlabel('$$r_{vz}$$','Interpreter','Latex')
+%ylabel('$$r_{z}$$','Interpreter','Latex')
 axis(axis_val_2)
+set(gca,'xtick',[])
+set(gca,'ytick',[])
 
 set(gcf,'color','w')
 set(gca,'FontSize',fontsize)

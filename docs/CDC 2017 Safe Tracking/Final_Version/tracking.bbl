@@ -22,7 +22,7 @@
 \BIBdecl
 
 \bibitem{Kuffner2000}
-J.~J. Kuffner and S.~M. LaValle, ``Rrt-connect: An efficient approach to
+J.~J. Kuffner and S.~M. LaValle, ``{RRT}-connect: An efficient approach to
   single-query path planning,'' in \emph{Proc. IEEE Int. Conf. Robotics and
   Automation}, 2000, pp. 995--1001.
 
@@ -67,9 +67,10 @@ S.~J. Qin and T.~A. Badgwell, ``A survey of industrial model predictive control
   733--764, 2003.
 
 \bibitem{Vitus2008}
-M.~Vitus, V.~Pradeep, G.~Hoffmann, S.~Waslander, and C.~Tomlin, ``Tunnel-milp:
-  Path planning with sequential convex polytopes,'' in \emph{Proc. AIAA
-  Guidance, Navigation and Control Conf. and Exhibit}, 2008, p. 7132.
+M.~Vitus, V.~Pradeep, G.~Hoffmann, S.~Waslander, and C.~Tomlin,
+  ``Tunnel-{MILP}: Path planning with sequential convex polytopes,'' in
+  \emph{Proc. AIAA Guidance, Navigation and Control Conf. and Exhibit}, 2008,
+  p. 7132.
 
 \bibitem{Zeilinger2011}
 M.~N. Zeilinger, C.~N. Jones, and M.~Morari, ``Real-time suboptimal model
@@ -117,8 +118,7 @@ S.~Singh, A.~Majumdar, J.-J. Slotine, and M.~Pavone, ``Robust online motion
 
 \bibitem{Majumdar2017}
 A.~Majumdar and R.~Tedrake, ``{Funnel libraries for real-time robust feedback
-  motion planning},'' \emph{Int. J. Robotics Research}, pp. 947--982, Jun.
-  2017.
+  motion planning},'' \emph{Int. J. Robotics Research}, Jun. 2017.
 
 \bibitem{Richards2006}
 A.~Richards and J.~P. How, ``Robust variable horizon model predictive control
@@ -147,7 +147,7 @@ E.~A. Coddington and N.~Levinson, \emph{Theory of Ordinary Differential
 \bibitem{Huang11}
 H.~Huang, J.~Ding, W.~Zhang, and C.~Tomlin, ``A differential game approach to
   planning in adversarial scenarios: A case study on capture-the-flag,'' in
-  \emph{Proc. IEEE Int. Conf. Robotics and Automation}, 2011, pp. 1451--1456.
+  \emph{Proc. IEEE Int. Conf. Robotics and Automation}, 2011.
 
 \bibitem{Chen17}
 M.~Chen, Z.~Zhou, and C.~J. Tomlin, ``{Multiplayer Reach-Avoid Games via
@@ -160,12 +160,12 @@ I.~Mitchell, A.~Bayen, and C.~Tomlin, ``A time-dependent {Hamilton-Jacobi}
   Trans. Autom. Control}, vol.~50, no.~7, pp. 947--957, 2005.
 
 \bibitem{Fisac15}
-J.~F. Fisac, M.~Chen, C.~J. Tomlin, and S.~S. Shankar, ``Reach-avoid problems
-  with time-varying dynamics, targets and constraints,'' in \emph{Proc. ACM
-  Int. Conf. Hybrid Systems: Computation and Control}, 2015.
+J.~F. Fisac, M.~Chen, C.~J. Tomlin, and S.~Sastry, ``Reach-avoid problems with
+  time-varying dynamics, targets and constraints,'' in \emph{Proc. ACM Int.
+  Conf. Hybrid Systems: Computation and Control}, 2015.
 
 \bibitem{ChenThesis}
-M.~Chen, ``High dimensional reachability analysis: Addressing the curse of
+M.~Chen, ``High dimensional reachability analysis: addressing the curse of
   dimensionality in formal verification,'' Ph.D. dissertation, EECS Department,
   University of California, Berkeley.
 

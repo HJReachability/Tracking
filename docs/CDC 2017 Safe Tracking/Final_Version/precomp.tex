@@ -3,7 +3,7 @@
 The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking system and the planning system, which we then analyze using HJ reachability. In this game, the tracking system is the pursuer, and the planning system is the evader. In reality the planner is typically not actively trying to avoid the tracking system, but this allows us to account for worst-case scenarios. Assuming both systems act optimally, we want to determine the largest relative distance that may occur over time. This distance is the maximum possible tracking error ($\TEB$).
 
 \subsection{Relative Dynamics}
-To determine the relative distance that may occur over time we first define relative states and dynamics between the tracking and planning models. The individual dynamics are defined in (\ref{eq:tdyn}) and (\ref{eq:pdyn}). The relative system is found by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model:
+To determine the relative distance that may occur over time, we first define relative states and dynamics between the tracking and planning models. The individual dynamics are defined in (\ref{eq:tdyn}) and (\ref{eq:pdyn}). The relative system is found by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model:
 
 \begin{equation}
 \label{eq:rdyn}
@@ -12,7 +12,7 @@ To determine the relative distance that may occur over time we first define rela
 \end{aligned}
 \end{equation}
 
-\noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}). The relative states $\rstate$ now represent the tracking states relative to the planning states. Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. This will be used to update the planning model in the online algorithm.
+\noindent where $\ptmat \in \tset$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}). The relative states $\rstate$ now represent the tracking states relative to the planning states. Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. This will be used to update the planning model in the online algorithm.
 
 \subsection{Formalizing the Pursuit-Evasion Game}
 Next we define a cost function $\errfunc(\rstate)$ in the new reference frame as the distance in position space to the origin. The tracking system tries to minimize this cost, while the planning system tries to maximize. As in \cite{Mitchell05}, we define a strategy for planning system as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a control for the planning model based on the control of the planning model. We restrict $\gamma$ to draw from only non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$. We similarly define the disturbance strategy $\gamma_{\dstb}: \tcset \rightarrow \dset$, $\gamma_{\dstb} \in \Gamma_\dstb(t)$.
@@ -35,7 +35,7 @@ We want to find the farthest distance (and thus highest cost) that this game wil
 
 The tracking error function can be computed using dynamic programming by solving a corresponding HJ PDE over some time horizon \cite{Mitchell05, Fisac15}. If the control authority of the tracking system is powerful enough to always eventually reach the planning system, this value function will converge, $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. In the next section we will prove that the sub-level sets of this value function will map initial relative states to the guaranteed furthest possible tracking error over all time, as seen in Fig. \ref{fig:quad10D_example}.
  
-In the context of the online framework, $\valfunc_\infty(\rstate)$ is the tracking error bound function. The gradient of the value function, $\deriv_\infty(\rstate)$, comprise the safety controller function (as described in Section \ref{sec:online}). When the framework is executed on a computer, these two functions are saved as look-up tables over a grid representing the relative state space.
+In the context of the online framework, $\valfunc_\infty(\rstate)$ is the tracking error bound function. The gradient of the value function, $\deriv_\infty(\rstate)$, informs the safety controller function (as described in Section \ref{sec:online}). When the framework is executed on a computer, these two functions are saved as look-up tables over a grid representing the relative state space.
  
 \subsection{Invariance of Converged Value Function}
  \begin{prop}
@@ -100,5 +100,5 @@ This is the tracking error bound that will be used in the online framework as sh
 %\end{equation} 
 %\end{proof} 
  \begin{rem} 
-   The proof of Proposition \ref{prop:main} can be found in \cite{ChenThesis}. The results are very similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc_\infty$ as a backward reachable set \cite{Mitchell05}. In our work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to perform solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
+   The proof of Proposition \ref{prop:main} can be found in \cite{ChenThesis}. The results are very similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc_\infty$ as a backward reachable set \cite{Mitchell05}. In our work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
  \end{rem}
