@@ -44,20 +44,134 @@ Authors: Vicenc Rubies Royo     ( vrubies@eecs.berkeley.edu )
 #
 ################################################################################
 
-#from MY_FILE import MY_FUNCTION
+from neural_policy import NeuralPolicy
+
+from crazyflie_msgs.msg import PositionStateStamped
+from crazyflie_msgs.msg import NoYawControlStamped
+
+import rospy
+from std_msgs.msg import Empty
 
 class NeuralTracker(object):
     def __init__(self):
-        pass
+        self._intialized = False
+        self._in_flight = False
 
     # Initialization and loading parameters.
-    def Initialize(self, node):
-        pass
+    def Initialize(self):
+        self._name = rospy.get_name() + "/neural_tracker"
 
-    def LoadParameters(self, node):
-        pass
+        # Load parameters.
+        if not self.LoadParameters():
+            rospy.logerr("%s: Error loading parameters.", self._name)
+            return False
 
-    def RegisterCallbacks(self, node):
-        pass
+        # Register callbacks.
+        if not self.RegisterCallbacks():
+            rospy.logerr("%s: Error registering callbacks.", self._name)
+            return False
 
-    #
+        # Create the NeuralPolicy.
+        # TODO! Finish populating parameters.
+        policy_params = {}
+        self._policy = NeuralPolicy(self._network_file, policy_params)
+
+        self._initialized = True
+        return True
+
+    def LoadParameters(self):
+        # Get the network filename.
+        if not rospy.has_param("network_file"):
+            return False
+        self._network_file = rospy.get_param("network_file")
+
+        # Get the timer interval.
+        if not rospy.has_param("time_step"):
+            return False
+        self._time_step = rospy.get_param("time_step")
+
+        # Topics.
+        if not rospy.has_param("state_topic"):
+            return False
+        self._state_topic = rospy.get_param("state_topic")
+
+        if not rospy.has_param("ref_topic"):
+            return False
+        self._ref_topic = rospy.get_param("ref_topic")
+
+        if not rospy.has_param("control_topic"):
+            return False
+        self._control_topic = rospy.get_param("control_topic")
+
+        if not rospy.has_param("in_flight_topic"):
+            return False
+        self._in_flight_topic = rospy.get_param("in_flight_topic")
+
+        return True
+
+    def RegisterCallbacks(self):
+        # Publishers.
+        self._control_pub = rospy.Publisher(self._control_topic,
+                                            NoYawControlStamped,
+                                            queue_size=1)
+
+        # Subscribers.
+        self._state_sub = rospy.Subscriber(self._state_topic,
+                                           PositionStateStamped,
+                                           self.StateCallback)
+
+        self._ref_sub = rospy.Subscriber(self._ref_topic,
+                                         NoYawControlStamped,
+                                         self.ReferenceCallback)
+
+        self._in_flight_sub = rospy.Subscriber(self._in_flight_topic,
+                                               Empty,
+                                               self.InFlightCallback)
+
+        # Timer.
+        self._timer = rospy.Timer(rospy.Duration(self._time_step),
+                                  self.TimerCallback)
+
+        return True
+
+    # Callback to process the takeoff signal.
+    def InFlightCallback(self, msg):
+        self._in_flight = True
+
+    # Callback to process state.
+    # HACK! Assuming state layout.
+    def StateCallback(self, msg):
+        self._state = np.array([msg.state.x, msg.state.y, msg.state.z,
+                                msg.state.x_dot, msg.state.y_dot, msg.state.z_dot])
+
+    # Callback to process references.
+    # TODO! Right now this will not directly interface with the MetaPlanner
+    # since that class publishes Trajectories. A simple fix will be to provide
+    # a C++ node that holds Trajectories and publishes planner state on a timer.
+    def ReferenceCallback(self, msg):
+        self._ref = np.array([msg.state.x, msg.state.y, msg.state.z,
+                              msg.state.x_dot, msg.state.y_dot, msg.state.z_dot])
+
+    # Timer callback. Every time this fires, look at the relative state and
+    # apply the optimal control.
+    # NOTE! This exists only to enforce regularity. It would also work to apply
+    # this function after every state or reference update.
+    def TimerCallback(self, event):
+        if not self._in_flight:
+            return
+
+        # Assuming we are in flight, then compute relative state and apply
+        # optimal control.
+        relative_state = self._state - self._ref
+        optimal_control = self._policy.OptimalControl(relative_state)
+
+        # Package into a message and publish.
+        # HACK! Assuming control layout.
+        msg = NoYawControlStamped()
+        msg.header.stamp = rospy.Time.now()
+        msg.control.roll = optimal_control[0]
+        msg.control.pitch = optimal_control[1]
+        msg.control.thrust = optimal_control[2]
+        msg.control.priority = 1.0
+
+        self._control_pub.publish(msg)
