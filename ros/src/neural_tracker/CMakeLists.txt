@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   crazyflie_msgs
   crazyflie_utils
-  neural_tracker_msgs
+  meta_planner_msgs
 )
 
 catkin_package(
