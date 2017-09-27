@@ -44,11 +44,60 @@ Authors: Vicenc Rubies Royo     ( vrubies@eecs.berkeley.edu )
 #
 ################################################################################
 
-#from MY_FILE import MY_FUNCTION
+import tensorflow as tf
+from Auxiliary import TransDef, Normalize
+import pickle
+import numpy as np
+import itertools
 
 class NeuralPolicy(object):
     def __init__(self, filename, params):
-        pass
+        # Set control parameters
+        self.max_list = [0.1,0.1,11.81];
+        self.min_list = [-0.1,-0.1,7.81];
+        
+        # Generate set of possible actions (i.e. all possible bang-bang configurations)
+        self.perms = list(itertools.product([-1,1], repeat=len(self.max_list)))
+        self.true_ac_list = [];
+        for i in range(len(self.perms)): #2**num_actions
+            ac_tuple = self.perms[i];
+            ac_list = [(tmp1==1)*tmp3 +  (tmp1==-1)*tmp2 for tmp1,tmp2,tmp3 in zip(ac_tuple,self.min_list,self.max_list)]; 
+            self.true_ac_list.append(ac_list);        
+
+        # Load layers and create neural net computational graph
+        layers = params["layers"]
+        states,y,Tt,L,l_r,lb,reg,cross_entropy = TransDef("PolicyNet",False,layers)
+        self.states = states
+        self.y = y
+        self.Tt = Tt
+        self.L = L
+        self.l_r = l_r
+        self.lb = lb
+        self.reg = reg
+        self.cross_entropy = cross_entropy
+        
+        # Initialize TF Session
+        self.theta = tf.get_collection(tf.GraphKeys.VARIABLES, scope='PolicyNet')
+        self.sess = tf.Session()
+        self.init = tf.initialize_all_variables()
+        self.sess.run(self.init)
+        
+        #Modify set of weights for the neural net policies
+        self.PIs = pickle.load( open(filename, "rb" ))
+        self.ALL_PI = self.PIs[0]
+        self.PI = self.ALL_PI[0]
+        for ind in range(len(self.PI)):
+            try:
+                self.sess.run(self.theta[ind].assign(self.PI[ind]))
+            except IndexError:
+                print("Pickable file doesn't correspond to the architecture: " + str(layers))
+                
 
     def OptimalControl(self, relative_state):
-        pass
+        #Get porbability distribution over actions
+        action = self.sess.run(self.Tt,{self.states:Normalize(relative_state)})
+        #Compute the argmax of the probability distribution
+        action = action.argmax(axis=1);
+        #Get the corresponding bang-bang control
+        action = np.asarray([self.true_ac_list[i] for i in action]);
+        return action     
