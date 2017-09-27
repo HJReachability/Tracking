@@ -91,21 +91,37 @@ class NeuralTracker(object):
         self._time_step = rospy.get_param("time_step")
 
         # Topics.
-        if not rospy.has_param("state_topic"):
+        if not rospy.has_param("topics/state"):
             return False
-        self._state_topic = rospy.get_param("state_topic")
+        self._state_topic = rospy.get_param("topics/state")
 
-        if not rospy.has_param("ref_topic"):
+        if not rospy.has_param("topics/ref"):
             return False
-        self._ref_topic = rospy.get_param("ref_topic")
+        self._ref_topic = rospy.get_param("topics/ref")
 
-        if not rospy.has_param("control_topic"):
+        if not rospy.has_param("topics/control"):
             return False
-        self._control_topic = rospy.get_param("control_topic")
+        self._control_topic = rospy.get_param("topics/control")
 
-        if not rospy.has_param("in_flight_topic"):
+        if not rospy.has_param("topics/in_flight"):
             return False
-        self._in_flight_topic = rospy.get_param("in_flight_topic")
+        self._in_flight_topic = rospy.get_param("topics/in_flight")
+
+        # Get the initial reference point.
+        # HACK! Assuming state layout.
+        if not rospy.has_param("ref/x"):
+            return False
+        ref_x = rospy.get_param("ref/x")
+
+        if not rospy.has_param("ref/y"):
+            return False
+        ref_y = rospy.get_param("ref/y")
+
+        if not rospy.has_param("ref/z"):
+            return False
+        ref_z = rospy.get_param("ref/z")
+
+        self._ref = np.array([ref_x, ref_y, ref_z, 0.0, 0.0, 0.0])
 
         return True
 
