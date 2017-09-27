@@ -10,11 +10,11 @@
   <arg name="state_upper_bound" default="[10.0, 10.0, 10.0, 1.0, 1.0, 1.0]" />
   -->
 
-  <arg name="goal_x" default="8.0" />
-  <arg name="goal_y" default="8.0" />
-  <arg name="goal_z" default="8.0" />
+  <arg name="goal_x" default="0.0" />
+  <arg name="goal_y" default="0.0" />
+  <arg name="goal_z" default="2.0" />
 
-  <arg name="network_file" default="$(find neural_tracker)/saved_networks/[fill_this_in].pkl" />
+  <arg name="network_file" default="$(find neural_tracker)/saved_networks/policies6D_PT_h35_h30.pkl" />
 
   <!--
   <arg name="random_seed" default="19" />
@@ -189,11 +189,11 @@
   <group ns="meta">
     <node name="neural_tracker"
           pkg="neural_tracker"
-          type="neural_tracker_node"
+          type="neural_tracker_node.py"
           output="screen">
 
       <param name="topics/in_flight" value="$(arg in_flight_topic)" />
-      <param name="topics/reference" value="$(arg reference_state_topic)" />
+      <param name="topics/ref" value="$(arg reference_state_topic)" />
       <param name="topics/state" value="$(arg position_state_topic)" />
       <param name="topics/control" value="$(arg optimal_control_topic)" />
 

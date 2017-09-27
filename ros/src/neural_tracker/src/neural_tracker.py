@@ -52,6 +52,8 @@ from crazyflie_msgs.msg import NoYawControlStamped
 import rospy
 from std_msgs.msg import Empty
 
+import numpy as np
+
 class NeuralTracker(object):
     def __init__(self):
         self._intialized = False
@@ -72,8 +74,9 @@ class NeuralTracker(object):
             return False
 
         # Create the NeuralPolicy.
-        # TODO! Finish populating parameters.
+        # TODO! This should be set from ROS parameters.
         policy_params = {}
+        policy_params["layers"] = [6, 35, 30, 2**3]
         self._policy = NeuralPolicy(self._network_file, policy_params)
 
         self._initialized = True
@@ -81,47 +84,47 @@ class NeuralTracker(object):
 
     def LoadParameters(self):
         # Get the network filename.
-        if not rospy.has_param("network_file"):
+        if not rospy.has_param("~network_file"):
             return False
-        self._network_file = rospy.get_param("network_file")
+        self._network_file = rospy.get_param("~network_file")
 
         # Get the timer interval.
-        if not rospy.has_param("time_step"):
+        if not rospy.has_param("~time_step"):
             return False
-        self._time_step = rospy.get_param("time_step")
+        self._time_step = rospy.get_param("~time_step")
 
         # Topics.
-        if not rospy.has_param("topics/state"):
+        if not rospy.has_param("~topics/state"):
             return False
-        self._state_topic = rospy.get_param("topics/state")
+        self._state_topic = rospy.get_param("~topics/state")
 
-        if not rospy.has_param("topics/ref"):
+        if not rospy.has_param("~topics/ref"):
             return False
-        self._ref_topic = rospy.get_param("topics/ref")
+        self._ref_topic = rospy.get_param("~topics/ref")
 
-        if not rospy.has_param("topics/control"):
+        if not rospy.has_param("~topics/control"):
             return False
-        self._control_topic = rospy.get_param("topics/control")
+        self._control_topic = rospy.get_param("~topics/control")
 
-        if not rospy.has_param("topics/in_flight"):
+        if not rospy.has_param("~topics/in_flight"):
             return False
-        self._in_flight_topic = rospy.get_param("topics/in_flight")
+        self._in_flight_topic = rospy.get_param("~topics/in_flight")
 
         # Get the initial reference point.
         # HACK! Assuming state layout.
-        if not rospy.has_param("ref/x"):
+        if not rospy.has_param("~ref/x"):
             return False
-        ref_x = rospy.get_param("ref/x")
+        ref_x = rospy.get_param("~ref/x")
 
-        if not rospy.has_param("ref/y"):
+        if not rospy.has_param("~ref/y"):
             return False
-        ref_y = rospy.get_param("ref/y")
+        ref_y = rospy.get_param("~ref/y")
 
-        if not rospy.has_param("ref/z"):
+        if not rospy.has_param("~ref/z"):
             return False
-        ref_z = rospy.get_param("ref/z")
+        ref_z = rospy.get_param("~ref/z")
 
-        self._ref = np.array([ref_x, ref_y, ref_z, 0.0, 0.0, 0.0])
+        self._ref = np.array([[ref_x, ref_y, ref_z, 0.0, 0.0, 0.0]])
 
         return True
 
@@ -137,7 +140,7 @@ class NeuralTracker(object):
                                            self.StateCallback)
 
         self._ref_sub = rospy.Subscriber(self._ref_topic,
-                                         NoYawControlStamped,
+                                         PositionStateStamped,
                                          self.ReferenceCallback)
 
         self._in_flight_sub = rospy.Subscriber(self._in_flight_topic,
@@ -157,16 +160,16 @@ class NeuralTracker(object):
     # Callback to process state.
     # HACK! Assuming state layout.
     def StateCallback(self, msg):
-        self._state = np.array([msg.state.x, msg.state.y, msg.state.z,
-                                msg.state.x_dot, msg.state.y_dot, msg.state.z_dot])
+        self._state = np.array([[msg.state.x, msg.state.y, msg.state.z,
+                                 msg.state.x_dot, msg.state.y_dot, msg.state.z_dot]])
 
     # Callback to process references.
     # TODO! Right now this will not directly interface with the MetaPlanner
     # since that class publishes Trajectories. A simple fix will be to provide
     # a C++ node that holds Trajectories and publishes planner state on a timer.
     def ReferenceCallback(self, msg):
-        self._ref = np.array([msg.state.x, msg.state.y, msg.state.z,
-                              msg.state.x_dot, msg.state.y_dot, msg.state.z_dot])
+        self._ref = np.array([[msg.state.x, msg.state.y, msg.state.z,
+                               msg.state.x_dot, msg.state.y_dot, msg.state.z_dot]])
 
     # Timer callback. Every time this fires, look at the relative state and
     # apply the optimal control.
@@ -185,9 +188,9 @@ class NeuralTracker(object):
         # HACK! Assuming control layout.
         msg = NoYawControlStamped()
         msg.header.stamp = rospy.Time.now()
-        msg.control.roll = optimal_control[0]
-        msg.control.pitch = optimal_control[1]
-        msg.control.thrust = optimal_control[2]
+        msg.control.roll = optimal_control[0, 0]
+        msg.control.pitch = optimal_control[0, 1]
+        msg.control.thrust = optimal_control[0, 2]
         msg.control.priority = 1.0
 
         self._control_pub.publish(msg)

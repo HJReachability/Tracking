@@ -23,6 +23,9 @@ ros/build
 ros/devel
 ros/src/CMakeLists.txt
 
+# Compiled python files.
+*.pyc
+
 # Swap files
 *.swp
 *.swo
