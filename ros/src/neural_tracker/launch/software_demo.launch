@@ -14,7 +14,7 @@
   <arg name="goal_y" default="0.0" />
   <arg name="goal_z" default="2.0" />
 
-  <arg name="network_file" default="$(find neural_tracker)/saved_networks/policies6D_PT_h35_h30.pkl" />
+  <arg name="network_file" default="$(find neural_tracker)/saved_networks/policies6D_PT_h40_h40.pkl" />
 
   <!--
   <arg name="random_seed" default="19" />
@@ -35,12 +35,12 @@
   <arg name="sensor_topic" default="/sensor" />
   <arg name="in_flight_topic" default="/in_flight" />
 
-  <arg name="simulator_dt" default="0.0001" />
-  <arg name="estimator_dt" default="0.001" />
-  <arg name="tracker_dt" default="0.001" />
-  <arg name="merger_dt" default="0.001" />
+  <arg name="simulator_dt" default="0.001" />
+  <arg name="estimator_dt" default="0.01" />
+  <arg name="tracker_dt" default="0.1" />
+  <arg name="merger_dt" default="0.01" />
 
-  <arg name="merger_mode" default="OPTIMAL" />
+  <arg name="merger_mode" default="MERGE" />
 
   <!--
   <arg name="max_meta_runtime" default="0.25" />

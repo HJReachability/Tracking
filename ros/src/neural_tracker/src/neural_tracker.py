@@ -76,7 +76,7 @@ class NeuralTracker(object):
         # Create the NeuralPolicy.
         # TODO! This should be set from ROS parameters.
         policy_params = {}
-        policy_params["layers"] = [6, 35, 30, 2**3]
+        policy_params["layers"] = [6, 40, 40, 2**3]
         self._policy = NeuralPolicy(self._network_file, policy_params)
 
         self._initialized = True
@@ -191,6 +191,6 @@ class NeuralTracker(object):
         msg.control.roll = optimal_control[0, 0]
         msg.control.pitch = optimal_control[0, 1]
         msg.control.thrust = optimal_control[0, 2]
-        msg.control.priority = 1.0
+        msg.control.priority = 0.9
 
         self._control_pub.publish(msg)

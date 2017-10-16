@@ -84,8 +84,8 @@ class NeuralPolicy(object):
 
         #Modify set of weights for the neural net policies
         self.PIs = pickle.load( open(filename, "rb" ))
-        self.ALL_PI = self.PIs[0]
-        self.PI = self.ALL_PI[0]
+        self.ALL_PI = self.PIs[0] # Pick out the policy for the controller (not disturbance).
+        self.PI = self.ALL_PI[4] # Pick out the desired controller policy.
         for ind in range(len(self.PI)):
             try:
                 self.sess.run(self.theta[ind].assign(self.PI[ind]))
