@@ -37,7 +37,7 @@
 
   <arg name="simulator_dt" default="0.001" />
   <arg name="estimator_dt" default="0.01" />
-  <arg name="tracker_dt" default="0.1" />
+  <arg name="tracker_dt" default="0.01" />
   <arg name="merger_dt" default="0.01" />
 
   <arg name="merger_mode" default="MERGE" />

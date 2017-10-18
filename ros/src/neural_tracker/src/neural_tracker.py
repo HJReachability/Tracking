@@ -184,13 +184,17 @@ class NeuralTracker(object):
         relative_state = self._state - self._ref
         optimal_control = self._policy.OptimalControl(relative_state)
 
-        # Package into a message and publish.
+        print "Relative state: " + str(relative_state)
+        print "Optimal control: " + str(optimal_control)
+
+        # Package into a message and publish. Note that optimal control
+        # layout is [pitch, roll, thrust].
         # HACK! Assuming control layout.
         msg = NoYawControlStamped()
         msg.header.stamp = rospy.Time.now()
-        msg.control.roll = optimal_control[0, 0]
-        msg.control.pitch = optimal_control[0, 1]
+        msg.control.pitch = optimal_control[0, 0]
+        msg.control.roll = optimal_control[0, 1]
         msg.control.thrust = optimal_control[0, 2]
-        msg.control.priority = 0.9
+        msg.control.priority = 1.0
 
         self._control_pub.publish(msg)
