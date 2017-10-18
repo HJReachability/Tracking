@@ -184,9 +184,6 @@ class NeuralTracker(object):
         relative_state = self._state - self._ref
         optimal_control = self._policy.OptimalControl(relative_state)
 
-        print "Relative state: " + str(relative_state)
-        print "Optimal control: " + str(optimal_control)
-
         # Package into a message and publish. Note that optimal control
         # layout is [pitch, roll, thrust].
         # HACK! Assuming control layout.
