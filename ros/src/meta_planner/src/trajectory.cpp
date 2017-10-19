@@ -56,12 +56,12 @@ Create(const std::vector<double>& times,
   size_t num_waypoints = states.size();
 
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (states.size() != times.size() || 
+  if (states.size() != times.size() ||
       states.size() != control_values.size() ||
       states.size() != bound_values.size()) {
     ROS_WARN("Inconsistent number of states, times, and values.");
     num_waypoints = std::min(states.size(),
-                             std::min(times.size(), 
+                             std::min(times.size(),
 				      std::min(control_values.size(),
 					       bound_values.size())));
   }
@@ -89,7 +89,7 @@ Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
       state(jj) = msg->states[ii].state[jj];
 
     // Add to this trajectory.
-    ptr->Add(msg->times[ii], state, 
+    ptr->Add(msg->times[ii], state,
 	     values[ msg->control_value_function_ids[ii] ],
 	     values[ msg->bound_value_function_ids[ii] ]);
   }
@@ -104,7 +104,7 @@ Create(const Trajectory::ConstPtr& other, double start) {
   Trajectory::Ptr traj = Trajectory::Create();
 
   // Insert the current state at the start time.
-  traj->Add(start, other->GetState(start), 
+  traj->Add(start, other->GetState(start),
 	    other->GetControlValueFunction(start),
 	    other->GetBoundValueFunction(start));
 
@@ -115,7 +115,7 @@ Create(const Trajectory::ConstPtr& other, double start) {
 
   // Iterate through all remaining states.
   while (iter != other->map_.end()) {
-    traj->Add(iter->first, iter->second.state_, 
+    traj->Add(iter->first, iter->second.state_,
 	      iter->second.control_value_, iter->second.bound_value_);
     iter++;
   }
@@ -271,7 +271,7 @@ void Trajectory::ExecuteSwitch(const ValueFunction::ConstPtr& value) {
 
     // (2) Insert this tuple into 'switched'.
     switched.insert({ time, StateValue(state, value, bound) });
-    
+
     // (3) Update last_state, last_time, and last_position.
     last_state = state;
     last_position = position;

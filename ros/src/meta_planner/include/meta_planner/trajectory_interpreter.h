@@ -36,23 +36,22 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Tracker class.
+// Defines the TrajectoryInterpreter class, which listens for new trajectory
+// messages and, on a timer, repeatedly queries the current trajectory and
+// publishes the corresponding reference.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_TRACKER_H
-#define META_PLANNER_TRACKER_H
+#ifndef META_PLANNER_TRAJECTORY_INTERPRETER_H
+#define META_PLANNER_TRAJECTORY_INTERPRETER_H
 
 #include <meta_planner/analytical_point_mass_value_function.h>
 #include <meta_planner/value_function.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
-#include <meta_planner/ompl_planner.h>
 #include <meta_planner/linear_dynamics.h>
 #include <meta_planner/near_hover_quad_no_yaw.h>
-#include <meta_planner/box.h>
-#include <demo/balls_in_box.h>
 
 #include <meta_planner_msgs/Trajectory.h>
 #include <meta_planner_msgs/TrajectoryRequest.h>
@@ -72,10 +71,10 @@
 
 namespace meta {
 
-class Tracker : private Uncopyable {
+class TrajectoryInterpreter : private Uncopyable {
 public:
-  explicit Tracker();
-  ~Tracker();
+  explicit TrajectoryInterpreter();
+  ~TrajectoryInterpreter();
 
   // Initialize this class with all parameters and callbacks.
   bool Initialize(const ros::NodeHandle& n);
@@ -84,26 +83,26 @@ private:
   bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // Callback for processing state updates.
-  void StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
-
   // Callback for processing trajectory updates.
   void TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg);
 
-  // Callback for when the MetaPlanner sees a new obstacle and wants the Tracker to
-  // hover and request a new trajectory.
-  void TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg);
+  // Callback for processing state updates.
+  void StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
 
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
+
+  // Request a new trajectory from the meta planner.
+  void RequestNewTrajectory() const;
+
+  // Callback for when the MetaPlanner sees a new obstacle and wants
+  // the Tracker to hover and request a new trajectory.
+  void TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg);
 
   // Process in flight notifications.
   inline void InFlightCallback(const std_msgs::Empty::ConstPtr& msg) {
     in_flight_ = true;
   }
-
-  // Request a new trajectory from the meta planner.
-  void RequestNewTrajectory() const;
 
   // Send a hover control.
   void Hover();
@@ -115,13 +114,16 @@ private:
   // Maximum runtime for meta planner.
   double max_meta_runtime_;
 
+  // TF interfacing.
+  tf2_ros::TransformBroadcaster br_;
+
+  // Set a recurring timer for a discrete-time controller.
+  ros::Timer timer_;
+  double time_step_;
+
   // Spaces and dimensions.
   size_t control_dim_;
   size_t state_dim_;
-  BallsInBox::Ptr space_;
-
-  std::vector<double> state_upper_;
-  std::vector<double> state_lower_;
 
   // Control upper/lower bounds.
   NearHoverQuadNoYaw::ConstPtr dynamics_;
@@ -139,38 +141,23 @@ private:
   std::vector<double> max_velocity_disturbances_;
   std::vector<double> max_acceleration_disturbances_;
 
-  // Set a recurring timer for a discrete-time controller.
-  ros::Timer timer_;
-  double time_step_;
-
-  // Amount of time (seconds) to look ahead in order to start switching
-  // into a smaller bubble.
-  // NOTE! This lookahead should really be the precise minimum switching time
-  // between this planner and the next-most cautious one.
-  double switching_lookahead_;
-
-  // TF interfacing.
-  tf2_ros::TransformBroadcaster br_;
-
   // Publishers/subscribers and related topics.
-  ros::Publisher control_pub_;
-  ros::Publisher environment_pub_;
-  ros::Publisher traj_vis_pub_;
   ros::Publisher tracking_bound_pub_;
   ros::Publisher reference_pub_;
   ros::Publisher request_traj_pub_;
-  ros::Subscriber state_sub_;
+  ros::Publisher traj_vis_pub_;
   ros::Subscriber traj_sub_;
+  ros::Subscriber state_sub_;
+  ros::Subscriber trigger_replan_sub_;
   ros::Subscriber in_flight_sub_;
 
-  std::string control_topic_;
-  std::string environment_topic_;
-  std::string traj_topic_;
-  std::string request_traj_topic_;
   std::string tracking_bound_topic_;
-  std::string state_topic_;
   std::string reference_topic_;
+  std::string request_traj_topic_;
   std::string traj_vis_topic_;
+  std::string traj_topic_;
+  std::string state_topic_;
+  std::string trigger_replan_topic_;
   std::string in_flight_topic_;
 
   // Frames of reference for reading current pose from tf tree.
@@ -178,11 +165,11 @@ private:
   std::string tracker_frame_id_;
   std::string planner_frame_id_;
 
-  // Are we in flight?
-  bool in_flight_;
-
   // Has the state been updated.
   bool been_updated_;
+
+  // Are we in flight?
+  bool in_flight_;
 
   // Is this class initialized?
   bool initialized_;

@@ -36,27 +36,27 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Tracker class.
+// Defines the TrajectoryInterpreter class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/tracker.h>
+#include <meta_planner/trajectory_interpreter.h>
 #include <crazyflie_utils/angles.h>
 
 #include <stdlib.h>
 
 namespace meta {
 
-Tracker::Tracker()
+TrajectoryInterpreter::TrajectoryInterpreter()
   : in_flight_(false),
     been_updated_(false),
     initialized_(false) {}
 
-Tracker::~Tracker() {}
+TrajectoryInterpreter::~TrajectoryInterpreter() {}
 
 // Initialize this class with all parameters and callbacks.
-bool Tracker::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "tracker");
+bool TrajectoryInterpreter::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "trajectory_interpreter");
 
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
@@ -68,6 +68,9 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
+  // Set the initial state to zero.
+  state_ = VectorXd::Zero(state_dim_);
+
   // Set control upper/lower bounds as Eigen::Vectors.
   VectorXd control_upper_vec(control_dim_);
   VectorXd control_lower_vec(control_dim_);
@@ -78,17 +81,6 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 
   // Set up dynamics.
   dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
-
-  // Set state space bounds.
-  VectorXd state_upper_vec(state_dim_);
-  VectorXd state_lower_vec(state_dim_);
-  for (size_t ii = 0; ii < state_dim_; ii++) {
-    state_upper_vec(ii) = state_upper_[ii];
-    state_lower_vec(ii) = state_lower_[ii];
-  }
-
-  // Set the initial state to zero.
-  state_ = VectorXd::Zero(state_dim_);
 
   // Populate list of value functions.
   if (numerical_mode_) {
@@ -130,8 +122,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Initialize trajectory to null as a cue to Hover(). Hover will reset the
-  // trajectory to just hover in place.
+  // Initialize trajectory to null.
   traj_ = nullptr;
 
   // Wait a little for the simulator to begin.
@@ -142,7 +133,7 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
 }
 
 // Load all parameters from config files.
-bool Tracker::LoadParameters(const ros::NodeHandle& n) {
+bool TrajectoryInterpreter::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Control parameters.
@@ -162,11 +153,8 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Planner parameters.
+  // Value parameters.
   if (!nl.getParam("meta/meta/max_runtime", max_meta_runtime_)) return false;
-  if (!nl.getParam("meta/meta/switching_lookahead", switching_lookahead_))
-    return false;
-
   if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
   if (!nl.getParam("meta/planners/value_directories", value_directories_))
     return false;
@@ -196,18 +184,13 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("meta/state/upper", state_upper_)) return false;
-  if (!nl.getParam("meta/state/lower", state_lower_)) return false;
-
   // Topics and frame ids.
-  if (!nl.getParam("meta/topics/control", control_topic_)) return false;
+  if (!nl.getParam("meta/topics/state", state_topic_)) return false;
   if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
+  if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
   if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
   if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
   if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
-
-  if (!nl.getParam("meta/topics/state", state_topic_)) return false;
-  if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
   if (!nl.getParam("meta/topics/vis/traj", traj_vis_topic_)) return false;
   if (!nl.getParam("meta/topics/vis/tracking_bound", tracking_bound_topic_))
     return false;
@@ -220,26 +203,25 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
 }
 
 // Register all callbacks and publishers.
-bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
+bool TrajectoryInterpreter::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Subscribers.
-  state_sub_ = nl.subscribe(
-    state_topic_.c_str(), 1, &Tracker::StateCallback, this);
-
   traj_sub_ = nl.subscribe(
-    traj_topic_.c_str(), 1, &Tracker::TrajectoryCallback, this);
+    traj_topic_.c_str(), 1, &TrajectoryInterpreter::TrajectoryCallback, this);
 
-  trigger_replan_sub_ = nl.subscribe(
-    trigger_replan_topic_.c_str(), 1, &Tracker::TriggerReplanCallback, this);
+  state_sub_ = nl.subscribe(
+    state_topic_.c_str(), 1, &TrajectoryInterpreter::StateCallback, this);
 
-  in_flight_sub_ = nl.subscribe(
-    in_flight_topic_.c_str(), 1, &Tracker::InFlightCallback, this);
+  trigger_replan_sub_ =
+    nl.subscribe(trigger_replan_topic_.c_str(), 1,
+                 &TrajectoryInterpreter::TriggerReplanCallback, this);
+
+  in_flight_sub_ =
+    nl.subscribe(in_flight_topic_.c_str(), 1,
+                 &TrajectoryInterpreter::InFlightCallback, this);
 
   // Visualization publisher(s).
-  environment_pub_ = nl.advertise<visualization_msgs::Marker>(
-    environment_topic_.c_str(), 1, false);
-
   traj_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
     traj_vis_topic_.c_str(), 1, false);
 
@@ -247,24 +229,25 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
     tracking_bound_topic_.c_str(), 1, false);
 
   // Actual publishers.
-  control_pub_ = nl.advertise<crazyflie_msgs::NoYawControlStamped>(
-    control_topic_.c_str(), 1, false);
-
   reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
     reference_topic_.c_str(), 1, false);
 
-  request_traj_pub_ = nl.advertise<meta_planner_msgs::TrajectoryRequest>(
-    request_traj_topic_.c_str(), 1, false);
-
   // Timer.
-  timer_ =
-    nl.createTimer(ros::Duration(time_step_), &Tracker::TimerCallback, this);
+  timer_ = nl.createTimer(ros::Duration(time_step_),
+                          &TrajectoryInterpreter::TimerCallback, this);
 
   return true;
 }
 
+// Callback for processing trajectory updates.
+void TrajectoryInterpreter::
+TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg) {
+  traj_ = Trajectory::Create(msg, values_);
+}
+
 // Callback for processing state updates.
-void Tracker::StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg) {
+void TrajectoryInterpreter::
+StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg) {
   // HACK! Assuming state format.
   state_(0) = msg->state.x;
   state_(1) = msg->state.y;
@@ -276,14 +259,10 @@ void Tracker::StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr
   been_updated_ = true;
 }
 
-// Callback for processing trajectory updates.
-void Tracker::TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg) {
-  traj_ = Trajectory::Create(msg, values_);
-}
-
-// Callback for when the MetaPlanner sees a new obstacle and wants the Tracker to
-// hover and request a new trajectory.
-void Tracker::TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg) {
+// Callback for when the MetaPlanner sees a new obstacle and wants the Tracker
+// to hover and request a new trajectory.
+void TrajectoryInterpreter::
+TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg) {
   ROS_INFO("%s: Replan callback triggered.", name_.c_str());
 
   if (!in_flight_ || !been_updated_)
@@ -298,9 +277,8 @@ void Tracker::TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg) {
   RequestNewTrajectory();
 }
 
-
 // Callback for applying tracking controller.
-void Tracker::TimerCallback(const ros::TimerEvent& e) {
+void TrajectoryInterpreter::TimerCallback(const ros::TimerEvent& e) {
   if (!in_flight_ || !been_updated_)
     return;
 
@@ -403,29 +381,39 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
     ROS_WARN_THROTTLE(1.0, "%s: Leaving the tracking error bound.", name_.c_str());
   }
 
-  // (3) Interpolate gradient to get optimal control.
-  const VectorXd optimal_control = control_value->OptimalControl(relative_state);
-
-  // (4) Publish optimal control with priority in (0, 1).
-  crazyflie_msgs::NoYawControlStamped control_msg;
-  control_msg.header.stamp = ros::Time::now();
-
-  // NOTE! Remember, control is assumed to be [pitch, roll, thrust].
-  control_msg.control.pitch = crazyflie_utils::angles::WrapAngleRadians(optimal_control(0));
-  control_msg.control.roll = crazyflie_utils::angles::WrapAngleRadians(optimal_control(1));
-  control_msg.control.thrust = optimal_control(2);
-  control_msg.control.priority = priority;
-
-  control_pub_.publish(control_msg);
-
   // Visualize trajectory.
   traj_->Visualize(traj_vis_pub_, fixed_frame_id_, dynamics_);
 }
 
+// Request a new trajectory from the meta planner.
+void TrajectoryInterpreter::RequestNewTrajectory() const {
+  if (traj_ == nullptr) {
+    ROS_ERROR("%s: Tried to request new trajectory without knowing.",
+              name_.c_str());
+    return;
+  }
 
-// Set the trajectory to continue the existing trajectory, then hover at the end.
-// If no current trajectory exists, simply hover at the current state.
-void Tracker::Hover() {
+  ROS_INFO("%s: Requesting a new trajectory.", name_.c_str());
+
+  // Determine time and state where we will receive the new trajectory.
+  // This is when/where the new trajectory should start from.
+  const double start_time = ros::Time::now().toSec() + max_meta_runtime_;
+  const VectorXd start_state = traj_->GetState(start_time);
+
+  // Populate request.
+  meta_planner_msgs::TrajectoryRequest msg;
+  msg.start_time = start_time;
+  msg.start_state.dimension = state_dim_;
+
+  for (size_t ii = 0; ii < start_state.size(); ii++)
+    msg.start_state.state.push_back(start_state(ii));
+
+  request_traj_pub_.publish(msg);
+}
+
+// Set the trajectory to continue the existing trajectory, then hover at
+// the end. If no current trajectory exists, simply hover at the current state.
+void TrajectoryInterpreter::Hover() {
   ROS_INFO("%s: Setting a hover trajectory.", name_.c_str());
 
   // Get the current time.
@@ -447,7 +435,8 @@ void Tracker::Hover() {
     hover_state(5) = 0.0;
 
     traj_->Add(now, hover_state, values_.back(), values_.front());
-    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state, values_.back(), values_.front());
+    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state,
+               values_.back(), values_.front());
     return;
   }
 
@@ -469,7 +458,7 @@ void Tracker::Hover() {
   hover->Add(hover->LastTime() + max_meta_runtime_ + 10.0,
              last_state,
              hover->LastControlValueFunction(),
-	     hover->LastControlValueFunction());
+             hover->LastControlValueFunction());
 
   traj_ = hover;
 }
