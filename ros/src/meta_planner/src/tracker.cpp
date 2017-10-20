@@ -79,16 +79,9 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
   // Set up dynamics.
   dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
 
-  // Set state space bounds.
-  VectorXd state_upper_vec(state_dim_);
-  VectorXd state_lower_vec(state_dim_);
-  for (size_t ii = 0; ii < state_dim_; ii++) {
-    state_upper_vec(ii) = state_upper_[ii];
-    state_lower_vec(ii) = state_lower_[ii];
-  }
-
-  // Set the initial state to zero.
+  // Set the initial state and reference to zero.
   state_ = VectorXd::Zero(state_dim_);
+  reference_ = VectorXd::Zero(state_dim_);
 
   // Populate list of value functions.
   if (numerical_mode_) {
@@ -130,9 +123,9 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Initialize trajectory to null as a cue to Hover(). Hover will reset the
-  // trajectory to just hover in place.
-  traj_ = nullptr;
+  // Start control and bound values at most/least conservative.
+  control_value_ = values_.back();
+  bound_value_ = values_.front();
 
   // Wait a little for the simulator to begin.
   //  ros::Duration(0.5).sleep();
@@ -163,10 +156,6 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // Planner parameters.
-  if (!nl.getParam("meta/meta/max_runtime", max_meta_runtime_)) return false;
-  if (!nl.getParam("meta/meta/switching_lookahead", switching_lookahead_))
-    return false;
-
   if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
   if (!nl.getParam("meta/planners/value_directories", value_directories_))
     return false;
@@ -196,20 +185,12 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("meta/state/upper", state_upper_)) return false;
-  if (!nl.getParam("meta/state/lower", state_lower_)) return false;
-
   // Topics and frame ids.
   if (!nl.getParam("meta/topics/control", control_topic_)) return false;
-  if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
-  if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
-  if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
   if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
-
   if (!nl.getParam("meta/topics/state", state_topic_)) return false;
   if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
-  if (!nl.getParam("meta/topics/vis/traj", traj_vis_topic_)) return false;
-  if (!nl.getParam("meta/topics/vis/tracking_bound", tracking_bound_topic_))
+  if (!nl.getParam("meta/topics/controller_id", controller_id_topic_))
     return false;
 
   if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
@@ -227,34 +208,18 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   state_sub_ = nl.subscribe(
     state_topic_.c_str(), 1, &Tracker::StateCallback, this);
 
-  traj_sub_ = nl.subscribe(
-    traj_topic_.c_str(), 1, &Tracker::TrajectoryCallback, this);
+  reference_sub_ = nl.subscribe(
+    reference_topic_.c_str(), 1, &Tracker::ReferenceCallback, this);
 
-  trigger_replan_sub_ = nl.subscribe(
-    trigger_replan_topic_.c_str(), 1, &Tracker::TriggerReplanCallback, this);
+  controller_id_sub_ = nl.subscribe(
+    controller_id_topic_.c_str(), 1, &Tracker::ControllerIdCallback, this);
 
   in_flight_sub_ = nl.subscribe(
     in_flight_topic_.c_str(), 1, &Tracker::InFlightCallback, this);
 
-  // Visualization publisher(s).
-  environment_pub_ = nl.advertise<visualization_msgs::Marker>(
-    environment_topic_.c_str(), 1, false);
-
-  traj_vis_pub_ = nl.advertise<visualization_msgs::Marker>(
-    traj_vis_topic_.c_str(), 1, false);
-
-  tracking_bound_pub_ = nl.advertise<visualization_msgs::Marker>(
-    tracking_bound_topic_.c_str(), 1, false);
-
   // Actual publishers.
   control_pub_ = nl.advertise<crazyflie_msgs::NoYawControlStamped>(
     control_topic_.c_str(), 1, false);
-
-  reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
-    reference_topic_.c_str(), 1, false);
-
-  request_traj_pub_ = nl.advertise<meta_planner_msgs::TrajectoryRequest>(
-    request_traj_topic_.c_str(), 1, false);
 
   // Timer.
   timer_ =
@@ -264,7 +229,8 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
 }
 
 // Callback for processing state updates.
-void Tracker::StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg) {
+void Tracker::
+StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg) {
   // HACK! Assuming state format.
   state_(0) = msg->state.x;
   state_(1) = msg->state.y;
@@ -276,202 +242,53 @@ void Tracker::StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr
   been_updated_ = true;
 }
 
-// Callback for processing trajectory updates.
-void Tracker::TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg) {
-  traj_ = Trajectory::Create(msg, values_);
+// Callback for processing state updates.
+void Tracker::ReferenceCallback(
+  const crazyflie_msgs::PositionStateStamped::ConstPtr& msg) {
+  // HACK! Assuming state format.
+  reference_(0) = msg->state.x;
+  reference_(1) = msg->state.y;
+  reference_(2) = msg->state.z;
+  reference_(3) = msg->state.x_dot;
+  reference_(4) = msg->state.y_dot;
+  reference_(5) = msg->state.z_dot;
 }
 
-// Callback for when the MetaPlanner sees a new obstacle and wants the Tracker to
-// hover and request a new trajectory.
-void Tracker::TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg) {
-  ROS_INFO("%s: Replan callback triggered.", name_.c_str());
-
-  if (!in_flight_ || !been_updated_)
-    return;
-
-  // Set trajectory to be the remainder of this trajectory, then hovering
-  // at the end for a while.
-  Hover();
-
-  // Request a new trajectory starting from the state we will be in after
-  // the max_meta_runtime_ has elapsed.
-  RequestNewTrajectory();
+// Callback for processing state updates.
+void Tracker::ControllerIdCallback(
+  const meta_planner_msgs::ControllerId::ConstPtr& msg) {
+  control_value_ = values_[msg->control_value_function_id];
+  bound_value_ = values_[msg->bound_value_function_id];
 }
-
 
 // Callback for applying tracking controller.
 void Tracker::TimerCallback(const ros::TimerEvent& e) {
   if (!in_flight_ || !been_updated_)
     return;
 
-  ros::Time current_time = ros::Time::now();
+  const VectorXd relative_state = state_ - reference_;
+  const Vector3d planner_position = dynamics_->Puncture(reference_);
 
-  // (1) If current time is near the end of the current trajectory, just hover and
-  //     post a request for a new trajectory.
-  if (traj_ == nullptr ||
-      current_time.toSec() > traj_->LastTime() - max_meta_runtime_) {
-    ROS_WARN_THROTTLE(1.0, "%s: Nearing end of trajectory. Replanning.",
-             name_.c_str());
+  // (1) Get corresponding control and bound value function.
+  const double priority = control_value_->Priority(relative_state);
 
-    // Set trajectory to be the remainder of this trajectory, then hovering
-    // at the end for a while.
-    Hover();
+  // (2) Interpolate gradient to get optimal control.
+  const VectorXd optimal_control =
+    control_value_->OptimalControl(relative_state);
 
-    // Request a new trajectory starting from the state we will be in after
-    // the max_meta_runtime_ has elapsed.
-    RequestNewTrajectory();
-
-    return;
-  }
-
-  const VectorXd planner_state = traj_->GetState(current_time.toSec());
-  const VectorXd relative_state = state_ - planner_state;
-
-  const Vector3d planner_position = dynamics_->Puncture(planner_state);
-
-  // Publish planner state on tf.
-  geometry_msgs::TransformStamped transform_stamped;
-  transform_stamped.header.frame_id = fixed_frame_id_;
-  transform_stamped.header.stamp = current_time;
-
-  transform_stamped.child_frame_id = planner_frame_id_;
-
-  transform_stamped.transform.translation.x = planner_position(0);
-  transform_stamped.transform.translation.y = planner_position(1);
-  transform_stamped.transform.translation.z = planner_position(2);
-
-  transform_stamped.transform.rotation.x = 0;
-  transform_stamped.transform.rotation.y = 0;
-  transform_stamped.transform.rotation.z = 0;
-  transform_stamped.transform.rotation.w = 1;
-
-  br_.sendTransform(transform_stamped);
-
-  // Publish planner position to the reference topic.
-  // HACK! Assuming planner state order.
-  crazyflie_msgs::PositionStateStamped reference;
-  reference.header.stamp = current_time;
-
-  reference.state.x = planner_position(0);
-  reference.state.y = planner_position(1);
-  reference.state.z = planner_position(2);
-
-  reference.state.x_dot = planner_state(3);
-  reference.state.y_dot = planner_state(4);
-  reference.state.z_dot = planner_state(5);
-
-  reference_pub_.publish(reference);
-
-  // (2) Get corresponding control and bound value function.
-  const ValueFunction::ConstPtr control_value =
-    traj_->GetControlValueFunction(current_time.toSec());
-  const ValueFunction::ConstPtr bound_value =
-    traj_->GetBoundValueFunction(current_time.toSec());
-
-  const double priority = control_value->Priority(relative_state);
-
-  // Visualize the tracking bound.
-  visualization_msgs::Marker tracking_bound_marker;
-  tracking_bound_marker.ns = "bound";
-  tracking_bound_marker.header.frame_id = planner_frame_id_;
-  tracking_bound_marker.header.stamp = current_time;
-  tracking_bound_marker.id = 0;
-  tracking_bound_marker.type = visualization_msgs::Marker::CUBE;
-  tracking_bound_marker.action = visualization_msgs::Marker::ADD;
-
-  tracking_bound_marker.scale.x = 2.0 * bound_value->TrackingBound(0);
-  tracking_bound_marker.scale.y = 2.0 * bound_value->TrackingBound(1);
-  tracking_bound_marker.scale.z = 2.0 * bound_value->TrackingBound(2);
-
-  tracking_bound_marker.color.a = 0.3;
-  tracking_bound_marker.color.r = priority;
-  tracking_bound_marker.color.g = 0.0;
-  tracking_bound_marker.color.b = 1.0 - priority;
-
-  tracking_bound_pub_.publish(tracking_bound_marker);
-
-  // Warn if outside tracking error bound.
-  double min_dist_to_bound = std::numeric_limits<double>::infinity();
-  for (size_t ii = 0; ii < 3; ii++) {
-    const double signed_dist =  bound_value->TrackingBound(ii) -
-      std::abs(relative_state(dynamics_->SpatialDimension(ii)));
-
-    min_dist_to_bound = std::min(min_dist_to_bound, signed_dist);
-  }
-
-  if (min_dist_to_bound <= 0.0) {
-    ROS_WARN_THROTTLE(1.0, "%s: Leaving the tracking error bound.", name_.c_str());
-  }
-
-  // (3) Interpolate gradient to get optimal control.
-  const VectorXd optimal_control = control_value->OptimalControl(relative_state);
-
-  // (4) Publish optimal control with priority in (0, 1).
+  // (3) Publish optimal control with priority in (0, 1).
   crazyflie_msgs::NoYawControlStamped control_msg;
   control_msg.header.stamp = ros::Time::now();
 
   // NOTE! Remember, control is assumed to be [pitch, roll, thrust].
-  control_msg.control.pitch = crazyflie_utils::angles::WrapAngleRadians(optimal_control(0));
-  control_msg.control.roll = crazyflie_utils::angles::WrapAngleRadians(optimal_control(1));
+  control_msg.control.pitch =
+    crazyflie_utils::angles::WrapAngleRadians(optimal_control(0));
+  control_msg.control.roll =
+    crazyflie_utils::angles::WrapAngleRadians(optimal_control(1));
   control_msg.control.thrust = optimal_control(2);
   control_msg.control.priority = priority;
 
   control_pub_.publish(control_msg);
-
-  // Visualize trajectory.
-  traj_->Visualize(traj_vis_pub_, fixed_frame_id_, dynamics_);
-}
-
-
-// Set the trajectory to continue the existing trajectory, then hover at the end.
-// If no current trajectory exists, simply hover at the current state.
-void Tracker::Hover() {
-  ROS_INFO("%s: Setting a hover trajectory.", name_.c_str());
-
-  // Get the current time.
-  const double now = ros::Time::now().toSec();
-
-  // Catch null trajectory, which should only occur on startup.
-  // Hover at the current trajectory for max_meta_runtime_ + some small amount.
-  // Set the value function for this trajectory to be the one for the least
-  // aggressive planner, ie. for the smallest tracking bubble.
-  if (traj_ == nullptr) {
-    ROS_INFO("%s: No existing trajectory. Hovering in place.", name_.c_str());
-    traj_ = Trajectory::Create();
-
-    // Get a zero-velocity version of the current state.
-    // HACK! Assuming state layout.
-    VectorXd hover_state = state_;
-    hover_state(3) = 0.0;
-    hover_state(4) = 0.0;
-    hover_state(5) = 0.0;
-
-    traj_->Add(now, hover_state, values_.back(), values_.front());
-    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state, values_.back(), values_.front());
-    return;
-  }
-
-  ROS_INFO("%s: Hovering at the end of the current trajectory.", name_.c_str());
-
-  // Non-null current trajectory.
-  // Copy over the remainder of the current trajectory.
-  Trajectory::Ptr hover = Trajectory::Create(traj_, now);
-
-  // Get the last state and make sure it has zero velocity.
-  // HACK! Assuming state layout.
-  VectorXd last_state = hover->LastState();
-  last_state(3) = 0.0;
-  last_state(4) = 0.0;
-  last_state(5) = 0.0;
-
-  // Hover at the last state.
-  // HACK! Assuming can hover using last value function. Is this true?
-  hover->Add(hover->LastTime() + max_meta_runtime_ + 10.0,
-             last_state,
-             hover->LastControlValueFunction(),
-	     hover->LastControlValueFunction());
-
-  traj_ = hover;
 }
 
 } //\namespace meta

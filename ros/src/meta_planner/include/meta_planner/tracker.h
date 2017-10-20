@@ -56,6 +56,7 @@
 
 #include <meta_planner_msgs/Trajectory.h>
 #include <meta_planner_msgs/TrajectoryRequest.h>
+#include <meta_planner_msgs/ControllerId.h>
 
 #include <crazyflie_msgs/PositionStateStamped.h>
 #include <crazyflie_msgs/ControlStamped.h>
@@ -87,12 +88,13 @@ private:
   // Callback for processing state updates.
   void StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
 
-  // Callback for processing trajectory updates.
-  void TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg);
+  // Callback for processing reference updates.
+  void ReferenceCallback(
+    const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
 
-  // Callback for when the MetaPlanner sees a new obstacle and wants the Tracker to
-  // hover and request a new trajectory.
-  void TriggerReplanCallback(const std_msgs::Empty::ConstPtr& msg);
+  // Callback for processing controller ID updates.
+  void ControllerIdCallback(
+    const meta_planner_msgs::ControllerId::ConstPtr& msg);
 
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
@@ -102,26 +104,17 @@ private:
     in_flight_ = true;
   }
 
-  // Request a new trajectory from the meta planner.
-  void RequestNewTrajectory() const;
-
-  // Send a hover control.
-  void Hover();
-
-  // Current state and trajectory.
+  // Current state and reference.
   VectorXd state_;
-  Trajectory::Ptr traj_;
+  VectorXd reference_;
 
-  // Maximum runtime for meta planner.
-  double max_meta_runtime_;
+  // Current value function.
+  ValueFunction::ConstPtr control_value_;
+  ValueFunction::ConstPtr bound_value_;
 
   // Spaces and dimensions.
   size_t control_dim_;
   size_t state_dim_;
-  BallsInBox::Ptr space_;
-
-  std::vector<double> state_upper_;
-  std::vector<double> state_lower_;
 
   // Control upper/lower bounds.
   NearHoverQuadNoYaw::ConstPtr dynamics_;
@@ -143,34 +136,17 @@ private:
   ros::Timer timer_;
   double time_step_;
 
-  // Amount of time (seconds) to look ahead in order to start switching
-  // into a smaller bubble.
-  // NOTE! This lookahead should really be the precise minimum switching time
-  // between this planner and the next-most cautious one.
-  double switching_lookahead_;
-
-  // TF interfacing.
-  tf2_ros::TransformBroadcaster br_;
-
   // Publishers/subscribers and related topics.
   ros::Publisher control_pub_;
-  ros::Publisher environment_pub_;
-  ros::Publisher traj_vis_pub_;
-  ros::Publisher tracking_bound_pub_;
-  ros::Publisher reference_pub_;
-  ros::Publisher request_traj_pub_;
   ros::Subscriber state_sub_;
-  ros::Subscriber traj_sub_;
+  ros::Subscriber reference_sub_;
+  ros::Subscriber controller_id_sub_;
   ros::Subscriber in_flight_sub_;
 
   std::string control_topic_;
-  std::string environment_topic_;
-  std::string traj_topic_;
-  std::string request_traj_topic_;
-  std::string tracking_bound_topic_;
   std::string state_topic_;
   std::string reference_topic_;
-  std::string traj_vis_topic_;
+  std::string controller_id_topic_;
   std::string in_flight_topic_;
 
   // Frames of reference for reading current pose from tf tree.

@@ -188,6 +188,9 @@ bool TrajectoryInterpreter::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/topics/state", state_topic_)) return false;
   if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
   if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
+  if (!nl.getParam("meta/topics/controller_id", controller_id_topic_))
+    return false;
+
   if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
   if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
   if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
@@ -231,6 +234,9 @@ bool TrajectoryInterpreter::RegisterCallbacks(const ros::NodeHandle& n) {
   // Actual publishers.
   reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
     reference_topic_.c_str(), 1, false);
+
+  controller_id_pub_ = nl.advertise<meta_planner_msgs::ControllerId>(
+    controller_id_topic_.c_str(), 1, false);
 
   // Timer.
   timer_ = nl.createTimer(ros::Duration(time_step_),
@@ -325,6 +331,14 @@ void TrajectoryInterpreter::TimerCallback(const ros::TimerEvent& e) {
 
   br_.sendTransform(transform_stamped);
 
+  // (2) Get corresponding control and bound value function.
+  const ValueFunction::ConstPtr control_value =
+    traj_->GetControlValueFunction(current_time.toSec());
+  const ValueFunction::ConstPtr bound_value =
+    traj_->GetBoundValueFunction(current_time.toSec());
+
+  const double priority = control_value->Priority(relative_state);
+
   // Publish planner position to the reference topic.
   // HACK! Assuming planner state order.
   crazyflie_msgs::PositionStateStamped reference;
@@ -340,13 +354,11 @@ void TrajectoryInterpreter::TimerCallback(const ros::TimerEvent& e) {
 
   reference_pub_.publish(reference);
 
-  // (2) Get corresponding control and bound value function.
-  const ValueFunction::ConstPtr control_value =
-    traj_->GetControlValueFunction(current_time.toSec());
-  const ValueFunction::ConstPtr bound_value =
-    traj_->GetBoundValueFunction(current_time.toSec());
+  meta_planner_msgs::ControllerId controller_id;
+  controller_id.control_value_function_id = control_value->Id();
+  controller_id.bound_value_function_id = bound_value->Id();
 
-  const double priority = control_value->Priority(relative_state);
+  controller_id_pub_.publish(controller_id);
 
   // Visualize the tracking bound.
   visualization_msgs::Marker tracking_bound_marker;

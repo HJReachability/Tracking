@@ -210,6 +210,37 @@
       <param name="meta/topics/control" value="$(arg optimal_control_topic)" />
     </node>
 
+    <node name="trajectory_interpreter"
+          pkg="meta_planner"
+          type="trajectory_interpreter_node"
+          output="screen">
+
+      <!-- Load parameters for the demo. -->
+      <rosparam file="$(find meta_planner)/config/meta_planner.yaml" />
+
+      <param name="meta/control/time_step" value="$(arg tracker_dt)" />
+      <param name="meta/meta/switching_lookahead" value="$(arg switching_lookahead)" />
+
+      <rosparam param="meta/state/lower" subst_value="True">$(arg state_lower_bound)</rosparam>
+      <rosparam param="meta/state/upper" subst_value="True">$(arg state_upper_bound)</rosparam>
+
+      <param name="meta/frames/fixed" value="$(arg fixed_frame)" />
+      <param name="meta/frames/tracker" value="$(arg tracker_frame)" />
+      <param name="meta/frames/planner" value="$(arg planner_frame)" />
+
+      <param name="meta/planners/numerical_mode" value="$(arg numerical_mode)" />
+      <rosparam param="meta/planners/value_directories" subst_value="True">$(arg value_directories)</rosparam>
+      <rosparam param="meta/planners/max_speeds" subst_value="True">$(arg max_speeds)</rosparam>
+      <rosparam param="meta/planners/max_velocity_disturbances" subst_value="True">$(arg max_velocity_disturbances)</rosparam>
+      <rosparam param="meta/planners/max_acceleration_disturbances" subst_value="True">$(arg max_acceleration_disturbances)</rosparam>
+
+      <param name="meta/topics/in_flight" value="$(arg in_flight_topic)" />
+      <param name="meta/topics/reference" value="$(arg reference_state_topic)" />
+
+      <param name="meta/topics/state" value="$(arg position_state_topic)" />
+      <param name="meta/topics/control" value="$(arg optimal_control_topic)" />
+    </node>
+
     <node name="meta_planner"
           pkg="meta_planner"
           type="meta_planner_node"

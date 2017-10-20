@@ -55,6 +55,7 @@
 
 #include <meta_planner_msgs/Trajectory.h>
 #include <meta_planner_msgs/TrajectoryRequest.h>
+#include <meta_planner_msgs/ControllerId.h>
 
 #include <crazyflie_msgs/PositionStateStamped.h>
 #include <crazyflie_msgs/ControlStamped.h>
@@ -144,6 +145,7 @@ private:
   // Publishers/subscribers and related topics.
   ros::Publisher tracking_bound_pub_;
   ros::Publisher reference_pub_;
+  ros::Publisher controller_id_pub_;
   ros::Publisher request_traj_pub_;
   ros::Publisher traj_vis_pub_;
   ros::Subscriber traj_sub_;
@@ -153,6 +155,7 @@ private:
 
   std::string tracking_bound_topic_;
   std::string reference_topic_;
+  std::string controller_id_topic_;
   std::string request_traj_topic_;
   std::string traj_vis_topic_;
   std::string traj_topic_;
