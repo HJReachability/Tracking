@@ -238,6 +238,9 @@ bool TrajectoryInterpreter::RegisterCallbacks(const ros::NodeHandle& n) {
   controller_id_pub_ = nl.advertise<meta_planner_msgs::ControllerId>(
     controller_id_topic_.c_str(), 1, false);
 
+  request_traj_pub_ = nl.advertise<meta_planner_msgs::TrajectoryRequest>(
+    request_traj_topic_.c_str(), 1, false);
+
   // Timer.
   timer_ = nl.createTimer(ros::Duration(time_step_),
                           &TrajectoryInterpreter::TimerCallback, this);

@@ -28,6 +28,7 @@
   <arg name="merged_control_topic" default="/control/merged" />
   <arg name="sensor_topic" default="/sensor" />
   <arg name="in_flight_topic" default="/in_flight" />
+  <arg name="controller_id_topic" default="/ref/controller_id" />
 
   <arg name="simulator_dt" default="0.0001" />
   <arg name="estimator_dt" default="0.001" />
@@ -205,6 +206,7 @@
 
       <param name="meta/topics/in_flight" value="$(arg in_flight_topic)" />
       <param name="meta/topics/reference" value="$(arg reference_state_topic)" />
+      <param name="meta/topics/controller_id" value="$(arg controller_id_topic)" />
 
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/control" value="$(arg optimal_control_topic)" />
@@ -236,6 +238,7 @@
 
       <param name="meta/topics/in_flight" value="$(arg in_flight_topic)" />
       <param name="meta/topics/reference" value="$(arg reference_state_topic)" />
+      <param name="meta/topics/controller_id" value="$(arg controller_id_topic)" />
 
       <param name="meta/topics/state" value="$(arg position_state_topic)" />
       <param name="meta/topics/control" value="$(arg optimal_control_topic)" />
