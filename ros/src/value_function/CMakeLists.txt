@@ -17,22 +17,9 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  utils
   meta_planner_msgs
   message_generation
-)
-
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    roscpp
-    rospy
-    meta_planner_msgs
-    message_runtime
-  DEPENDS
-    EIGEN3
-    MATIO
-    BOOST
 )
 
 file(GLOB srv_files RELATIVE ${PROJECT_SOURCE_DIR}/srv ${PROJECT_SOURCE_DIR}/srv/*.srv)
@@ -43,6 +30,21 @@ generate_messages(
   std_msgs
   geometry_msgs
   meta_planner_msgs
+)
+
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS
+    roscpp
+    rospy
+    utils
+    meta_planner_msgs
+    message_runtime
+  DEPENDS
+    EIGEN3
+    MATIO
+    BOOST
 )
 
 option(ENABLE_DEBUG_MESSAGES "Turn on to enable bound checking and debug messages" ON)
