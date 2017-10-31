@@ -36,8 +36,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the ValueFunction class. Many functions in this class are declared
-// virtual so that analytical value functions may inherit from this class.
+// Defines the ValueFunctionServer class, which manages the service-based
+// interface to all value functions.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -47,6 +47,7 @@
 #include <value_function/value_function.h>
 #include <value_function/analytical_point_mass_value_function.h>
 #include <value_function/dynamics.h>
+#include <value_function/near_hover_quad_no_yaw.h>
 #include <utils/types.h>
 #include <utils/uncopyable.h>
 
@@ -75,47 +76,47 @@ public:
   // Get the optimal control at a particular state.
   bool OptimalControlCallback(
     value_function::OptimalControl::Request& req,
-    value_function::OptimalControl::Response& res) const;
+    value_function::OptimalControl::Response& res);
 
   // Get the tracking error bound in this spatial dimension.
   bool TrackingBoundCallback(
     value_function::TrackingBoundBox::Request& req,
-    value_function::TrackingBoundBox::Response& res) const;
+    value_function::TrackingBoundBox::Response& res);
 
   // Get the tracking error bound in this spatial dimension for a planner
   // switching INTO this one with the specified max speed.
   bool SwitchingTrackingBoundCallback(
     value_function::SwitchingTrackingBoundBox::Request& req,
-    value_function::SwitchingTrackingBoundBox::Response& res) const;
+    value_function::SwitchingTrackingBoundBox::Response& res);
 
   // Guaranteed time in which a planner with the specified value function
   // can switch into this value function's tracking error bound.
   bool GuaranteedSwitchingTimeCallback(
     value_function::GuaranteedSwitchingTime::Request& req,
-    value_function::GuaranteedSwitchingTime::Response& res) const;
+    value_function::GuaranteedSwitchingTime::Response& res);
 
   // Guaranteed distance in which a planner with the specified value function
   // can switch into this value function's safe set.
   bool GuaranteedSwitchingDistanceCallback(
     value_function::GuaranteedSwitchingDistance::Request& req,
-    value_function::GuaranteedSwitchingDistance::Response& res) const;
+    value_function::GuaranteedSwitchingDistance::Response& res);
 
   // Priority of the optimal control at the given state. This is a number
   // between 0 and 1, where 1 means the final control signal should be exactly
   // the optimal control signal computed by this value function.
   bool PriorityCallback(value_function::Priority::Request& req,
-                        value_function::Priority::Response& res) const;
+                        value_function::Priority::Response& res);
 
   // Max planner speed in the given spatial dimension.
   bool MaxPlannerSpeedCallback(
     value_function::GeometricPlannerSpeed::Request& req,
-    value_function::GeometricPlannerSpeed::Response& res) const;
+    value_function::GeometricPlannerSpeed::Response& res);
 
   // Compute the shortest possible time to go from start to stop for a
   // geometric planner with the max planner speed for this value function.
   bool BestPossibleTimeCallback(
     value_function::GeometricPlannerTime::Request& req,
-    value_function::GeometricPlannerTime::Response& res) const;
+    value_function::GeometricPlannerTime::Response& res);
 
 private:
   bool LoadParameters(const ros::NodeHandle& n);
@@ -140,12 +141,25 @@ private:
   std::string max_planner_speed_name_;
   std::string best_possible_time_name_;
 
-  // Initialization and naming.
-  bool initialized_;
-  std::string name_;
+  // Numerical mode flag and associated parameters for both analytic
+  // and numerical modes.
+  bool numerical_mode_;
+  std::vector<std::string> value_dirs_;
+  std::vector<double> max_planner_speeds_;
+  std::vector<double> max_velocity_disturbances_;
+  std::vector<double> max_acceleration_disturbances_;
+
+  // Control upper/lower bounds.
+  size_t control_dim_, state_dim_;
+  std::vector<double> control_upper_;
+  std::vector<double> control_lower_;
 
   // List of value functions.
   std::vector<ValueFunction::ConstPtr> values_;
+
+  // Initialization and naming.
+  bool initialized_;
+  std::string name_;
 };
 
 } //\namespace meta
