@@ -40,8 +40,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_UNCOPYABLE_H
-#define META_PLANNER_UNCOPYABLE_H
+#ifndef UTILS_UNCOPYABLE_H
+#define UTILS_UNCOPYABLE_H
 
 namespace meta {
 

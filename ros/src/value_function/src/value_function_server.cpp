@@ -42,6 +42,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <value_function/value_function_server.h>
+#include <utils/message_interfacing.h>
 
 namespace meta {
 
@@ -120,16 +121,22 @@ bool ValueFunctionServer::Initialize(const ros::NodeHandle& n) {
 bool ValueFunctionServer::OptimalControlCallback(
   value_function::OptimalControl::Request& req,
   value_function::OptimalControl::Response& res) {
-  // TODO!
-  return false;
+  const VectorXd state = utils::Unpack(req.state);
+  const VectorXd control = values_[req.id]->OptimalControl(state);
+  res.control = utils::PackControl(control);
+
+  return true;
 }
 
 // Get the tracking error bound in this spatial dimension.
 bool ValueFunctionServer::TrackingBoundCallback(
   value_function::TrackingBoundBox::Request& req,
   value_function::TrackingBoundBox::Response& res) {
-  // TODO!
-  return false;
+  res.x = values_[req.id]->TrackingBound(0);
+  res.y = values_[req.id]->TrackingBound(1);
+  res.z = values_[req.id]->TrackingBound(2);
+
+  return true;
 }
 
 // Get the tracking error bound in this spatial dimension for a planner
@@ -137,8 +144,10 @@ bool ValueFunctionServer::TrackingBoundCallback(
 bool ValueFunctionServer::SwitchingTrackingBoundCallback(
   value_function::SwitchingTrackingBoundBox::Request& req,
   value_function::SwitchingTrackingBoundBox::Response& res) {
-  // TODO!
-  return false;
+  res.x = values_[req.to_id]->SwitchingTrackingBound(0, values_[req.from_id]);
+  res.y = values_[req.to_id]->SwitchingTrackingBound(1, values_[req.from_id]);
+  res.z = values_[req.to_id]->SwitchingTrackingBound(2, values_[req.from_id]);
+  return true;
 }
 
 // Guaranteed time in which a planner with the specified value function
@@ -146,8 +155,10 @@ bool ValueFunctionServer::SwitchingTrackingBoundCallback(
 bool ValueFunctionServer::GuaranteedSwitchingTimeCallback(
   value_function::GuaranteedSwitchingTime::Request& req,
   value_function::GuaranteedSwitchingTime::Response& res) {
-  // TODO!
-  return false;
+  res.x = values_[req.to_id]->GuaranteedSwitchingTime(0, values_[req.from_id]);
+  res.y = values_[req.to_id]->GuaranteedSwitchingTime(1, values_[req.from_id]);
+  res.z = values_[req.to_id]->GuaranteedSwitchingTime(2, values_[req.from_id]);
+  return true;
 }
 
 // Guaranteed distance in which a planner with the specified value function
@@ -155,8 +166,10 @@ bool ValueFunctionServer::GuaranteedSwitchingTimeCallback(
 bool ValueFunctionServer::GuaranteedSwitchingDistanceCallback(
   value_function::GuaranteedSwitchingDistance::Request& req,
   value_function::GuaranteedSwitchingDistance::Response& res) {
-  // TODO!
-  return false;
+  res.x = values_[req.to_id]->GuaranteedSwitchingDistance(0, values_[req.from_id]);
+  res.y = values_[req.to_id]->GuaranteedSwitchingDistance(1, values_[req.from_id]);
+  res.z = values_[req.to_id]->GuaranteedSwitchingDistance(2, values_[req.from_id]);
+  return true;
 }
 
 // Priority of the optimal control at the given state. This is a number
@@ -165,16 +178,19 @@ bool ValueFunctionServer::GuaranteedSwitchingDistanceCallback(
 bool ValueFunctionServer::PriorityCallback(
   value_function::Priority::Request& req,
   value_function::Priority::Response& res) {
-  // TODO!
-  return false;
+  const VectorXd state = utils::Unpack(req.state);
+  res.priority = values_[req.id]->Priority(state);
+  return true;
 }
 
 // Max planner speed in the given spatial dimension.
 bool ValueFunctionServer::MaxPlannerSpeedCallback(
   value_function::GeometricPlannerSpeed::Request& req,
   value_function::GeometricPlannerSpeed::Response& res) {
-  // TODO!
-  return false;
+  res.x = values_[req.id]->MaxPlannerSpeed(0);
+  res.y = values_[req.id]->MaxPlannerSpeed(1);
+  res.z = values_[req.id]->MaxPlannerSpeed(2);
+  return true;
 }
 
 // Compute the shortest possible time to go from start to stop for a
@@ -182,8 +198,11 @@ bool ValueFunctionServer::MaxPlannerSpeedCallback(
 bool ValueFunctionServer::BestPossibleTimeCallback(
   value_function::GeometricPlannerTime::Request& req,
   value_function::GeometricPlannerTime::Response& res) {
-  // TODO!
-  return false;
+  const Vector3d start = utils::Unpack(req.start);
+  const Vector3d stop = utils::Unpack(req.stop);
+  res.time = values_[req.id]->BestPossibleTime(start, stop);
+
+  return true;
 }
 
 // Load parameters.

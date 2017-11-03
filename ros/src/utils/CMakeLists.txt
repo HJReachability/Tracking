@@ -14,6 +14,7 @@ find_package(Eigen3 REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  meta_planner_msgs
 )
 
 catkin_package(
@@ -21,6 +22,7 @@ catkin_package(
 #  LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
     roscpp
+    meta_planner_msgs
   DEPENDS
     EIGEN3
 )

@@ -36,36 +36,77 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Custom types.
+// Helper functions to pack and unpack different messages.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef UTILS_TYPES_H
-#define UTILS_TYPES_H
+#ifndef UTILS_MESSAGE_INTERFACING_H
+#define UTILS_MESSAGE_INTERFACING_H
 
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
+#include <utils/types.h>
+#include <meta_planner_msgs/State.h>
+#include <meta_planner_msgs/Control.h>
 
-// ------------------------------- CONSTANTS -------------------------------- //
+#include <geometry_msgs/Vector3.h>
 
 namespace meta {
-  namespace constants {
-    // Acceleration due to gravity.
-    const double G = 9.81;
-  } //\namespace constants
 
-  // Internal typedefs.
-  typedef size_t ValueFunctionId;
+namespace utils {
 
-// ------------------------ THIRD PARTY TYPEDEFS ---------------------------- //
+// Unpack a Vector3 into a Vector3d.
+inline Vector3d Unpack(const geometry_msgs::Vector3& msg) {
+  return Vector3d(msg.x, msg.y, msg.z);
+}
 
-typedef Eigen::Matrix<double, 3, 4> Matrix34d;
-using Eigen::Matrix3d;
-using Eigen::Vector3d;
-using Eigen::Matrix4d;
-using Eigen::VectorXd;
-using Eigen::MatrixXd;
-using Eigen::Quaterniond;
+// Pack a Vector3d into a Vector3.
+inline geometry_msgs::Vector3 Unpack(const Vector3d& point) {
+  geometry_msgs::Vector3 msg;
+  msg.x = point(0);
+  msg.y = point(1);
+  msg.z = point(2);
+
+  return msg;
+}
+
+// Unpack a State message into a VectorXd.
+inline VectorXd Unpack(const meta_planner_msgs::State& msg) {
+  VectorXd state(msg.dimension);
+  for (size_t ii = 0; ii < state.size(); ii++)
+    state(ii) = msg.state[ii];
+
+  return state;
+}
+
+// Pack a VectorXd into a State message.
+inline meta_planner_msgs::State PackState(const VectorXd& state) {
+  meta_planner_msgs::State msg;
+  msg.dimension = state.size();
+  for (size_t ii = 0; ii < state.size(); ii++)
+    msg.state.push_back(state(ii));
+
+  return msg;
+}
+
+// Unpack a Control message into a VectorXd.
+inline VectorXd Unpack(const meta_planner_msgs::Control& msg) {
+  VectorXd control(msg.dimension);
+  for (size_t ii = 0; ii < control.size(); ii++)
+    control(ii) = msg.control[ii];
+
+  return control;
+}
+
+// Pack a VectorXd into a Control message.
+inline meta_planner_msgs::Control PackControl(const VectorXd& control) {
+  meta_planner_msgs::Control msg;
+  msg.dimension = control.size();
+  for (size_t ii = 0; ii < control.size(); ii++)
+    msg.control.push_back(control(ii));
+
+  return msg;
+}
+
+} //\namespace utils
 
 } //\namespace meta
 
