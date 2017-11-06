@@ -155,35 +155,15 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Planner parameters.
-  if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
-  if (!nl.getParam("meta/planners/value_directories", value_directories_))
-    return false;
-
-  if (value_directories_.size() == 0) {
-    ROS_ERROR("%s: Must specify at least one value function directory.",
-              name_.c_str());
-    return false;
-  }
-
-  if (!nl.getParam("meta/planners/max_speeds", max_planner_speeds_)) return false;
-  if (!nl.getParam("meta/planners/max_velocity_disturbances",
-                   max_velocity_disturbances_))
-    return false;
-  if (!nl.getParam("meta/planners/max_acceleration_disturbances",
-                   max_acceleration_disturbances_))
-    return false;
-
-  if (max_planner_speeds_.size() != max_velocity_disturbances_.size() ||
-      max_planner_speeds_.size() != max_acceleration_disturbances_.size()) {
-    ROS_ERROR("%s: Must specify max speed/velocity/acceleration disturbances.",
-              name_.c_str());
-    return false;
-  }
-
   // State space parameters.
   if (!nl.getParam("meta/state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
+
+  // Service names.
+  if (!nl.getParam("meta/srv/optimal_control", optimal_control_name_))
+    return false;
+  if (!nl.getParam("meta/srv/priority", priority_name_))
+    return false;
 
   // Topics and frame ids.
   if (!nl.getParam("meta/topics/control", control_topic_)) return false;
@@ -221,6 +201,13 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   control_pub_ = nl.advertise<crazyflie_msgs::NoYawControlStamped>(
     control_topic_.c_str(), 1, false);
 
+  // Service clients.
+  optimal_control_srv_ = nl.serviceClient<value_function::OptimalControl>(
+    optimal_control_name_.c_str(), true);
+
+  priority_srv_ = nl.serviceClient<value_function::Priority>(
+    priority_name_.c_str(), true);
+
   // Timer.
   timer_ =
     nl.createTimer(ros::Duration(time_step_), &Tracker::TimerCallback, this);
@@ -257,8 +244,8 @@ void Tracker::ReferenceCallback(
 // Callback for processing state updates.
 void Tracker::ControllerIdCallback(
   const meta_planner_msgs::ControllerId::ConstPtr& msg) {
-  control_value_ = values_[msg->control_value_function_id];
-  bound_value_ = values_[msg->bound_value_function_id];
+  control_value_id_ = msg->control_value_function_id;
+  bound_value_id_ = msg->bound_value_function_id;
 }
 
 // Callback for applying tracking controller.
@@ -266,15 +253,47 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   if (!in_flight_ || !been_updated_)
     return;
 
+  // HACK! Assuming state layout.
   const VectorXd relative_state = state_ - reference_;
-  const Vector3d planner_position = dynamics_->Puncture(reference_);
+  const Vector3d planner_position(reference_(0), reference_(1), reference(2));
 
-  // (1) Get corresponding control and bound value function.
-  const double priority = control_value_->Priority(relative_state);
+  // (1) Get priority.
+  if (!priority_srv_) {
+    ROS_WARN("%s: Priority server disconnected.", name_.c_str());
+    priority_srv_ = nl.serviceClient<value_function::Priority>(
+      priority_name_.c_str(), true);
 
-  // (2) Interpolate gradient to get optimal control.
-  const VectorXd optimal_control =
-    control_value_->OptimalControl(relative_state);
+    return;
+  }
+
+  double priority = 0.0;
+
+  value_function::Priority p;
+  p.request.id = control_value_id_;
+  p.request.state = utils::PackState(relative_state);
+  if (!priority_srv_.call(p))
+    ROS_ERROR("%s: Error calling priority server.", name_.c_str());
+  else
+    priority = p.response.priority;
+
+  // (2) Get optimal control.
+  if (!optimal_control_srv_) {
+    ROS_WARN("%s: Optimal control server disconnected.", name_.c_str());
+    optimal_control_srv_ = nl.serviceClient<value_function::OptimalControl>(
+      optimal_control_name_.c_str(), true);
+
+    return;
+  }
+
+  VectorXd optimal_control(control_dim_);
+
+  value_function::OptimalControl c;
+  c.request.id = control_value_id_;
+  c.request.state = utils::PackState(relative_state);
+  if (!optimal_control_srv_.call(c))
+    ROS_ERROR("%s: Error calling optimal control server.", name_.c_str());
+  else
+    optimal_control = utils::UnpackControl(c.response.control);
 
   // (3) Publish optimal control with priority in (0, 1).
   crazyflie_msgs::NoYawControlStamped control_msg;
