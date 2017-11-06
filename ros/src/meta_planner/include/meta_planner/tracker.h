@@ -48,7 +48,9 @@
 #include <meta_planner/uncopyable.h>
 #include <meta_planner/ompl_planner.h>
 #include <meta_planner/box.h>
+
 #include <demo/balls_in_box.h>
+#include <utils/message_interfacing.h>
 
 #include <meta_planner_msgs/Trajectory.h>
 #include <meta_planner_msgs/TrajectoryRequest.h>

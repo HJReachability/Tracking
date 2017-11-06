@@ -96,7 +96,7 @@ public:
   void Add(double time,
            const VectorXd& state,
            const ValueFunction::ConstPtr& control_value,
-	   const ValueFunction::ConstPtr& bound_value);
+           const ValueFunction::ConstPtr& bound_value);
 
   // Add a whole other Trajectory to this one.
   void Add(const ConstPtr& other);
@@ -109,7 +109,7 @@ public:
 
   // Total time length of the trajectory.
   double Time() const;
-  
+
   // Swap out the control value function in this trajectory and update time
   // stamps accordingly.
   void ExecuteSwitch(const ValueFunction::ConstPtr& value);
@@ -157,7 +157,7 @@ private:
     ValueFunction::ConstPtr control_value_;
     ValueFunction::ConstPtr bound_value_;
 
-    StateValue(const VectorXd& state, 
+    StateValue(const VectorXd& state,
 	       const ValueFunction::ConstPtr& control_value,
 	       const ValueFunction::ConstPtr& bound_value)
       : state_(state),

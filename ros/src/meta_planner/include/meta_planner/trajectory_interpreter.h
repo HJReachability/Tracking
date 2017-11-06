@@ -45,13 +45,12 @@
 #ifndef META_PLANNER_TRAJECTORY_INTERPRETER_H
 #define META_PLANNER_TRAJECTORY_INTERPRETER_H
 
-#include <meta_planner/analytical_point_mass_value_function.h>
-#include <meta_planner/value_function.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/types.h>
 #include <meta_planner/uncopyable.h>
-#include <meta_planner/linear_dynamics.h>
-#include <meta_planner/near_hover_quad_no_yaw.h>
+
+#include <value_function/TrackingBoundBox.h>
+#include <utils/message_interfacing.h>
 
 #include <meta_planner_msgs/Trajectory.h>
 #include <meta_planner_msgs/TrajectoryRequest.h>
@@ -126,21 +125,9 @@ private:
   size_t control_dim_;
   size_t state_dim_;
 
-  // Control upper/lower bounds.
-  NearHoverQuadNoYaw::ConstPtr dynamics_;
-  std::vector<double> control_upper_;
-  std::vector<double> control_lower_;
-
-  // Value functions, flag for whether to load from disk or create
-  // analytic versions given parameters read from ROS.
-  std::vector<ValueFunction::ConstPtr> values_;
-
-  bool numerical_mode_;
-  std::vector<std::string> value_directories_;
-
-  std::vector<double> max_planner_speeds_;
-  std::vector<double> max_velocity_disturbances_;
-  std::vector<double> max_acceleration_disturbances_;
+  // Servers and names.
+  ros::ServiceServer tracking_bound_srv_;
+  std::string tracking_bound_name_;
 
   // Publishers/subscribers and related topics.
   ros::Publisher tracking_bound_pub_;

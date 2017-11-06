@@ -68,67 +68,13 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Set control upper/lower bounds as Eigen::Vectors.
-  VectorXd control_upper_vec(control_dim_);
-  VectorXd control_lower_vec(control_dim_);
-  for (size_t ii = 0; ii < control_dim_; ii++) {
-    control_upper_vec(ii) = control_upper_[ii];
-    control_lower_vec(ii) = control_lower_[ii];
-  }
-
-  // Set up dynamics.
-  dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
-
   // Set the initial state and reference to zero.
   state_ = VectorXd::Zero(state_dim_);
   reference_ = VectorXd::Zero(state_dim_);
 
-  // Populate list of value functions.
-  if (numerical_mode_) {
-    for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-      const ValueFunction::ConstPtr value =
-        ValueFunction::Create(value_directories_[ii], dynamics_,
-                              state_dim_, control_dim_,
-                              static_cast<ValueFunctionId>(ii));
-
-      values_.push_back(value);
-    }
-  } else {
-    for (size_t ii = 0; ii < max_planner_speeds_.size(); ii++) {
-      // Generate inputs for AnalyticalPointMassValueFunction.
-      // SEMI-HACK! Manually feeding control/disturbance bounds.
-      const Vector3d max_planner_speed =
-        Vector3d::Constant(max_planner_speeds_[ii]);
-      const Vector3d max_velocity_disturbance =
-        Vector3d::Constant(max_velocity_disturbances_[ii]);
-      const Vector3d max_acceleration_disturbance =
-        Vector3d::Constant(max_acceleration_disturbances_[ii]);
-      const Vector3d velocity_expansion = Vector3d::Constant(0.1);
-
-      // Create analytical value function.
-      const AnalyticalPointMassValueFunction::ConstPtr value =
-        AnalyticalPointMassValueFunction::Create(max_planner_speed,
-                                                 max_velocity_disturbance,
-                                                 max_acceleration_disturbance,
-                                                 velocity_expansion,
-                                                 dynamics_,
-                                                 static_cast<ValueFunctionId>(ii));
-
-      values_.push_back(value);
-    }
-  }
-
-  if (values_.size() % 2 != 0) {
-    ROS_ERROR("%s: Must provide pairs of value functions.", name_.c_str());
-    return false;
-  }
-
   // Start control and bound values at most/least conservative.
-  control_value_ = values_.back();
-  bound_value_ = values_.front();
-
-  // Wait a little for the simulator to begin.
-  //  ros::Duration(0.5).sleep();
+  control_value_id_ = 0;
+  bound_value_id_ = 0;
 
   initialized_ = true;
   return true;
@@ -144,16 +90,6 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   int dimension = 1;
   if (!nl.getParam("meta/control/dim", dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
-
-  if (!nl.getParam("meta/control/upper", control_upper_)) return false;
-  if (!nl.getParam("meta/control/lower", control_lower_)) return false;
-
-  if (control_upper_.size() != control_dim_ ||
-      control_lower_.size() != control_dim_) {
-    ROS_ERROR("%s: Upper and/or lower bounds are in the wrong dimension.",
-              name_.c_str());
-    return false;
-  }
 
   // State space parameters.
   if (!nl.getParam("meta/state/dim", dimension)) return false;
