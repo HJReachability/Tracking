@@ -51,7 +51,7 @@
 
 #include <meta_planner/planner.h>
 #include <meta_planner/box.h>
-#include <meta_planner/types.h>
+#include <utils/types.h>
 
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/planners/bitstar/BITstar.h>
@@ -72,8 +72,8 @@ class OmplPlanner : public Planner {
 public:
   ~OmplPlanner() {}
 
-  static Planner::ConstPtr Create(const ValueFunction::ConstPtr& incoming_value,
-                                  const ValueFunction::ConstPtr& outgoing_value,
+  static Planner::ConstPtr Create(ValueFunctionId incoming_value,
+                                  ValueFunctionId outgoing_value,
                                   const Box::ConstPtr& space);
 
   // Derived classes must plan trajectories between two points.
@@ -83,8 +83,8 @@ public:
                        double budget = 1.0) const;
 
 private:
-  explicit OmplPlanner(const ValueFunction::ConstPtr& incoming_value,
-                       const ValueFunction::ConstPtr& outgoing_value,
+  explicit OmplPlanner(ValueFunctionId incoming_value,
+                       ValueFunctionId outgoing_value,
                        const Box::ConstPtr& space);
 
   // Convert between OMPL states and Vector3ds.
@@ -94,16 +94,16 @@ private:
 // ------------------------------- IMPLEMENTATION --------------------------- //
 
 template<typename PlannerType>
-OmplPlanner<PlannerType>::OmplPlanner(const ValueFunction::ConstPtr& incoming_value,
-                                      const ValueFunction::ConstPtr& outgoing_value,
+OmplPlanner<PlannerType>::OmplPlanner(ValueFunctionId incoming_value,
+                                      ValueFunctionId outgoing_value,
                                       const Box::ConstPtr& space)
   : Planner(incoming_value, outgoing_value, space) {}
 
 // Create OmplPlanner pointer.
 template<typename PlannerType>
 inline Planner::ConstPtr OmplPlanner<PlannerType>::
-Create(const ValueFunction::ConstPtr& incoming_value,
-       const ValueFunction::ConstPtr& outgoing_value,
+Create(ValueFunctionId incoming_value,
+       ValueFunctionId outgoing_value,
        const Box::ConstPtr& space) {
   Planner::ConstPtr ptr(
     new OmplPlanner<PlannerType>(incoming_value, outgoing_value, space));

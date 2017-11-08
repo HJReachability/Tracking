@@ -71,8 +71,8 @@ public:
   // Returns true if the state is a valid configuration.
   // Takes in incoming and outgoing value functions. See planner.h for details.
   virtual bool IsValid(const Vector3d& position,
-                       const ValueFunction::ConstPtr& incoming_value,
-                       const ValueFunction::ConstPtr& outgoing_value) const;
+                       ValueFunctionId incoming_value,
+                       ValueFunctionId outgoing_value) const;
 
   // Inherited by Environment, but can be overwritten by child classes.
   // Assumes that the first <=3 dimensions correspond to R^3.

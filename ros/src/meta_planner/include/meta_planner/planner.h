@@ -64,8 +64,8 @@
 #include <meta_planner/trajectory.h>
 #include <meta_planner/environment.h>
 #include <meta_planner/box.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
 #include <memory>
 
@@ -93,28 +93,28 @@ public:
   // Get the value function associated to this planner. The way incoming and
   // outgoing value functions are intended to be used, this corresponds to
   // the outgoing value function.
-  inline ValueFunction::ConstPtr GetIncomingValueFunction() const {
+  inline ValueFunctionId GetIncomingValueFunction() const {
     return incoming_value_;
   }
 
-  inline ValueFunction::ConstPtr GetOutgoingValueFunction() const {
+  inline ValueFunctionId GetOutgoingValueFunction() const {
     return outgoing_value_;
   }
 
 protected:
-  explicit Planner(const ValueFunction::ConstPtr& incoming_value,
-                   const ValueFunction::ConstPtr& outgoing_value,
+  explicit Planner(ValueFunctionId incoming_value,
+                   ValueFunctionId outgoing_value,
                    const Box::ConstPtr& space)
     : incoming_value_(incoming_value),
       outgoing_value_(outgoing_value),
       space_(space) {
-    if (incoming_value_->Id() + 1!= outgoing_value_->Id())
+    if (incoming_value_ + 1 != outgoing_value_)
       ROS_ERROR("Outgoing value function not successor to incoming one.");
   }
 
   // Value functions.
-  const ValueFunction::ConstPtr incoming_value_;
-  const ValueFunction::ConstPtr outgoing_value_;
+  const ValueFunctionId incoming_value_;
+  const ValueFunctionId outgoing_value_;
 
   // State space (with collision checking).
   const Box::ConstPtr space_;

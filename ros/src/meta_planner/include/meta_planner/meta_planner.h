@@ -45,23 +45,20 @@
 #ifndef META_PLANNER_META_PLANNER_H
 #define META_PLANNER_META_PLANNER_H
 
-#include <demo/balls_in_box.h>
-#include <meta_planner/near_hover_quad_no_yaw.h>
-#include <meta_planner/value_function.h>
-#include <meta_planner/analytical_point_mass_value_function.h>
 #include <meta_planner/waypoint_tree.h>
 #include <meta_planner/waypoint.h>
 #include <meta_planner/ompl_planner.h>
 #include <meta_planner/environment.h>
-#include <meta_planner/trajectory.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
+#include <demo/balls_in_box.h>
 
 #include <meta_planner_msgs/Trajectory.h>
 #include <meta_planner_msgs/TrajectoryRequest.h>
-
 #include <meta_planner_msgs/SensorMeasurement.h>
 #include <crazyflie_msgs/PositionStateStamped.h>
+
+#include <value_function/OptimalControl.h>
 
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
@@ -110,7 +107,7 @@ private:
   // Remember the last trajectory we sent.
   Trajectory::ConstPtr traj_;
 
-  // List of planners and flag for whether to load value functions from disk or
+   // List of planners and flag for whether to load value functions from disk or
   // create analytic versions given parameters read from ROS.
   std::vector<Planner::ConstPtr> planners_;
   bool numerical_mode_;
@@ -135,11 +132,6 @@ private:
 
   std::vector<double> state_upper_;
   std::vector<double> state_lower_;
-
-  // Control upper/lower bounds.
-  NearHoverQuadNoYaw::ConstPtr dynamics_;
-  std::vector<double> control_upper_;
-  std::vector<double> control_lower_;
 
   // Max time to spend searching for an optimal path.
   double max_runtime_;

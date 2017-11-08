@@ -46,7 +46,7 @@
 #define DEMO_BALLS_IN_BOX_H
 
 #include <meta_planner/box.h>
-#include <meta_planner/types.h>
+#include <utils/types.h>
 
 #include <vector>
 
@@ -66,8 +66,8 @@ public:
   // Inherited collision checker from Box needs to be overwritten.
   // Takes in incoming and outgoing value functions. See planner.h for details.
   bool IsValid(const Vector3d& position,
-               const ValueFunction::ConstPtr& incoming_value,
-               const ValueFunction::ConstPtr& outgoing_value) const;
+               ValueFunctionId incoming_value,
+               ValueFunctionId outgoing_value) const;
 
   // Check for obstacles within a sensing radius. Returns true if at least
   // one obstacle was sensed.

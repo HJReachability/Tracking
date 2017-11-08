@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
   crazyflie_utils
   meta_planner_msgs
   value_function
+  utils
   message_generation
 )
 
@@ -44,6 +45,7 @@ catkin_package(
     crazyflie_utils
     meta_planner_msgs
     value_function
+    utils
     message_runtime
   DEPENDS
     EIGEN3
