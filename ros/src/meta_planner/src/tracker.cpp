@@ -196,6 +196,8 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   // (1) Get priority.
   if (!priority_srv_) {
     ROS_WARN("%s: Priority server disconnected.", name_.c_str());
+
+    ros::NodeHandle nl;
     priority_srv_ = nl.serviceClient<value_function::Priority>(
       priority_name_.c_str(), true);
 
@@ -215,6 +217,8 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   // (2) Get optimal control.
   if (!optimal_control_srv_) {
     ROS_WARN("%s: Optimal control server disconnected.", name_.c_str());
+
+    ros::NodeHandle nl;
     optimal_control_srv_ = nl.serviceClient<value_function::OptimalControl>(
       optimal_control_name_.c_str(), true);
 

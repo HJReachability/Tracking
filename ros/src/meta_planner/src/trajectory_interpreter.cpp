@@ -297,6 +297,7 @@ void TrajectoryInterpreter::TimerCallback(const ros::TimerEvent& e) {
 
   if (!tracking_bound_srv_) {
     ROS_WARN("%s: Tracking bound server disconnected.", name_.c_str());
+    ros::NodeHandle nl;
     tracking_bound_srv_ = nl.serviceClient<value_function::TrackingBoundBox>(
       tracking_bound_name_.c_str(), true);
   } else {

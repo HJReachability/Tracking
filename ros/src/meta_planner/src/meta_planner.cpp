@@ -78,9 +78,12 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
   // Set up dynamics.
   dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
 
-  // Initialize state space. For now, use an empty box.
-  // TODO: Parameterize this somehow and integrate with occupancy grid.
+  // Initialize state space.
   space_ = BallsInBox::Create();
+  if (!space_->Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize BallsInBox.", name_.c_str());
+    return false;
+  }
 
   // Set state space bounds.
   VectorXd state_upper_vec(state_dim_);
@@ -95,61 +98,16 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
 
   space_->Seed(seed_);
 
-  // Create value functions.
-  std::vector<ValueFunction::ConstPtr> values;
-
-  if (numerical_mode_) {
-    for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-      const ValueFunction::ConstPtr value =
-        ValueFunction::Create(value_directories_[ii], dynamics_,
-                              state_dim_, control_dim_,
-                              static_cast<ValueFunctionId>(ii));
-
-      values.push_back(value);
-    }
-  } else {
-    for (size_t ii = 0; ii < max_planner_speeds_.size(); ii++) {
-      // Generate inputs for AnalyticalPointMassValueFunction.
-      // SEMI-HACK! Manually feeding control/disturbance bounds.
-      const Vector3d max_planner_speed =
-        Vector3d::Constant(max_planner_speeds_[ii]);
-      const Vector3d max_velocity_disturbance =
-        Vector3d::Constant(max_velocity_disturbances_[ii]);
-      const Vector3d max_acceleration_disturbance =
-        Vector3d::Constant(max_acceleration_disturbances_[ii]);
-      const Vector3d velocity_expansion = Vector3d::Constant(0.1);
-
-      // Create analytical value function.
-      const AnalyticalPointMassValueFunction::ConstPtr value =
-        AnalyticalPointMassValueFunction::Create(max_planner_speed,
-                                                 max_velocity_disturbance,
-                                                 max_acceleration_disturbance,
-                                                 velocity_expansion,
-                                                 dynamics_,
-                                                 static_cast<ValueFunctionId>(ii));
-
-      values.push_back(value);
-    }
-  }
-
-  if (values.size() % 2 != 0) {
-    ROS_ERROR("%s: Must provide value functions in pairs.", name_.c_str());
-    return false;
-  }
-
   // Create planners.
-  for (size_t ii = 0; ii < values.size() - 1; ii += 2) {
+  for (ValueFunctionId ii = 0; ii < num_value_functions_ - 1; ii += 2) {
     const Planner::ConstPtr planner =
-      OmplPlanner<og::BITstar>::Create(values[ii], values[ii + 1], space_);
+      OmplPlanner<og::BITstar>::Create(ii, ii + 1, space_);
 
     planners_.push_back(planner);
   }
 
   // Set OMPL log level.
   ompl::msg::setLogLevel(ompl::msg::LogLevel::LOG_ERROR);
-
-  // Generate an initial trajectory and auto-publish.
-  //  Plan(position_, goal_, ros::Time::now().toSec());
 
   // Publish environment.
   space_->Visualize(env_pub_, fixed_frame_id_);
@@ -189,26 +147,13 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
 
   // Planner parameters.
   if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
-  if (!nl.getParam("meta/planners/value_directories", value_directories_))
-    return false;
 
-  if (value_directories_.size() == 0) {
-    ROS_ERROR("%s: Must specify at least one value function directory.",
-              name_.c_str());
-    return false;
-  }
+  int num_values = 2;
+  if (!nl.getParam("meta/planners/num_values", num_values)) return false;
+  num_value_functions_ = static_cast<size_t>(num_values);
 
-  if (!nl.getParam("meta/planners/max_speeds", max_planner_speeds_)) return false;
-  if (!nl.getParam("meta/planners/max_velocity_disturbances",
-                   max_velocity_disturbances_))
-    return false;
-  if (!nl.getParam("meta/planners/max_acceleration_disturbances",
-                   max_acceleration_disturbances_))
-    return false;
-
-  if (max_planner_speeds_.size() != max_velocity_disturbances_.size() ||
-      max_planner_speeds_.size() != max_acceleration_disturbances_.size()) {
-    ROS_ERROR("%s: Must specify max speed/velocity/acceleration disturbances.",
+  if (num_value_functions_ % 2 != 0) {
+    ROS_ERROR("%s: Must provide an even number of value functions.",
               name_.c_str());
     return false;
   }
@@ -227,6 +172,13 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("meta/goal/z", goal_z)) return false;
   goal_ = Vector3d(goal_x, goal_y, goal_z);
 
+  // Service names.
+  if (!nl.getParam("meta/srv/tracking_bound", bound_name_)) return false;
+  if (!nl.getParam("meta/srv/best_time", best_time_name_)) return false;
+  if (!nl.getParam("meta/srv/switching_time", switching_time_name_)) return false;
+  if (!nl.getParam("meta/srv/switching_distance", switching_distance_name_))
+    return false;
+
   // Topics and frame ids.
   if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
   if (!nl.getParam("meta/topics/vis/known_environment", env_topic_)) return false;
@@ -244,6 +196,19 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
 // Register callbacks.
 bool MetaPlanner::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
+
+  // Services.
+  bound_srv_ = nl.serviceClient<value_function::TrackingBoundBox>(
+    bound_name_.c_str(), true);
+
+  best_time_srv_ = nl.serviceClient<value_function::GeometricPlannerTime>(
+    best_time_name_.c_str(), true);
+
+  switching_time_srv_ = nl.serviceClient<value_function::GuaranteedSwitchingTime>(
+    switching_time_name_.c_str(), true);
+
+  switching_distance_srv_ = nl.serviceClient<value_function::GuaranteedSwitchingDistance>(
+    switching_distance_name_.c_str(), true);
 
   // Subscribers.
   sensor_sub_ = nl.subscribe(

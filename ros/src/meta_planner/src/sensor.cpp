@@ -69,6 +69,10 @@ bool Sensor::Initialize(const ros::NodeHandle& n) {
 
   // Initialize state space.
   space_ = BallsInBox::Create();
+  if (!space_->Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize BallsInBox.", name_.c_str());
+    return false;
+  }
 
   // Dynamics with dummy control bounds. We only need puncturing functionality.
   dynamics_ = NearHoverQuadNoYaw::Create(VectorXd::Zero(control_dim_),
@@ -96,9 +100,6 @@ bool Sensor::Initialize(const ros::NodeHandle& n) {
   // Add an obstacle with a random radius at a random location.
   for (size_t ii = 0; ii < num_obstacles_; ii++)
     space_->AddObstacle(space_->Sample(), uniform_radius(rng));
-
-  // Sleep for a little while to let other nodes start up.
-  //  ros::Duration(1.0).sleep();
 
   initialized_ = true;
   return true;

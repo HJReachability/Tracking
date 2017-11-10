@@ -40,68 +40,47 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_ENVIRONMENT_H
-#define META_PLANNER_ENVIRONMENT_H
-
-#include <utils/types.h>
-#include <utils/uncopyable.h>
-
-#include <value_function/SwitchingTrackingBoundBox.h>
-
-#include <ros/ros.h>
-#include <visualization_msgs/Marker.h>
-#include <random>
-#include <string>
+#include <meta_planner/environment.h>
 
 namespace meta {
 
-class Environment : private Uncopyable {
-public:
-  virtual ~Environment() {}
+// Initialize this class from a ROS node.
+bool Environment::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "environment");
 
-  // Initialize this class from a ROS node.
-  bool Initialize(const ros::NodeHandle& n);
+  if (!LoadParameters(n)) {
+    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
+    return false;
+  }
 
-  // Re-seed the random engine.
-  inline void Seed(unsigned int seed) const { rng_.seed(seed); }
+  if (!RegisterCallbacks(n)) {
+    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
+    return false;
+  }
 
-  // Derived classes must be able to sample uniformly from the state space.
-  virtual Vector3d Sample() const = 0;
+  initialized_ = true;
+  return true;
+}
 
-  // Derived classes must provide a collision checker which returns true if
-  // and only if the provided position is a valid collision-free configuration.
-  // Takes in incoming and outgoing value functions. See planner.h for details.
-  virtual bool IsValid(const Vector3d& position,
-                       ValueFunctionId incoming_value,
-                       ValueFunctionId outgoing_value) const = 0;
+// Load all parameters.
+bool Environment::LoadParameters(const ros::NodeHandle& n) {
+  ros::NodeHandle nl(n);
 
-  // Derived classes must have some sort of visualization through RVIZ.
-  virtual void Visualize(const ros::Publisher& pub,
-                         const std::string& frame_id) const = 0;
+  // Sensor radius.
+  if (!nl.getParam("srv/switching_bound", switching_bound_name_)) return false;
 
-protected:
-  explicit Environment(const std::string& switching_bound_name)
-    : rng_(rd_()),
-      initialized_(false) {}
+  return true;
+}
 
-  // Server to query value functions for tracking bound.
-  ros::ServiceServer switching_bound_srv_;
-  std::string switching_bound_name_;
+// Register all callbacks and publishers.
+bool Environment::RegisterCallbacks(const ros::NodeHandle& n) {
+  ros::NodeHandle nl(n);
 
-  // Random number generation.
-  std::random_device rd_;
-  mutable std::default_random_engine rng_;
+  // Server.
+  switching_bound_srv_ = nl.serviceClient<value_function::SwitchingTrackingBoundBox>(
+    switching_bound_name_.c_str(), true);
 
-  // Initialization and naming.
-  bool initialized_;
-  std::string name_;
-
-private:
-  // Load parameters and register callbacks.
-  bool LoadParameters(const ros::NodeHandle& n);
-  bool RegisterCallbacks(const ros::NodeHandle& n);
-};
+  return true;
+}
 
 } //\namespace meta
-
-#endif

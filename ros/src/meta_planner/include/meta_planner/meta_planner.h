@@ -49,6 +49,7 @@
 #include <meta_planner/waypoint.h>
 #include <meta_planner/ompl_planner.h>
 #include <meta_planner/environment.h>
+#include <value_function/near_hover_quad_no_yaw.h>
 #include <utils/types.h>
 #include <utils/uncopyable.h>
 #include <demo/balls_in_box.h>
@@ -58,7 +59,10 @@
 #include <meta_planner_msgs/SensorMeasurement.h>
 #include <crazyflie_msgs/PositionStateStamped.h>
 
-#include <value_function/OptimalControl.h>
+#include <value_function/TrackingBoundBox.h>
+#include <value_function/GeometricPlannerTime.h>
+#include <value_function/GuaranteedSwitchingTime.h>
+#include <value_function/GuaranteedSwitchingDistance.h>
 
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
@@ -107,15 +111,9 @@ private:
   // Remember the last trajectory we sent.
   Trajectory::ConstPtr traj_;
 
-   // List of planners and flag for whether to load value functions from disk or
-  // create analytic versions given parameters read from ROS.
+  // List of planners.
   std::vector<Planner::ConstPtr> planners_;
-  bool numerical_mode_;
-  std::vector<std::string> value_directories_;
-
-  std::vector<double> max_planner_speeds_;
-  std::vector<double> max_velocity_disturbances_;
-  std::vector<double> max_acceleration_disturbances_;
+  size_t num_value_functions_;
 
   // Geometric goal point.
   Vector3d goal_;
@@ -138,6 +136,17 @@ private:
 
   // Maximum distance between waypoints.
   double max_connection_radius_;
+
+  // Services and names.
+  ros::ServiceClient bound_srv_;
+  ros::ServiceClient best_time_srv_;
+  ros::ServiceClient switching_time_srv_;
+  ros::ServiceClient switching_distance_srv_;
+
+  std::string bound_name_;
+  std::string best_time_name_;
+  std::string switching_time_name_;
+  std::string switching_distance_name_;
 
   // Publishers/subscribers and related topics.
   ros::Publisher traj_pub_;
