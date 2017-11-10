@@ -47,8 +47,8 @@
 
 #include <meta_planner/waypoint.h>
 #include <meta_planner/flann_tree.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
 #include <iostream>
 #include <list>

@@ -44,9 +44,8 @@
 #define META_PLANNER_WAYPOINT_H
 
 #include <meta_planner/trajectory.h>
-#include <meta_planner/value_function.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
 #include <memory>
 

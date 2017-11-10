@@ -43,12 +43,14 @@
 #ifndef META_PLANNER_TRAJECTORY_H
 #define META_PLANNER_TRAJECTORY_H
 
-#include <meta_planner/dynamics.h>
+#include <value_function/dynamics.h>
 #include <utils/types.h>
 #include <utils/message_interfacing.h>
 
 #include <meta_planner_msgs/Trajectory.h>
 #include <meta_planner_msgs/State.h>
+
+#include <value_function/GeometricPlannerTime.h>
 
 #include <ros/ros.h>
 #include <std_msgs/ColorRGBA.h>
@@ -82,8 +84,7 @@ public:
 
   // Factory constructor from ROS message and an ordered list of all
   // possible ValueFunctions.
-  static Ptr Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
-		    const std::vector<ValueFunctionId>& value_registry);
+  static Ptr Create(const meta_planner_msgs::Trajectory::ConstPtr& msg);
 
   // Factory constructor to create a Trajectory as the remainder of the
   // given Trajectory after the specified time point.
@@ -112,7 +113,7 @@ public:
 
   // Swap out the control value function in this trajectory and update time
   // stamps accordingly.
-  void ExecuteSwitch(ValueFunctionId value);
+  void ExecuteSwitch(ValueFunctionId value, ros::ServiceClient& best_time_srv);
 
   // Adjust the time stamps for this trajectory to start at the given time.
   void ResetStartTime(double start);

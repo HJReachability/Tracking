@@ -75,8 +75,7 @@ Create(const std::vector<double>& times,
 
 // Factory constructor from ROS message and list of ValueFunctions.
 Trajectory::Ptr Trajectory::
-Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
-       const std::vector<ValueFunctionId>& values) {
+Create(const meta_planner_msgs::Trajectory::ConstPtr& msg) {
   Trajectory::Ptr ptr(new Trajectory());
 
   // Number of entries in trajectory.
@@ -84,14 +83,12 @@ Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
 
   for (size_t ii = 0; ii < num_waypoints; ii++) {
     // Convert state message to VectorXd.
-    VectorXd state(msg->states[ii].dimension);
-    for (size_t jj = 0; jj < state.size(); jj++)
-      state(jj) = msg->states[ii].state[jj];
+    const VectorXd state = utils::Unpack(msg->states[ii]);
 
     // Add to this trajectory.
     ptr->Add(msg->times[ii], state,
-	     values[ msg->control_value_function_ids[ii] ],
-	     values[ msg->bound_value_function_ids[ii] ]);
+             msg->control_value_function_ids[ii],
+             msg->bound_value_function_ids[ii]);
   }
 
   return ptr;
@@ -256,18 +253,36 @@ ValueFunctionId Trajectory::GetBoundValueFunction(double time) const {
 
 // Swap out the control value function in this trajectory and update time
 // stamps accordingly.
-void Trajectory::ExecuteSwitch(const ValueFunctionId& value) {
+void Trajectory::ExecuteSwitch(ValueFunctionId value,
+                               ros::ServiceClient& best_time_srv) {
   std::map<double, StateValue> switched;
 
   double last_time = FirstTime();
   VectorXd last_state = FirstState();
-  Vector3d last_position = value->GetDynamics()->Puncture(last_state);
+
+  // HACK! Assuming state layout.
+  Vector3d last_position(last_state(0), last_state(1), last_state(2));
   for (auto iter = map_.begin(); iter != map_.end(); iter++) {
     // (1) Compute time for this state from last_time.
     const ValueFunctionId bound = iter->second.bound_value_;
     const VectorXd state = iter->second.state_;
-    const Vector3d position = value->GetDynamics()->Puncture(state);
-    const double time = last_time + value->BestPossibleTime(last_position, position);
+
+    // HACK! Still assuming state layout.
+    const Vector3d position(state(0), state(1), state(2));
+
+    double dt = 10.0;
+    value_function::GeometricPlannerTime t;
+    t.request.id = value;
+    t.request.start = utils::Pack(last_position);
+    t.request.stop = utils::Pack(position);
+    if (!best_time_srv)
+      ROS_WARN("Trajectory: Best time server disconnected. Assuming fixed dt.");
+    else if (!best_time_srv.call(t))
+      ROS_ERROR("Trajectory: Error calling best time server.");
+    else
+      dt = t.response.time;
+
+    const double time = last_time + dt;
 
     // (2) Insert this tuple into 'switched'.
     switched.insert({ time, StateValue(state, value, bound) });

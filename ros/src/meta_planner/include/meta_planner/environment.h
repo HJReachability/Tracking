@@ -80,12 +80,12 @@ public:
                          const std::string& frame_id) const = 0;
 
 protected:
-  explicit Environment(const std::string& switching_bound_name)
+  explicit Environment()
     : rng_(rd_()),
       initialized_(false) {}
 
   // Server to query value functions for tracking bound.
-  ros::ServiceServer switching_bound_srv_;
+  mutable ros::ServiceClient switching_bound_srv_;
   std::string switching_bound_name_;
 
   // Random number generation.

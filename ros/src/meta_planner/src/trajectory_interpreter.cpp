@@ -170,7 +170,7 @@ bool TrajectoryInterpreter::RegisterCallbacks(const ros::NodeHandle& n) {
 // Callback for processing trajectory updates.
 void TrajectoryInterpreter::
 TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg) {
-  traj_ = Trajectory::Create(msg, values_);
+  traj_ = Trajectory::Create(msg);
 }
 
 // Callback for processing state updates.
@@ -256,9 +256,9 @@ void TrajectoryInterpreter::TimerCallback(const ros::TimerEvent& e) {
   br_.sendTransform(transform_stamped);
 
   // (2) Get corresponding control and bound value function.
-  const ValueFunction::ConstPtr control_value_id =
+  const ValueFunctionId control_value_id =
     traj_->GetControlValueFunction(current_time.toSec());
-  const ValueFunction::ConstPtr bound_value_id =
+  const ValueFunctionId bound_value_id =
     traj_->GetBoundValueFunction(current_time.toSec());
 
   // Publish planner position to the reference topic.
@@ -356,8 +356,8 @@ void TrajectoryInterpreter::Hover() {
 
   // Catch null trajectory, which should only occur on startup.
   // Hover at the current trajectory for max_meta_runtime_ + some small amount.
-  // Set the value function for this trajectory to be the one for the least
-  // aggressive planner, ie. for the smallest tracking bubble.
+  // Set the value function for this trajectory to be the most aggressive planner
+  // so that it has the largest error bound.
   if (traj_ == nullptr) {
     ROS_INFO("%s: No existing trajectory. Hovering in place.", name_.c_str());
     traj_ = Trajectory::Create();
@@ -369,9 +369,8 @@ void TrajectoryInterpreter::Hover() {
     hover_state(4) = 0.0;
     hover_state(5) = 0.0;
 
-    traj_->Add(now, hover_state, values_.back(), values_.front());
-    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state,
-               values_.back(), values_.front());
+    traj_->Add(now, hover_state, 0, 0);
+    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state, 0, 0);
     return;
   }
 

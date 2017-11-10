@@ -75,7 +75,7 @@ bool Planner::LoadParameters(const ros::NodeHandle& n) {
 }
 
 // Register all callbacks and publishers.
-bool Environment::RegisterCallbacks(const ros::NodeHandle& n) {
+bool Planner::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Server.

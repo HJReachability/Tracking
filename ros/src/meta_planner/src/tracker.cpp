@@ -191,7 +191,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
 
   // HACK! Assuming state layout.
   const VectorXd relative_state = state_ - reference_;
-  const Vector3d planner_position(reference_(0), reference_(1), reference(2));
+  const Vector3d planner_position(reference_(0), reference_(1), reference_(2));
 
   // (1) Get priority.
   if (!priority_srv_) {
@@ -233,7 +233,7 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   if (!optimal_control_srv_.call(c))
     ROS_ERROR("%s: Error calling optimal control server.", name_.c_str());
   else
-    optimal_control = utils::UnpackControl(c.response.control);
+    optimal_control = utils::Unpack(c.response.control);
 
   // (3) Publish optimal control with priority in (0, 1).
   crazyflie_msgs::NoYawControlStamped control_msg;

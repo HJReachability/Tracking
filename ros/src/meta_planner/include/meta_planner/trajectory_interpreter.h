@@ -46,11 +46,11 @@
 #define META_PLANNER_TRAJECTORY_INTERPRETER_H
 
 #include <meta_planner/trajectory.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
+#include <utils/message_interfacing.h>
 
 #include <value_function/TrackingBoundBox.h>
-#include <utils/message_interfacing.h>
 
 #include <meta_planner_msgs/Trajectory.h>
 #include <meta_planner_msgs/TrajectoryRequest.h>
@@ -126,7 +126,7 @@ private:
   size_t state_dim_;
 
   // Servers and names.
-  ros::ServiceServer tracking_bound_srv_;
+  ros::ServiceClient tracking_bound_srv_;
   std::string tracking_bound_name_;
 
   // Publishers/subscribers and related topics.

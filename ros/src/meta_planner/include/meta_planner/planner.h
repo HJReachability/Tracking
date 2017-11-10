@@ -60,10 +60,10 @@
 #ifndef META_PLANNER_PLANNER_H
 #define META_PLANNER_PLANNER_H
 
-#include <meta_planner/value_function.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/environment.h>
 #include <meta_planner/box.h>
+#include <value_function/dynamics.h>
 #include <utils/types.h>
 #include <utils/uncopyable.h>
 #include <utils/message_interfacing.h>
@@ -111,10 +111,12 @@ public:
 protected:
   explicit Planner(ValueFunctionId incoming_value,
                    ValueFunctionId outgoing_value,
-                   const Box::ConstPtr& space)
+                   const Box::ConstPtr& space,
+                   const Dynamics::ConstPtr& dynamics)
     : incoming_value_(incoming_value),
       outgoing_value_(outgoing_value),
-      space_(space) {
+      space_(space),
+      dynamics_(dynamics) {
     if (incoming_value_ + 1 != outgoing_value_)
       ROS_ERROR("Outgoing value function not successor to incoming one.");
   }
@@ -126,8 +128,11 @@ protected:
   // State space (with collision checking).
   const Box::ConstPtr space_;
 
+  // Dynamics.
+  const Dynamics::ConstPtr dynamics_;
+
   // Server to query value functions best possible time.
-  ros::ServiceServer best_time_srv_;
+  mutable ros::ServiceClient best_time_srv_;
   std::string best_time_name_;
 
   // Initialization and naming.

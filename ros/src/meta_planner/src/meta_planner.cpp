@@ -100,8 +100,8 @@ bool MetaPlanner::Initialize(const ros::NodeHandle& n) {
 
   // Create planners.
   for (ValueFunctionId ii = 0; ii < num_value_functions_ - 1; ii += 2) {
-    const Planner::ConstPtr planner =
-      OmplPlanner<og::BITstar>::Create(ii, ii + 1, space_);
+    const Planner::Ptr planner =
+      OmplPlanner<og::BITstar>::Create(ii, ii + 1, space_, dynamics_);
 
     if (!planner->Initialize(n)) {
       ROS_ERROR("%s: Failed to initialize planner.", name_.c_str());
@@ -151,8 +151,6 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // Planner parameters.
-  if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
-
   int num_values = 2;
   if (!nl.getParam("meta/planners/num_values", num_values)) return false;
   num_value_functions_ = static_cast<size_t>(num_values);
@@ -179,6 +177,7 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
 
   // Service names.
   if (!nl.getParam("meta/srv/tracking_bound", bound_name_)) return false;
+  if (!nl.getParam("meta/srv/best_time", best_time_name_)) return false;
   if (!nl.getParam("meta/srv/switching_time", switching_time_name_)) return false;
   if (!nl.getParam("meta/srv/switching_distance", switching_distance_name_))
     return false;
@@ -204,6 +203,9 @@ bool MetaPlanner::RegisterCallbacks(const ros::NodeHandle& n) {
   // Services.
   bound_srv_ = nl.serviceClient<value_function::TrackingBoundBox>(
     bound_name_.c_str(), true);
+
+  best_time_srv_ = nl.serviceClient<value_function::GeometricPlannerTime>(
+    best_time_name_.c_str(), true);
 
   switching_time_srv_ = nl.serviceClient<value_function::GuaranteedSwitchingTime>(
     switching_time_name_.c_str(), true);
@@ -305,7 +307,7 @@ void MetaPlanner::RequestTrajectoryCallback(
     ros::NodeHandle nl;
     bound_srv_ = nl.serviceClient<value_function::TrackingBoundBox>(
       bound_name_.c_str(), true);
-    return false;
+    return;
   }
 
   // Get the tracking bound for this planner.
@@ -353,7 +355,7 @@ void MetaPlanner::RequestTrajectoryCallback(
       ros::NodeHandle nl;
       switching_time_srv_ = nl.serviceClient<value_function::GuaranteedSwitchingTime>(
         switching_time_name_.c_str(), true);
-      return false;
+      return;
     }
 
     // Get times.
@@ -362,7 +364,7 @@ void MetaPlanner::RequestTrajectoryCallback(
     t.request.from_id = bound_value;
     t.request.to_id = control_value;
     if (!switching_time_srv_.call(t))
-      ROS_ERROR("%s: Error calling switching time server.", name_c._str());
+      ROS_ERROR("%s: Error calling switching time server.", name_.c_str());
     else
       switching_time = std::max(std::max(t.response.x, t.response.y),
                                 t.response.z);
@@ -543,7 +545,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
 
             // Swap out the control value function in the neighbor's trajectory
             // and update time stamps accordingly.
-            clone->traj_->ExecuteSwitch(value_used);
+            clone->traj_->ExecuteSwitch(value_used, best_time_srv_);
 
             // Insert the clone.
             tree.Insert(clone, false);
@@ -595,7 +597,7 @@ bool MetaPlanner::Plan(const Vector3d& start, const Vector3d& stop,
           if (ii > neighbor_planner_id) {
             // Swap out the control value function in the neighbor's trajectory
             // and update time stamps accordingly.
-            waypoint->traj_->ExecuteSwitch(goal_value_used);
+            waypoint->traj_->ExecuteSwitch(goal_value_used, best_time_srv_);
 
             // Adjust the time stamps for the new trajectory to occur after the
             // updated neighbor's trajectory.

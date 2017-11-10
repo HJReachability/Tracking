@@ -108,6 +108,9 @@ private:
   // meta planning was successful.
   bool Plan(const Vector3d& start, const Vector3d& stop, double start_time);
 
+  // Dynamics.
+  NearHoverQuadNoYaw::ConstPtr dynamics_;
+
   // Remember the last trajectory we sent.
   Trajectory::ConstPtr traj_;
 
@@ -130,6 +133,8 @@ private:
 
   std::vector<double> state_upper_;
   std::vector<double> state_lower_;
+  std::vector<double> control_upper_;
+  std::vector<double> control_lower_;
 
   // Max time to spend searching for an optimal path.
   double max_runtime_;
@@ -139,10 +144,12 @@ private:
 
   // Services and names.
   ros::ServiceClient bound_srv_;
+  ros::ServiceClient best_time_srv_;
   ros::ServiceClient switching_time_srv_;
   ros::ServiceClient switching_distance_srv_;
 
   std::string bound_name_;
+  std::string best_time_name_;
   std::string switching_time_name_;
   std::string switching_distance_name_;
 
