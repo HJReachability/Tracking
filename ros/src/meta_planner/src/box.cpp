@@ -91,7 +91,6 @@ bool Box::IsValid(const Vector3d& position,
     ros::NodeHandle nl;
     switching_bound_srv_ = nl.serviceClient<value_function::SwitchingTrackingBoundBox>(
       switching_bound_name_.c_str(), true);
-
     return false;
   }
 

@@ -58,13 +58,13 @@ public:
 
   // Member variables.
   const Vector3d point_;
-  const ValueFunction::ConstPtr value_;
+  const ValueFunctionId value_;
   const Trajectory::Ptr traj_;
   const ConstPtr parent_;
 
   // Factory method. Use this instead of the constructor.
   static inline ConstPtr Create(const Vector3d& point,
-                                const ValueFunction::ConstPtr& value,
+                                ValueFunctionId value,
                                 const Trajectory::Ptr& traj,
                                 const ConstPtr& parent) {
     ConstPtr ptr(new Waypoint(point, value, traj, parent));
@@ -76,7 +76,7 @@ public:
 
 private:
   explicit Waypoint(const Vector3d& point,
-                    const ValueFunction::ConstPtr& value,
+                    ValueFunctionId value,
                     const Trajectory::Ptr& traj,
                     const ConstPtr& parent)
     : point_(point),

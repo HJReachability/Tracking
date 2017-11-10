@@ -66,6 +66,9 @@
 #include <meta_planner/box.h>
 #include <utils/types.h>
 #include <utils/uncopyable.h>
+#include <utils/message_interfacing.h>
+
+#include <value_function/GeometricPlannerTime.h>
 
 #include <memory>
 
@@ -75,10 +78,14 @@ namespace meta {
 
 class Planner : private Uncopyable {
 public:
+  typedef std::shared_ptr<Planner> Ptr;
   typedef std::shared_ptr<const Planner> ConstPtr;
 
   // Destructor.
   virtual ~Planner() {}
+
+  // Initialize this class from a ROS node.
+  bool Initialize(const ros::NodeHandle& n);
 
   // Derived classes must plan trajectories between two points.
   // Budget is the time the planner is allowed to take during planning.
@@ -118,6 +125,19 @@ protected:
 
   // State space (with collision checking).
   const Box::ConstPtr space_;
+
+  // Server to query value functions best possible time.
+  ros::ServiceServer best_time_srv_;
+  std::string best_time_name_;
+
+  // Initialization and naming.
+  bool initialized_;
+  std::string name_;
+
+private:
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 };
 
 } //\namespace meta

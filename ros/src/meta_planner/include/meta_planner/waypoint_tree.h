@@ -60,7 +60,7 @@ class WaypointTree : private Uncopyable {
 public:
   ~WaypointTree() {}
   explicit WaypointTree(const Vector3d& start,
-                        const ValueFunction::ConstPtr& start_value,
+                        ValueFunctionId start_value,
                         double start_time = 0.0);
 
   // Find nearest neighbors in the tree.

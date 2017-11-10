@@ -47,7 +47,7 @@
 namespace meta {
 
 WaypointTree::WaypointTree(const Vector3d& start,
-                           const ValueFunction::ConstPtr& start_value,
+                           ValueFunctionId start_value,
                            double start_time)
   : root_(Waypoint::Create(start, start_value, nullptr, nullptr)),
     start_time_(start_time) {

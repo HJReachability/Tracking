@@ -139,12 +139,10 @@ private:
 
   // Services and names.
   ros::ServiceClient bound_srv_;
-  ros::ServiceClient best_time_srv_;
   ros::ServiceClient switching_time_srv_;
   ros::ServiceClient switching_distance_srv_;
 
   std::string bound_name_;
-  std::string best_time_name_;
   std::string switching_time_name_;
   std::string switching_distance_name_;
 

@@ -72,9 +72,9 @@ class OmplPlanner : public Planner {
 public:
   ~OmplPlanner() {}
 
-  static Planner::ConstPtr Create(ValueFunctionId incoming_value,
-                                  ValueFunctionId outgoing_value,
-                                  const Box::ConstPtr& space);
+  static Planner::Ptr Create(ValueFunctionId incoming_value,
+                             ValueFunctionId outgoing_value,
+                             const Box::ConstPtr& space);
 
   // Derived classes must plan trajectories between two points.
   Trajectory::Ptr Plan(const Vector3d& start,
@@ -101,11 +101,11 @@ OmplPlanner<PlannerType>::OmplPlanner(ValueFunctionId incoming_value,
 
 // Create OmplPlanner pointer.
 template<typename PlannerType>
-inline Planner::ConstPtr OmplPlanner<PlannerType>::
+inline Planner::Ptr OmplPlanner<PlannerType>::
 Create(ValueFunctionId incoming_value,
        ValueFunctionId outgoing_value,
        const Box::ConstPtr& space) {
-  Planner::ConstPtr ptr(
+  Planner::Ptr ptr(
     new OmplPlanner<PlannerType>(incoming_value, outgoing_value, space));
   return ptr;
 }

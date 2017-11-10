@@ -59,7 +59,7 @@ inline Vector3d Unpack(const geometry_msgs::Vector3& msg) {
 }
 
 // Pack a Vector3d into a Vector3.
-inline geometry_msgs::Vector3 Unpack(const Vector3d& point) {
+inline geometry_msgs::Vector3 Pack(const Vector3d& point) {
   geometry_msgs::Vector3 msg;
   msg.x = point(0);
   msg.y = point(1);

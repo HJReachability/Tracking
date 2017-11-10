@@ -46,10 +46,71 @@
 
 namespace meta {
 
+// Initialize this class from a ROS node.
+bool Planner::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "planner");
+
+  if (!LoadParameters(n)) {
+    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
+    return false;
+  }
+
+  if (!RegisterCallbacks(n)) {
+    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
+    return false;
+  }
+
+  initialized_ = true;
+  return true;
+}
+
+// Load all parameters.
+bool Planner::LoadParameters(const ros::NodeHandle& n) {
+  ros::NodeHandle nl(n);
+
+  // Sensor radius.
+  if (!nl.getParam("srv/best_time", best_time_name_)) return false;
+
+  return true;
+}
+
+// Register all callbacks and publishers.
+bool Environment::RegisterCallbacks(const ros::NodeHandle& n) {
+  ros::NodeHandle nl(n);
+
+  // Server.
+  best_time_srv_ = nl.serviceClient<value_function::GeometricPlannerTime>(
+    best_time_name_.c_str(), true);
+
+  return true;
+}
+
 // Shortest possible time to go from start to stop for this planner.
 double Planner::
 BestPossibleTime(const Vector3d& start, const Vector3d& stop) const {
-  return incoming_value_->BestPossibleTime(start, stop);
+  double best_time = std::numeric_limits<double>::infinity();
+
+  // Make sure the server is up.
+  if (!best_time_srv_) {
+    ROS_WARN("%s: Best time server disconnected.", name_.c_str());
+
+    ros::NodeHandle nl;
+    best_time_srv_ = nl.serviceClient<value_function::GeometricPlannerTime>(
+      best_time_name_.c_str(), true);
+    return best_time;
+  }
+
+  // Call the server.
+  value_function::GeometricPlannerTime t;
+  t.request.id = incoming_value_;
+  t.request.start = utils::Pack(start);
+  t.request.stop = utils::Pack(stop);
+  if (!best_time_srv_.call(t))
+    ROS_ERROR("%s: Error calling best time server.", name_.c_str());
+  else
+    best_time = t.response.time;
+
+  return best_time;
 }
 
 } //\namespace meta
