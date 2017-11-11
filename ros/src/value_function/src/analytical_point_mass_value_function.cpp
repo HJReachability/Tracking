@@ -263,7 +263,7 @@ double AnalyticalPointMassValueFunction::
 GuaranteedSwitchingDistance(
   size_t dim,
   const AnalyticalPointMassValueFunction::ConstPtr& value_in) const {
-  //HACK! Assume value_in is of class analytic_point_mass_value_function
+  // HACK! Assume value_in is of class analytic_point_mass_value_function
   // so that private max_planner_speed_ can be read from this function
   return max_planner_speed_(dim) *
          GuaranteedSwitchingTime(dim, value_in);

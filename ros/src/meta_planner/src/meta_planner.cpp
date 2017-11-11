@@ -127,21 +127,21 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
 
   // Random seed.
   int seed = 0;
-  if (!nl.getParam("meta/random/seed", seed)) return false;
+  if (!nl.getParam("random/seed", seed)) return false;
   seed_ = static_cast<unsigned int>(seed);
 
   // Meta planning parameters.
-  if (!nl.getParam("meta/meta/max_runtime", max_runtime_))
+  if (!nl.getParam("max_runtime", max_runtime_))
     return false;
-  if (!nl.getParam("meta/meta/max_connection_radius", max_connection_radius_))
+  if (!nl.getParam("max_connection_radius", max_connection_radius_))
     return false;
 
   int dimension = 1;
-  if (!nl.getParam("meta/control/dim", dimension)) return false;
+  if (!nl.getParam("control/dim", dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("meta/control/upper", control_upper_)) return false;
-  if (!nl.getParam("meta/control/lower", control_lower_)) return false;
+  if (!nl.getParam("control/upper", control_upper_)) return false;
+  if (!nl.getParam("control/lower", control_lower_)) return false;
 
   if (control_upper_.size() != control_dim_ ||
       control_lower_.size() != control_dim_) {
@@ -152,7 +152,7 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
 
   // Planner parameters.
   int num_values = 2;
-  if (!nl.getParam("meta/planners/num_values", num_values)) return false;
+  if (!nl.getParam("planners/num_values", num_values)) return false;
   num_value_functions_ = static_cast<size_t>(num_values);
 
   if (num_value_functions_ % 2 != 0) {
@@ -162,36 +162,36 @@ bool MetaPlanner::LoadParameters(const ros::NodeHandle& n) {
   }
 
   // State space parameters.
-  if (!nl.getParam("meta/state/dim", dimension)) return false;
+  if (!nl.getParam("state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("meta/state/upper", state_upper_)) return false;
-  if (!nl.getParam("meta/state/lower", state_lower_)) return false;
+  if (!nl.getParam("state/upper", state_upper_)) return false;
+  if (!nl.getParam("state/lower", state_lower_)) return false;
 
   // Goal position.
   double goal_x, goal_y, goal_z;
-  if (!nl.getParam("meta/goal/x", goal_x)) return false;
-  if (!nl.getParam("meta/goal/y", goal_y)) return false;
-  if (!nl.getParam("meta/goal/z", goal_z)) return false;
+  if (!nl.getParam("goal/x", goal_x)) return false;
+  if (!nl.getParam("goal/y", goal_y)) return false;
+  if (!nl.getParam("goal/z", goal_z)) return false;
   goal_ = Vector3d(goal_x, goal_y, goal_z);
 
   // Service names.
-  if (!nl.getParam("meta/srv/tracking_bound", bound_name_)) return false;
-  if (!nl.getParam("meta/srv/best_time", best_time_name_)) return false;
-  if (!nl.getParam("meta/srv/switching_time", switching_time_name_)) return false;
-  if (!nl.getParam("meta/srv/switching_distance", switching_distance_name_))
+  if (!nl.getParam("srv/tracking_bound", bound_name_)) return false;
+  if (!nl.getParam("srv/best_time", best_time_name_)) return false;
+  if (!nl.getParam("srv/switching_time", switching_time_name_)) return false;
+  if (!nl.getParam("srv/switching_distance", switching_distance_name_))
     return false;
 
   // Topics and frame ids.
-  if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
-  if (!nl.getParam("meta/topics/vis/known_environment", env_topic_)) return false;
-  if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
-  if (!nl.getParam("meta/topics/state", state_topic_)) return false;
-  if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
-  if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
-  if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
+  if (!nl.getParam("topics/sensor", sensor_topic_)) return false;
+  if (!nl.getParam("topics/vis/known_environment", env_topic_)) return false;
+  if (!nl.getParam("topics/traj", traj_topic_)) return false;
+  if (!nl.getParam("topics/state", state_topic_)) return false;
+  if (!nl.getParam("topics/request_traj", request_traj_topic_)) return false;
+  if (!nl.getParam("topics/trigger_replan", trigger_replan_topic_)) return false;
+  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
 
-  if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("frames/fixed", fixed_frame_id_)) return false;
 
   return true;
 }

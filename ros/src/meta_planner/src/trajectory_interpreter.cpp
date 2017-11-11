@@ -83,39 +83,39 @@ bool TrajectoryInterpreter::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Control parameters.
-  if (!nl.getParam("meta/control/time_step", time_step_)) return false;
+  if (!nl.getParam("control/time_step", time_step_)) return false;
 
   int dimension = 1;
-  if (!nl.getParam("meta/control/dim", dimension)) return false;
+  if (!nl.getParam("control/dim", dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
 
   // Value parameters.
-  if (!nl.getParam("meta/meta/max_runtime", max_meta_runtime_)) return false;
+  if (!nl.getParam("max_runtime", max_meta_runtime_)) return false;
 
   // State space parameters.
-  if (!nl.getParam("meta/state/dim", dimension)) return false;
+  if (!nl.getParam("state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
   // Service names.
-  if (!nl.getParam("meta/srv/tracking_bound", tracking_bound_name_)) return false;
+  if (!nl.getParam("srv/tracking_bound", tracking_bound_name_)) return false;
 
   // Topics and frame ids.
-  if (!nl.getParam("meta/topics/state", state_topic_)) return false;
-  if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
-  if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
-  if (!nl.getParam("meta/topics/controller_id", controller_id_topic_))
+  if (!nl.getParam("topics/state", state_topic_)) return false;
+  if (!nl.getParam("topics/traj", traj_topic_)) return false;
+  if (!nl.getParam("topics/reference", reference_topic_)) return false;
+  if (!nl.getParam("topics/controller_id", controller_id_topic_))
     return false;
 
-  if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
-  if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
-  if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
-  if (!nl.getParam("meta/topics/vis/traj", traj_vis_topic_)) return false;
-  if (!nl.getParam("meta/topics/vis/tracking_bound", tracking_bound_topic_))
+  if (!nl.getParam("topics/request_traj", request_traj_topic_)) return false;
+  if (!nl.getParam("topics/trigger_replan", trigger_replan_topic_)) return false;
+  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
+  if (!nl.getParam("topics/vis/traj", traj_vis_topic_)) return false;
+  if (!nl.getParam("topics/vis/tracking_bound", tracking_bound_topic_))
     return false;
 
-  if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
-  if (!nl.getParam("meta/frames/tracker", tracker_frame_id_)) return false;
-  if (!nl.getParam("meta/frames/planner", planner_frame_id_)) return false;
+  if (!nl.getParam("frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("frames/tracker", tracker_frame_id_)) return false;
+  if (!nl.getParam("frames/planner", planner_frame_id_)) return false;
 
   return true;
 }

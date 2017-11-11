@@ -166,10 +166,22 @@ bool ValueFunctionServer::GuaranteedSwitchingTimeCallback(
 bool ValueFunctionServer::GuaranteedSwitchingDistanceCallback(
   value_function::GuaranteedSwitchingDistance::Request& req,
   value_function::GuaranteedSwitchingDistance::Response& res) {
-  res.x = values_[req.to_id]->GuaranteedSwitchingDistance(0, values_[req.from_id]);
-  res.y = values_[req.to_id]->GuaranteedSwitchingDistance(1, values_[req.from_id]);
-  res.z = values_[req.to_id]->GuaranteedSwitchingDistance(2, values_[req.from_id]);
-  return true;
+  // Check which mode we're in.
+  if (numerical_mode_) {
+    res.x = values_[req.to_id]->GuaranteedSwitchingDistance(0, values_[req.from_id]);
+    res.y = values_[req.to_id]->GuaranteedSwitchingDistance(1, values_[req.from_id]);
+    res.z = values_[req.to_id]->GuaranteedSwitchingDistance(2, values_[req.from_id]);
+  } else {
+    const AnalyticalPointMassValueFunction::ConstPtr cast_to =
+      std::static_pointer_cast<const AnalyticalPointMassValueFunction>(values_[req.to_id]);
+    const AnalyticalPointMassValueFunction::ConstPtr cast_from =
+      std::static_pointer_cast<const AnalyticalPointMassValueFunction>(values_[req.from_id]);
+
+    res.x = cast_to->GuaranteedSwitchingDistance(0, cast_from);
+    res.y = cast_to->GuaranteedSwitchingDistance(1, cast_from);
+    res.z = cast_to->GuaranteedSwitchingDistance(2, cast_from);
+  }
+    return true;
 }
 
 // Priority of the optimal control at the given state. This is a number
@@ -260,7 +272,7 @@ bool ValueFunctionServer::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("srv/guaranteed_switching_distance",
                    guaranteed_switching_distance_name_)) return false;
   if (!nl.getParam("srv/priority", priority_name_)) return false;
-  if (!nl.getParam("srv/max_planner_speed_name",
+  if (!nl.getParam("srv/max_planner_speed",
                    max_planner_speed_name_)) return false;
   if (!nl.getParam("srv/best_possible_time",
                    best_possible_time_name_)) return false;
