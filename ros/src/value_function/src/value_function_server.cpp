@@ -144,9 +144,22 @@ bool ValueFunctionServer::TrackingBoundCallback(
 bool ValueFunctionServer::SwitchingTrackingBoundCallback(
   value_function::SwitchingTrackingBoundBox::Request& req,
   value_function::SwitchingTrackingBoundBox::Response& res) {
-  res.x = values_[req.to_id]->SwitchingTrackingBound(0, values_[req.from_id]);
-  res.y = values_[req.to_id]->SwitchingTrackingBound(1, values_[req.from_id]);
-  res.z = values_[req.to_id]->SwitchingTrackingBound(2, values_[req.from_id]);
+  // Check which mode we're in.
+  if (numerical_mode_) {
+    res.x = values_[req.to_id]->SwitchingTrackingBound(0, values_[req.from_id]);
+    res.y = values_[req.to_id]->SwitchingTrackingBound(1, values_[req.from_id]);
+    res.z = values_[req.to_id]->SwitchingTrackingBound(2, values_[req.from_id]);
+  } else {
+    const auto cast_to = std::static_pointer_cast<
+      const AnalyticalPointMassValueFunction>(values_[req.to_id]);
+    const auto cast_from = std::static_pointer_cast<
+      const AnalyticalPointMassValueFunction>(values_[req.from_id]);
+
+    res.x = cast_to->SwitchingTrackingBound(0, cast_from);
+    res.y = cast_to->SwitchingTrackingBound(1, cast_from);
+    res.z = cast_to->SwitchingTrackingBound(2, cast_from);
+  }
+
   return true;
 }
 
@@ -155,9 +168,22 @@ bool ValueFunctionServer::SwitchingTrackingBoundCallback(
 bool ValueFunctionServer::GuaranteedSwitchingTimeCallback(
   value_function::GuaranteedSwitchingTime::Request& req,
   value_function::GuaranteedSwitchingTime::Response& res) {
-  res.x = values_[req.to_id]->GuaranteedSwitchingTime(0, values_[req.from_id]);
-  res.y = values_[req.to_id]->GuaranteedSwitchingTime(1, values_[req.from_id]);
-  res.z = values_[req.to_id]->GuaranteedSwitchingTime(2, values_[req.from_id]);
+  // Check which mode we're in.
+  if (numerical_mode_) {
+    res.x = values_[req.to_id]->GuaranteedSwitchingTime(0, values_[req.from_id]);
+    res.y = values_[req.to_id]->GuaranteedSwitchingTime(1, values_[req.from_id]);
+    res.z = values_[req.to_id]->GuaranteedSwitchingTime(2, values_[req.from_id]);
+  } else {
+    const auto cast_to = std::static_pointer_cast<
+      const AnalyticalPointMassValueFunction>(values_[req.to_id]);
+    const auto cast_from = std::static_pointer_cast<
+      const AnalyticalPointMassValueFunction>(values_[req.from_id]);
+
+    res.x = cast_to->GuaranteedSwitchingTime(0, cast_from);
+    res.y = cast_to->GuaranteedSwitchingTime(1, cast_from);
+    res.z = cast_to->GuaranteedSwitchingTime(2, cast_from);
+  }
+
   return true;
 }
 
@@ -172,16 +198,17 @@ bool ValueFunctionServer::GuaranteedSwitchingDistanceCallback(
     res.y = values_[req.to_id]->GuaranteedSwitchingDistance(1, values_[req.from_id]);
     res.z = values_[req.to_id]->GuaranteedSwitchingDistance(2, values_[req.from_id]);
   } else {
-    const AnalyticalPointMassValueFunction::ConstPtr cast_to =
-      std::static_pointer_cast<const AnalyticalPointMassValueFunction>(values_[req.to_id]);
-    const AnalyticalPointMassValueFunction::ConstPtr cast_from =
-      std::static_pointer_cast<const AnalyticalPointMassValueFunction>(values_[req.from_id]);
+    const auto cast_to = std::static_pointer_cast<
+      const AnalyticalPointMassValueFunction>(values_[req.to_id]);
+    const auto cast_from = std::static_pointer_cast<
+      const AnalyticalPointMassValueFunction>(values_[req.from_id]);
 
     res.x = cast_to->GuaranteedSwitchingDistance(0, cast_from);
     res.y = cast_to->GuaranteedSwitchingDistance(1, cast_from);
     res.z = cast_to->GuaranteedSwitchingDistance(2, cast_from);
   }
-    return true;
+
+  return true;
 }
 
 // Priority of the optimal control at the given state. This is a number
