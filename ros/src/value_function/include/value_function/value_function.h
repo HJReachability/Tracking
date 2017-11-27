@@ -41,13 +41,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_VALUE_FUNCTION_H
-#define META_PLANNER_VALUE_FUNCTION_H
+#ifndef VALUE_FUNCTION_VALUE_FUNCTION_H
+#define VALUE_FUNCTION_VALUE_FUNCTION_H
 
-#include <meta_planner/subsystem_value_function.h>
-#include <meta_planner/dynamics.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <value_function/subsystem_value_function.h>
+#include <value_function/dynamics.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
 #include <ros/ros.h>
 #include <limits>
@@ -122,7 +122,7 @@ public:
     // Take the max of the min times in each dimension.
     for (size_t ii = 0; ii < 3; ii++) {
       const double dim_time =
-	std::abs(stop(ii) - start(ii)) / max_planner_speed_(ii);
+        std::abs(stop(ii) - start(ii)) / max_planner_speed_(ii);
       time = std::max(time, dim_time);
     }
 

@@ -68,67 +68,13 @@ bool Tracker::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  // Set control upper/lower bounds as Eigen::Vectors.
-  VectorXd control_upper_vec(control_dim_);
-  VectorXd control_lower_vec(control_dim_);
-  for (size_t ii = 0; ii < control_dim_; ii++) {
-    control_upper_vec(ii) = control_upper_[ii];
-    control_lower_vec(ii) = control_lower_[ii];
-  }
-
-  // Set up dynamics.
-  dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
-
   // Set the initial state and reference to zero.
   state_ = VectorXd::Zero(state_dim_);
   reference_ = VectorXd::Zero(state_dim_);
 
-  // Populate list of value functions.
-  if (numerical_mode_) {
-    for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-      const ValueFunction::ConstPtr value =
-        ValueFunction::Create(value_directories_[ii], dynamics_,
-                              state_dim_, control_dim_,
-                              static_cast<ValueFunctionId>(ii));
-
-      values_.push_back(value);
-    }
-  } else {
-    for (size_t ii = 0; ii < max_planner_speeds_.size(); ii++) {
-      // Generate inputs for AnalyticalPointMassValueFunction.
-      // SEMI-HACK! Manually feeding control/disturbance bounds.
-      const Vector3d max_planner_speed =
-        Vector3d::Constant(max_planner_speeds_[ii]);
-      const Vector3d max_velocity_disturbance =
-        Vector3d::Constant(max_velocity_disturbances_[ii]);
-      const Vector3d max_acceleration_disturbance =
-        Vector3d::Constant(max_acceleration_disturbances_[ii]);
-      const Vector3d velocity_expansion = Vector3d::Constant(0.1);
-
-      // Create analytical value function.
-      const AnalyticalPointMassValueFunction::ConstPtr value =
-        AnalyticalPointMassValueFunction::Create(max_planner_speed,
-                                                 max_velocity_disturbance,
-                                                 max_acceleration_disturbance,
-                                                 velocity_expansion,
-                                                 dynamics_,
-                                                 static_cast<ValueFunctionId>(ii));
-
-      values_.push_back(value);
-    }
-  }
-
-  if (values_.size() % 2 != 0) {
-    ROS_ERROR("%s: Must provide pairs of value functions.", name_.c_str());
-    return false;
-  }
-
   // Start control and bound values at most/least conservative.
-  control_value_ = values_.back();
-  bound_value_ = values_.front();
-
-  // Wait a little for the simulator to begin.
-  //  ros::Duration(0.5).sleep();
+  control_value_id_ = 0;
+  bound_value_id_ = 0;
 
   initialized_ = true;
   return true;
@@ -139,63 +85,33 @@ bool Tracker::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Control parameters.
-  if (!nl.getParam("meta/control/time_step", time_step_)) return false;
+  if (!nl.getParam("control/time_step", time_step_)) return false;
 
   int dimension = 1;
-  if (!nl.getParam("meta/control/dim", dimension)) return false;
+  if (!nl.getParam("control/dim", dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("meta/control/upper", control_upper_)) return false;
-  if (!nl.getParam("meta/control/lower", control_lower_)) return false;
-
-  if (control_upper_.size() != control_dim_ ||
-      control_lower_.size() != control_dim_) {
-    ROS_ERROR("%s: Upper and/or lower bounds are in the wrong dimension.",
-              name_.c_str());
-    return false;
-  }
-
-  // Planner parameters.
-  if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
-  if (!nl.getParam("meta/planners/value_directories", value_directories_))
-    return false;
-
-  if (value_directories_.size() == 0) {
-    ROS_ERROR("%s: Must specify at least one value function directory.",
-              name_.c_str());
-    return false;
-  }
-
-  if (!nl.getParam("meta/planners/max_speeds", max_planner_speeds_)) return false;
-  if (!nl.getParam("meta/planners/max_velocity_disturbances",
-                   max_velocity_disturbances_))
-    return false;
-  if (!nl.getParam("meta/planners/max_acceleration_disturbances",
-                   max_acceleration_disturbances_))
-    return false;
-
-  if (max_planner_speeds_.size() != max_velocity_disturbances_.size() ||
-      max_planner_speeds_.size() != max_acceleration_disturbances_.size()) {
-    ROS_ERROR("%s: Must specify max speed/velocity/acceleration disturbances.",
-              name_.c_str());
-    return false;
-  }
-
   // State space parameters.
-  if (!nl.getParam("meta/state/dim", dimension)) return false;
+  if (!nl.getParam("state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
-  // Topics and frame ids.
-  if (!nl.getParam("meta/topics/control", control_topic_)) return false;
-  if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
-  if (!nl.getParam("meta/topics/state", state_topic_)) return false;
-  if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
-  if (!nl.getParam("meta/topics/controller_id", controller_id_topic_))
+  // Service names.
+  if (!nl.getParam("srv/optimal_control", optimal_control_name_))
+    return false;
+  if (!nl.getParam("srv/priority", priority_name_))
     return false;
 
-  if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
-  if (!nl.getParam("meta/frames/tracker", tracker_frame_id_)) return false;
-  if (!nl.getParam("meta/frames/planner", planner_frame_id_)) return false;
+  // Topics and frame ids.
+  if (!nl.getParam("topics/control", control_topic_)) return false;
+  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
+  if (!nl.getParam("topics/state", state_topic_)) return false;
+  if (!nl.getParam("topics/reference", reference_topic_)) return false;
+  if (!nl.getParam("topics/controller_id", controller_id_topic_))
+    return false;
+
+  if (!nl.getParam("frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("frames/tracker", tracker_frame_id_)) return false;
+  if (!nl.getParam("frames/planner", planner_frame_id_)) return false;
 
   return true;
 }
@@ -220,6 +136,13 @@ bool Tracker::RegisterCallbacks(const ros::NodeHandle& n) {
   // Actual publishers.
   control_pub_ = nl.advertise<crazyflie_msgs::NoYawControlStamped>(
     control_topic_.c_str(), 1, false);
+
+  // Service clients.
+  optimal_control_srv_ = nl.serviceClient<value_function::OptimalControl>(
+    optimal_control_name_.c_str(), true);
+
+  priority_srv_ = nl.serviceClient<value_function::Priority>(
+    priority_name_.c_str(), true);
 
   // Timer.
   timer_ =
@@ -257,8 +180,8 @@ void Tracker::ReferenceCallback(
 // Callback for processing state updates.
 void Tracker::ControllerIdCallback(
   const meta_planner_msgs::ControllerId::ConstPtr& msg) {
-  control_value_ = values_[msg->control_value_function_id];
-  bound_value_ = values_[msg->bound_value_function_id];
+  control_value_id_ = msg->control_value_function_id;
+  bound_value_id_ = msg->bound_value_function_id;
 }
 
 // Callback for applying tracking controller.
@@ -266,15 +189,51 @@ void Tracker::TimerCallback(const ros::TimerEvent& e) {
   if (!in_flight_ || !been_updated_)
     return;
 
+  // HACK! Assuming state layout.
   const VectorXd relative_state = state_ - reference_;
-  const Vector3d planner_position = dynamics_->Puncture(reference_);
+  const Vector3d planner_position(reference_(0), reference_(1), reference_(2));
 
-  // (1) Get corresponding control and bound value function.
-  const double priority = control_value_->Priority(relative_state);
+  // (1) Get priority.
+  if (!priority_srv_) {
+    ROS_WARN("%s: Priority server disconnected.", name_.c_str());
 
-  // (2) Interpolate gradient to get optimal control.
-  const VectorXd optimal_control =
-    control_value_->OptimalControl(relative_state);
+    ros::NodeHandle nl;
+    priority_srv_ = nl.serviceClient<value_function::Priority>(
+      priority_name_.c_str(), true);
+
+    return;
+  }
+
+  double priority = 0.0;
+
+  value_function::Priority p;
+  p.request.id = control_value_id_;
+  p.request.state = utils::PackState(relative_state);
+  if (!priority_srv_.call(p))
+    ROS_ERROR("%s: Error calling priority server.", name_.c_str());
+  else
+    priority = p.response.priority;
+
+  // (2) Get optimal control.
+  if (!optimal_control_srv_) {
+    ROS_WARN("%s: Optimal control server disconnected.", name_.c_str());
+
+    ros::NodeHandle nl;
+    optimal_control_srv_ = nl.serviceClient<value_function::OptimalControl>(
+      optimal_control_name_.c_str(), true);
+
+    return;
+  }
+
+  VectorXd optimal_control(control_dim_);
+
+  value_function::OptimalControl c;
+  c.request.id = control_value_id_;
+  c.request.state = utils::PackState(relative_state);
+  if (!optimal_control_srv_.call(c))
+    ROS_ERROR("%s: Error calling optimal control server.", name_.c_str());
+  else
+    optimal_control = utils::Unpack(c.response.control);
 
   // (3) Publish optimal control with priority in (0, 1).
   crazyflie_msgs::NoYawControlStamped control_msg;

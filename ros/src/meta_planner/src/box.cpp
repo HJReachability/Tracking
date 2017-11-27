@@ -74,24 +74,42 @@ Vector3d Box::Sample() const {
 // Returns true if the state is a valid configuration.
 // Takes in incoming and outgoing value functions. See planner.h for details.
 bool Box::IsValid(const Vector3d& position,
-                  const ValueFunction::ConstPtr& incoming_value,
-                  const ValueFunction::ConstPtr& outgoing_value) const {
+                  ValueFunctionId incoming_value,
+                  ValueFunctionId outgoing_value) const {
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (!incoming_value.get() || !outgoing_value.get()) {
-    ROS_ERROR("Value function pointer was null.");
+  if (!initialized_) {
+    ROS_WARN("%s: Tried to collision check an uninitialized Box.",
+             name_.c_str());
     return false;
   }
 #endif
 
-  // No obstacles. Just check bounds.
-  for (size_t ii = 0; ii < 3; ii++) {
-    const double bound = outgoing_value->
-      SwitchingTrackingBound(ii, incoming_value);
+  // Make sure server is up.
+  if (!switching_bound_srv_) {
+    ROS_WARN("%s: Switching bound server disconnected.", name_.c_str());
 
-    if (position(ii) < lower_(ii) + bound ||
-        position(ii) > upper_(ii) - bound)
-      return false;
+    ros::NodeHandle nl;
+    switching_bound_srv_ = nl.serviceClient<value_function::SwitchingTrackingBoundBox>(
+      switching_bound_name_.c_str(), true);
+    return false;
   }
+
+  // No obstacles. Just check bounds.
+  value_function::SwitchingTrackingBoundBox bound;
+  bound.request.from_id = incoming_value;
+  bound.request.to_id = outgoing_value;
+  if (!switching_bound_srv_.call(bound)) {
+    ROS_ERROR("%s: Error calling switching bound server.", name_.c_str());
+    return false;
+  }
+
+  if (position(0) < lower_(0) + bound.response.x ||
+      position(0) > upper_(0) - bound.response.x ||
+      position(1) < lower_(1) + bound.response.y ||
+      position(1) > upper_(1) - bound.response.y ||
+      position(2) < lower_(2) + bound.response.z ||
+      position(2) > upper_(2) - bound.response.z)
+      return false;
 
   return true;
 }

@@ -36,53 +36,34 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the NearHoverQuadNoYaw class. Assumes that state 'x' entried are:
-// * x(0) -- x
-// * x(1) -- y
-// * x(2) -- z
-// * x(3) -- x_dot
-// * x(4) -- y_dot
-// * x(5) -- z_dot
-//
-// Also assumes that entried in control 'u' are:
-// * u(0) -- pitch
-// * u(1) -- roll
-// * u(2) -- thrust
+// Defines the LinearDynamics class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_NEAR_HOVER_QUAD_NO_YAW_H
-#define META_PLANNER_NEAR_HOVER_QUAD_NO_YAW_H
+#ifndef VALUE_FUNCTION_LINEAR_DYNAMICS_H
+#define VALUE_FUNCTION_LINEAR_DYNAMICS_H
 
-#include <meta_planner/dynamics.h>
-
-#include <math.h>
+#include <value_function/dynamics.h>
 
 namespace meta {
 
-class NearHoverQuadNoYaw : public Dynamics {
+class LinearDynamics : public Dynamics {
 public:
-  typedef std::shared_ptr<const NearHoverQuadNoYaw> ConstPtr;
+  typedef std::shared_ptr<const LinearDynamics> ConstPtr;
 
   // Destructor.
-  ~NearHoverQuadNoYaw() {}
+  ~LinearDynamics() {}
 
   // Factory method. Use this instead of the constructor.
-  static ConstPtr Create(const VectorXd& lower_u,
+  static ConstPtr Create(const MatrixXd& A,
+                         const MatrixXd& B,
+                         const VectorXd& lower_u,
                          const VectorXd& upper_u);
 
   // Derived classes must be able to give the time derivative of state
   // as a function of current state and control.
   inline VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const {
-    VectorXd x_dot(X_DIM);
-    x_dot(0) = x(3);
-    x_dot(1) = x(4);
-    x_dot(2) = x(5);
-    x_dot(3) = constants::G * std::tan(u(0));
-    x_dot(4) = -constants::G * std::tan(u(1));
-    x_dot(5) = u(2) - constants::G;
-
-    return x_dot;
+    return A_ * x + B_ * u;
   }
 
   // Derived classes must be able to compute an optimal control given
@@ -93,27 +74,29 @@ public:
                           const VectorXd& value_gradient) const;
 
   // Puncture a full state vector and return a position.
-  Vector3d Puncture(const VectorXd& x) const;
+  virtual Vector3d Puncture(const VectorXd& x) const;
 
   // Get the corresponding full state dimension to the given spatial dimension.
-  size_t SpatialDimension(size_t dimension) const;
+  virtual size_t SpatialDimension(size_t dimension) const;
 
   // Get the max acceleration in the given spatial dimension.
-  double MaxAcceleration(size_t dimension) const;
+  virtual double MaxAcceleration(size_t dimension) const;
 
   // Derived classes must be able to translate a geometric trajectory
   // (i.e. through Euclidean space) into a full state space trajectory.
-  std::vector<VectorXd> LiftGeometricTrajectory(
+  // Should be overridden by derived classes.
+  virtual std::vector<VectorXd> LiftGeometricTrajectory(
     const std::vector<Vector3d>& positions,
     const std::vector<double>& times) const;
 
 private:
   // Private constructor. Use the factory method instead.
-  explicit NearHoverQuadNoYaw(const VectorXd& lower_u, const VectorXd& upper_u);
+  explicit LinearDynamics(const MatrixXd& A, const MatrixXd& B,
+                          const VectorXd& lower_u, const VectorXd& upper_u);
 
-  // Static constants for dimensions.
-  static const size_t X_DIM;
-  static const size_t U_DIM;
+  // A and B matrices for linear dynamics function.
+  const MatrixXd A_;
+  const MatrixXd B_;
 };
 
 } //\namespace meta

@@ -48,8 +48,8 @@ namespace meta {
 Trajectory::Ptr Trajectory::
 Create(const std::vector<double>& times,
        const std::vector<VectorXd>& states,
-       const std::vector<ValueFunction::ConstPtr>& control_values,
-       const std::vector<ValueFunction::ConstPtr>& bound_values) {
+       const std::vector<ValueFunctionId>& control_values,
+       const std::vector<ValueFunctionId>& bound_values) {
   Trajectory::Ptr ptr(new Trajectory());
 
   // Number of entries in trajectory.
@@ -62,8 +62,8 @@ Create(const std::vector<double>& times,
     ROS_WARN("Inconsistent number of states, times, and values.");
     num_waypoints = std::min(states.size(),
                              std::min(times.size(),
-				      std::min(control_values.size(),
-					       bound_values.size())));
+                                      std::min(control_values.size(),
+                                               bound_values.size())));
   }
 #endif
 
@@ -75,8 +75,7 @@ Create(const std::vector<double>& times,
 
 // Factory constructor from ROS message and list of ValueFunctions.
 Trajectory::Ptr Trajectory::
-Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
-       const std::vector<ValueFunction::ConstPtr>& values) {
+Create(const meta_planner_msgs::Trajectory::ConstPtr& msg) {
   Trajectory::Ptr ptr(new Trajectory());
 
   // Number of entries in trajectory.
@@ -84,14 +83,12 @@ Create(const meta_planner_msgs::Trajectory::ConstPtr& msg,
 
   for (size_t ii = 0; ii < num_waypoints; ii++) {
     // Convert state message to VectorXd.
-    VectorXd state(msg->states[ii].dimension);
-    for (size_t jj = 0; jj < state.size(); jj++)
-      state(jj) = msg->states[ii].state[jj];
+    const VectorXd state = utils::Unpack(msg->states[ii]);
 
     // Add to this trajectory.
     ptr->Add(msg->times[ii], state,
-	     values[ msg->control_value_function_ids[ii] ],
-	     values[ msg->bound_value_function_ids[ii] ]);
+             msg->control_value_function_ids[ii],
+             msg->bound_value_function_ids[ii]);
   }
 
   return ptr;
@@ -104,9 +101,10 @@ Create(const Trajectory::ConstPtr& other, double start) {
   Trajectory::Ptr traj = Trajectory::Create();
 
   // Insert the current state at the start time.
-  traj->Add(start, other->GetState(start),
-	    other->GetControlValueFunction(start),
-	    other->GetBoundValueFunction(start));
+  traj->Add(start,
+            other->GetState(start),
+            other->GetControlValueFunction(start),
+            other->GetBoundValueFunction(start));
 
   // Insert the rest of the states in the other trajectory.
   // Get a const iterator to a time in the other trajectory >= start time.
@@ -115,8 +113,10 @@ Create(const Trajectory::ConstPtr& other, double start) {
 
   // Iterate through all remaining states.
   while (iter != other->map_.end()) {
-    traj->Add(iter->first, iter->second.state_,
-	      iter->second.control_value_, iter->second.bound_value_);
+    traj->Add(iter->first,
+              iter->second.state_,
+              iter->second.control_value_,
+              iter->second.bound_value_);
     iter++;
   }
 
@@ -131,17 +131,14 @@ meta_planner_msgs::Trajectory Trajectory::ToRosMessage() const {
   // Iterate through the trajectory and append to message.
   for (const auto& pair : map_) {
     // Extract state.
-    meta_planner_msgs::State state_msg;
-    state_msg.dimension = pair.second.state_.size();
-
-    for (size_t ii = 0; ii < pair.second.state_.size(); ii++)
-      state_msg.state.push_back(pair.second.state_(ii));
+    const meta_planner_msgs::State state_msg =
+      utils::PackState(pair.second.state_);
 
     // Update message.
     traj_msg.states.push_back(state_msg);
     traj_msg.times.push_back(pair.first);
-    traj_msg.control_value_function_ids.push_back(pair.second.control_value_->Id());
-    traj_msg.bound_value_function_ids.push_back(pair.second.bound_value_->Id());
+    traj_msg.control_value_function_ids.push_back(pair.second.control_value_);
+    traj_msg.bound_value_function_ids.push_back(pair.second.bound_value_);
   }
 
   return traj_msg;
@@ -188,8 +185,8 @@ VectorXd Trajectory::GetState(double time) const {
     (time - lower_time) / (upper_time - lower_time);
 }
 
-// Return a pointer to the value function being used at this time.
-const ValueFunction::ConstPtr& Trajectory::GetControlValueFunction(double time) const {
+// Return the ID of the value function being used at this time.
+ValueFunctionId Trajectory::GetControlValueFunction(double time) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (IsEmpty()) {
     ROS_WARN("Tried to interpolate an empty trajectory.");
@@ -221,8 +218,8 @@ const ValueFunction::ConstPtr& Trajectory::GetControlValueFunction(double time) 
   return (--iter)->second.control_value_;
 }
 
-// Return a pointer to the value function being used at this time.
-const ValueFunction::ConstPtr& Trajectory::GetBoundValueFunction(double time) const {
+// Return the ID of the value function being used at this time.
+ValueFunctionId Trajectory::GetBoundValueFunction(double time) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (IsEmpty()) {
     ROS_WARN("Tried to interpolate an empty trajectory.");
@@ -256,18 +253,36 @@ const ValueFunction::ConstPtr& Trajectory::GetBoundValueFunction(double time) co
 
 // Swap out the control value function in this trajectory and update time
 // stamps accordingly.
-void Trajectory::ExecuteSwitch(const ValueFunction::ConstPtr& value) {
+void Trajectory::ExecuteSwitch(ValueFunctionId value,
+                               ros::ServiceClient& best_time_srv) {
   std::map<double, StateValue> switched;
 
   double last_time = FirstTime();
   VectorXd last_state = FirstState();
-  Vector3d last_position = value->GetDynamics()->Puncture(last_state);
+
+  // HACK! Assuming state layout.
+  Vector3d last_position(last_state(0), last_state(1), last_state(2));
   for (auto iter = map_.begin(); iter != map_.end(); iter++) {
     // (1) Compute time for this state from last_time.
-    const ValueFunction::ConstPtr bound = iter->second.bound_value_;
+    const ValueFunctionId bound = iter->second.bound_value_;
     const VectorXd state = iter->second.state_;
-    const Vector3d position = value->GetDynamics()->Puncture(state);
-    const double time = last_time + value->BestPossibleTime(last_position, position);
+
+    // HACK! Still assuming state layout.
+    const Vector3d position(state(0), state(1), state(2));
+
+    double dt = 10.0;
+    value_function::GeometricPlannerTime t;
+    t.request.id = value;
+    t.request.start = utils::Pack(last_position);
+    t.request.stop = utils::Pack(position);
+    if (!best_time_srv)
+      ROS_WARN("Trajectory: Best time server disconnected. Assuming fixed dt.");
+    else if (!best_time_srv.call(t))
+      ROS_ERROR("Trajectory: Error calling best time server.");
+    else
+      dt = t.response.time;
+
+    const double time = last_time + dt;
 
     // (2) Insert this tuple into 'switched'.
     switched.insert({ time, StateValue(state, value, bound) });
@@ -305,17 +320,9 @@ void Trajectory::ResetStartTime(double start) {
 
 // Visualize this trajectory in RVIZ.
 void Trajectory::Visualize(const ros::Publisher& pub,
-                           const std::string& frame_id,
-                           const Dynamics::ConstPtr& dynamics) const {
+                           const std::string& frame_id) const {
   if (pub.getNumSubscribers() <= 0)
     return;
-
-#ifdef ENABLE_DEBUG_MESSAGES
-  if (!dynamics.get()) {
-    ROS_ERROR("Dynamics pointer was null. Did not visualize.");
-    return;
-  }
-#endif
 
   // Set up spheres marker.
   visualization_msgs::Marker spheres;
@@ -356,11 +363,11 @@ void Trajectory::Visualize(const ros::Publisher& pub,
 
   // Iterate through the trajectory and append to markers.
   for (const auto& pair : map_) {
-    // Extract point.
+    // Extract point. HACK! Assuming state layout.
     geometry_msgs::Point p;
-    p.x = pair.second.state_(dynamics->SpatialDimension(0));
-    p.y = pair.second.state_(dynamics->SpatialDimension(1));
-    p.z = pair.second.state_(dynamics->SpatialDimension(2));
+    p.x = pair.second.state_(0);
+    p.y = pair.second.state_(1);
+    p.z = pair.second.state_(2);
 
     const std_msgs::ColorRGBA c = Colormap(pair.first);
 

@@ -43,20 +43,19 @@
 #ifndef META_PLANNER_TRACKER_H
 #define META_PLANNER_TRACKER_H
 
-#include <meta_planner/analytical_point_mass_value_function.h>
-#include <meta_planner/value_function.h>
 #include <meta_planner/trajectory.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
 #include <meta_planner/ompl_planner.h>
-#include <meta_planner/linear_dynamics.h>
-#include <meta_planner/near_hover_quad_no_yaw.h>
-#include <meta_planner/box.h>
 #include <demo/balls_in_box.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
+#include <utils/message_interfacing.h>
 
 #include <meta_planner_msgs/Trajectory.h>
 #include <meta_planner_msgs/TrajectoryRequest.h>
 #include <meta_planner_msgs/ControllerId.h>
+
+#include <value_function/OptimalControl.h>
+#include <value_function/Priority.h>
 
 #include <crazyflie_msgs/PositionStateStamped.h>
 #include <crazyflie_msgs/ControlStamped.h>
@@ -108,33 +107,24 @@ private:
   VectorXd state_;
   VectorXd reference_;
 
-  // Current value function.
-  ValueFunction::ConstPtr control_value_;
-  ValueFunction::ConstPtr bound_value_;
+  // IDs of control/bound value functions.
+  ValueFunctionId control_value_id_;
+  ValueFunctionId bound_value_id_;
 
   // Spaces and dimensions.
   size_t control_dim_;
   size_t state_dim_;
 
-  // Control upper/lower bounds.
-  NearHoverQuadNoYaw::ConstPtr dynamics_;
-  std::vector<double> control_upper_;
-  std::vector<double> control_lower_;
-
-  // Value functions, flag for whether to load from disk or create
-  // analytic versions given parameters read from ROS.
-  std::vector<ValueFunction::ConstPtr> values_;
-
-  bool numerical_mode_;
-  std::vector<std::string> value_directories_;
-
-  std::vector<double> max_planner_speeds_;
-  std::vector<double> max_velocity_disturbances_;
-  std::vector<double> max_acceleration_disturbances_;
-
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;
+
+  // Service clients.
+  ros::ServiceClient optimal_control_srv_;
+  ros::ServiceClient priority_srv_;
+
+  std::string optimal_control_name_;
+  std::string priority_name_;
 
   // Publishers/subscribers and related topics.
   ros::Publisher control_pub_;

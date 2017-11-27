@@ -36,76 +36,84 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the Dynamics class. All Dynamics will be constructed as ConstPtrs.
+// Defines the NearHoverQuadNoYaw class. Assumes that state 'x' entried are:
+// * x(0) -- x
+// * x(1) -- y
+// * x(2) -- z
+// * x(3) -- x_dot
+// * x(4) -- y_dot
+// * x(5) -- z_dot
+//
+// Also assumes that entried in control 'u' are:
+// * u(0) -- pitch
+// * u(1) -- roll
+// * u(2) -- thrust
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_DYNAMICS_H
-#define META_PLANNER_DYNAMICS_H
+#ifndef VALUE_FUNCTION_NEAR_HOVER_QUAD_NO_YAW_H
+#define VALUE_FUNCTION_NEAR_HOVER_QUAD_NO_YAW_H
 
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <value_function/dynamics.h>
 
-#include <ros/ros.h>
-#include <memory>
+#include <math.h>
 
 namespace meta {
 
-class Dynamics : private Uncopyable {
+class NearHoverQuadNoYaw : public Dynamics {
 public:
-  typedef std::shared_ptr<const Dynamics> ConstPtr;
+  typedef std::shared_ptr<const NearHoverQuadNoYaw> ConstPtr;
 
   // Destructor.
-  virtual ~Dynamics() {}
+  ~NearHoverQuadNoYaw() {}
+
+  // Factory method. Use this instead of the constructor.
+  static ConstPtr Create(const VectorXd& lower_u,
+                         const VectorXd& upper_u);
 
   // Derived classes must be able to give the time derivative of state
   // as a function of current state and control.
-  virtual VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const = 0;
+  inline VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const {
+    VectorXd x_dot(X_DIM);
+    x_dot(0) = x(3);
+    x_dot(1) = x(4);
+    x_dot(2) = x(5);
+    x_dot(3) = constants::G * std::tan(u(0));
+    x_dot(4) = -constants::G * std::tan(u(1));
+    x_dot(5) = u(2) - constants::G;
+
+    return x_dot;
+  }
 
   // Derived classes must be able to compute an optimal control given
   // the gradient of the value function at the specified state.
-  virtual VectorXd OptimalControl(const VectorXd& x,
-                                  const VectorXd& value_gradient) const = 0;
+  // In this case (linear dynamics), the state is irrelevant given the
+  // gradient of the value function at that state.
+  VectorXd OptimalControl(const VectorXd& x,
+                          const VectorXd& value_gradient) const;
 
   // Puncture a full state vector and return a position.
-  virtual Vector3d Puncture(const VectorXd& x) const = 0;
+  Vector3d Puncture(const VectorXd& x) const;
 
   // Get the corresponding full state dimension to the given spatial dimension.
-  virtual size_t SpatialDimension(size_t dimension) const = 0;
-
-  // Get the min and max control in each (control) dimension.
-  inline double MinControl(size_t dimension) const { return lower_u_(dimension); }
-  inline double MaxControl(size_t dimension) const { return upper_u_(dimension); }
+  size_t SpatialDimension(size_t dimension) const;
 
   // Get the max acceleration in the given spatial dimension.
-  virtual double MaxAcceleration(size_t dimension) const = 0;
+  double MaxAcceleration(size_t dimension) const;
 
   // Derived classes must be able to translate a geometric trajectory
   // (i.e. through Euclidean space) into a full state space trajectory.
-  virtual std::vector<VectorXd> LiftGeometricTrajectory(
+  std::vector<VectorXd> LiftGeometricTrajectory(
     const std::vector<Vector3d>& positions,
-    const std::vector<double>& times) const = 0;
+    const std::vector<double>& times) const;
 
-protected:
-  // Protected constructor. Use the factory method instead.
-  explicit Dynamics(const VectorXd& lower_u, const VectorXd& upper_u)
-    : lower_u_(lower_u),
-      upper_u_(upper_u) {
-    // Check that dimensions match.
-    if (lower_u_.size() != upper_u_.size())
-      ROS_ERROR("Upper and lower control bounds have different dimensions.");
+private:
+  // Private constructor. Use the factory method instead.
+  explicit NearHoverQuadNoYaw(const VectorXd& lower_u, const VectorXd& upper_u);
 
-    // Check that lower is never greater than upper.
-    for (size_t ii = 0; ii < lower_u_.size(); ii++) {
-      if (lower_u_(ii) > upper_u_(ii))
-        ROS_ERROR("Lower control bound was above upper bound: %f > %f.",
-                  lower_u_(ii), upper_u_(ii));
-    }
-  }
-
-  // Lower and upper bounds for control variable.
-  const VectorXd lower_u_;
-  const VectorXd upper_u_;
+  // Static constants for dimensions.
+  static const size_t X_DIM;
+  static const size_t U_DIM;
 };
 
 } //\namespace meta

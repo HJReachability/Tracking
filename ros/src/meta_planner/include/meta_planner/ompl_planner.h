@@ -51,7 +51,7 @@
 
 #include <meta_planner/planner.h>
 #include <meta_planner/box.h>
-#include <meta_planner/types.h>
+#include <utils/types.h>
 
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/planners/bitstar/BITstar.h>
@@ -72,9 +72,10 @@ class OmplPlanner : public Planner {
 public:
   ~OmplPlanner() {}
 
-  static Planner::ConstPtr Create(const ValueFunction::ConstPtr& incoming_value,
-                                  const ValueFunction::ConstPtr& outgoing_value,
-                                  const Box::ConstPtr& space);
+  static Planner::Ptr Create(ValueFunctionId incoming_value,
+                             ValueFunctionId outgoing_value,
+                             const Box::ConstPtr& space,
+                             const Dynamics::ConstPtr& dynamics);
 
   // Derived classes must plan trajectories between two points.
   Trajectory::Ptr Plan(const Vector3d& start,
@@ -83,9 +84,10 @@ public:
                        double budget = 1.0) const;
 
 private:
-  explicit OmplPlanner(const ValueFunction::ConstPtr& incoming_value,
-                       const ValueFunction::ConstPtr& outgoing_value,
-                       const Box::ConstPtr& space);
+  explicit OmplPlanner(ValueFunctionId incoming_value,
+                       ValueFunctionId outgoing_value,
+                       const Box::ConstPtr& space,
+                       const Dynamics::ConstPtr& dynamics);
 
   // Convert between OMPL states and Vector3ds.
   Vector3d FromOmplState(const ob::State* state) const;
@@ -94,19 +96,21 @@ private:
 // ------------------------------- IMPLEMENTATION --------------------------- //
 
 template<typename PlannerType>
-OmplPlanner<PlannerType>::OmplPlanner(const ValueFunction::ConstPtr& incoming_value,
-                                      const ValueFunction::ConstPtr& outgoing_value,
-                                      const Box::ConstPtr& space)
-  : Planner(incoming_value, outgoing_value, space) {}
+OmplPlanner<PlannerType>::OmplPlanner(ValueFunctionId incoming_value,
+                                      ValueFunctionId outgoing_value,
+                                      const Box::ConstPtr& space,
+                                      const Dynamics::ConstPtr& dynamics)
+  : Planner(incoming_value, outgoing_value, space, dynamics) {}
 
 // Create OmplPlanner pointer.
 template<typename PlannerType>
-inline Planner::ConstPtr OmplPlanner<PlannerType>::
-Create(const ValueFunction::ConstPtr& incoming_value,
-       const ValueFunction::ConstPtr& outgoing_value,
-       const Box::ConstPtr& space) {
-  Planner::ConstPtr ptr(
-    new OmplPlanner<PlannerType>(incoming_value, outgoing_value, space));
+inline Planner::Ptr OmplPlanner<PlannerType>::
+Create(ValueFunctionId incoming_value,
+       ValueFunctionId outgoing_value,
+       const Box::ConstPtr& space,
+       const Dynamics::ConstPtr& dynamics) {
+  Planner::Ptr ptr(new OmplPlanner<PlannerType>(
+    incoming_value, outgoing_value, space, dynamics));
   return ptr;
 }
 
@@ -173,7 +177,7 @@ Plan(const Vector3d& start, const Vector3d& stop,
     // Populate the Trajectory with states and time stamps.
     std::vector<Vector3d> positions;
     std::vector<double> times;
-    std::vector<ValueFunction::ConstPtr> values;
+    std::vector<ValueFunctionId> values;
 
     double time = start_time;
     for (size_t ii = 0; ii < solution.getStateCount(); ii++) {
@@ -192,7 +196,7 @@ Plan(const Vector3d& start, const Vector3d& stop,
 
     // Convert to full state space. Make sure to use the INCOMING VALUE!
     std::vector<VectorXd> full_states =
-      incoming_value_->GetDynamics()->LiftGeometricTrajectory(positions, times);
+      dynamics_->LiftGeometricTrajectory(positions, times);
 
     return Trajectory::Create(times, full_states, values, values);
   }

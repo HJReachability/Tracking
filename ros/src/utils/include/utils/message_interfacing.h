@@ -36,62 +36,77 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines a Box environment with spherical obstacles. For simplicity, this
-// does not bother with a kdtree index to speed up collision queries, since
-// it is only for a simulated demo.
+// Helper functions to pack and unpack different messages.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef DEMO_BALLS_IN_BOX_H
-#define DEMO_BALLS_IN_BOX_H
+#ifndef UTILS_MESSAGE_INTERFACING_H
+#define UTILS_MESSAGE_INTERFACING_H
 
-#include <meta_planner/box.h>
 #include <utils/types.h>
+#include <meta_planner_msgs/State.h>
+#include <meta_planner_msgs/Control.h>
 
-#include <vector>
+#include <geometry_msgs/Vector3.h>
 
 namespace meta {
 
-class BallsInBox : public Box {
-public:
-  typedef std::shared_ptr<BallsInBox> Ptr;
-  typedef std::shared_ptr<const BallsInBox> ConstPtr;
+namespace utils {
 
-  // Factory method. Use this instead of the constructor.
-  static Ptr Create();
+// Unpack a Vector3 into a Vector3d.
+inline Vector3d Unpack(const geometry_msgs::Vector3& msg) {
+  return Vector3d(msg.x, msg.y, msg.z);
+}
 
-  // Destructor.
-  ~BallsInBox() {}
+// Pack a Vector3d into a Vector3.
+inline geometry_msgs::Vector3 Pack(const Vector3d& point) {
+  geometry_msgs::Vector3 msg;
+  msg.x = point(0);
+  msg.y = point(1);
+  msg.z = point(2);
 
-  // Inherited collision checker from Box needs to be overwritten.
-  // Takes in incoming and outgoing value functions. See planner.h for details.
-  bool IsValid(const Vector3d& position,
-               ValueFunctionId incoming_value,
-               ValueFunctionId outgoing_value) const;
+  return msg;
+}
 
-  // Check for obstacles within a sensing radius. Returns true if at least
-  // one obstacle was sensed.
-  bool SenseObstacles(const Vector3d& position, double sensor_radius,
-                      std::vector<Vector3d>& obstacle_positions,
-                      std::vector<double>& obstacle_radii) const;
+// Unpack a State message into a VectorXd.
+inline VectorXd Unpack(const meta_planner_msgs::State& msg) {
+  VectorXd state(msg.dimension);
+  for (size_t ii = 0; ii < state.size(); ii++)
+    state(ii) = msg.state[ii];
 
-  // Check if a given obstacle is in the environment.
-  bool IsObstacle(const Vector3d& obstacle_position,
-                  double obstacle_radius) const;
+  return state;
+}
 
-  // Inherited visualizer from Box needs to be overwritten.
-  void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
+// Pack a VectorXd into a State message.
+inline meta_planner_msgs::State PackState(const VectorXd& state) {
+  meta_planner_msgs::State msg;
+  msg.dimension = state.size();
+  for (size_t ii = 0; ii < state.size(); ii++)
+    msg.state.push_back(state(ii));
 
-  // Add a spherical obstacle of the given radius to the environment.
-  void AddObstacle(const Vector3d& point, double r);
+  return msg;
+}
 
-private:
-  BallsInBox();
+// Unpack a Control message into a VectorXd.
+inline VectorXd Unpack(const meta_planner_msgs::Control& msg) {
+  VectorXd control(msg.dimension);
+  for (size_t ii = 0; ii < control.size(); ii++)
+    control(ii) = msg.control[ii];
 
-  // List of obstacle locations and radii.
-  std::vector<VectorXd> points_;
-  std::vector<double> radii_;
-};
+  return control;
+}
+
+// Pack a VectorXd into a Control message.
+inline meta_planner_msgs::Control PackControl(const VectorXd& control) {
+  meta_planner_msgs::Control msg;
+  msg.dimension = control.size();
+  for (size_t ii = 0; ii < control.size(); ii++)
+    msg.control.push_back(control(ii));
+
+  return msg;
+}
+
+} //\namespace utils
 
 } //\namespace meta
 

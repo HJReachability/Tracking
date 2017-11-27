@@ -19,6 +19,8 @@
   <build_depend>crazyflie_msgs</build_depend>
   <build_depend>crazyflie_utils</build_depend>
   <build_depend>meta_planner_msgs</build_depend>
+  <build_depend>value_function</build_depend>
+  <build_depend>utils</build_depend>
   <build_depend>message_generation</build_depend>
 
   <run_depend>roscpp</run_depend>
@@ -30,5 +32,7 @@
   <run_depend>crazyflie_msgs</run_depend>
   <run_depend>crazyflie_utils</run_depend>
   <run_depend>meta_planner_msgs</run_depend>
+  <run_depend>value_function</run_depend>
+  <run_depend>utils</run_depend>
   <run_depend>message_runtime</run_depend>
 </package>

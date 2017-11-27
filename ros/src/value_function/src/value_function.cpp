@@ -40,7 +40,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/value_function.h>
+#include <value_function/value_function.h>
 
 #include <boost/filesystem.hpp>
 

@@ -47,8 +47,8 @@
 
 #include <meta_planner/waypoint.h>
 #include <meta_planner/flann_tree.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
 #include <iostream>
 #include <list>
@@ -60,7 +60,7 @@ class WaypointTree : private Uncopyable {
 public:
   ~WaypointTree() {}
   explicit WaypointTree(const Vector3d& start,
-                        const ValueFunction::ConstPtr& start_value,
+                        ValueFunctionId start_value,
                         double start_time = 0.0);
 
   // Find nearest neighbors in the tree.

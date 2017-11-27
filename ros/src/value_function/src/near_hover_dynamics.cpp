@@ -56,7 +56,7 @@
 // Note: angle sign convention is based on positive accelerations on FLU frame
 // (theta PITCH DOWN / phi ROLL LEFT / psi YAW left)
 
-#include <meta_planner/near_hover_dynamics.h>
+#include <value_function/near_hover_dynamics.h>
 
 namespace meta {
 

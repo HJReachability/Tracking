@@ -40,7 +40,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/linear_dynamics.h>
+#include <value_function/linear_dynamics.h>
 
 namespace meta {
 

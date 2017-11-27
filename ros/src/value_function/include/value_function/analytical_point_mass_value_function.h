@@ -45,13 +45,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_ANALYTICAL_POINT_MASS_VALUE_FUNCTION_H
-#define META_PLANNER_ANALYTICAL_POINT_MASS_VALUE_FUNCTION_H
+#ifndef VALUE_FUNCTION_ANALYTICAL_POINT_MASS_VALUE_FUNCTION_H
+#define VALUE_FUNCTION_ANALYTICAL_POINT_MASS_VALUE_FUNCTION_H
 
-#include <meta_planner/value_function.h>
-#include <meta_planner/dynamics.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <value_function/value_function.h>
+#include <value_function/dynamics.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
 #include <ros/ros.h>
 #include <limits>

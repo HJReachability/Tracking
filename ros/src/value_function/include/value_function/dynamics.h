@@ -31,93 +31,81 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * Please contact the author(s) of this library if you have any questions.
- * Authors: Jaime Fernandez Fisac   ( jfisac@eecs.berkeley.edu )
- *          David Fridovich-Keil    ( dfk@eecs.berkeley.edu )
+ * Authors: David Fridovich-Keil   ( dfk@eecs.berkeley.edu )
  */
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines the NearHoverDynamics class (7D quadrotor model used by Crazyflie).
+// Defines the Dynamics class. All Dynamics will be constructed as ConstPtrs.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// System dynamics
-// (quadrotor in near hover, assuming small attitude angles)
-//    dx/dt     =  vx_G
-//    dy/dt     =  vy_G
-//    dz/dt     =  vz_G
-//    dvx_G/dt  =  T*sin(theta)*cos(psi) - T*sin(phi)*sin(psi)
-//    dvy_G/dt  =  T*sin(phi)*cos(psi)   + T*sin(theta)*sin(psi)
-//    dvz_G/dt  =  T*cos(phi)*cos(theta) - g
-//    dpsi/dt   =  w
-//
-//    control: u = [phi, theta, w, T]
-//
-// Note: angle sign convention is based on positive accelerations on FLU frame
-// (theta PITCH DOWN / phi ROLL LEFT / psi YAW left)
+#ifndef VALUE_FUNCTION_DYNAMICS_H
+#define VALUE_FUNCTION_DYNAMICS_H
 
-#ifndef META_PLANNER_NEAR_HOVER_DYNAMICS_H
-#define META_PLANNER_NEAR_HOVER_DYNAMICS_H
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
-#include <meta_planner/dynamics.h>
-#include <meta_planner/types.h>
+#include <ros/ros.h>
+#include <memory>
 
 namespace meta {
 
-class NearHoverDynamics : public Dynamics {
+class Dynamics : private Uncopyable {
 public:
-  typedef std::shared_ptr<const NearHoverDynamics> ConstPtr;
+  typedef std::shared_ptr<const Dynamics> ConstPtr;
 
   // Destructor.
-  ~NearHoverDynamics() {}
+  virtual ~Dynamics() {}
 
-  // Factory method. Use this instead of the constructor.
-  static NearHoverDynamics::ConstPtr Create(const VectorXd& lower_u,
-                                            const VectorXd& upper_u);
-
-  // Derived from parent virtual operator, gives the time derivative of state
-  // as a function of current state and control. See above description for details.
-  inline VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const {
-    VectorXd x_dot(X_DIM);
-    x_dot(0) = x(3);
-    x_dot(1) = x(4);
-    x_dot(2) = x(5);
-    x_dot(3) = u(3)*std::sin(u(1))*std::cos(x(6)) - u(3)*std::sin(u(0))*std::sin(x(6));
-    x_dot(4) = u(3)*std::sin(u(0))*std::cos(x(6)) + u(3)*std::sin(u(1))*std::sin(x(6));
-    x_dot(5) = u(3)*std::cos(u(0))*std::cos(u(1)) - constants::G;
-    x_dot(6) = u(2);
-    return x_dot;
-  }
+  // Derived classes must be able to give the time derivative of state
+  // as a function of current state and control.
+  virtual VectorXd Evaluate(const VectorXd& x, const VectorXd& u) const = 0;
 
   // Derived classes must be able to compute an optimal control given
   // the gradient of the value function at the specified state.
-  // This function is currently not implemented for NearHover.
-  VectorXd OptimalControl(const VectorXd& x,
-                          const VectorXd& value_gradient) const;
+  virtual VectorXd OptimalControl(const VectorXd& x,
+                                  const VectorXd& value_gradient) const = 0;
 
   // Puncture a full state vector and return a position.
-  Vector3d Puncture(const VectorXd& x) const;
+  virtual Vector3d Puncture(const VectorXd& x) const = 0;
 
   // Get the corresponding full state dimension to the given spatial dimension.
-  size_t SpatialDimension(size_t dimension) const;
+  virtual size_t SpatialDimension(size_t dimension) const = 0;
+
+  // Get the min and max control in each (control) dimension.
+  inline double MinControl(size_t dimension) const { return lower_u_(dimension); }
+  inline double MaxControl(size_t dimension) const { return upper_u_(dimension); }
 
   // Get the max acceleration in the given spatial dimension.
-  double MaxAcceleration(size_t dimension) const;
+  virtual double MaxAcceleration(size_t dimension) const = 0;
 
   // Derived classes must be able to translate a geometric trajectory
   // (i.e. through Euclidean space) into a full state space trajectory.
-  std::vector<VectorXd> LiftGeometricTrajectory(
+  virtual std::vector<VectorXd> LiftGeometricTrajectory(
     const std::vector<Vector3d>& positions,
-    const std::vector<double>& times) const;
+    const std::vector<double>& times) const = 0;
 
-private:
-  // Private constructor. Use the factory method instead.
-  explicit NearHoverDynamics(const VectorXd& lower_u,
-                             const VectorXd& upper_u);
+protected:
+  // Protected constructor. Use the factory method instead.
+  explicit Dynamics(const VectorXd& lower_u, const VectorXd& upper_u)
+    : lower_u_(lower_u),
+      upper_u_(upper_u) {
+    // Check that dimensions match.
+    if (lower_u_.size() != upper_u_.size())
+      ROS_ERROR("Upper and lower control bounds have different dimensions.");
 
-  // Static dimensions.
-  static const size_t X_DIM;
-  static const size_t U_DIM;
+    // Check that lower is never greater than upper.
+    for (size_t ii = 0; ii < lower_u_.size(); ii++) {
+      if (lower_u_(ii) > upper_u_(ii))
+        ROS_ERROR("Lower control bound was above upper bound: %f > %f.",
+                  lower_u_(ii), upper_u_(ii));
+    }
+  }
+
+  // Lower and upper bounds for control variable.
+  const VectorXd lower_u_;
+  const VectorXd upper_u_;
 };
 
 } //\namespace meta

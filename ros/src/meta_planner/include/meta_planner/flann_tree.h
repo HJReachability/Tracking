@@ -45,8 +45,8 @@
 #define META_PLANNER_FLANN_TREE_H
 
 #include <meta_planner/waypoint.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
 #include <ros/ros.h>
 #include <flann/flann.h>

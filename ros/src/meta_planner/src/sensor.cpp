@@ -69,6 +69,10 @@ bool Sensor::Initialize(const ros::NodeHandle& n) {
 
   // Initialize state space.
   space_ = BallsInBox::Create();
+  if (!space_->Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize BallsInBox.", name_.c_str());
+    return false;
+  }
 
   // Dynamics with dummy control bounds. We only need puncturing functionality.
   dynamics_ = NearHoverQuadNoYaw::Create(VectorXd::Zero(control_dim_),
@@ -97,9 +101,6 @@ bool Sensor::Initialize(const ros::NodeHandle& n) {
   for (size_t ii = 0; ii < num_obstacles_; ii++)
     space_->AddObstacle(space_->Sample(), uniform_radius(rng));
 
-  // Sleep for a little while to let other nodes start up.
-  //  ros::Duration(1.0).sleep();
-
   initialized_ = true;
   return true;
 }
@@ -109,44 +110,44 @@ bool Sensor::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Sensor radius.
-  if (!nl.getParam("meta/sensor/sensor_radius", sensor_radius_)) return false;
+  if (!nl.getParam("sensor/sensor_radius", sensor_radius_)) return false;
 
   // Random seed.
   int seed = 0;
-  if (!nl.getParam("meta/random/seed", seed)) return false;
+  if (!nl.getParam("random/seed", seed)) return false;
   seed_ = static_cast<unsigned int>(seed);
 
   // Number of obstacles.
   int num_obstacles = 1;
-  if (!nl.getParam("meta/sensor/num_obstacles", num_obstacles)) return false;
+  if (!nl.getParam("sensor/num_obstacles", num_obstacles)) return false;
   num_obstacles_ = static_cast<size_t>(num_obstacles);
 
   // Obstacle size.
-  if (!nl.getParam("meta/sensor/max_obstacle_radius", max_obstacle_radius_)) return false;
-  if (!nl.getParam("meta/sensor/min_obstacle_radius", min_obstacle_radius_)) return false;
+  if (!nl.getParam("sensor/max_obstacle_radius", max_obstacle_radius_)) return false;
+  if (!nl.getParam("sensor/min_obstacle_radius", min_obstacle_radius_)) return false;
 
   // Time step.
-  if (!nl.getParam("meta/sensor/time_step", time_step_)) return false;
+  if (!nl.getParam("sensor/time_step", time_step_)) return false;
 
   // State space parameters.
   int dimension = 1;
-  if (!nl.getParam("meta/control/dim", dimension)) return false;
+  if (!nl.getParam("control/dim", dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("meta/state/dim", dimension)) return false;
+  if (!nl.getParam("state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("meta/state/upper", state_upper_)) return false;
-  if (!nl.getParam("meta/state/lower", state_lower_)) return false;
+  if (!nl.getParam("state/upper", state_upper_)) return false;
+  if (!nl.getParam("state/lower", state_lower_)) return false;
 
   // Topics and frame ids.
-  if (!nl.getParam("meta/topics/sensor", sensor_topic_)) return false;
-  if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
-  if (!nl.getParam("meta/topics/vis/sensor_radius", sensor_radius_topic_)) return false;
-  if (!nl.getParam("meta/topics/vis/true_environment", environment_topic_)) return false;
+  if (!nl.getParam("topics/sensor", sensor_topic_)) return false;
+  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
+  if (!nl.getParam("topics/vis/sensor_radius", sensor_radius_topic_)) return false;
+  if (!nl.getParam("topics/vis/true_environment", environment_topic_)) return false;
 
-  if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
-  if (!nl.getParam("meta/frames/tracker", robot_frame_id_)) return false;
+  if (!nl.getParam("frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("frames/tracker", robot_frame_id_)) return false;
 
   return true;
 }

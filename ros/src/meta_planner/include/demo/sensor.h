@@ -45,15 +45,14 @@
 #define DEMO_SIMULATOR_H
 
 #include <demo/balls_in_box.h>
-#include <meta_planner/near_hover_quad_no_yaw.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <value_function/near_hover_quad_no_yaw.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
 #include <meta_planner_msgs/SensorMeasurement.h>
 
-#include <tf2_ros/transform_listener.h>
-
 #include <ros/ros.h>
+#include <tf2_ros/transform_listener.h>
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <string>

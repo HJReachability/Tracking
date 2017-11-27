@@ -36,63 +36,51 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Defines a Box environment with spherical obstacles. For simplicity, this
-// does not bother with a kdtree index to speed up collision queries, since
-// it is only for a simulated demo.
+// Defines the Environment abstract class interface.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef DEMO_BALLS_IN_BOX_H
-#define DEMO_BALLS_IN_BOX_H
-
-#include <meta_planner/box.h>
-#include <utils/types.h>
-
-#include <vector>
+#include <meta_planner/environment.h>
 
 namespace meta {
 
-class BallsInBox : public Box {
-public:
-  typedef std::shared_ptr<BallsInBox> Ptr;
-  typedef std::shared_ptr<const BallsInBox> ConstPtr;
+// Initialize this class from a ROS node.
+bool Environment::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "environment");
 
-  // Factory method. Use this instead of the constructor.
-  static Ptr Create();
+  if (!LoadParameters(n)) {
+    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
+    return false;
+  }
 
-  // Destructor.
-  ~BallsInBox() {}
+  if (!RegisterCallbacks(n)) {
+    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
+    return false;
+  }
 
-  // Inherited collision checker from Box needs to be overwritten.
-  // Takes in incoming and outgoing value functions. See planner.h for details.
-  bool IsValid(const Vector3d& position,
-               ValueFunctionId incoming_value,
-               ValueFunctionId outgoing_value) const;
+  initialized_ = true;
+  return true;
+}
 
-  // Check for obstacles within a sensing radius. Returns true if at least
-  // one obstacle was sensed.
-  bool SenseObstacles(const Vector3d& position, double sensor_radius,
-                      std::vector<Vector3d>& obstacle_positions,
-                      std::vector<double>& obstacle_radii) const;
+// Load all parameters.
+bool Environment::LoadParameters(const ros::NodeHandle& n) {
+  ros::NodeHandle nl(n);
 
-  // Check if a given obstacle is in the environment.
-  bool IsObstacle(const Vector3d& obstacle_position,
-                  double obstacle_radius) const;
+  // Sensor radius.
+  if (!nl.getParam("srv/switching_bound", switching_bound_name_)) return false;
 
-  // Inherited visualizer from Box needs to be overwritten.
-  void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
+  return true;
+}
 
-  // Add a spherical obstacle of the given radius to the environment.
-  void AddObstacle(const Vector3d& point, double r);
+// Register all callbacks and publishers.
+bool Environment::RegisterCallbacks(const ros::NodeHandle& n) {
+  ros::NodeHandle nl(n);
 
-private:
-  BallsInBox();
+  // Server.
+  switching_bound_srv_ = nl.serviceClient<value_function::SwitchingTrackingBoundBox>(
+    switching_bound_name_.c_str(), true);
 
-  // List of obstacle locations and radii.
-  std::vector<VectorXd> points_;
-  std::vector<double> radii_;
-};
+  return true;
+}
 
 } //\namespace meta
-
-#endif

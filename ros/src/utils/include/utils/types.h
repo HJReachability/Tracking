@@ -36,26 +36,36 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Base class for uncopyable classes.
+// Custom types.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef META_PLANNER_UNCOPYABLE_H
-#define META_PLANNER_UNCOPYABLE_H
+#ifndef UTILS_TYPES_H
+#define UTILS_TYPES_H
+
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+
+// ------------------------------- CONSTANTS -------------------------------- //
 
 namespace meta {
+  namespace constants {
+    // Acceleration due to gravity.
+    const double G = 9.81;
+  } //\namespace constants
 
-class Uncopyable {
-protected:
-  Uncopyable() {}
-  ~Uncopyable() {}
+  // Internal typedefs.
+  typedef size_t ValueFunctionId;
 
-private:
-  // Declare (but do not define) copy constructor and copy-assign operator
-  // so that child classes are not copyable.
-  Uncopyable(const Uncopyable& other);
-  Uncopyable& operator=(const Uncopyable& other);
-};
+// ------------------------ THIRD PARTY TYPEDEFS ---------------------------- //
+
+typedef Eigen::Matrix<double, 3, 4> Matrix34d;
+using Eigen::Matrix3d;
+using Eigen::Vector3d;
+using Eigen::Matrix4d;
+using Eigen::VectorXd;
+using Eigen::MatrixXd;
+using Eigen::Quaterniond;
 
 } //\namespace meta
 

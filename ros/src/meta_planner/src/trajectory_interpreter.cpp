@@ -71,62 +71,8 @@ bool TrajectoryInterpreter::Initialize(const ros::NodeHandle& n) {
   // Set the initial state to zero.
   state_ = VectorXd::Zero(state_dim_);
 
-  // Set control upper/lower bounds as Eigen::Vectors.
-  VectorXd control_upper_vec(control_dim_);
-  VectorXd control_lower_vec(control_dim_);
-  for (size_t ii = 0; ii < control_dim_; ii++) {
-    control_upper_vec(ii) = control_upper_[ii];
-    control_lower_vec(ii) = control_lower_[ii];
-  }
-
-  // Set up dynamics.
-  dynamics_ = NearHoverQuadNoYaw::Create(control_lower_vec, control_upper_vec);
-
-  // Populate list of value functions.
-  if (numerical_mode_) {
-    for (size_t ii = 0; ii < value_directories_.size(); ii++) {
-      const ValueFunction::ConstPtr value =
-        ValueFunction::Create(value_directories_[ii], dynamics_,
-                              state_dim_, control_dim_,
-                              static_cast<ValueFunctionId>(ii));
-
-      values_.push_back(value);
-    }
-  } else {
-    for (size_t ii = 0; ii < max_planner_speeds_.size(); ii++) {
-      // Generate inputs for AnalyticalPointMassValueFunction.
-      // SEMI-HACK! Manually feeding control/disturbance bounds.
-      const Vector3d max_planner_speed =
-        Vector3d::Constant(max_planner_speeds_[ii]);
-      const Vector3d max_velocity_disturbance =
-        Vector3d::Constant(max_velocity_disturbances_[ii]);
-      const Vector3d max_acceleration_disturbance =
-        Vector3d::Constant(max_acceleration_disturbances_[ii]);
-      const Vector3d velocity_expansion = Vector3d::Constant(0.1);
-
-      // Create analytical value function.
-      const AnalyticalPointMassValueFunction::ConstPtr value =
-        AnalyticalPointMassValueFunction::Create(max_planner_speed,
-                                                 max_velocity_disturbance,
-                                                 max_acceleration_disturbance,
-                                                 velocity_expansion,
-                                                 dynamics_,
-                                                 static_cast<ValueFunctionId>(ii));
-
-      values_.push_back(value);
-    }
-  }
-
-  if (values_.size() % 2 != 0) {
-    ROS_ERROR("%s: Must provide pairs of value functions.", name_.c_str());
-    return false;
-  }
-
   // Initialize trajectory to null.
   traj_ = nullptr;
-
-  // Wait a little for the simulator to begin.
-  //  ros::Duration(0.5).sleep();
 
   initialized_ = true;
   return true;
@@ -137,70 +83,39 @@ bool TrajectoryInterpreter::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Control parameters.
-  if (!nl.getParam("meta/control/time_step", time_step_)) return false;
+  if (!nl.getParam("control/time_step", time_step_)) return false;
 
   int dimension = 1;
-  if (!nl.getParam("meta/control/dim", dimension)) return false;
+  if (!nl.getParam("control/dim", dimension)) return false;
   control_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("meta/control/upper", control_upper_)) return false;
-  if (!nl.getParam("meta/control/lower", control_lower_)) return false;
-
-  if (control_upper_.size() != control_dim_ ||
-      control_lower_.size() != control_dim_) {
-    ROS_ERROR("%s: Upper and/or lower bounds are in the wrong dimension.",
-              name_.c_str());
-    return false;
-  }
-
   // Value parameters.
-  if (!nl.getParam("meta/meta/max_runtime", max_meta_runtime_)) return false;
-  if (!nl.getParam("meta/planners/numerical_mode", numerical_mode_)) return false;
-  if (!nl.getParam("meta/planners/value_directories", value_directories_))
-    return false;
-
-  if (value_directories_.size() == 0) {
-    ROS_ERROR("%s: Must specify at least one value function directory.",
-              name_.c_str());
-    return false;
-  }
-
-  if (!nl.getParam("meta/planners/max_speeds", max_planner_speeds_)) return false;
-  if (!nl.getParam("meta/planners/max_velocity_disturbances",
-                   max_velocity_disturbances_))
-    return false;
-  if (!nl.getParam("meta/planners/max_acceleration_disturbances",
-                   max_acceleration_disturbances_))
-    return false;
-
-  if (max_planner_speeds_.size() != max_velocity_disturbances_.size() ||
-      max_planner_speeds_.size() != max_acceleration_disturbances_.size()) {
-    ROS_ERROR("%s: Must specify max speed/velocity/acceleration disturbances.",
-              name_.c_str());
-    return false;
-  }
+  if (!nl.getParam("max_runtime", max_meta_runtime_)) return false;
 
   // State space parameters.
-  if (!nl.getParam("meta/state/dim", dimension)) return false;
+  if (!nl.getParam("state/dim", dimension)) return false;
   state_dim_ = static_cast<size_t>(dimension);
 
+  // Service names.
+  if (!nl.getParam("srv/tracking_bound", tracking_bound_name_)) return false;
+
   // Topics and frame ids.
-  if (!nl.getParam("meta/topics/state", state_topic_)) return false;
-  if (!nl.getParam("meta/topics/traj", traj_topic_)) return false;
-  if (!nl.getParam("meta/topics/reference", reference_topic_)) return false;
-  if (!nl.getParam("meta/topics/controller_id", controller_id_topic_))
+  if (!nl.getParam("topics/state", state_topic_)) return false;
+  if (!nl.getParam("topics/traj", traj_topic_)) return false;
+  if (!nl.getParam("topics/reference", reference_topic_)) return false;
+  if (!nl.getParam("topics/controller_id", controller_id_topic_))
     return false;
 
-  if (!nl.getParam("meta/topics/request_traj", request_traj_topic_)) return false;
-  if (!nl.getParam("meta/topics/trigger_replan", trigger_replan_topic_)) return false;
-  if (!nl.getParam("meta/topics/in_flight", in_flight_topic_)) return false;
-  if (!nl.getParam("meta/topics/vis/traj", traj_vis_topic_)) return false;
-  if (!nl.getParam("meta/topics/vis/tracking_bound", tracking_bound_topic_))
+  if (!nl.getParam("topics/request_traj", request_traj_topic_)) return false;
+  if (!nl.getParam("topics/trigger_replan", trigger_replan_topic_)) return false;
+  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
+  if (!nl.getParam("topics/vis/traj", traj_vis_topic_)) return false;
+  if (!nl.getParam("topics/vis/tracking_bound", tracking_bound_topic_))
     return false;
 
-  if (!nl.getParam("meta/frames/fixed", fixed_frame_id_)) return false;
-  if (!nl.getParam("meta/frames/tracker", tracker_frame_id_)) return false;
-  if (!nl.getParam("meta/frames/planner", planner_frame_id_)) return false;
+  if (!nl.getParam("frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("frames/tracker", tracker_frame_id_)) return false;
+  if (!nl.getParam("frames/planner", planner_frame_id_)) return false;
 
   return true;
 }
@@ -241,6 +156,10 @@ bool TrajectoryInterpreter::RegisterCallbacks(const ros::NodeHandle& n) {
   request_traj_pub_ = nl.advertise<meta_planner_msgs::TrajectoryRequest>(
     request_traj_topic_.c_str(), 1, false);
 
+  // Service clients.
+  tracking_bound_srv_ = nl.serviceClient<value_function::TrackingBoundBox>(
+    tracking_bound_name_.c_str(), true);
+
   // Timer.
   timer_ = nl.createTimer(ros::Duration(time_step_),
                           &TrajectoryInterpreter::TimerCallback, this);
@@ -251,7 +170,7 @@ bool TrajectoryInterpreter::RegisterCallbacks(const ros::NodeHandle& n) {
 // Callback for processing trajectory updates.
 void TrajectoryInterpreter::
 TrajectoryCallback(const meta_planner_msgs::Trajectory::ConstPtr& msg) {
-  traj_ = Trajectory::Create(msg, values_);
+  traj_ = Trajectory::Create(msg);
 }
 
 // Callback for processing state updates.
@@ -314,7 +233,9 @@ void TrajectoryInterpreter::TimerCallback(const ros::TimerEvent& e) {
   const VectorXd planner_state = traj_->GetState(current_time.toSec());
   const VectorXd relative_state = state_ - planner_state;
 
-  const Vector3d planner_position = dynamics_->Puncture(planner_state);
+  // HACK! Assuming state layout.
+  const Vector3d planner_position(
+    planner_state(0), planner_state(1), planner_state(2));
 
   // Publish planner state on tf.
   geometry_msgs::TransformStamped transform_stamped;
@@ -335,12 +256,10 @@ void TrajectoryInterpreter::TimerCallback(const ros::TimerEvent& e) {
   br_.sendTransform(transform_stamped);
 
   // (2) Get corresponding control and bound value function.
-  const ValueFunction::ConstPtr control_value =
+  const ValueFunctionId control_value_id =
     traj_->GetControlValueFunction(current_time.toSec());
-  const ValueFunction::ConstPtr bound_value =
+  const ValueFunctionId bound_value_id =
     traj_->GetBoundValueFunction(current_time.toSec());
-
-  const double priority = control_value->Priority(relative_state);
 
   // Publish planner position to the reference topic.
   // HACK! Assuming planner state order.
@@ -358,8 +277,8 @@ void TrajectoryInterpreter::TimerCallback(const ros::TimerEvent& e) {
   reference_pub_.publish(reference);
 
   meta_planner_msgs::ControllerId controller_id;
-  controller_id.control_value_function_id = control_value->Id();
-  controller_id.bound_value_function_id = bound_value->Id();
+  controller_id.control_value_function_id = control_value_id;
+  controller_id.bound_value_function_id = bound_value_id;
 
   controller_id_pub_.publish(controller_id);
 
@@ -372,32 +291,36 @@ void TrajectoryInterpreter::TimerCallback(const ros::TimerEvent& e) {
   tracking_bound_marker.type = visualization_msgs::Marker::CUBE;
   tracking_bound_marker.action = visualization_msgs::Marker::ADD;
 
-  tracking_bound_marker.scale.x = 2.0 * bound_value->TrackingBound(0);
-  tracking_bound_marker.scale.y = 2.0 * bound_value->TrackingBound(1);
-  tracking_bound_marker.scale.z = 2.0 * bound_value->TrackingBound(2);
+  tracking_bound_marker.scale.x = 0.0;
+  tracking_bound_marker.scale.y = 0.0;
+  tracking_bound_marker.scale.z = 0.0;
+
+  if (!tracking_bound_srv_) {
+    ROS_WARN("%s: Tracking bound server disconnected.", name_.c_str());
+    ros::NodeHandle nl;
+    tracking_bound_srv_ = nl.serviceClient<value_function::TrackingBoundBox>(
+      tracking_bound_name_.c_str(), true);
+  } else {
+    value_function::TrackingBoundBox b;
+    b.request.id = bound_value_id;
+    if (!tracking_bound_srv_.call(b))
+      ROS_ERROR("%s: Tracking bound server error.", name_.c_str());
+    else {
+      tracking_bound_marker.scale.x = 2.0 * b.response.x;
+      tracking_bound_marker.scale.y = 2.0 * b.response.y;
+      tracking_bound_marker.scale.z = 2.0 * b.response.z;
+    }
+  }
 
   tracking_bound_marker.color.a = 0.3;
-  tracking_bound_marker.color.r = priority;
-  tracking_bound_marker.color.g = 0.0;
-  tracking_bound_marker.color.b = 1.0 - priority;
+  tracking_bound_marker.color.r = 0.5;
+  tracking_bound_marker.color.g = 0.1;
+  tracking_bound_marker.color.b = 0.5;
 
   tracking_bound_pub_.publish(tracking_bound_marker);
 
-  // Warn if outside tracking error bound.
-  double min_dist_to_bound = std::numeric_limits<double>::infinity();
-  for (size_t ii = 0; ii < 3; ii++) {
-    const double signed_dist =  bound_value->TrackingBound(ii) -
-      std::abs(relative_state(dynamics_->SpatialDimension(ii)));
-
-    min_dist_to_bound = std::min(min_dist_to_bound, signed_dist);
-  }
-
-  if (min_dist_to_bound <= 0.0) {
-    ROS_WARN_THROTTLE(1.0, "%s: Leaving the tracking error bound.", name_.c_str());
-  }
-
   // Visualize trajectory.
-  traj_->Visualize(traj_vis_pub_, fixed_frame_id_, dynamics_);
+  traj_->Visualize(traj_vis_pub_, fixed_frame_id_);
 }
 
 // Request a new trajectory from the meta planner.
@@ -418,10 +341,7 @@ void TrajectoryInterpreter::RequestNewTrajectory() const {
   // Populate request.
   meta_planner_msgs::TrajectoryRequest msg;
   msg.start_time = start_time;
-  msg.start_state.dimension = state_dim_;
-
-  for (size_t ii = 0; ii < start_state.size(); ii++)
-    msg.start_state.state.push_back(start_state(ii));
+  msg.start_state = utils::PackState(start_state);
 
   request_traj_pub_.publish(msg);
 }
@@ -436,8 +356,8 @@ void TrajectoryInterpreter::Hover() {
 
   // Catch null trajectory, which should only occur on startup.
   // Hover at the current trajectory for max_meta_runtime_ + some small amount.
-  // Set the value function for this trajectory to be the one for the least
-  // aggressive planner, ie. for the smallest tracking bubble.
+  // Set the value function for this trajectory to be the most aggressive planner
+  // so that it has the largest error bound.
   if (traj_ == nullptr) {
     ROS_INFO("%s: No existing trajectory. Hovering in place.", name_.c_str());
     traj_ = Trajectory::Create();
@@ -449,9 +369,8 @@ void TrajectoryInterpreter::Hover() {
     hover_state(4) = 0.0;
     hover_state(5) = 0.0;
 
-    traj_->Add(now, hover_state, values_.back(), values_.front());
-    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state,
-               values_.back(), values_.front());
+    traj_->Add(now, hover_state, 0, 0);
+    traj_->Add(now + max_meta_runtime_ + 10.0, hover_state, 0, 0);
     return;
   }
 

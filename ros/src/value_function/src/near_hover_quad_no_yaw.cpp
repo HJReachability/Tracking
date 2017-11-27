@@ -51,7 +51,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <meta_planner/near_hover_quad_no_yaw.h>
+#include <value_function/near_hover_quad_no_yaw.h>
 
 namespace meta {
 
