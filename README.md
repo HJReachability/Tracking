@@ -6,6 +6,8 @@ Code in this repository is broken into two sections:
 1. `code/` contains MATLAB code related to the original FaSTrack project
 2. `ros/` contains a Robot Operating System (ROS) implementation of the FaSTrack idea that incorporates multiple planners hierarchically
 
+Please note that the C++ / ROS implementation is deprecated here, and active development is continuing under the name [meta-fastrack](https://github.com/HJReachability/meta_fastrack)
+
 ## Usage
 ### MATLAB
 _Insert instructions here._
@@ -13,7 +15,7 @@ _Insert instructions here._
 ### C++ / ROS
 First, make sure you have ROS installed on your system. The project was developed in Jade, but it should be compatible with anything past Hydro. Please let us know if you have any compatibility issues.
 
-`Tracking` currently depends upon the [crazyflie_clean](https://github.com/dfridovi/crazyflie_clean) repository, which contains drivers and utilities for the HSL's Crazyflie 2.0 testbed. We intend to remove this build dependency in the future so that `Tracking` can be used more easily in other contexts. This will be part of a larger code reorganization/refactor.
+`Tracking` currently depends upon the [crazyflie_clean](https://github.com/dfridovi/crazyflie_clean) repository, which contains drivers and utilities for the HSL's Crazyflie 2.0 testbed. However, since this part of the repository is deprecated it only works with release [v0.1](https://github.com/HJReachability/crazyflie_clean/releases).
 
 Other dependencies:
 * [Gtest](https://github.com/google/googletest) -- Google's C++ unit testing library
