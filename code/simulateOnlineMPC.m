@@ -19,27 +19,32 @@ function simulateOnlineMPC(data_filename, obs_filename, extraArgs)
 %       inputs related to RRT (goal?)
 
 addpath(genpath('.'))
-mex CCMotion.cpp
 
-%% Problem setup
-start = [-0.75; -0.75; pi/6];
-goal = [0.5; 0.5; pi/2];
-trackErr = 0.05; %%%%%%%
-sense_range = 0.5;
-sense_angle = pi/6;
-sense_region = create_sensing_region(sense_range, sense_angle);
-
-virt_v = 0.5;
-
-dt = 0.01;
-delta_x = virt_v*dt;
+%% Problem setup (DEFINE YOUR OWN HERE)
+% start = [-0.75; -0.75; pi/6];
+% goal = [0.5; 0.5; pi/2];
+% trackErr = 0.05; %%%%%%%
+% sense_range = 0.5;
+% sense_angle = pi/6;
+% sense_region = create_sensing_region(sense_range, sense_angle);
+% 
+% virt_v = 0.5;
+% 
+% delta_x = virt_v*dt;
 
 if nargin < 1
-  data_filename = 'FILL_IN_FILENAME.mat';
+  data_filename = 'Q8D_Q4D_RS_1.00aMax.mat';
 end
 
+load(data_filename)
+dt = tau(2) - tau(1);
+
+% Initial list of tracking error bounds, now in ascending-time order
+TEB_list = flip(TEB(1:end-1));
+min_level = minData(end)*1.01;
+
 if nargin < 2
-  obs_filename = 'obs.mat';
+  obs_filename = 'OBS_FILE_NAME_HERE.mat';
 end
 
 if nargin < 3
@@ -48,9 +53,11 @@ end
 
 % matrix to compare position states (virt vs. true)
 if ~isfield(extraArgs,'Q')
-  Q = zeros(8,2);
+  Q = zeros(8,4);
   Q(1,1) = 1;
-  Q(5,2) = 1;
+  Q(2,2) = 1;
+  Q(5,3) = 1;
+  Q(6,4) = 1;
 end
 
 if ~isfield(extraArgs, 'visualize')
@@ -64,39 +71,39 @@ load(obs_filename)
 uMode = 'max';
 % dMode = 'min'; % Not needed since we're not using worst-case control
 
-obsMap = ObstacleMapLS(g2D, obs2D);
+% obsMap = ObstacleMapLS(g2D, obs2D);
 
-% plot global obstacles
-if vis
-  f = figure;
-  f.Color = 'white';
-  f.Position = [100 100 1280 720];
-  
-  obsMap.plotGlobal()
-  f.Children.FontSize = 16;
-  hold on
-  quiver(goal(1), goal(2), 0.2*cos(goal(3)), 0.2*sin(goal(3)), 'b')
-  plotDisk(goal(1:2), 0.2, 'b-');
-  
-  xlabel('x', 'FontSize', 16)
-  ylabel('y', 'FontSize', 16)
-  
-  axis equal
-  xlim([-L L])
-
-  box on
-  grid on
-end
+% % plot global obstacles
+% if vis
+%   f = figure;
+%   f.Color = 'white';
+%   f.Position = [100 100 1280 720];
+%   
+%   obsMap.plotGlobal()
+%   f.Children.FontSize = 16;
+%   hold on
+%   quiver(goal(1), goal(2), 0.2*cos(goal(3)), 0.2*sin(goal(3)), 'b')
+%   plotDisk(goal(1:2), 0.2, 'b-');
+%   
+%   xlabel('x', 'FontSize', 16)
+%   ylabel('y', 'FontSize', 16)
+%   
+%   axis equal
+%   xlim([-L L])
+% 
+%   box on
+%   grid on
+% end
 
 % % set initial states to zero
 % true_x = zeros(5,1);
 % true_x(1:3) = start;
 virt_x = start;
 
-% Create real quadrotor system; 10D model is used but we will ignore Z
-rl_ui = [2 4 6];
-trueQuad = Quad10D(start_x, dynSysX.uMin(rl_ui), dynSysX.uMax(rl_ui), ...
-  dynSysX.dMin, dynSysX.dMax, 1:10);
+% Create real quadrotor syste
+dynSys = sD.dynSys;
+trueQuad = Quad8D(start_x, dynSys.uMin, dynSys.uMax, dynSys.dMin, ...
+  dynSys.dMax, 1:8);
 
 % % define when to switch from safety control to performance control
 % small = 1;
@@ -144,59 +151,80 @@ while iter < max_iter && norm(virt_x - goal) > 0.25
   
   % 2. Determine which controller to use, find optimal control
   % get spatial gradients
+  XDims = 1:4;
+  YDims = 5:8;
   pX = eval_u(g, deriv, rel_x(XDims));
   pY = eval_u(g, deriv, rel_x(YDims));
 
   % Find optimal control of relative system (no performance control)
-  uX = dynSysX.optCtrl([], rel_x(XDims), pX, uMode);
-  uY = dynSysX.optCtrl([], rel_x(YDims), pY, uMode);
+  uX = dynSys.optCtrl([], rel_x(XDims), pX, uMode);
+  uY = dynSys.optCtrl([], rel_x(YDims), pY, uMode);
 
   u = [uX uY];
-  u = u(rl_ui);
   lookup_time = lookup_time + toc(local_start);
   
   %% True System Block
   % 1. add random disturbance to velocity within given bound
-%   d = dynSysX.dMin + rand(3,1).*(dynSysX.dMax - dynSysX.dMin);
+  d = dynSysX.dMin + rand(2,1).*(dynSysX.dMax - dynSysX.dMin);
   
   % 2. update state of true vehicle
-%   trueQuad.updateState(u, dt, [], d);
+  trueQuad.updateState(u, dt, [], d);
 
-%   % Make sure error isn't too big (shouldn't happen)
-%   if norm(virt_x - trueQuad.x([1 5 9])) > 3
-%     keyboard
-%   end
+  
+  %% Determine which tracking error bound to start with next (takes about 0.1s)
+  max_ind = length(tau);
+  min_ind = 1;
+  ind = ceil(max_ind/2);
+  while max_ind > min_ind
+    if eval_u(sD.grid, data(:,:,:,:,ind), rel_x) >= min_level;
+      % If inside the TEB for the current index, look for smaller TEB
+      min_ind = ind;                 % Set minimum ind to current ind
+      ind = ceil((max_ind + ind)/2); % Set current ind to between min and max ind
+
+    else
+      % If outside the TEB for the current index, looking for larger TEB
+      max_ind = ind - 1; % Set maximum ind to current ind (exclude current ind)
+      ind = floor((min_ind + ind)/2);
+    end
+  end
+  
+  TEB_list = TEB(1:ind-1);
+  
+  % Make sure error isn't too big (shouldn't happen)
+  if norm(virt_x - trueQuad.x([1 2 5 6])) > 10 % Modify this bound
+    keyboard
+  end
   
   %% Virtual System Block  
 %   fprintf('Iteration took %.2f seconds\n', toc);
   
-  % Visualize
-  if vis
-    % Local obstacles and true position
-    obsMap.plotLocal;
-    obsMap.plotPadded;
-    obsMap.plotSenseRegion;    
-    if iter == 1
-      quiver(start(1), start(2), 0.2*cos(start(3)), 0.2*sin(start(3)))
-      hold on
-    end
-    
-    % Virtual state
-    if exist('hV', 'var')
-      hV.XData = virt_x(1);
-      hV.YData = virt_x(2);
-      hV.UData = 0.2*cos(virt_x(3));
-      hV.VData = 0.2*sin(virt_x(3));
-    else
-      hV = quiver(virt_x(1), virt_x(2), 0.2*cos(virt_x(3)), ...
-        0.2*sin(virt_x(3)), '*', 'color', [0 0.75 0]);
-    end
-    
-    drawnow
-
-    export_fig(sprintf('pics/%d', iter), '-png')
-%     savefig(sprintf('pics/%d.fig', iter))    
-  end
+%   % Visualize
+%   if vis
+%     % Local obstacles and true position
+%     obsMap.plotLocal;
+%     obsMap.plotPadded;
+%     obsMap.plotSenseRegion;    
+%     if iter == 1
+%       quiver(start(1), start(2), 0.2*cos(start(3)), 0.2*sin(start(3)))
+%       hold on
+%     end
+%     
+%     % Virtual state
+%     if exist('hV', 'var')
+%       hV.XData = virt_x(1);
+%       hV.YData = virt_x(2);
+%       hV.UData = 0.2*cos(virt_x(3));
+%       hV.VData = 0.2*sin(virt_x(3));
+%     else
+%       hV = quiver(virt_x(1), virt_x(2), 0.2*cos(virt_x(3)), ...
+%         0.2*sin(virt_x(3)), '*', 'color', [0 0.75 0]);
+%     end
+%     
+%     drawnow
+% 
+%     export_fig(sprintf('pics/%d', iter), '-png')
+% %     savefig(sprintf('pics/%d.fig', iter))    
+%   end
 end
 
 % comp_time = toc(global_start);
