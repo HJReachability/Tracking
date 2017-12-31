@@ -177,23 +177,12 @@ while iter < max_iter && norm(virt_x - goal) > 0.25
   trueQuad.updateState(u, dt, [], d);
 
   
-  %% Determine which tracking error bound to start with next (takes about 0.1s)
-  max_ind = length(tau);
-  min_ind = 1;
-  TEB_ind = ceil(max_ind/2);
-  while max_ind > min_ind
-    if eval_u(sD.grid, data(:,:,:,:,TEB_ind), rel_x) >= min_level;
-      % If inside the TEB for the current index, look for smaller TEB
-      min_ind = TEB_ind;                 % Set minimum ind to current ind
-      TEB_ind = ceil((max_ind + TEB_ind)/2); % Set current ind to between min and max ind
-
-    else
-      % If outside the TEB for the current index, looking for larger TEB
-      max_ind = TEB_ind - 1; % Set maximum ind to current ind (exclude current ind)
-      TEB_ind = floor((min_ind + TEB_ind)/2);
-    end
-  end
+  %% Determine which tracking error bound to start with next (takes about 0.2s)
   
+  TEB_ind_x = get_TEB_ind(tau, sD, data, rel_x(1:4), TEB, min_level)
+  TEB_ind_y = get_TEB_ind(tau, sD, data, rel_x(5:8), TEB, min_level)
+ 
+  TEB_ind = min(TEB_ind_x, TEB_ind_y);
   TEB_list = flip(TEB(1:TEB_ind-1));
   
   % Make sure error isn't too big (shouldn't happen)
