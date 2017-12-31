@@ -1,4 +1,4 @@
-classdef Air3D < DynSys
+classdef P5D_Dubins_Rel < DynSys
   properties
     % Control bounds of this vehicle
     aRange   % Linear acceleration
@@ -12,14 +12,13 @@ classdef Air3D < DynSys
     
     % Vehicle speeds
     vOther
+    
+    dims
 
   end % end properties
  
   methods
-    function obj = Air3D(x, aRange, alphaMax, vOther, wMax, dMax)
-      % obj = Air3D(x, aMax, bMax, va, vb)
-      %
-      
+    function obj = P5D_Dubins_Rel(x, aRange, alphaMax, vOther, wMax, dMax, dims)
       %% Process initial state
       obj.x = x;
       obj.xhist = x;
@@ -45,11 +44,17 @@ classdef Air3D < DynSys
         dMax = [0.02; 0.02; 0.2; 0.02];
       end
       
+      if nargin < 7
+        dims = 1:5;
+      end
+      
       obj.aRange = aRange;
       obj.alphaMax = alphaMax;
       obj.vOther = vOther;
       obj.wMax = wMax;
       obj.dMax = dMax;
+      
+      obj.dims = dims;
       
       obj.nx = 5;
       obj.nu = 2;

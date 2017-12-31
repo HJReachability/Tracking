@@ -2,30 +2,36 @@
 % level for automatically determining time-varying tracking error bound
 
 [g2D, data2D] = proj(sD.grid, data, [0 0 1 1], 'max');
+[g3D, data3D] = proj(sD.grid, data, [0 0 0 1], 'max');
 
-dataSize = size(data2D);
-numT = dataSize(end);
+numT = length(tau);
 
-fig_filename = 'TEB_aMax1.00';
+fig_filename = 'TEB_Q8D_Q4D_0.5';
 
-level = -1.5950;
+level = -0.13;
 
 TEB = nan(1,numT);
 
+f = figure;
+f.Color = 'white';
+box on
+grid on
+
+h = cell(numT,1);
+
 for i = 1:numT
-  extraArg.fig_filename = sprintf('%s_%d', fig_filename, i);
-  f = figure;
-  f.Color = 'white';
-  box on
-  grid on
+  h{i} = visSetIm(g2D, data2D(:,:,i), 'r', level);
+  hold on
+  %   h = visSetIm(g2D, data2D(:,:,i), 'r', level, extraArg);
   
-  h = visSetIm(g2D, data2D(:,:,i), 'r', level, extraArg);
-  
-  if ~isempty(h.ContourMatrix)
-    indsToKeep = h.ContourMatrix(1,:) ~= level;
-    contourPts_x = h.ContourMatrix(1,indsToKeep);
+  if ~isempty(h{i}.ContourMatrix)
+    indsToKeep = h{i}.ContourMatrix(1,:) ~= level;
+    contourPts_x = h{i}.ContourMatrix(1,indsToKeep);
     TEB(i) = max(abs(contourPts_x));
   end
   
-  savefig(sprintf('%s.fig', extraArg.fig_filename));
+  
+  % keyboard
 end
+
+savefig(sprintf('%s.fig', fig_filename));

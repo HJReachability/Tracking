@@ -40,7 +40,8 @@ load(data_filename)
 dt = tau(2) - tau(1);
 
 % Initial list of tracking error bounds, now in ascending-time order
-TEB_list = flip(TEB(1:end-1));
+TEB_ind = length(tau);
+TEB_list = flip(TEB(1:TEB_ind-1));
 min_level = minData(end)*1.01;
 
 if nargin < 2
@@ -153,8 +154,13 @@ while iter < max_iter && norm(virt_x - goal) > 0.25
   % get spatial gradients
   XDims = 1:4;
   YDims = 5:8;
-  pX = eval_u(g, deriv, rel_x(XDims));
-  pY = eval_u(g, deriv, rel_x(YDims));
+  
+  deriv_TEB_ind = cell(4,1);
+  for k = 1:4
+    deriv_TEB_ind{k} = deriv{k}(:,:,:,:,TEB_ind);
+  end
+  pX = eval_u(g, deriv_TEB_ind, rel_x(XDims));
+  pY = eval_u(g, deriv_TEB_ind, rel_x(YDims));
 
   % Find optimal control of relative system (no performance control)
   uX = dynSys.optCtrl([], rel_x(XDims), pX, uMode);
@@ -174,21 +180,21 @@ while iter < max_iter && norm(virt_x - goal) > 0.25
   %% Determine which tracking error bound to start with next (takes about 0.1s)
   max_ind = length(tau);
   min_ind = 1;
-  ind = ceil(max_ind/2);
+  TEB_ind = ceil(max_ind/2);
   while max_ind > min_ind
-    if eval_u(sD.grid, data(:,:,:,:,ind), rel_x) >= min_level;
+    if eval_u(sD.grid, data(:,:,:,:,TEB_ind), rel_x) >= min_level;
       % If inside the TEB for the current index, look for smaller TEB
-      min_ind = ind;                 % Set minimum ind to current ind
-      ind = ceil((max_ind + ind)/2); % Set current ind to between min and max ind
+      min_ind = TEB_ind;                 % Set minimum ind to current ind
+      TEB_ind = ceil((max_ind + TEB_ind)/2); % Set current ind to between min and max ind
 
     else
       % If outside the TEB for the current index, looking for larger TEB
-      max_ind = ind - 1; % Set maximum ind to current ind (exclude current ind)
-      ind = floor((min_ind + ind)/2);
+      max_ind = TEB_ind - 1; % Set maximum ind to current ind (exclude current ind)
+      TEB_ind = floor((min_ind + TEB_ind)/2);
     end
   end
   
-  TEB_list = TEB(1:ind-1);
+  TEB_list = flip(TEB(1:TEB_ind-1));
   
   % Make sure error isn't too big (shouldn't happen)
   if norm(virt_x - trueQuad.x([1 2 5 6])) > 10 % Modify this bound

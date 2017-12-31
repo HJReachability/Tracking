@@ -17,14 +17,31 @@ if ~iscell(deriv)
   deriv = num2cell(deriv);
 end
 
-% Determinant for sign of control
-det = deriv{1}.*y{2}  - deriv{2}.*y{1} - deriv{3};
+uOpt = cell(obj.nu, 1);
 
-% Maximize Hamiltonian
+%% Optimal control
 if strcmp(uMode, 'max')
-  uOpt = (det>=0)*obj.uMax + (det<0)*(-obj.uMax);
-else
-  uOpt = (det>=0)*(-obj.uMax) + (det<0)*obj.uMax;
-end
+  if any(obj.dims == 4)
+    uOpt{1} = (deriv{obj.dims==4}>=0)*obj.aRange(2) + ...
+      (deriv{obj.dims==4}<0)*obj.aRange(1);
+  end
+  
+  if any(obj.dims == 5)
+    uOpt{2} = (deriv{obj.dims==5}>=0)*(obj.alphaMax) + ...
+      (deriv{obj.dims==5}<0)*(-obj.alphaMax);
+  end
 
+elseif strcmp(uMode, 'min')
+  if any(obj.dims == 4)
+    uOpt{1} = (deriv{obj.dims==4}>=0)*obj.aRange(1) + ...
+      (deriv{obj.dims==4}<0)*obj.aRange(2);
+  end
+  
+  if any(obj.dims == 5)
+    uOpt{2} = (deriv{obj.dims==5}>=0)*(-obj.alphaMax) + ...
+      (deriv{obj.dims==5}<0)*(obj.alphaMax);
+  end
+else
+  error('Unknown uMode!')
+end
 end

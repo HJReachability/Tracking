@@ -20,8 +20,8 @@ if iscell(x)
   % Disturbances
   wOther = d{5}; % Turn rate of other vehicle (at origin)
   
-  dx{1} = -obj.vOther + v * cos(tr) + wOther * yr + d{1};
-  dx{2} = v * sin(tr) - wOther * xr + d{2};
+  dx{1} = -obj.vOther + v .* cos(tr) + wOther .* yr + d{1};
+  dx{2} = v .* sin(tr) - wOther .* xr + d{2};
   dx{3} = w - wOther;
   dx{4} = a + d{3};
   dx{5} = alpha + d{4};
