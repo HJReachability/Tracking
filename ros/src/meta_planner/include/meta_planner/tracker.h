@@ -43,19 +43,36 @@
 #ifndef META_PLANNER_TRACKER_H
 #define META_PLANNER_TRACKER_H
 
-#include <meta_planner/meta_planner.h>
 #include <meta_planner/trajectory.h>
-#include <meta_planner/box.h>
-#include <meta_planner/types.h>
+#include <meta_planner/ompl_planner.h>
+#include <demo/balls_in_box.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
+#include <utils/message_interfacing.h>
+
+#include <meta_planner_msgs/Trajectory.h>
+#include <meta_planner_msgs/TrajectoryRequest.h>
+#include <meta_planner_msgs/ControllerId.h>
+
+#include <value_function/OptimalControl.h>
+#include <value_function/Priority.h>
+
+#include <crazyflie_msgs/PositionStateStamped.h>
+#include <crazyflie_msgs/ControlStamped.h>
+#include <crazyflie_msgs/NoYawControlStamped.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
+#include <std_msgs/Empty.h>
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/TransformStamped.h>
-#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <string>
+#include <math.h>
 
-class Tracker {
+namespace meta {
+
+class Tracker : private Uncopyable {
 public:
   explicit Tracker();
   ~Tracker();
@@ -67,40 +84,71 @@ private:
   bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // Callback for processing sensor measurements.
-  //  void SensorCallback(const SomeMessageType::ConstPtr& msg);
+  // Callback for processing state updates.
+  void StateCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
+
+  // Callback for processing reference updates.
+  void ReferenceCallback(
+    const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
+
+  // Callback for processing controller ID updates.
+  void ControllerIdCallback(
+    const meta_planner_msgs::ControllerId::ConstPtr& msg);
 
   // Callback for applying tracking controller.
   void TimerCallback(const ros::TimerEvent& e);
 
-  // Current state and trajectory.
-  VectorXd state_;
-  Trajectory traj_;
+  // Process in flight notifications.
+  inline void InFlightCallback(const std_msgs::Empty::ConstPtr& msg) {
+    in_flight_ = true;
+  }
 
-  // State space.
-  size_t dimension_;
-  Box::Ptr space_;
+  // Current state and reference.
+  VectorXd state_;
+  VectorXd reference_;
+
+  // IDs of control/bound value functions.
+  ValueFunctionId control_value_id_;
+  ValueFunctionId bound_value_id_;
+
+  // Spaces and dimensions.
+  size_t control_dim_;
+  size_t state_dim_;
 
   // Set a recurring timer for a discrete-time controller.
   ros::Timer timer_;
   double time_step_;
 
-  // Buffer and listener to get current pose.
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
+  // Service clients.
+  ros::ServiceClient optimal_control_srv_;
+  ros::ServiceClient priority_srv_;
+
+  std::string optimal_control_name_;
+  std::string priority_name_;
 
   // Publishers/subscribers and related topics.
   ros::Publisher control_pub_;
-  ros::Publisher rrt_connect_vis_pub_;
-  ros::Subscriber sensor_sub_;
+  ros::Subscriber state_sub_;
+  ros::Subscriber reference_sub_;
+  ros::Subscriber controller_id_sub_;
+  ros::Subscriber in_flight_sub_;
 
   std::string control_topic_;
-  std::string rrt_connect_vis_topic_;
-  std::string sensor_topic_;
+  std::string state_topic_;
+  std::string reference_topic_;
+  std::string controller_id_topic_;
+  std::string in_flight_topic_;
 
   // Frames of reference for reading current pose from tf tree.
   std::string fixed_frame_id_;
   std::string tracker_frame_id_;
+  std::string planner_frame_id_;
+
+  // Are we in flight?
+  bool in_flight_;
+
+  // Has the state been updated.
+  bool been_updated_;
 
   // Is this class initialized?
   bool initialized_;
@@ -108,5 +156,7 @@ private:
   // Name of this class, for use in debug messages.
   std::string name_;
 };
+
+} //\namespace meta
 
 #endif

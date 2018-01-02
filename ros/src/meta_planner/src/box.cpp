@@ -43,25 +43,26 @@
 
 #include <meta_planner/box.h>
 
+namespace meta {
+
 // Factory method. Use this instead of the constructor.
-Box::Ptr Box::Create(size_t dimension) {
-  Box::Ptr ptr(new Box(dimension));
+Box::Ptr Box::Create() {
+  Box::Ptr ptr(new Box());
   return ptr;
 }
 
 // Constructor. Don't use this. Use the factory method instead.
-Box::Box(size_t dimension)
+Box::Box()
   : Environment(),
-    dimension_(dimension),
-    lower_(VectorXd::Zero(dimension)),
-    upper_(VectorXd::Constant(dimension, 1.0)) {}
+    lower_(Vector3d::Zero()),
+    upper_(Vector3d::Constant(1.0)) {}
 
-// Inherited from Environment, but can be overriden by child classes.
-VectorXd Box::Sample() const {
-  VectorXd sample(dimension_);
+// Inherited from Environment, but can be overwritten by child classes.
+Vector3d Box::Sample() const {
+  Vector3d sample;
 
   // Sample each dimension from this distribution.
-  for (size_t ii = 0; ii < dimension_; ii++) {
+  for (size_t ii = 0; ii < 3; ii++) {
     std::uniform_real_distribution<double> unif(lower_(ii), upper_(ii));
     sample(ii) = unif(rng_);
   }
@@ -69,70 +70,96 @@ VectorXd Box::Sample() const {
   return sample;
 }
 
-// Inherited from Environment, but can be overriden by child classes.
+// Inherited from Environment, but can be overwritten by child classes.
 // Returns true if the state is a valid configuration.
-bool Box::IsValid(const VectorXd& state) const {
+// Takes in incoming and outgoing value functions. See planner.h for details.
+bool Box::IsValid(const Vector3d& position,
+                  ValueFunctionId incoming_value,
+                  ValueFunctionId outgoing_value) const {
 #ifdef ENABLE_DEBUG_MESSAGES
-  if (state.size() != dimension_)
-    ROS_ERROR("Improperly sized state vector (%zu vs. %zu).",
-              state.size(), dimension_);
+  if (!initialized_) {
+    ROS_WARN("%s: Tried to collision check an uninitialized Box.",
+             name_.c_str());
+    return false;
+  }
 #endif
 
+  // Make sure server is up.
+  if (!switching_bound_srv_) {
+    ROS_WARN("%s: Switching bound server disconnected.", name_.c_str());
+
+    ros::NodeHandle nl;
+    switching_bound_srv_ = nl.serviceClient<value_function::SwitchingTrackingBoundBox>(
+      switching_bound_name_.c_str(), true);
+    return false;
+  }
+
   // No obstacles. Just check bounds.
-  for (size_t ii = 0; ii < state.size(); ii++)
-    if (state(ii) < lower_(ii) || state(ii) > upper_(ii))
+  value_function::SwitchingTrackingBoundBox bound;
+  bound.request.from_id = incoming_value;
+  bound.request.to_id = outgoing_value;
+  if (!switching_bound_srv_.call(bound)) {
+    ROS_ERROR("%s: Error calling switching bound server.", name_.c_str());
+    return false;
+  }
+
+  if (position(0) < lower_(0) + bound.response.x ||
+      position(0) > upper_(0) - bound.response.x ||
+      position(1) < lower_(1) + bound.response.y ||
+      position(1) > upper_(1) - bound.response.y ||
+      position(2) < lower_(2) + bound.response.z ||
+      position(2) > upper_(2) - bound.response.z)
       return false;
 
   return true;
 }
 
-// Set bounds in each dimension.
-void Box::SetBounds(const VectorXd& lower, const VectorXd& upper) {
-#ifdef ENABLE_DEBUG_MESSAGES
-  if (lower.size() != dimension_ || upper.size() != dimension_) {
-    ROS_ERROR("Improperly sized lower/upper bounds. Did not set.");
+// Inherited by Environment, but can be overwritten by child classes.
+// Assumes that the first <=3 dimensions correspond to R^3.
+void Box::Visualize(const ros::Publisher& pub,
+                    const std::string& frame_id) const {
+  if (pub.getNumSubscribers() <= 0)
     return;
-  }
-#endif
 
+  // Set up box marker.
+  visualization_msgs::Marker cube;
+  cube.ns = "cube";
+  cube.header.frame_id = frame_id;
+  cube.header.stamp = ros::Time::now();
+  cube.id = 0;
+  cube.type = visualization_msgs::Marker::CUBE;
+  cube.action = visualization_msgs::Marker::ADD;
+  cube.color.a = 0.25;
+  cube.color.r = 0.2;
+  cube.color.g = 0.2;
+  cube.color.b = 0.2;
+
+  geometry_msgs::Point center;
+
+  // Fill in center and scale.
+  cube.scale.x = upper_(0) - lower_(0);
+  center.x = lower_(0) + 0.5 * cube.scale.x;
+
+  cube.scale.y = upper_(1) - lower_(1);
+  center.y = lower_(1) + 0.5 * cube.scale.y;
+
+  cube.scale.z = upper_(2) - lower_(2);
+  center.z = lower_(2) + 0.5 * cube.scale.z;
+
+  cube.pose.position = center;
+  cube.pose.orientation.x = 0.0;
+  cube.pose.orientation.y = 0.0;
+  cube.pose.orientation.z = 0.0;
+  cube.pose.orientation.w = 1.0;
+
+  // Publish marker.
+  pub.publish(cube);
+}
+
+// Set bounds in each dimension.
+void Box::SetBounds(const Vector3d& lower, const Vector3d& upper) {
   lower_ = lower;
   upper_ = upper;
 }
 
-// Get the lower bounds at the specified dimensions.
-VectorXd Box::LowerBounds(const std::vector<size_t>& dimensions) const {
-  VectorXd punctured = VectorXd::Zero(dimensions.size());
-
-  for (size_t ii = 0; ii < dimensions.size(); ii++) {
-#ifdef ENABLE_DEBUG_MESSAGES
-    if (dimensions[ii] >= dimension_) {
-      ROS_ERROR("Tried to access bound for a non-existent dimension: %zu.",
-                dimensions[ii]);
-      continue;
-    }
-#endif
-
-    punctured[ii] = lower_[dimensions[ii]];
-  }
-
-  return punctured;
-}
-
-// Get the upper bounds at the specified dimensions.
-VectorXd Box::UpperBounds(const std::vector<size_t>& dimensions) const {
-  VectorXd punctured = VectorXd::Zero(dimensions.size());
-
-  for (size_t ii = 0; ii < dimensions.size(); ii++) {
-#ifdef ENABLE_DEBUG_MESSAGES
-    if (dimensions[ii] >= dimension_) {
-      ROS_ERROR("Tried to access bound for a non-existent dimension: %zu.",
-                dimensions[ii]);
-      continue;
-    }
-#endif
-
-    punctured[ii] = upper_[dimensions[ii]];
-  }
-
-  return punctured;
-}
+} //\namespace meta

@@ -43,8 +43,14 @@
 #ifndef META_PLANNER_TRAJECTORY_H
 #define META_PLANNER_TRAJECTORY_H
 
-#include <meta_planner/value_function.h>
-#include <meta_planner/types.h>
+#include <value_function/dynamics.h>
+#include <utils/types.h>
+#include <utils/message_interfacing.h>
+
+#include <meta_planner_msgs/Trajectory.h>
+#include <meta_planner_msgs/State.h>
+
+#include <value_function/GeometricPlannerTime.h>
 
 #include <ros/ros.h>
 #include <std_msgs/ColorRGBA.h>
@@ -55,16 +61,46 @@
 #include <string>
 #include <iostream>
 #include <exception>
+#include <memory>
+
+namespace meta {
 
 class Trajectory {
 public:
+  typedef std::shared_ptr<Trajectory> Ptr;
+  typedef std::shared_ptr<const Trajectory> ConstPtr;
+
+  // Factory method. Use this instead of the constructor.
+  static inline Ptr Create() {
+    Ptr ptr(new Trajectory());
+    return ptr;
+  }
+
+  // Factory constructor from times, states, values.
+  static Ptr Create(const std::vector<double>& times,
+                    const std::vector<VectorXd>& states,
+                    const std::vector<ValueFunctionId>& control_values,
+                    const std::vector<ValueFunctionId>& bound_values);
+
+  // Factory constructor from ROS message and an ordered list of all
+  // possible ValueFunctions.
+  static Ptr Create(const meta_planner_msgs::Trajectory::ConstPtr& msg);
+
+  // Factory constructor to create a Trajectory as the remainder of the
+  // given Trajectory after the specified time point.
+  static Ptr Create(const ConstPtr& other, double start);
+
   // Clear out this Trajectory.
   void Clear();
 
   // Add a (state, time) tuple to this Trajectory.
   void Add(double time,
            const VectorXd& state,
-           const ValueFunction::ConstPtr& value);
+           ValueFunctionId control_value,
+           ValueFunctionId bound_value);
+
+  // Add a whole other Trajectory to this one.
+  void Add(const ConstPtr& other);
 
   // Check if this trajectory is empty.
   bool IsEmpty() const;
@@ -75,36 +111,58 @@ public:
   // Total time length of the trajectory.
   double Time() const;
 
+  // Swap out the control value function in this trajectory and update time
+  // stamps accordingly.
+  void ExecuteSwitch(ValueFunctionId value, ros::ServiceClient& best_time_srv);
+
+  // Adjust the time stamps for this trajectory to start at the given time.
+  void ResetStartTime(double start);
+
   // Accessors.
   const VectorXd& LastState() const;
   const VectorXd& FirstState() const;
   double LastTime() const;
   double FirstTime() const;
+  ValueFunctionId LastControlValueFunction() const;
+  ValueFunctionId FirstControlValueFunction() const;
+  ValueFunctionId LastBoundValueFunction() const;
+  ValueFunctionId FirstBoundValueFunction() const;
 
   // Find the state corresponding to a particular time via linear interpolation.
   VectorXd GetState(double time) const;
 
-  // Return a pointer to the value function being used at this time.
-  const ValueFunction::ConstPtr& GetValueFunction(double time) const;
+  // Return the ID of the value function being used at this time.
+  ValueFunctionId GetControlValueFunction(double time) const;
+  ValueFunctionId GetBoundValueFunction(double time) const;
+
+  // Convert to ROS message.
+  meta_planner_msgs::Trajectory ToRosMessage() const;
 
   // Visualize this trajectory in RVIZ.
-  void Visualize(const ros::Publisher& pub, const std::string& frame_id) const;
+  void Visualize(const ros::Publisher& pub,
+                 const std::string& frame_id) const;
 
   // Print this trajectory to stdout.
   void Print(const std::string& prefix) const;
 
 private:
+  Trajectory() {}
+
   // Compute the color (on a red-blue colormap) at a particular time.
   std_msgs::ColorRGBA Colormap(double time) const;
 
   // Private struct to hold a state and a value function.
   struct StateValue {
     VectorXd state_;
-    ValueFunction::ConstPtr value_;
+    ValueFunctionId control_value_;
+    ValueFunctionId bound_value_;
 
-    StateValue(const VectorXd& state, const ValueFunction::ConstPtr& value)
+    StateValue(const VectorXd& state,
+               ValueFunctionId control_value,
+               ValueFunctionId bound_value)
       : state_(state),
-        value_(value) {}
+        control_value_(control_value),
+        bound_value_(bound_value) {}
     ~StateValue() {}
   };
 
@@ -122,8 +180,14 @@ inline void Trajectory::Clear() {
 // Add a (state, time) tuple to this Trajectory.
 inline void Trajectory::Add(double time,
                             const VectorXd& state,
-                            const ValueFunction::ConstPtr& value) {
-  map_.insert({time, StateValue(state, value)});
+                            ValueFunctionId control_value,
+                            ValueFunctionId bound_value) {
+  map_.insert({ time, StateValue(state, control_value, bound_value) });
+}
+
+// Add a whole other Trajectory to this one.
+inline void Trajectory::Add(const ConstPtr& other) {
+  map_.insert(other->map_.begin(), other->map_.end());
 }
 
 // Check if this trajectory is empty.
@@ -192,5 +256,51 @@ inline double Trajectory::FirstTime() const {
 
   return map_.begin()->first;
 }
+
+inline ValueFunctionId Trajectory::LastControlValueFunction() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to get last ValueFunction of empty trajectory.");
+    throw std::underflow_error("Attempted last ValueFunction of empty trajectory.");
+  }
+#endif
+
+  return (--map_.end())->second.control_value_;
+}
+
+inline ValueFunctionId Trajectory::FirstControlValueFunction() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+    if (IsEmpty()) {
+      ROS_WARN("Tried to get first ValueFunction of empty trajectory.");
+      throw std::underflow_error("Attempted first ValueFunction of empty trajectory.");
+    }
+#endif
+
+    return map_.begin()->second.control_value_;
+  }
+
+inline ValueFunctionId Trajectory::LastBoundValueFunction() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (IsEmpty()) {
+    ROS_WARN("Tried to get last ValueFunction of empty trajectory.");
+    throw std::underflow_error("Attempted last ValueFunction of empty trajectory.");
+  }
+#endif
+
+  return (--map_.end())->second.bound_value_;
+}
+
+inline ValueFunctionId Trajectory::FirstBoundValueFunction() const {
+#ifdef ENABLE_DEBUG_MESSAGES
+    if (IsEmpty()) {
+      ROS_WARN("Tried to get first ValueFunction of empty trajectory.");
+      throw std::underflow_error("Attempted first ValueFunction of empty trajectory.");
+    }
+#endif
+
+    return map_.begin()->second.bound_value_;
+  }
+
+} //\namespace meta
 
 #endif

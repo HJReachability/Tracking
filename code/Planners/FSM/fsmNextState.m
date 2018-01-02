@@ -152,6 +152,8 @@ if vis
   hold on
   plot(newStates(1,:), newStates(2,:), 'r.')
 end
+
+keyboard
 end
 
 function error_check(p, g, params, vis)

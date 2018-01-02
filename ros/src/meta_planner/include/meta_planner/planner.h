@@ -40,43 +40,111 @@
 // operate within a Box. This is because of the way in which subspaces are
 // specified in the constructor.
 //
+// Planners take in two different ValueFunctions: one for the waypoint prior
+// to this plan, and one for the waypoint at the end of this plan.
+// These ValueFunctions should be set such that the outgoing ID is precisely
+// 1 + the incoming ID. In the numerical case, value functions will be ordered:
+// (1), (1 -> 2), (2 -> 3), ... so that planner 1 gets values (1) and (1 -> 2),
+// planner 2 gets values (1 -> 2) and (2 -> 3), etc. In the analytic case,
+// value functions will be ordered (1), (2), (3), ... so that planner 1 gets
+// values (1) and (2), planner 2 gets values (2) and (3), etc. This way,
+// collision checking may be done using the SwitchingTrackingBound() function
+// provided by the outgoing value function for both numeric/analytic cases.
+//
+// In short, the outgoing value function is what is typically meant by _the_
+// value function associated with this Planner. The incoming value function
+// is only used for generating switching tracking bounds.
+//
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef META_PLANNER_PLANNER_H
 #define META_PLANNER_PLANNER_H
 
-#include <meta_planner/value_function.h>
 #include <meta_planner/trajectory.h>
 #include <meta_planner/environment.h>
 #include <meta_planner/box.h>
-#include <meta_planner/types.h>
+#include <value_function/dynamics.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
+#include <utils/message_interfacing.h>
+
+#include <value_function/GeometricPlannerTime.h>
+
+#include <memory>
 
 #include <ros/ros.h>
 
-class Planner {
+namespace meta {
+
+class Planner : private Uncopyable {
 public:
+  typedef std::shared_ptr<Planner> Ptr;
+  typedef std::shared_ptr<const Planner> ConstPtr;
+
+  // Destructor.
   virtual ~Planner() {}
 
+  // Initialize this class from a ROS node.
+  bool Initialize(const ros::NodeHandle& n);
+
   // Derived classes must plan trajectories between two points.
-  virtual Trajectory Plan(
-    const VectorXd& start, const VectorXd& stop) const = 0;
+  // Budget is the time the planner is allowed to take during planning.
+  virtual Trajectory::Ptr Plan(const Vector3d& start,
+                               const Vector3d& stop,
+                               double start_time = 0.0,
+                               double budget = 1.0) const = 0;
+
+  // Shortest possible time to go from start to stop for this planner.
+  double BestPossibleTime(const Vector3d& start, const Vector3d& stop) const;
+
+  // Get the value function associated to this planner. The way incoming and
+  // outgoing value functions are intended to be used, this corresponds to
+  // the outgoing value function.
+  inline ValueFunctionId GetIncomingValueFunction() const {
+    return incoming_value_;
+  }
+
+  inline ValueFunctionId GetOutgoingValueFunction() const {
+    return outgoing_value_;
+  }
 
 protected:
-  explicit Planner(const ValueFunction::ConstPtr& value,
+  explicit Planner(ValueFunctionId incoming_value,
+                   ValueFunctionId outgoing_value,
                    const Box::ConstPtr& space,
-                   const std::vector<size_t>& dimensions)
-    : value_(value),
+                   const Dynamics::ConstPtr& dynamics)
+    : incoming_value_(incoming_value),
+      outgoing_value_(outgoing_value),
       space_(space),
-      dimensions_(dimensions) {}
+      dynamics_(dynamics) {
+    if (incoming_value_ + 1 != outgoing_value_)
+      ROS_ERROR("Outgoing value function not successor to incoming one.");
+  }
 
-  // Value function.
-  const ValueFunction::ConstPtr value_;
+  // Value functions.
+  const ValueFunctionId incoming_value_;
+  const ValueFunctionId outgoing_value_;
 
   // State space (with collision checking).
   const Box::ConstPtr space_;
 
-  // Dimensions within the overall state space in which this Planner operates.
-  const std::vector<size_t> dimensions_;
+  // Dynamics.
+  const Dynamics::ConstPtr dynamics_;
+
+  // Server to query value functions best possible time.
+  mutable ros::ServiceClient best_time_srv_;
+  std::string best_time_name_;
+
+  // Initialization and naming.
+  bool initialized_;
+  std::string name_;
+
+private:
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 };
+
+} //\namespace meta
 
 #endif

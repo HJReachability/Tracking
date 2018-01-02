@@ -35,9 +35,11 @@ end
 function dx = dynamics_cell_helper(obj, x, u, d, dims, dim)
 switch dim
   case 1
-    dx = (x{dims==4}).*cos(x{dims==3}) - d{1} - d{2};
+    %dx = (x{dims==4}).*cos(x{dims==3}) - d{1} - d{2};
+    dx = (x{4}).*cos(x{3}) - d{1} - d{2};
   case 2
-    dx = (x{dims==4}).*sin(x{dims==3}) - d{3} - d{4};
+    %dx = (x{dims==4}).*sin(x{dims==3}) - d{3} - d{4};
+    dx = (x{4}).*sin(x{3}) - d{3} - d{4};
   case 3
     dx = u{1};
   case 4

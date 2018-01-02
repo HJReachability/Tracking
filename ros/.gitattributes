@@ -1,0 +1,2 @@
+src/meta_planner/bagfiles/hw_demo_recording_2017-09-09-14-01-11.bag filter=lfs diff=lfs merge=lfs -text
+src/meta_planner/bagfiles/hw_demo_recording_2017-09-10-10-06-18.bag filter=lfs diff=lfs merge=lfs -text

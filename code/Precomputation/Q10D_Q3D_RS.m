@@ -179,6 +179,9 @@ if strcmp(targetType,'quadratic')
   TEB = sqrt(TEB);
 end
 
+save(['Quad10D_g' num2str(gNZ(1)) '_dt0' num2str(dt*100) '_t' ...
+    num2str(tMax) '_' accuracy '_' targetType '.mat'], 'sD_X', ...
+    'sD_Z', 'dataX', 'dataZ', 'tau', '-v7.3')
 %save(sprintf('%s_%f.mat', mfilename, now), 'sD_X', 'sD_Z', 'dataX', 'dataZ', ...
 %  'tau', '-v7.3')
 end

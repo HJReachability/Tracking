@@ -1,0 +1,187 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%2345678901234567890123456789012345678901234567890123456789012345678901234567890
+%        1         2         3         4         5         6         7         8
+
+%\documentclass[letterpaper, 10 pt, conference]{ieeeconf}  % Comment this line out
+                                                          % if you need a4paper
+\documentclass[letterpaper, 10pt, conference]{ieeeconf}      % Use this line for a4
+                                                          % paper
+
+ 
+\IEEEoverridecommandlockouts                              % This command is only
+                                                          % needed if you want to
+                                                          % use the \thanks command
+\overrideIEEEmargins
+% See the \addtolength command later in the file to balance the column lengths
+% on the last page of the document
+
+\usepackage{amsmath}    % need for sub equations
+\usepackage{amsfonts}
+\usepackage{graphicx}   % need for figures
+\usepackage{subcaption}
+\usepackage{epsfig} 
+\usepackage{algorithmic}
+\usepackage{color}
+\usepackage[normalem]{ulem}
+\usepackage{cancel}
+\usepackage{amssymb}
+\usepackage{color}
+%\usepackage{my_macros}
+\usepackage[ruled,vlined,titlenotnumbered]{algorithm2e} 
+\usepackage{cite}
+\usepackage{float}
+
+\usepackage{url}
+\usepackage{hyperref}
+\renewcommand{\ttdefault}{cmtt}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\xset}{\mathcal{X}}
+\newcommand{\yset}{\mathcal{Y}}
+\newcommand{\xfset}{\mathbb{X}}
+\newcommand{\yfset}{\mathbb{Y}}
+
+
+\newcommand{\reachset}{\mathcal{V}}
+\newcommand{\targetset}{\mathcal{L}}
+\newcommand{\traj}{\zeta} % trajectory
+
+
+\newcommand{\pcset}{\mathcal{U}_p} %planner control set
+\newcommand{\pcfset}{\mathbb{U}_p} %planner control function set
+\newcommand{\tcset}{\mathcal{U}_s} %tracker control set
+\newcommand{\tcfset}{\mathbb{U}_s} %tracker control funciton set
+\newcommand{\dset}{\mathcal{D}}
+\newcommand{\dfset}{\mathbb{D}}
+
+\newcommand{\pset}{\mathcal{P}} %planner set set
+\newcommand{\tset}{\mathcal{S}} %tracker set
+\newcommand{\rset}{\mathcal{R}}
+
+\newcommand{\tvar}{t}
+\newcommand{\thor}{T} % Time horizon
+
+\newcommand{\tstate}{s} % Tracker state
+\newcommand{\pstate}{p} % Planner state
+\newcommand{\rstate}{r} % Relative state
+
+
+\newcommand{\ttraj}{\xi_{\tdyn}} % Tracker trajectory
+\newcommand{\ptraj}{\xi_{\pdyn}} %Planner trajectory
+\newcommand{\rtraj}{\xi_\rdyn}
+
+\newcommand{\senseDist}{m}
+
+
+\newcommand{\tctrl}{u_s} % Tracker control
+\newcommand{\dstb}{d} % Disturbance
+\newcommand{\pctrl}{u_p} % Planner control
+
+\newcommand{\tdyn}{f} % Tracker dynamics
+\newcommand{\pdyn}{h} % Planner Dynamics
+\newcommand{\rdyn}{g} % Relative dynamics
+
+\newcommand{\plannerfunc}{j}
+
+\newcommand{\ptind}{i} % Index of vehicle state corresponding to planner state
+\newcommand{\ptmat}{Q} % Matrix for transforming planner state to the same length as tracker state
+\newcommand{\tpmat}{Q^T}
+
+\newcommand{\errfunc}{l} % Error function
+\newcommand{\valfunc}{V} % Value function
+
+\newcommand{\deriv}{\nabla\valfunc} %gradient look-up table
+
+\newcommand{\dx}{\Delta x} %distance allowed in a time step
+\newcommand{\dt}{\Delta t} %time step
+
+\newcommand{\obsSense}{\mathcal{O}_{sense}}
+\newcommand{\obsAug}{\mathcal{O}_{aug}}
+
+
+
+\newcommand{\TEB}{\mathcal B} % tracking error bound
+
+\newtheorem{thm}{Theorem}
+\newtheorem{claim}{Claim}
+\newtheorem{rem}{Remark}
+\newtheorem{prop}{Proposition}
+
+\newcommand{\MCnote}{\textcolor{blue}}
+\newcommand{\SHnote}{\textcolor{red}}
+
+\title{\Large \bf FaSTrack: a Modular Framework for Fast and Guaranteed Safe Motion Planning} 
+
+\author{Sylvia L. Herbert*, Mo Chen*, SooJean Han, Somil Bansal, Jaime F. Fisac, and Claire J. Tomlin
+\thanks{
+	This research is supported by NSF under the CPS Frontiers VehiCal project (1545126), by the UC-Philippine-California Advanced Research Institute under project IIID-2016-005, and by the ONR MURI Embedded Humans (N00014-16-1-2206). The research of S. Herbert is supported by the NSF GRFP and the UC Berkeley Chancellor's Fellowship Program.}
+\thanks{* Both authors contributed equally to this work. All authors are with the Department of Electrical Engineering and Computer Sciences, UC Berkeley. \{sylvia.herbert, mochen72, soojean, somil, jfisac, tomlin\}@berkeley.edu}}
+
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+%%%
+\begin{abstract}
+Fast and safe navigation of dynamical systems through \textit{a priori} unknown cluttered environments is vital to many applications of autonomous systems. However, trajectory planning for autonomous systems is computationally intensive, often requiring simplified dynamics that sacrifice safety and dynamic feasibility in order to plan efficiently. Conversely, safe trajectories can be computed using more sophisticated dynamic models, but this is typically too slow to be used for real-time planning. We present the new algorithm FaSTrack: Fast and Safe Tracking. A path or trajectory planner using simplified dynamics to plan quickly can be incorporated into the FaSTrack framework, which provides a safety controller for the vehicle along with a guaranteed tracking error bound. This bound captures all possible deviations due to high dimensional dynamics and external disturbances. FaSTrack is modular and can be used with most current path or trajectory planners. We demonstrate this framework using a 10D nonlinear quadrotor model tracking a 3D path obtained from an RRT planner.
+%FaSTRackHD lets you take your favorite planning system and compute real-time trajectories based on simplified dynamics. FasSTRackHD then 
+%Our new algorithm uses nearly any simplified dynamics with planner based on simplified dynamics, while simultaneously tracking the trajectory using complex dynamics.
+
+%  FaSTRackHD is robust to external disturbances, guaranteed safe, and provides optimal control for the autonomous system.   of your favorite path or trajectory planner 
+
+%hat incorporates safety guarantees, even in the presence of external disturbances. 
+
+%which allows real-time path planning using simplified dynamics, yet maintains safety guarantees as well as providing optimal safety control for the autonomous system to track the planner. FaSTrackHD is modular and can be used to add robustness to most path or trajectory planners. 
+% This is done by an offline precomputation and an online planning computation. The offline computation consists of formulating a capture-avoid game between a simplified planning model and and more sophisticated tracking model. We then use Hamilton Jacobi reachability analysis to find the maximum possible tracking error bound between these two systems, as well as a safety control function mapping the current relative state between the systems to the optimal safety control for the tracking system. Online, path or trajectory planning can be performed in real-time using the planning model, where sensed obstacles are augmented by the tracking error bound. The tracking error bound captures all possible deviations that may occur due to nonlinearities or external disturbances. As the planning occurs, the autonomous system determines the relative state between itself and the next desired position, and uses the precomputed safety control function to find the optimal tracking control. 
+\end{abstract}
+
+\input{introduction.tex}
+% Introduction (.5-1p)
+%%Tracking with quadrotors is a need
+%%There exist methods that work in real time and methods that work for safety but not very many for both
+%%Goal: combine both in a simple way
+
+\input{relatedwork.tex}
+% Related Work (1p)
+%%work on fast planning
+%%work on safe planning
+%%work on both
+%%how ours is different
+
+\input{formulation.tex}
+% formally introduce the problem
+
+\input{framework.tex}
+%framework of algorithm
+
+\input{precomp.tex}
+% Computing capture basin (~2.5p)
+%% HJ Reachability (~1p)
+%% Relative dynamics, setup, etc. (~1p)
+%% Capture basin computation (~0.5p)
+
+\input{online.tex}
+% online part of framework
+
+\input{results.tex}
+% Numerical Simulations (1-2p)
+%% demonstrate feasibility (~.5)
+%% real-time computation load (~.5)
+%% comparison to other methods (~.5)
+
+\input{conclusion.tex}
+% Conclusion (0.5p)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\addtolength{\textheight}{1cm}   % This command serves to balance the column lengths
+                                  % on the last page of the document manually. It shortens
+                                  % the textheight of the last page by a suitable amount.
+                                  % This command does not take effect until the next page
+                                  % so it should come on the page before the last. Make
+                                  % sure that you do not shorten the textheight too much.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}

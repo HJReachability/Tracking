@@ -91,7 +91,8 @@ classdef P4D_Q2D_Rel < DynSys
       obj.nd = 4;
       
       obj.pdim = [find(dims == 1) find(dims == 2)]; % Position dimensions
-      obj.vdim = [find(dims == 3)]; % angle dimensions
+      obj.hdim = find(dims == 3); % angle dimensions
+      obj.vdim = find(dims == 4); % velocity dimensions
     end
   end
 end
