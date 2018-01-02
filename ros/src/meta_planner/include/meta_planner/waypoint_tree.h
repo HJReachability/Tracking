@@ -47,24 +47,30 @@
 
 #include <meta_planner/waypoint.h>
 #include <meta_planner/flann_tree.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
+#include <iostream>
 #include <list>
+#include <limits>
+
+namespace meta {
 
 class WaypointTree : private Uncopyable {
 public:
-  explicit WaypointTree(const VectorXd& start, const VectorXd& stop);
   ~WaypointTree() {}
+  explicit WaypointTree(const Vector3d& start,
+                        ValueFunctionId start_value,
+                        double start_time = 0.0);
 
   // Find nearest neighbors in the tree.
   inline std::vector<Waypoint::ConstPtr>
-  KnnSearch(VectorXd& query, size_t k) const {
+  KnnSearch(Vector3d& query, size_t k) const {
     return kdtree_.KnnSearch(query, k);
   }
 
   inline std::vector<Waypoint::ConstPtr>
-  RadiusSearch(VectorXd& query, double r) const {
+  RadiusSearch(Vector3d& query, double r) const {
     return kdtree_.RadiusSearch(query, r);
   }
 
@@ -74,15 +80,24 @@ public:
   // Get best (fastest) trajectory (if it exists).
   Trajectory::Ptr BestTrajectory() const;
 
+  // Get best total time (seconds) of any valid trajectory.
+  // NOTE! Returns positive infinity if no valid trajectory exists.
+  double BestTime() const;
+
 private:
   // Root of the tree.
-  const Waypoint::ConstPtr root_;
+  Waypoint::ConstPtr root_;
 
   // Best terminal waypoint.
   Waypoint::ConstPtr terminus_;
 
+  // Start time.
+  const double start_time_;
+
   // Kdtree storing all waypoints for easy nearest neighbor searching.
   FlannTree kdtree_;
 };
+
+} //\namespace meta
 
 #endif

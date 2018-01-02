@@ -44,8 +44,13 @@
 
 #include <meta_planner/waypoint_tree.h>
 
-WaypointTree::WaypointTree(const VectorXd& start, const VectorXd& stop)
-  : root_(Waypoint::Create(start, 0.0, nullptr, nullptr)) {
+namespace meta {
+
+WaypointTree::WaypointTree(const Vector3d& start,
+                           ValueFunctionId start_value,
+                           double start_time)
+  : root_(Waypoint::Create(start, start_value, nullptr, nullptr)),
+    start_time_(start_time) {
   kdtree_.Insert(root_);
 }
 
@@ -54,11 +59,24 @@ void WaypointTree::Insert(const Waypoint::ConstPtr& waypoint, bool is_terminal) 
   kdtree_.Insert(waypoint);
 
   if (is_terminal) {
-    if (terminus_ == nullptr)
+    if (terminus_ == nullptr) {
+      ROS_WARN("Set initial terminus.");
       terminus_ = waypoint;
-    else if (waypoint->time_ < terminus_->time_)
+    }
+    else if (waypoint->traj_->LastTime() < terminus_->traj_->LastTime()) {
+      ROS_WARN("Updated terminus.");
       terminus_ = waypoint;
+    }
   }
+}
+
+// Get best total time (seconds) of any valid trajectory. Returns negative
+// if no valid trajectory exists.
+double WaypointTree::BestTime() const {
+  if (terminus_ == nullptr)
+    return std::numeric_limits<double>::infinity();
+
+  return terminus_->traj_->LastTime() - start_time_;
 }
 
 // Get best (fastest) trajectory (if it exists).
@@ -72,10 +90,12 @@ Trajectory::Ptr WaypointTree::BestTrajectory() const {
 
   // Walk back from the terminus, and append trajectories as we go.
   Waypoint::ConstPtr waypoint = terminus_;
-  while (waypoint != nullptr) {
+  while (waypoint != nullptr && waypoint->traj_ != nullptr) {
     traj->Add(waypoint->traj_);
     waypoint = waypoint->parent_;
   }
 
   return traj;
 }
+
+} //\namespace meta

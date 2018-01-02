@@ -44,26 +44,29 @@
 #define META_PLANNER_WAYPOINT_H
 
 #include <meta_planner/trajectory.h>
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
 
 #include <memory>
+
+namespace meta {
 
 struct Waypoint : private Uncopyable {
 public:
   typedef std::shared_ptr<const Waypoint> ConstPtr;
 
   // Member variables.
-  const VectorXd point_;
-  const double time_;
-  const Trajectory::ConstPtr traj_;
+  const Vector3d point_;
+  const ValueFunctionId value_;
+  const Trajectory::Ptr traj_;
   const ConstPtr parent_;
 
   // Factory method. Use this instead of the constructor.
-  static inline ConstPtr Create(const VectorXd& point, double time,
-                                const Trajectory::ConstPtr& traj,
+  static inline ConstPtr Create(const Vector3d& point,
+                                ValueFunctionId value,
+                                const Trajectory::Ptr& traj,
                                 const ConstPtr& parent) {
-    ConstPtr ptr(new Waypoint(point, time, traj, parent));
+    ConstPtr ptr(new Waypoint(point, value, traj, parent));
     return ptr;
   }
 
@@ -71,13 +74,16 @@ public:
   ~Waypoint() {}
 
 private:
-  explicit Waypoint(const VectorXd& point, double time,
-                    const Trajectory::ConstPtr& traj,
+  explicit Waypoint(const Vector3d& point,
+                    ValueFunctionId value,
+                    const Trajectory::Ptr& traj,
                     const ConstPtr& parent)
     : point_(point),
+      value_(value),
       traj_(traj),
-      parent_(parent),
-      time_(time) {}
+      parent_(parent) {}
 };
+
+} //\namespace meta
 
 #endif

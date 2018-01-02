@@ -14,12 +14,21 @@ find_package(Eigen3 REQUIRED)
 find_package(ompl REQUIRED)
 find_package(Matio REQUIRED)
 find_package(Flann REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  rospy
   visualization_msgs
+  geometry_msgs
   std_msgs
   tf2_ros
+  crazyflie_msgs
+  crazyflie_utils
+  meta_planner_msgs
+  value_function
+  utils
+  message_generation
 )
 
 catkin_package(
@@ -27,14 +36,23 @@ catkin_package(
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
     roscpp
+    rospy
     visualization_msgs
+    geometry_msgs
     std_msgs
     tf2_ros
+    crazyflie_msgs
+    crazyflie_utils
+    meta_planner_msgs
+    value_function
+    utils
+    message_runtime
   DEPENDS
     EIGEN3
     OMPL
     MATIO
     FLANN
+    BOOST
 )
 
 option(ENABLE_DEBUG_MESSAGES "Turn on to enable bound checking and debug messages" ON)
@@ -53,6 +71,7 @@ include_directories(
   ${OMPL_INCLUDE_DIRS}
   ${MATIO_INCLUDE_DIRS}
   ${FLANN_INCLUDE_DIRS}
+  ${BOOST_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -61,6 +80,7 @@ link_directories(
   ${OMPL_LIBRARY_DIRS}
   ${MATIO_LIBRARY_DIRS}
   ${FLANN_LIBRARY_DIRS}
+  ${BOOST_LIBRARY_DIRS}
 )
 
 file(GLOB_RECURSE ${PROJECT_NAME}_srcs ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/*.cpp)
@@ -73,6 +93,7 @@ target_link_libraries(${PROJECT_NAME}
   ${OMPL_LIBRARIES}
   ${MATIO_LIBRARIES}
   ${FLANN_LIBRARIES}
+  ${BOOST_LIBRARIES}
 )
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
@@ -83,6 +104,7 @@ target_link_libraries(${PROJECT_NAME}
   ${OMPL_LIBRARIES}
   ${MATIO_LIBRARIES}
   ${FLANN_LIBRARIES}
+  ${BOOST_LIBRARIES}
 )
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
@@ -92,6 +114,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
   get_filename_component(exec_name ${executable} NAME_WE)
   message(STATUS "Including executable   \"${BoldBlue}${exec_name}${ColorReset}\".")
   add_executable(${exec_name} ${executable})
+  add_dependencies(${exec_name} ${catkin_EXPORTED_TARGETS})
   target_link_libraries(${exec_name}
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
@@ -99,6 +122,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
     ${OMPL_LIBRARIES}
     ${MATIO_LIBRARIES}
     ${FLANN_LIBRARIES}
+    ${BOOST_LIBRARIES}
   )
 endforeach()
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -108,6 +132,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
   get_filename_component(exec_name ${executable} NAME_WE)
   message(STATUS "Including executable   \"${BoldBlue}${exec_name}${ColorReset}\".")
   add_executable(${exec_name} ${executable})
+  add_dependencies(${exec_name} ${catkin_EXPORTED_TARGETS})
   target_link_libraries(${exec_name}
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
@@ -115,7 +140,8 @@ foreach(executable ${${PROJECT_NAME}_execs})
     ${OMPL_LIBRARIES}
     ${MATIO_LIBRARIES}
     ${FLANN_LIBRARIES}
-  )
+    ${BOOST_LIBRARIES}
+    )
 endforeach()
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
@@ -135,5 +161,6 @@ if(CATKIN_ENABLE_TESTING)
     ${OMPL_LIBRARIES}
     ${MATIO_LIBRARIES}
     ${FLANN_LIBRARIES}
+    ${BOOST_LIBRARIES}
   )
 endif()

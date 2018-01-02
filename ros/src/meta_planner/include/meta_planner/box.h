@@ -51,23 +51,28 @@
 #include <algorithm>
 #include <random>
 
+namespace meta {
+
 class Box : public Environment {
 public:
   typedef std::shared_ptr<Box> Ptr;
   typedef std::shared_ptr<const Box> ConstPtr;
 
   // Factory method. Use this instead of the constructor.
-  static Ptr Create(size_t dimension);
+  static Ptr Create();
 
   // Destructor.
   virtual ~Box() {}
 
   // Inherited from Environment, but can be overwritten by child classes.
-  virtual VectorXd Sample() const;
+  virtual Vector3d Sample() const;
 
   // Inherited from Environment, but can be overwritten by child classes.
   // Returns true if the state is a valid configuration.
-  virtual bool IsValid(const VectorXd& state) const;
+  // Takes in incoming and outgoing value functions. See planner.h for details.
+  virtual bool IsValid(const Vector3d& position,
+                       ValueFunctionId incoming_value,
+                       ValueFunctionId outgoing_value) const;
 
   // Inherited by Environment, but can be overwritten by child classes.
   // Assumes that the first <=3 dimensions correspond to R^3.
@@ -75,22 +80,20 @@ public:
                          const std::string& frame_id) const;
 
   // Set bounds in each dimension.
-  void SetBounds(const VectorXd& lower, const VectorXd& upper);
+  void SetBounds(const Vector3d& lower, const Vector3d& upper);
 
   // Get the dimension and upper/lower bounds as const references.
-  size_t Dimension() const { return dimension_; }
-  const VectorXd& LowerBounds() const { return lower_; }
-  const VectorXd& UpperBounds() const { return upper_; }
-  VectorXd LowerBounds(const std::vector<size_t>& dimensions) const;
-  VectorXd UpperBounds(const std::vector<size_t>& dimensions) const;
+  inline const Vector3d& LowerBounds() const { return lower_; }
+  inline const Vector3d& UpperBounds() const { return upper_; }
 
 protected:
-  Box(size_t dimension);
+  explicit Box();
 
-  // Dimension and bounds.
-  const size_t dimension_;
-  VectorXd lower_;
-  VectorXd upper_;
+  // Bounds.
+  Vector3d lower_;
+  Vector3d upper_;
 };
+
+} //\namespace meta
 
 #endif

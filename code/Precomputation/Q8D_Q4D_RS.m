@@ -2,8 +2,10 @@ function Q8D_Q4D_RS(gN, visualize)
 %Q10D_Q4D_RS Summary of this function goes here
 %   Detailed explanation goes here
 
+addpath(genpath('..'))
+
 if nargin < 1
-  gN = [25; 25; 15; 9];
+  gN = [41; 41; 25; 21];
 end
 
 if nargin < 2
@@ -11,8 +13,8 @@ if nargin < 2
 end
 
 %% Grid and cost
-gMin = [-5; -5; -35*pi/180; -1];
-gMax = [ 5;  5;  35*pi/180;  1];
+gMin = [-2; -4; -35*pi/180; -1];
+gMax = [ 2;  4;  35*pi/180;  1];
 sD.grid = createGrid(gMin, gMax, gN);
 
 extraArgs.targets = -sD.grid.xs{1}.^2;
@@ -21,8 +23,8 @@ extraArgs.targets = -sD.grid.xs{1}.^2;
 uMin = [-20/180*pi; -20/180*pi];
 uMax = [20/180*pi; 20/180*pi];
 
-aMin = [-1.25; -1.25];
-aMax = [1.25; 1.25];
+aMin = [-0.5; -0.5];
+aMax = [0.5; 0.5];
 
 dMax = [0.1; 0.1];
 dMin = [-0.1; -0.1];
@@ -32,7 +34,7 @@ dims = 1:4;
 sD.dynSys = Q8D_Q4D_Rel([], uMin, uMax, aMin, aMax, dMin, dMax, dims);
 
 %% Otherparameters
-tMax = 5;
+tMax = 15;
 dt = 0.5;
 tau = 0:dt:tMax;
 
@@ -50,12 +52,17 @@ end
 data = HJIPDE_solve(extraArgs.targets, tau, sD, 'none', extraArgs);
 
 %% Save and output worst value
-save(sprintf('%s_%f.mat', mfilename, now), 'sD', 'data', '-v7.3');
-
+minData = ones(size(tau));
 for i = 1:size(data,5)
   data_i = data(:,:,:,:,i);
-  max(data_i(:))
+  minData(i) = max(data_i(:));
+  minData(i)
 end
+
+deriv = computeGradients(sD.grid, data);
+
+save_filename = sprintf('%s_%f.mat', mfilename, now);
+save(save_filename, 'sD', 'data', 'tau', 'minData', 'deriv', '-v7.3');
 
 keyboard
 end

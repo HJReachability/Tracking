@@ -51,7 +51,7 @@
 
 #include <meta_planner/planner.h>
 #include <meta_planner/box.h>
-#include <meta_planner/types.h>
+#include <utils/types.h>
 
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/planners/bitstar/BITstar.h>
@@ -62,6 +62,8 @@
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <memory>
 
+namespace meta {
+
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
@@ -70,78 +72,75 @@ class OmplPlanner : public Planner {
 public:
   ~OmplPlanner() {}
 
-  static Planner::ConstPtr Create(const ValueFunction::ConstPtr& value,
-                       const Box::ConstPtr& space,
-                       const std::vector<size_t>& dimensions,
-                       double speed);
-
+  static Planner::Ptr Create(ValueFunctionId incoming_value,
+                             ValueFunctionId outgoing_value,
+                             const Box::ConstPtr& space,
+                             const Dynamics::ConstPtr& dynamics);
 
   // Derived classes must plan trajectories between two points.
-  Trajectory::Ptr Plan(
-    const VectorXd& start, const VectorXd& stop, double start_time = 0.0) const;
+  Trajectory::Ptr Plan(const Vector3d& start,
+                       const Vector3d& stop,
+                       double start_time = 0.0,
+                       double budget = 1.0) const;
 
 private:
-  explicit OmplPlanner(const ValueFunction::ConstPtr& value,
+  explicit OmplPlanner(ValueFunctionId incoming_value,
+                       ValueFunctionId outgoing_value,
                        const Box::ConstPtr& space,
-                       const std::vector<size_t>& dimensions,
-                       double speed);
+                       const Dynamics::ConstPtr& dynamics);
 
-  // Convert between OMPL states and VectorXds.
-  VectorXd FromOmplState(const ob::State* state) const;
-
-  // Robot speed.
-  const double speed_;
+  // Convert between OMPL states and Vector3ds.
+  Vector3d FromOmplState(const ob::State* state) const;
 };
 
 // ------------------------------- IMPLEMENTATION --------------------------- //
 
 template<typename PlannerType>
-OmplPlanner<PlannerType>::OmplPlanner(const ValueFunction::ConstPtr& value,
+OmplPlanner<PlannerType>::OmplPlanner(ValueFunctionId incoming_value,
+                                      ValueFunctionId outgoing_value,
                                       const Box::ConstPtr& space,
-                                      const std::vector<size_t>& dimensions,
-                                      double speed)
-  : Planner(value, space, dimensions),
-    speed_((speed <= 0.0) ? 1.0 : speed) {
-#ifdef ENABLE_DEBUG_MESSAGES
-  if (speed_ <= 0.0)
-    ROS_ERROR("Speed was negative. Setting to unity.");
-#endif
-}
-
+                                      const Dynamics::ConstPtr& dynamics)
+  : Planner(incoming_value, outgoing_value, space, dynamics) {}
 
 // Create OmplPlanner pointer.
 template<typename PlannerType>
-inline Planner::ConstPtr OmplPlanner<PlannerType>::Create(const ValueFunction::ConstPtr& value,
-                                      const Box::ConstPtr& space,
-                                      const std::vector<size_t>& dimensions,
-							  double speed){
- Planner::ConstPtr ptr(new OmplPlanner<PlannerType>(value, space, dimensions, speed));
- return ptr;
+inline Planner::Ptr OmplPlanner<PlannerType>::
+Create(ValueFunctionId incoming_value,
+       ValueFunctionId outgoing_value,
+       const Box::ConstPtr& space,
+       const Dynamics::ConstPtr& dynamics) {
+  Planner::Ptr ptr(new OmplPlanner<PlannerType>(
+    incoming_value, outgoing_value, space, dynamics));
+  return ptr;
 }
-
-
 
 // Derived classes must plan trajectories between two points.
 template<typename PlannerType>
-Trajectory::Ptr OmplPlanner<PlannerType>::Plan(
-  const VectorXd& start, const VectorXd& stop, double start_time) const {
-#ifdef ENABLE_DEBUG_MESSAGES
-  if (start.size() != stop.size() || start.size() != space_->Dimension()) {
-    ROS_ERROR("Start/stop state dimensions inconsistent with space dimension.");
+Trajectory::Ptr OmplPlanner<PlannerType>::
+Plan(const Vector3d& start, const Vector3d& stop,
+     double start_time, double budget) const {
+  // Check that both start and stop are in bounds.
+  if (!space_->IsValid(start, incoming_value_, outgoing_value_)) {
+    ROS_WARN_THROTTLE(1.0, "Start point was in collision or out of bounds.");
     return nullptr;
   }
-#endif
+
+  if (!space_->IsValid(stop, incoming_value_, outgoing_value_)) {
+    ROS_WARN_THROTTLE(1.0, "Stop point was in collision or out of bounds.");
+    return nullptr;
+  }
 
   // Create the OMPL state space corresponding to this environment.
   auto ompl_space(
-    std::make_shared<ob::RealVectorStateSpace>(dimensions_.size()));
+    std::make_shared<ob::RealVectorStateSpace>(3));
 
   // Set bounds for the environment.
-  const VectorXd& lower = space_->LowerBounds(dimensions_);
-  const VectorXd& upper = space_->UpperBounds(dimensions_);
-  ob::RealVectorBounds ompl_bounds(dimensions_.size());
+  const Vector3d lower = space_->LowerBounds();
+  const Vector3d upper = space_->UpperBounds();
 
-  for (size_t ii = 0; ii < dimensions_.size(); ii++) {
+  ob::RealVectorBounds ompl_bounds(3);
+
+  for (size_t ii = 0; ii < 3; ii++) {
     ompl_bounds.setLow(ii, lower(ii));
     ompl_bounds.setHigh(ii, upper(ii));
   }
@@ -151,14 +150,15 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(
   // Create a SimpleSetup instance and set the state validity checker function.
   og::SimpleSetup ompl_setup(ompl_space);
   ompl_setup.setStateValidityChecker([&](const ob::State* state) {
-      return space_->IsValid(FromOmplState(state)); });
+      return space_->IsValid(FromOmplState(state),
+                             incoming_value_, outgoing_value_); });
 
   // Set the start and stop states.
   ob::ScopedState<ob::RealVectorStateSpace> ompl_start(ompl_space);
   ob::ScopedState<ob::RealVectorStateSpace> ompl_stop(ompl_space);
-  for (size_t ii = 0; ii < dimensions_.size(); ii++) {
-    ompl_start[ii] = start(dimensions_[ii]);
-    ompl_stop[ii] = stop(dimensions_[ii]);
+  for (size_t ii = 0; ii < 3; ii++) {
+    ompl_start[ii] = start(ii);
+    ompl_stop[ii] = stop(ii);
   }
 
   ompl_setup.setStartAndGoalStates(ompl_start, ompl_stop);
@@ -169,31 +169,36 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(
   ompl_setup.setPlanner(ompl_planner);
 
   // Solve. Parameter is the amount of time (in seconds) used by the solver.
-  const ob::PlannerStatus solved = ompl_setup.solve(1.0);
+  const ob::PlannerStatus solved = ompl_setup.solve(budget);
 
   if (solved) {
     const og::PathGeometric& solution = ompl_setup.getSolutionPath();
 
     // Populate the Trajectory with states and time stamps.
-    Trajectory::Ptr traj = Trajectory::Create();
+    std::vector<Vector3d> positions;
+    std::vector<double> times;
+    std::vector<ValueFunctionId> values;
+
     double time = start_time;
     for (size_t ii = 0; ii < solution.getStateCount(); ii++) {
-      const VectorXd state = FromOmplState(solution.getState(ii));
-
-      // Catch first state.
-      if (ii == 0)
-        traj->Add(time, state, value_);
+      const Vector3d position = FromOmplState(solution.getState(ii));
 
       // Handle all other states.
-      // Assuming speed is isotropic.
-      // TODO: make this more general.
-      else {
-        time += (state - traj->LastState()).norm() / speed_;
-        traj->Add(time, state, value_);
+      if (ii > 0) {
+        const double dt = BestPossibleTime(positions.back(), position);
+        time += dt;
       }
+
+      times.push_back(time);
+      positions.push_back(position);
+      values.push_back(incoming_value_);
     }
 
-    return traj;
+    // Convert to full state space. Make sure to use the INCOMING VALUE!
+    std::vector<VectorXd> full_states =
+      dynamics_->LiftGeometricTrajectory(positions, times);
+
+    return Trajectory::Create(times, full_states, values, values);
   }
 
   ROS_WARN("OMPL Planner could not compute a solution.");
@@ -202,24 +207,25 @@ Trajectory::Ptr OmplPlanner<PlannerType>::Plan(
 
 // Convert between OMPL states and VectorXds.
 template<typename PlannerType>
-VectorXd OmplPlanner<PlannerType>::FromOmplState(
+Vector3d OmplPlanner<PlannerType>::FromOmplState(
   const ob::State* state) const {
 #ifdef ENABLE_DEBUG_MESSAGES
   if (!state) {
     ROS_ERROR("State pointer was null.");
-    return VectorXd::Zero(space_->Dimension());
+    return Vector3d::Zero();
   }
 #endif
 
   const ob::RealVectorStateSpace::StateType* cast_state =
     static_cast<const ob::RealVectorStateSpace::StateType*>(state);
 
-  VectorXd converted = VectorXd::Zero(space_->Dimension());
-  for (size_t ii = 0; ii < dimensions_.size(); ii++)
-    converted(dimensions_[ii]) = cast_state->values[ii];
+  Vector3d converted;
+  for (size_t ii = 0; ii < 3; ii++)
+    converted(ii) = cast_state->values[ii];
 
   return converted;
 }
 
+} //\namespace meta
 
 #endif

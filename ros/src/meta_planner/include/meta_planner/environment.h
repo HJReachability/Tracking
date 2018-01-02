@@ -43,24 +43,37 @@
 #ifndef META_PLANNER_ENVIRONMENT_H
 #define META_PLANNER_ENVIRONMENT_H
 
-#include <meta_planner/types.h>
-#include <meta_planner/uncopyable.h>
+#include <utils/types.h>
+#include <utils/uncopyable.h>
+
+#include <value_function/SwitchingTrackingBoundBox.h>
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include <random>
 #include <string>
 
+namespace meta {
+
 class Environment : private Uncopyable {
 public:
   virtual ~Environment() {}
 
+  // Initialize this class from a ROS node.
+  bool Initialize(const ros::NodeHandle& n);
+
+  // Re-seed the random engine.
+  inline void Seed(unsigned int seed) const { rng_.seed(seed); }
+
   // Derived classes must be able to sample uniformly from the state space.
-  virtual VectorXd Sample() const = 0;
+  virtual Vector3d Sample() const = 0;
 
   // Derived classes must provide a collision checker which returns true if
-  // and only if the provided state is a valid collision-free configuration.
-  virtual bool IsValid(const VectorXd& state) const = 0;
+  // and only if the provided position is a valid collision-free configuration.
+  // Takes in incoming and outgoing value functions. See planner.h for details.
+  virtual bool IsValid(const Vector3d& position,
+                       ValueFunctionId incoming_value,
+                       ValueFunctionId outgoing_value) const = 0;
 
   // Derived classes must have some sort of visualization through RVIZ.
   virtual void Visualize(const ros::Publisher& pub,
@@ -68,11 +81,27 @@ public:
 
 protected:
   explicit Environment()
-    : rd_(), rng_(rd_()) {}
+    : rng_(rd_()),
+      initialized_(false) {}
+
+  // Server to query value functions for tracking bound.
+  mutable ros::ServiceClient switching_bound_srv_;
+  std::string switching_bound_name_;
 
   // Random number generation.
   std::random_device rd_;
   mutable std::default_random_engine rng_;
+
+  // Initialization and naming.
+  bool initialized_;
+  std::string name_;
+
+private:
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 };
+
+} //\namespace meta
 
 #endif

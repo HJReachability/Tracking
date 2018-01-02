@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "tracker");
   ros::NodeHandle n("~");
 
-  Tracker tracker;
+  meta::Tracker tracker;
 
   if (!tracker.Initialize(n)) {
     ROS_ERROR("%s: Failed to initialize Tracker.",
