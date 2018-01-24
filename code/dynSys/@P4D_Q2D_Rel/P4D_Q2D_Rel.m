@@ -5,8 +5,8 @@ classdef P4D_Q2D_Rel < DynSys
     uMax
     
     % Planner/"Human" bounds
-    pMin
-    pMax
+    pxMax
+    pyMax
     
     %Disturbance bounds
     dMin
@@ -21,8 +21,8 @@ classdef P4D_Q2D_Rel < DynSys
   end
   
   methods
-    function obj = P4D_Q2D_Rel(x, uMin, uMax, pMin, pMax, dMin, dMax, aMin, aMax, dims)
-      % obj = P4D_Q2D_Rel(x, uMin, uMax, pMin, pMax, dMin, dMax, dims)
+    function obj = P4D_Q2D_Rel(x, uMin, uMax, pxMax, pyMax, dMin, dMax, aMin, aMax, dims)
+      % obj = P4D_Q2D_Rel(x, uMin, uMax, pxMax, pyMax, dMin, dMax, dims)
       %     Constructor for a 4D plane relative to a 2D quadrotor
       %
       % Dynamics:
@@ -51,13 +51,13 @@ classdef P4D_Q2D_Rel < DynSys
       end
       
       if nargin < 4
-        pMin = [-1; -1];
-        pMax = [1; 1];
+        pxMax = 1;
+        pyMax = 1;
       end
       
       if nargin < 6
-        dMax = [0.1; 0.1];
-        dMin = [-0.1; -0.1];
+        dMax = 0.1;
+        dMin = -0.1;
       end
       
       if nargin < 8
@@ -75,8 +75,8 @@ classdef P4D_Q2D_Rel < DynSys
       obj.uMin = uMin;
       obj.uMax = uMax;
 
-      obj.pMin = pMin;
-      obj.pMax = pMax;      
+      obj.pxMax = pxMax;
+      obj.pyMax = pyMax;      
       
       obj.dMin = dMin;
       obj.dMax = dMax;
