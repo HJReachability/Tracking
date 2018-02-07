@@ -56,8 +56,8 @@ classdef P4D_Q2D_Rel < DynSys
       end
       
       if nargin < 6
-        dMax = 0.1;
-        dMin = -0.1;
+        dMax = [0.1, 0.1];
+        dMin = [-0.1, -0.1];
       end
       
       if nargin < 8
