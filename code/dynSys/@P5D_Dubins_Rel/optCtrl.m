@@ -10,10 +10,12 @@ if ~(strcmp(uMode, 'max') || strcmp(uMode, 'min'))
 end
 
 if ~iscell(y)
-  deriv = num2cell(y);
+  y = num2cell(y);
 end
 
+convert_back = false;
 if ~iscell(deriv)
+  convert_back = true;
   deriv = num2cell(deriv);
 end
 
@@ -43,5 +45,9 @@ elseif strcmp(uMode, 'min')
   end
 else
   error('Unknown uMode!')
+end
+
+if convert_back
+  uOpt = cell2mat(uOpt);
 end
 end

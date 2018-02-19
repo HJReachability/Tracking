@@ -5,7 +5,7 @@ function P5D_Dubins_RS(gN, visualize)
 addpath(genpath('..'))
 
 if nargin < 1
-  gN = [31; 31; 21; 21; 21];
+  gN = [35; 35; 21; 25; 21];
 end
 
 if nargin < 2
@@ -30,24 +30,30 @@ dims = 1:5;
 
 sD.dynSys = P5D_Dubins_Rel([], aRange, alphaMax, vOther, wMax, dMax, dims);
 
-%% Otherparameters
-tMax = 10;
-dt = 0.5;
+%% Other parameters
+tMax = 5;
+dt = 0.01;
 tau = 0:dt:tMax;
 
 sD.uMode = 'max';
 sD.dMode = 'min';
 
+extraArgs.keepLast =  true;
+
+save_name = sprintf('%s_%f', mfilename, now);
+
 if visualize
   extraArgs.visualize = true;
-  extraArgs.RS_level = -0.05  ;
+  extraArgs.RS_level = -0.05;
   extraArgs.plotData.plotDims = [1 1 1 0 0];
   extraArgs.plotData.projpt = [0; 0];
   extraArgs.deleteLastPlot = true;
-  extraArgs.keepLast =  true;
+  extraArgs.fig_filename = save_name;
 end
 
 data = HJIPDE_solve(extraArgs.targets, tau, sD, 'none', extraArgs);
+
+deriv = computeGradients(sD.grid, data);
 
 %% Save and output worst value
 minData = ones(size(tau));
@@ -57,8 +63,8 @@ for i = 1:size(data,5)
   minData(i)
 end
 
-save_filename = sprintf('%s_%f.mat', mfilename, now);
-save(save_filename, 'sD', 'data', 'tau', 'minData', '-v7.3');
+save_filename = sprintf('%s.mat', save_name);
+save(save_filename, 'sD', 'data', 'tau', 'minData', 'deriv', '-v7.3');
 
 keyboard
 end

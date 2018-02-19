@@ -99,12 +99,14 @@ uMode = 'max';
 % % set initial states to zero
 % true_x = zeros(5,1);
 % true_x(1:3) = start;
-virt_x = start;
 
 % Create real quadrotor syste
 dynSys = sD.dynSys;
 trueQuad = Quad8D(start_x, dynSys.uMin, dynSys.uMax, dynSys.dMin, ...
   dynSys.dMax, 1:8);
+
+virt_x = start_x([1 2 5 6]);
+rel_x = trueQuad.x - Q*virt_x;
 
 % % define when to switch from safety control to performance control
 % small = 1;
@@ -145,11 +147,7 @@ while iter < max_iter && norm(virt_x - goal) > 0.25
 %   virt_x = newStates(:,1);
 %   newStates(:,1) = [];
 
-  %% Hybrid Tracking Controller
-  % 1. find relative state
-  local_start = tic;
-  rel_x = trueQuad.x - Q*virt_x;
-  
+  %% Hybrid Tracking Controller  
   % 2. Determine which controller to use, find optimal control
   % get spatial gradients
   XDims = 1:4;
@@ -176,11 +174,11 @@ while iter < max_iter && norm(virt_x - goal) > 0.25
   % 2. update state of true vehicle
   trueQuad.updateState(u, dt, [], d);
 
-  
   %% Determine which tracking error bound to start with next (takes about 0.2s)
+  rel_x = trueQuad.x - Q*virt_x;
   
-  TEB_ind_x = get_TEB_ind(tau, sD, data, rel_x(1:4), TEB, min_level)
-  TEB_ind_y = get_TEB_ind(tau, sD, data, rel_x(5:8), TEB, min_level)
+  TEB_ind_x = get_TEB_ind(tau, sD, data, rel_x(1:4), TEB, min_level);
+  TEB_ind_y = get_TEB_ind(tau, sD, data, rel_x(5:8), TEB, min_level);
  
   TEB_ind = min(TEB_ind_x, TEB_ind_y);
   TEB_list = flip(TEB(1:TEB_ind-1));
