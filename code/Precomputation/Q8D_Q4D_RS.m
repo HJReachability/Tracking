@@ -12,6 +12,8 @@ if nargin < 3
   visualize = true;
 end
 
+save_name = sprintf('%s_%.2f_%.4f_', mfilename, A, rem(now,1));
+
 %% Grid and cost
 gMin = [-2; -4; -35*pi/180; -2*pi];
 gMax = [ 2;  4;  35*pi/180;  2*pi];
@@ -35,7 +37,7 @@ sD.dynSys = Q8D_Q4D_Rel([], uMin, uMax, aMin, aMax, dMin, dMax, dims);
 
 %% Otherparameters
 tMax = 15;
-dt = 0.5;
+dt = 0.2;
 tau = 0:dt:tMax;
 
 sD.uMode = 'max';
@@ -43,10 +45,11 @@ sD.dMode = 'min';
 
 if visualize
   extraArgs.visualize = true;
-  extraArgs.RS_level = -5;
+  extraArgs.RS_level = -3;
   extraArgs.plotData.plotDims = [1 1 1 0];
   extraArgs.plotData.projpt = 0;
   extraArgs.deleteLastPlot = true;
+  extraArgs.fig_filename = save_name;
 end
 
 data = HJIPDE_solve(extraArgs.targets, tau, sD, 'none', extraArgs);
@@ -61,7 +64,7 @@ end
 
 deriv = computeGradients(sD.grid, data);
 
-save_filename = sprintf('%s_%f_%f.mat', mfilename, A, now);
+save_filename = sprintf('%s.mat', save_name);
 save(save_filename, 'sD', 'data', 'tau', 'minData', 'deriv', '-v7.3');
 
 end
