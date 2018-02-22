@@ -1,7 +1,7 @@
 % Script for saving figures of 2D projection of value function at a suitable
 % level for automatically determining time-varying tracking error bound
 
-numD = 2;
+function tvTEB(numD, fig_filename, level, sD, data, tau)
 
 if numD ~= 2 && numD ~= 3
   return
@@ -17,12 +17,8 @@ else
   [g3D, data3D] = proj(sD.grid, data, [0 0 1 0], 'max');
 end
 
-fig_filename = 'TEB_Q8D_Q4D_0.5';
-
-level = -0.36;
 
 TEB = nan(1,numT);
-
 
 f = figure;
 f.Color = 'white';
@@ -60,4 +56,5 @@ end
 
 if numD == 2
   savefig(sprintf('%s.fig', fig_filename));
+end
 end
