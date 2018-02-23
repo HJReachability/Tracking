@@ -28,14 +28,17 @@ if nargin < 2
     %[TEB_R,Value_R,sD] = FaSTrack_DoubleInt(gN, gMin, gMax, TEB_NN,...
     %    accuracy, pMax, thrustRange, angleRange, dRangeV, dRangeA)
     
-    [TEB_R,Value_R,sD] = FaSTrack_DoubleInt(gN, gMin, gMax, ...
-        TEB_NN, 'veryHigh');
+    [TEB_R,Value_R,sD] = FaSTrack_DoubleInt(flip(gN), flip(gMin), ...
+        flip(gMax), TEB_NN, 'veryHigh');
     
-    %save('/Users/sylvia/Documents/MATLAB/NeuralNetReachability/reachability_data.mat',...
-    %  'TEB_R','Value_R','sD')
+    save('reachability_data.mat','TEB_R','Value_R','sD')
 else
     load(R_file, 'TEB_R','Value_R','sD');
 end
+
+% rotate axes so x axis is velocity to match Vince's stuff
+sD.grid = createGrid(gMin, gMax, gN);
+Value_R = Value_R';
 
 % make relevant variables
 Deriv = computeGradients(sD.grid, Value_R);
@@ -222,6 +225,11 @@ l_slice_NN = legend([h_slice_NN_flat{:}]);
 l_slice_NN.Location = 'northeast';
 grid off
 axis square
+axis square
+set(gca,'FontSize',font_size_other)
+xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
+ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
+
 
 % reachability stuff
 subplot(1,2,2)
@@ -259,6 +267,10 @@ l_slice_R = legend([h_slice_R_flat{:}]);
 l_slice_R.Location = 'northeast';
 grid off
 axis square
+axis square
+set(gca,'FontSize',font_size_other)
+xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
+ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
 
 set(gcf,'Color','white')
 

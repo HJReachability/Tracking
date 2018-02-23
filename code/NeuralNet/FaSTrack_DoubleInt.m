@@ -97,10 +97,7 @@ extraArgs.deleteLastPlot = false;
 [datas, ~] = HJIPDE_solve(data0, tau, ...
     sD, 'maxWithTarget', extraArgs);
 
-% rotate so x axis is velocity to match Vince's stuff
-Value_R = rot90(sqrt(datas),2);
-sD.grid = createGrid(flip(gMin), flip(gMax), flip(gN));
-
+Value_R = sqrt(datas);
 % grab tracking error bound, add a small number to it
 TEB_R = min(Value_R(:))+small;
 end
