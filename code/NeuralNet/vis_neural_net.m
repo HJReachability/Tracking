@@ -1,4 +1,4 @@
-function [fig1info,fig2info,fig3info] = vis_neural_net(NN_file,R_file)
+function [fig1info,fig2info,fig3info] = vis_neural_net(NN_file,NN_analydist_file,R_file)
 %% Load NN stuff
 
 if nargin <1
@@ -22,8 +22,28 @@ clear Value Control_Actions Disturb_Actions lower_bound upper_bound ...
 TEB_NN = Value_NN(gN(1)/2, gN(2)/2);
 g_NN = createGrid(gMin, gMax, double(gN));
 
+%% Load analytic disturbance stuff
+if nargin <2
+    load('/Users/sylvia/Documents/MATLAB/NeuralNetReachability/reachability_neural_net_analydist_data.mat',...
+        'Control_Actions', 'lower_bound', ...
+        'slice_points_y_vy_z_vz', 'spacing_x_vx', 'upper_bound', 'Value');
+else
+    load(NN_analydist_file, 'Control_Actions','lower_bound', ...
+        'slice_points_y_vy_z_vz', 'spacing_x_vx', 'upper_bound', 'Value');
+end
+Value_NN_analydist = Value;
+Control_NN_analydist = Control_Actions;
+gMin_analydist = lower_bound;
+gMax_analydist = upper_bound;
+gN_analydist = double(spacing_x_vx);
+clear Value_analydist Control_Actions_analydist lower_bound_analydist...
+    upper_bound_analydist spacing_x_vx_analydist
+
+% make relevant variables
+TEB_NN_analydist = Value_NN_analydist(gN_analydist(1)/2, gN_analydist(2)/2);
+g_NN_analydist = createGrid(gMin_analydist, gMax_analydist, double(gN_analydist));
 %% Load reachability stuff
-if nargin < 2
+if nargin < 3
     
     %[TEB_R,Value_R,sD] = FaSTrack_DoubleInt(gN, gMin, gMax, TEB_NN,...
     %    accuracy, pMax, thrustRange, angleRange, dRangeV, dRangeA)
@@ -71,6 +91,11 @@ el = 10;
 x_axis='$s_{vx}$';
 y_axis='$r_x$';
 
+%axes
+ax_xy = [gMin(1) gMax(1) gMin(2) gMax(2)];
+maxval = max(Value_NN(:)),max(Value_NN_analydist(:)),max(Value_R(:));
+ax_z = [0 max(maxval(:))];
+
 %% Overlay NN and Reachability slice @ TEB_NN
 
 figure(1)
@@ -88,6 +113,7 @@ h_overlay{2} = contour(sD.grid.xs{1}, sD.grid.xs{2}, Value_R, ...
         'color','red','lineWidth',2,'lineStyle','--');
 legend show
 axis square
+axis(ax_xy)
 set(gca,'FontSize',font_size_other)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
@@ -96,7 +122,7 @@ set(gcf,'Color','white')
 %% Value Functions with control side-by-side
 figure(2)
 clf
-subplot(1,2,1) % Neural net value function
+subplot(1,3,1) % Neural net value function
  actions_NN = unique(Control_NN);
 
  delta_color_NN = floor(length(cmap)/length(actions_NN));
@@ -131,6 +157,7 @@ subplot(1,2,1) % Neural net value function
  end
 view(az,el)
 axis square
+axis([ax_xy ax_z])
 l_value_NN = legend([h_value_NN{:}]);
 l_value_NN.Location = 'northeast';
 grid off
@@ -139,7 +166,52 @@ xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
 zlabel('$V_{NN}$','interpreter','latex','FontSize',font_size_axes)
 
-subplot(1,2,2) %reachability value function
+subplot(1,3,2) % Neural net value function with analytic disturbance
+ actions_NN_analydist = unique(Control_NN_analydist);
+
+ delta_color_NN_analydist = floor(length(cmap)/length(actions_NN_analydist));
+ actionlabels = {'A','B','C','D','E','F','G','H','I'};
+ for ii = 1:length(actions_NN_analydist)
+     action = actions_NN_analydist(ii);
+     temp = Control_NN_analydist;
+     
+     % do some shit to make value only display at control action
+     temp(temp<action) = max(actions_NN_analydist)+1;
+     temp(temp>action)= max(actions_NN_analydist)+1;
+     temp = (temp<(max(actions_NN_analydist)+1));
+     Value_disp = Value_NN_analydist.*temp;
+     Value_disp(Value_disp<0.01) = NaN;
+     
+     % plot
+     h_value_NN_analydist{ii} = ...
+         surf(g_NN_analydist.xs{1}, g_NN_analydist.xs{2}, Value_disp,...
+         'DisplayName',num2str(actionlabels{ii}));
+     hold on
+     h_value_NN_analydist{ii}.EdgeColor = 'none';
+     h_value_NN_analydist{ii}.FaceColor = cmap(ii*delta_color_NN_analydist,:);
+     h_value_NN_analydist{ii}.FaceAlpha = face_alpha;
+     
+     % make flat surface on the bottom
+     flat = ones(size(temp));
+     flat = flat.*temp;
+     flat(flat<1) = NaN;
+     flat = flat -1;
+     h_value_NN_flat_analydist{ii} = surf(g_NN.xs{1}, g_NN.xs{2}, flat);
+     h_value_NN_flat_analydist{ii}.FaceColor = cmap(ii*delta_color_NN_analydist,:);
+     h_value_NN_flat_analydist{ii}.EdgeColor = 'none';   
+ end
+view(az,el)
+axis square
+axis([ax_xy ax_z])
+l_value_NN_analydist = legend([h_value_NN_analydist{:}]);
+l_value_NN_analydist.Location = 'northeast';
+grid off
+set(gca,'FontSize',font_size_other)
+xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
+ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
+zlabel('$V_{NN}$','interpreter','latex','FontSize',font_size_axes)
+
+subplot(1,3,3) %reachability value function
 actions_R = unique(Control_R);
 delta_color_R = length(cmap)/length(actions_R);
 
@@ -176,6 +248,7 @@ for ii = 1:length(actions_R)
 end
 view(az,el)
 axis square
+axis([ax_xy ax_z])
 l_value_R = legend([h_value_R{:}]);
 l_value_R.Location = 'northeast';
 grid off
@@ -183,13 +256,14 @@ set(gca,'FontSize',font_size_other)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
 zlabel('$V_{R}$','interpreter','latex','FontSize',font_size_axes)
+set(gcf,'Color','white')
 
 %% new visualization with level set curves and control actions
 figure(3)
 clf
 linestyles = {'-','--','-.',':'};
 % neural net stuff
-subplot(1,2,1)
+subplot(1,3,1)
 actions_NN = unique(Control_NN);
 actionlabels = {'A','B','C','D','E','F'};
   
@@ -211,6 +285,7 @@ for jj = 1:length(actions_NN)
      %c2 = camlight;
      %c2.Position = [30 60 -80];
 axis square
+axis(ax_xy)
 hold on
  end
 
@@ -225,14 +300,61 @@ l_slice_NN = legend([h_slice_NN_flat{:}]);
 l_slice_NN.Location = 'northeast';
 grid off
 axis square
+axis(ax_xy)
 axis square
 set(gca,'FontSize',font_size_other)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
 
+% neural net with analytic disturbance
+subplot(1,3,2)
+actions_NN_analydist = unique(Control_NN_analydist);
+actionlabels = {'A','B','C','D','E','F','G','H','I'};
+delta_color_actions = floor(length(cmap)/length(actions_NN_analydist));
+  
+for jj = 1:length(actions_NN_analydist)
+     action = actions_NN_analydist(jj);
+     temp = Control_NN_analydist;
+     temp(temp<action) = max(actions_NN_analydist)+1;
+     temp(temp>action)= max(actions_NN_analydist)+1;
+     temp = (temp<(max(actions_NN_analydist)+1));
+     flat = ones(size(temp));
+     flat = flat.*temp;
+     flat(flat<1) = NaN;
+     flat = flat -1;
+     h_slice_NN_flat_analydist{jj} = ...
+         surf(g_NN_analydist.xs{1}, g_NN_analydist.xs{2}, flat,'DisplayName',...
+         [num2str(actionlabels{jj})]);
+     h_slice_NN_flat_analydist{jj}.FaceColor = cmap(jj*delta_color_actions,:);
+     h_slice_NN_flat_analydist{jj}.EdgeColor = 'none';
+     h_slice_NN_flat_analydist{jj}.FaceAlpha = face_alpha;
+     %c2 = camlight;
+     %c2.Position = [30 60 -80];
+axis square
+axis(ax_xy)
+hold on
+ end
+
+for ii = 1:length(levels)
+    [~, h_slice_NN_analydist{ii}] = ...
+        contour(g_NN_analydist.xs{1}, g_NN_analydist.xs{2}, ...
+        Value_NN_analydist,[levels(ii) levels(ii)], 'LineStyle', '-',...
+        'color','black','LineWidth',2);
+    hold on
+end
+view(0,90)
+l_slice_NN_analydist = legend([h_slice_NN_flat_analydist{:}]);
+l_slice_NN_analydist.Location = 'northeast';
+grid off
+axis square
+axis(ax_xy)
+axis square
+set(gca,'FontSize',font_size_other)
+xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
+ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
 
 % reachability stuff
-subplot(1,2,2)
+subplot(1,3,3)
 
 for jj = 1:length(actions_R)
      action = actions_R(jj);
@@ -252,6 +374,7 @@ for jj = 1:length(actions_R)
      %c2 = camlight;
      %c2.Position = [30 60 -80];
 axis square
+axis(ax_xy)
 hold on
  end
 
@@ -267,7 +390,7 @@ l_slice_R = legend([h_slice_R_flat{:}]);
 l_slice_R.Location = 'northeast';
 grid off
 axis square
-axis square
+axis(ax_xy)
 set(gca,'FontSize',font_size_other)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
@@ -277,7 +400,9 @@ set(gcf,'Color','white')
 %% Save
 fig1info = {h_overlay, l_overlay};
 fig2info = {h_value_R, h_value_R_flat,l_value_R,...
-    h_value_NN,h_value_NN_flat, l_value_NN};
+    h_value_NN,h_value_NN_flat, l_value_NN,...
+    h_value_NN_analydist,h_value_NN_flat_analydist, l_value_NN_analydist};
 fig3info = {h_slice_R, h_slice_R_flat, l_slice_R, ...
-    h_slice_NN, h_slice_NN_flat, l_slice_NN};
+    h_slice_NN, h_slice_NN_flat, l_slice_NN,...
+    h_slice_NN_analydist, h_slice_NN_flat_analydist, l_slice_NN_analydist,};
 end
