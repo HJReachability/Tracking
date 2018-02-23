@@ -93,7 +93,7 @@ delta_color_NN = length(cmap)/length(levels);
 
 %font sizes
 font_size_axes = 20;
-font_size_other = 10;
+font_size_other = 12;
 
 %transparency
 face_alpha = .7;
@@ -119,24 +119,33 @@ ax_z = [0 max(maxval(:))];
 
 figure(1)
 clf
-level = TEB_NN;
+level = 1.25;
 l_overlay = legend;
-h_overlay{1} = contour(g_NN.xs{1}, g_NN.xs{2}, Value_NN, ...
-        [level level],'DisplayName','Neural Net',...
-        'color','blue','lineWidth',2);
-    legend show
-    hold on
-
-h_overlay{2} = contour(sD.grid.xs{1}, sD.grid.xs{2}, Value_R, ...
+h_overlay{1} = contour(sD.grid.xs{1}, sD.grid.xs{2}, Value_R, ...
         [level level],'DisplayName','HJ Reachability',...
+        'color','black','lineWidth',2);
+legend show
+hold on
+
+h_overlay{2} = contour(g_NN.xs{1}, g_NN.xs{2}, Value_NN_analydist, ...
+        [level level],'DisplayName','Neural Net with Analytical Dist',...
+        'color','blue','lineWidth',2,'lineStyle','-.');
+    legend show
+    
+
+h_overlay{3} = contour(sD.grid.xs{1}, sD.grid.xs{2}, Value_NN, ...
+        [level level],'DisplayName','Neural Net Learned',...
         'color','red','lineWidth',2,'lineStyle','--');
 legend show
-axis square
-axis(ax_xy)
+
+%axis square
+axis([-2.6 2.6 -1.5 2])
+%axis(ax_xy)
 set(gca,'FontSize',font_size_other)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
 set(gcf,'Color','white')
+box off
 
 %% Value Functions with control side-by-side
 figure(2)
