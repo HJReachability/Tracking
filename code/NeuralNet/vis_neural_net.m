@@ -10,7 +10,14 @@ else
         'slice_points_y_vy_z_vz', 'spacing_x_vx', 'upper_bound', 'Value');
 end
 Value_NN = Value;
-Control_NN = Control_Actions;
+Control_NN_umin = Control_Actions;
+Control_NN_umin(Control_Actions>3)= NaN;
+Control_NN_umin(Control_Actions<4)= 1;
+Control_NN_umin = double(Control_NN_umin);
+Control_NN_umax = Control_Actions;
+Control_NN_umax(Control_Actions>3)= 1;
+Control_NN_umax(Control_Actions<4)= NaN;
+Control_NN_umax = double(Control_NN_umax);
 Disturb_NN = Disturb_Actions;
 gMin = lower_bound;
 gMax = upper_bound;
@@ -33,6 +40,14 @@ else
 end
 Value_NN_analydist = Value;
 Control_NN_analydist = Control_Actions;
+Control_NN_analydist_umin = Control_Actions;
+Control_NN_analydist_umin(Control_Actions>3)= NaN;
+Control_NN_analydist_umin(Control_Actions<4)= 1;
+Control_NN_analydist_umin = double(Control_NN_analydist_umin);
+Control_NN_analydist_umax = Control_Actions;
+Control_NN_analydist_umax(Control_Actions>3)= 1;
+Control_NN_analydist_umax(Control_Actions<4)= NaN;
+Control_NN_analydist_umax = double(Control_NN_analydist_umax);
 gMin_analydist = lower_bound;
 gMax_analydist = upper_bound;
 gN_analydist = double(spacing_x_vx);
@@ -71,21 +86,25 @@ Control_R = u{1};
 cmap = colormap(winter);
 
 %how many levels to show? starting from TEB_NN
-levels = linspace(ceil(TEB_NN),2,4);
+levels = linspace(ceil(TEB_NN_analydist),2,4);
 
 % color for each level
 delta_color_NN = length(cmap)/length(levels);
 
 %font sizes
 font_size_axes = 20;
-font_size_other = 15;
+font_size_other = 10;
 
 %transparency
 face_alpha = .7;
 
 %viewing angles
-az = 65;
-el = 10;
+az = 70;
+el = 6;
+
+% camera position
+Pos1 = [40 0 80];
+Pos2 = [40 0 -80];
 
 %labels
 x_axis='$s_{vx}$';
@@ -122,78 +141,98 @@ set(gcf,'Color','white')
 %% Value Functions with control side-by-side
 figure(2)
 clf
-subplot(1,3,1) % Neural net value function
- actions_NN = unique(Control_NN);
+%subplot(1,3,1) % Neural net value function
+ actions_NN = unique(Control_R);
+Control_NN = {Control_NN_umin, Control_NN_umax};
 
  delta_color_NN = floor(length(cmap)/length(actions_NN));
- actionlabels = {'A','B','C','D','E','F'};
+ %actionlabels = {'A','B','C','D','E','F'};
  for ii = 1:length(actions_NN)
-     action = actions_NN(ii);
-     temp = Control_NN;
+     %action = actions_NN(ii);
+     %temp = Control_NN;
      
      % do some shit to make value only display at control action
-     temp(temp<action) = max(actions_NN)+1;
-     temp(temp>action)= max(actions_NN)+1;
-     temp = (temp<(max(actions_NN)+1));
-     Value_disp = Value_NN.*temp;
+     %temp(temp<action) = max(actions_NN)+1;
+     %temp(temp>action)= max(actions_NN)+1;
+     %temp = (temp<(max(actions_NN)+1));
+     %Value_disp = Value_NN.*temp;
+     %Value_disp(Value_disp<0.01) = NaN;
+         Value_disp = Value_NN.*Control_NN{ii};
      Value_disp(Value_disp<0.01) = NaN;
      
      % plot
      h_value_NN{ii} = surf(g_NN.xs{1}, g_NN.xs{2}, Value_disp,...
-         'DisplayName',num2str(actionlabels{ii}));
+         'DisplayName',['u_{sx} = ' num2str(actions_NN(ii))]);
      hold on
      h_value_NN{ii}.EdgeColor = 'none';
      h_value_NN{ii}.FaceColor = cmap(ii*delta_color_NN,:);
      h_value_NN{ii}.FaceAlpha = face_alpha;
      
      % make flat surface on the bottom
-     flat = ones(size(temp));
-     flat = flat.*temp;
+     flat = ones(size(Control_NN{ii}));
+     flat = flat.*Control_NN{ii};
      flat(flat<1) = NaN;
      flat = flat -1;
      h_value_NN_flat{ii} = surf(g_NN.xs{1}, g_NN.xs{2}, flat);
      h_value_NN_flat{ii}.FaceColor = cmap(ii*delta_color_NN,:);
      h_value_NN_flat{ii}.EdgeColor = 'none';   
+
  end
 view(az,el)
+     c_value_NN{1} = camlight('left');
+     c_value_NN{1}.Position = Pos1;
+     c_value_NN{2} = camlight('left');
+     c_value_NN{2}.Position = Pos2;
 axis square
 axis([ax_xy ax_z])
-l_value_NN = legend([h_value_NN{:}]);
-l_value_NN.Location = 'northeast';
+%l_value_NN = legend([h_value_NN{:}]);
+%l_value_NN.Location = 'northeast';
 grid off
-set(gca,'FontSize',font_size_other)
+set(gca,'FontSize',font_size_axes)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
-zlabel('$V_{NN}$','interpreter','latex','FontSize',font_size_axes)
+zlabel('$V$','interpreter','latex','FontSize',font_size_axes)
+%t = title('a','interpreter','latex','FontSize',font_size_axes);
+%t.Position = t.Position - [ 0 0 11];
+set(gcf,'Color','white')
 
-subplot(1,3,2) % Neural net value function with analytic disturbance
- actions_NN_analydist = unique(Control_NN_analydist);
+figure(3)
+clf
+%subplot(1,3,2) % Neural net value function with analytic disturbance
 
+
+
+ actions_NN_analydist = unique(Control_R);
+Control_NN_analydist = {Control_NN_analydist_umin, Control_NN_analydist_umax};
+ 
  delta_color_NN_analydist = floor(length(cmap)/length(actions_NN_analydist));
- actionlabels = {'A','B','C','D','E','F','G','H','I'};
+ %actionlabels = {'A','B','C','D','E','F','G','H','I'};
  for ii = 1:length(actions_NN_analydist)
-     action = actions_NN_analydist(ii);
-     temp = Control_NN_analydist;
+     %action = actions_NN_analydist(ii);
+     %temp = Control_NN_analydist;
      
      % do some shit to make value only display at control action
-     temp(temp<action) = max(actions_NN_analydist)+1;
-     temp(temp>action)= max(actions_NN_analydist)+1;
-     temp = (temp<(max(actions_NN_analydist)+1));
-     Value_disp = Value_NN_analydist.*temp;
+     %temp(temp<action) = max(actions_NN_analydist)+1;
+     %temp(temp>action)= max(actions_NN_analydist)+1;
+     %temp = (temp<(max(actions_NN_analydist)+1));
+     %Value_disp = Value_NN_analydist.*temp;
+     %Value_disp(Value_disp<0.01) = NaN;
+     
+     Value_disp = Value_NN_analydist.*Control_NN_analydist{ii};
      Value_disp(Value_disp<0.01) = NaN;
      
      % plot
      h_value_NN_analydist{ii} = ...
          surf(g_NN_analydist.xs{1}, g_NN_analydist.xs{2}, Value_disp,...
-         'DisplayName',num2str(actionlabels{ii}));
+         'DisplayName',['u_{sx} = ' num2str(actions_NN_analydist(ii))]);
      hold on
      h_value_NN_analydist{ii}.EdgeColor = 'none';
      h_value_NN_analydist{ii}.FaceColor = cmap(ii*delta_color_NN_analydist,:);
      h_value_NN_analydist{ii}.FaceAlpha = face_alpha;
      
      % make flat surface on the bottom
-     flat = ones(size(temp));
-     flat = flat.*temp;
+     flat = ones(size(Control_NN_analydist{ii}));
+     flat = flat.*Control_NN_analydist{ii};
      flat(flat<1) = NaN;
      flat = flat -1;
      h_value_NN_flat_analydist{ii} = surf(g_NN.xs{1}, g_NN.xs{2}, flat);
@@ -201,17 +240,26 @@ subplot(1,3,2) % Neural net value function with analytic disturbance
      h_value_NN_flat_analydist{ii}.EdgeColor = 'none';   
  end
 view(az,el)
+c_value_NN_analydist{1} = camlight('left');
+     c_value_NN_analydist{1}.Position = Pos1;
+     c_value_NN_analydist{2} = camlight('left');
+     c_value_NN_analydist{2}.Position = Pos2;
 axis square
 axis([ax_xy ax_z])
-l_value_NN_analydist = legend([h_value_NN_analydist{:}]);
-l_value_NN_analydist.Location = 'northeast';
+%l_value_NN_analydist = legend([h_value_NN_analydist{:}]);
+%l_value_NN_analydist.Location = 'northeast';
 grid off
-set(gca,'FontSize',font_size_other)
+set(gca,'FontSize',font_size_axes)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
-zlabel('$V_{NN}$','interpreter','latex','FontSize',font_size_axes)
+zlabel('$V$','interpreter','latex','FontSize',font_size_axes)
+%t = title('b','interpreter','latex','FontSize',font_size_axes);
+%t.Position = t.Position - [ 0 0 11];
+set(gcf,'Color','white')
 
-subplot(1,3,3) %reachability value function
+figure(4)
+clf
+%subplot(1,3,3) %reachability value function
 actions_R = unique(Control_R);
 delta_color_R = length(cmap)/length(actions_R);
 
@@ -247,43 +295,43 @@ for ii = 1:length(actions_R)
      %c2.Position = [30 60 -80];
 end
 view(az,el)
+c_value_R{1} = camlight('left');
+     c_value_R{1}.Position = Pos1;
+     c_value_R{2} = camlight('left');
+     c_value_R{2}.Position = Pos2;
 axis square
 axis([ax_xy ax_z])
 l_value_R = legend([h_value_R{:}]);
 l_value_R.Location = 'northeast';
 grid off
-set(gca,'FontSize',font_size_other)
+set(gca,'FontSize',font_size_axes)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
-zlabel('$V_{R}$','interpreter','latex','FontSize',font_size_axes)
+zlabel('$V$','interpreter','latex','FontSize',font_size_axes)
+%t = title('c','interpreter','latex','FontSize',font_size_axes);
+%t.Position = t.Position - [ 0 0 11];
+
 set(gcf,'Color','white')
 
 %% new visualization with level set curves and control actions
-figure(3)
+figure(5)
 clf
-linestyles = {'-','--','-.',':'};
+%linestyles = {'-','--','-.',':'};
 % neural net stuff
-subplot(1,3,1)
-actions_NN = unique(Control_NN);
-actionlabels = {'A','B','C','D','E','F'};
+%subplot(1,3,1)
+%actions_NN = unique(Control_NN);
+%actionlabels = {'A','B','C','D','E','F'};
   
 for jj = 1:length(actions_NN)
-     action = actions_NN(jj);
-     temp = Control_NN;
-     temp(temp<action) = max(actions_NN)+1;
-     temp(temp>action)= max(actions_NN)+1;
-     temp = (temp<(max(actions_NN)+1));
-     flat = ones(size(temp));
-     flat = flat.*temp;
+     flat = ones(size(Control_NN{jj}));
+     flat = flat.*Control_NN{jj};
      flat(flat<1) = NaN;
      flat = flat -1;
      h_slice_NN_flat{jj} = surf(g_NN.xs{1}, g_NN.xs{2}, flat,'DisplayName',...
-         [num2str(actionlabels{jj})]);
+         ['u_{sx} = ' num2str(actions_NN(jj))]);
      h_slice_NN_flat{jj}.FaceColor = cmap(jj*delta_color_NN,:);
      h_slice_NN_flat{jj}.EdgeColor = 'none';
      h_slice_NN_flat{jj}.FaceAlpha = face_alpha;
-     %c2 = camlight;
-     %c2.Position = [30 60 -80];
 axis square
 axis(ax_xy)
 hold on
@@ -296,36 +344,43 @@ for ii = 1:length(levels)
     hold on
 end
 view(0,90)
-l_slice_NN = legend([h_slice_NN_flat{:}]);
-l_slice_NN.Location = 'northeast';
+%l_slice_NN = legend([h_slice_NN_flat{:}]);
+%l_slice_NN.Location = 'northeast';
 grid off
 axis square
 axis(ax_xy)
 axis square
-set(gca,'FontSize',font_size_other)
+set(gca,'FontSize',font_size_axes)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
+set(gcf,'Color','white')
 
+figure(6)
+clf
 % neural net with analytic disturbance
-subplot(1,3,2)
-actions_NN_analydist = unique(Control_NN_analydist);
-actionlabels = {'A','B','C','D','E','F','G','H','I'};
-delta_color_actions = floor(length(cmap)/length(actions_NN_analydist));
+%subplot(1,3,2)
+%actions_NN_analydist = unique(Control_NN_analydist);
+%actionlabels = {'A','B','C','D','E','F','G','H','I'};
+%delta_color_actions = floor(length(cmap)/length(actions_NN_analydist));
   
 for jj = 1:length(actions_NN_analydist)
-     action = actions_NN_analydist(jj);
-     temp = Control_NN_analydist;
-     temp(temp<action) = max(actions_NN_analydist)+1;
-     temp(temp>action)= max(actions_NN_analydist)+1;
-     temp = (temp<(max(actions_NN_analydist)+1));
-     flat = ones(size(temp));
-     flat = flat.*temp;
+%      action = actions_NN_analydist(jj);
+%      temp = Control_NN_analydist;
+%      temp(temp<action) = max(actions_NN_analydist)+1;
+%      temp(temp>action)= max(actions_NN_analydist)+1;
+%      temp = (temp<(max(actions_NN_analydist)+1));
+%      flat = ones(size(temp));
+%      flat = flat.*temp;
+%      flat(flat<1) = NaN;
+%      flat = flat -1;
+flat = ones(size(Control_NN_analydist{jj}));
+     flat = flat.*Control_NN_analydist{jj};
      flat(flat<1) = NaN;
      flat = flat -1;
      h_slice_NN_flat_analydist{jj} = ...
-         surf(g_NN_analydist.xs{1}, g_NN_analydist.xs{2}, flat,'DisplayName',...
-         [num2str(actionlabels{jj})]);
-     h_slice_NN_flat_analydist{jj}.FaceColor = cmap(jj*delta_color_actions,:);
+         surf(g_NN_analydist.xs{1}, g_NN_analydist.xs{2}, flat,...
+         'DisplayName',['u_{sx} = ' num2str(actions_NN_analydist(jj))]);
+     h_slice_NN_flat_analydist{jj}.FaceColor = cmap(jj*delta_color_NN_analydist,:);
      h_slice_NN_flat_analydist{jj}.EdgeColor = 'none';
      h_slice_NN_flat_analydist{jj}.FaceAlpha = face_alpha;
      %c2 = camlight;
@@ -343,19 +398,22 @@ for ii = 1:length(levels)
     hold on
 end
 view(0,90)
-l_slice_NN_analydist = legend([h_slice_NN_flat_analydist{:}]);
-l_slice_NN_analydist.Location = 'northeast';
+%l_slice_NN_analydist = legend([h_slice_NN_flat_analydist{:}]);
+%l_slice_NN_analydist.Location = 'northeast';
 grid off
 axis square
 axis(ax_xy)
 axis square
-set(gca,'FontSize',font_size_other)
+set(gca,'FontSize',font_size_axes)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
+set(gcf,'Color','white')
+
 
 % reachability stuff
-subplot(1,3,3)
-
+%subplot(1,3,3)
+figure(7)
+clf
 for jj = 1:length(actions_R)
      action = actions_R(jj);
      temp = Control_R;
@@ -367,7 +425,7 @@ for jj = 1:length(actions_R)
      flat(flat<1) = NaN;
      flat = flat -1;
      h_slice_R_flat{jj} = surf(sD.grid.xs{1}, sD.grid.xs{2}, flat,'DisplayName',...
-         ['u = ' num2str(actions_R(jj))]);
+         ['u_{sx} = ' num2str(actions_R(jj))]);
      h_slice_R_flat{jj}.FaceColor = cmap(jj*delta_color_R,:);
      h_slice_R_flat{jj}.EdgeColor = 'none';
      h_slice_R_flat{jj}.FaceAlpha = face_alpha;
@@ -382,7 +440,7 @@ for ii = 1:length(levels)
     [~, h_slice_R{ii}] = contour(sD.grid.xs{1}, sD.grid.xs{2}, Value_R, ...
         [levels(ii) levels(ii)], 'LineStyle', '-',...
         'color','black','LineWidth',2,...
-        'DisplayName',['V_{R} = ' num2str(levels(ii))]);
+        'DisplayName',['V = ' num2str(levels(ii))]);
     hold on
 end
 view(0,90)
@@ -391,7 +449,7 @@ l_slice_R.Location = 'northeast';
 grid off
 axis square
 axis(ax_xy)
-set(gca,'FontSize',font_size_other)
+set(gca,'FontSize',font_size_axes)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
 
@@ -400,9 +458,9 @@ set(gcf,'Color','white')
 %% Save
 fig1info = {h_overlay, l_overlay};
 fig2info = {h_value_R, h_value_R_flat,l_value_R,...
-    h_value_NN,h_value_NN_flat, l_value_NN,...
-    h_value_NN_analydist,h_value_NN_flat_analydist, l_value_NN_analydist};
+    h_value_NN,h_value_NN_flat,...
+    h_value_NN_analydist,h_value_NN_flat_analydist};
 fig3info = {h_slice_R, h_slice_R_flat, l_slice_R, ...
-    h_slice_NN, h_slice_NN_flat, l_slice_NN,...
-    h_slice_NN_analydist, h_slice_NN_flat_analydist, l_slice_NN_analydist,};
+    h_slice_NN, h_slice_NN_flat,...
+    h_slice_NN_analydist, h_slice_NN_flat_analydist,};
 end
