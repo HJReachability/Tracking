@@ -1,4 +1,4 @@
-function [indX, indY, TEB_list] = Q8D_Q4D_gti(s, p, g, vf, level, TEB)
+function [TEB_ind, deriv_ind, TEB_list] = Q8D_Q4D_gti(s, p, g, vf, level, TEB)
 % [indX, indY, TEB_list] = Q8D_Q4D_gti(s, p, tau, g, vf, level)
 %     Get tracking error bound index (gti) and TEB list given the current
 %     states of the tracker and planner
@@ -24,14 +24,14 @@ YDims = 5:8;
 % Relative state
 r = Q8D_Q4D_grs(s, p);
 
-indX = Q8D_Q4D_gti_single(g, vf, r(XDims), level);
-indY = Q8D_Q4D_gti_single(g, vf, r(YDims), level);
+[TEB_ind.x, deriv_ind.x] = Q8D_Q4D_gti_single(g, vf, r(XDims), level);
+[TEB_ind.y, deriv_ind.y] = Q8D_Q4D_gti_single(g, vf, r(YDims), level);
 
-TEB_ind = min(indX, indY);
+TEB_ind = min(TEB_ind.x, TEB_ind.y);
 TEB_list = flip(TEB(1:TEB_ind-1));
 end
 
-function [TEB_ind, values] = Q8D_Q4D_gti_single(g, vf, r, level)
+function [TEB_ind, deriv_ind, values] = Q8D_Q4D_gti_single(g, vf, r, level)
 % [TEB_ind, values] = Q8D_Q4D_gti_single(tau, g, vf, r, level)
 %     Determines the last index from which to create TEB_list from TEB by
 %     finding the smallest index of vf such that r evaluates to a value greater
@@ -62,4 +62,6 @@ while max_ind > min_ind
     TEB_ind = floor((min_ind + TEB_ind)/2);
   end
 end
+
+deriv_ind = min(tau_length, TEB_ind + 1);
 end
