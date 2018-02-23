@@ -1,7 +1,7 @@
 % Script for saving figures of 2D projection of value function at a suitable
 % level for automatically determining time-varying tracking error bound
 
-function tvTEB(numD, fig_filename, level, sD, data, tau)
+function TEB = tvTEB(numD, fig_filename, level, sD, data, tau)
 
 if numD ~= 2 && numD ~= 3
   return

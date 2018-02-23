@@ -1,4 +1,4 @@
-function u = Q8D_Q4D_htc(rel_sys, s, p, g, deriv, indX, indY)
+function u = Q8D_Q4D_htc(rel_sys, uMode, s, p, g, deriv, deriv_ind)
 % u = Q8D_Q4D_htc(s, p, deriv)
 %     Hybrid tracking controller (htc) for 8D quadrotor tracking 4D double
 %     integrator (2D position space)
@@ -20,7 +20,8 @@ function u = Q8D_Q4D_htc(rel_sys, s, p, g, deriv, indX, indY)
 XDims = 1:4;
 YDims = 5:8;
 
-uMode = 'max';
+indX = deriv_ind.x;
+indY = deriv_ind.y;
 
 % Relative state
 r = Q8D_Q4D_grs(s, p);
