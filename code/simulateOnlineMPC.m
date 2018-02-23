@@ -53,14 +53,6 @@ if nargin < 3
 end
 
 % matrix to compare position states (virt vs. true)
-if ~isfield(extraArgs,'Q')
-  Q = zeros(8,4);
-  Q(1,1) = 1;
-  Q(2,2) = 1;
-  Q(5,3) = 1;
-  Q(6,4) = 1;
-end
-
 if ~isfield(extraArgs, 'visualize')
   vis = true;
 end
@@ -69,42 +61,13 @@ end
 % load(data_filename)
 load(obs_filename)
 
-uMode = 'max';
-% dMode = 'min'; % Not needed since we're not using worst-case control
-
-% obsMap = ObstacleMapLS(g2D, obs2D);
-
-% % plot global obstacles
-% if vis
-%   f = figure;
-%   f.Color = 'white';
-%   f.Position = [100 100 1280 720];
-%   
-%   obsMap.plotGlobal()
-%   f.Children.FontSize = 16;
-%   hold on
-%   quiver(goal(1), goal(2), 0.2*cos(goal(3)), 0.2*sin(goal(3)), 'b')
-%   plotDisk(goal(1:2), 0.2, 'b-');
-%   
-%   xlabel('x', 'FontSize', 16)
-%   ylabel('y', 'FontSize', 16)
-%   
-%   axis equal
-%   xlim([-L L])
-% 
-%   box on
-%   grid on
-% end
-
-% % set initial states to zero
-% true_x = zeros(5,1);
-% true_x(1:3) = start;
-virt_x = start;
-
 % Create real quadrotor syste
 dynSys = sD.dynSys;
 trueQuad = Quad8D(start_x, dynSys.uMin, dynSys.uMax, dynSys.dMin, ...
   dynSys.dMax, 1:8);
+
+virt_x = start_x([1 2 5 6]);
+rel_x = trueQuad.x - Q*virt_x;
 
 % % define when to switch from safety control to performance control
 % small = 1;
@@ -113,7 +76,7 @@ trueQuad = Quad8D(start_x, dynSys.uMin, dynSys.uMax, dynSys.dMin, ...
 %% Start loop! Tracking error bound block
 %input: environment, sensing
 %output: augmented obstacles
-newStates = [];
+
 iter = 0;
 global_start = tic; % Time entire simulation
 
@@ -123,50 +86,18 @@ lookup_time = 0;
 % while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
 while iter < max_iter && norm(virt_x - goal) > 0.25
   iter = iter + 1;
-%%%%%%%%%%%% MPC PLANNING BLOCK HERE %%%%%%%%%%
-%   % 1. Sense your environment, locate obstacles
-%   % 2. Expand sensed obstacles by tracking error bound
-%   sensed_new = obsMap.sense_update(virt_x, sense_region, trackErr);
-%   
-%   %% Path Planner Block
-%   % Replan if a new obstacle is seen
-%   if isempty(newStates) || sensed_new
-%     % Update next virtual state
-%     obs3D = repmat(obsMap.padded_obs, [1 1 g.N(3)]);
-%     newStates = fsmNextState(virt_x, goal, L, g, obs3D, delta_x, false);
-%     
-%     if iter == 1
-%       hPath = plot(newStates(1,:), newStates(2,:), ':');
-%     else
-%       hPath.XData = newStates(1,:);
-%       hPath.YData = newStates(2,:);
-%     end
-%   end
-%   virt_x = newStates(:,1);
-%   newStates(:,1) = [];
-
-  %% Hybrid Tracking Controller
-  % 1. find relative state
-  local_start = tic;
-  rel_x = trueQuad.x - Q*virt_x;
   
+  %%%%%%%%%%%% MPC PLANNING BLOCK HERE %%%%%%%%%%
+  p = nextState; %%%%%%%%%%%%%%
+  
+  %% Hybrid Tracking Controller  
   % 2. Determine which controller to use, find optimal control
   % get spatial gradients
-  XDims = 1:4;
-  YDims = 5:8;
   
-  deriv_TEB_ind = cell(4,1);
-  for k = 1:4
-    deriv_TEB_ind{k} = deriv{k}(:,:,:,:,TEB_ind);
-  end
-  pX = eval_u(g, deriv_TEB_ind, rel_x(XDims));
-  pY = eval_u(g, deriv_TEB_ind, rel_x(YDims));
-
-  % Find optimal control of relative system (no performance control)
-  uX = dynSys.optCtrl([], rel_x(XDims), pX, uMode);
-  uY = dynSys.optCtrl([], rel_x(YDims), pY, uMode);
-
-  u = [uX uY];
+  local_start = tic;
+  
+  u = Q8D_Q4D_htc(rel_sys, trueQuad.x, nextState, sD.grid, deriv, indX, indY);
+  
   lookup_time = lookup_time + toc(local_start);
   
   %% True System Block
@@ -176,14 +107,9 @@ while iter < max_iter && norm(virt_x - goal) > 0.25
   % 2. update state of true vehicle
   trueQuad.updateState(u, dt, [], d);
 
-  
   %% Determine which tracking error bound to start with next (takes about 0.2s)
-  
-  TEB_ind_x = get_TEB_ind(tau, sD, data, rel_x(1:4), TEB, min_level)
-  TEB_ind_y = get_TEB_ind(tau, sD, data, rel_x(5:8), TEB, min_level)
- 
-  TEB_ind = min(TEB_ind_x, TEB_ind_y);
-  TEB_list = flip(TEB(1:TEB_ind-1));
+  [indX, indY, TEB_list] = ...
+    Q8D_Q4D_gti(trueQuad.x, nextState, sD.grid, data, level);
   
   % Make sure error isn't too big (shouldn't happen)
   if norm(virt_x - trueQuad.x([1 2 5 6])) > 10 % Modify this bound

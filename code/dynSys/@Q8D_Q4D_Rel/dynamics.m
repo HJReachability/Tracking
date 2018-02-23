@@ -1,16 +1,14 @@
 function dx = dynamics(obj, ~, x, u, d)
 % dx = dynamics(obj, ~, x, u, ~)
 %     Dynamics of the 10D Quadrotor
-%         \dot x_1 = x_2
-%         \dot x_2 = g * tan(x_3)
+%         \dot x_1 = x_2 + d(1)
+%         \dot x_2 = g * tan(x_3) 
 %         \dot x_3 = -d1 * x_3 + x_4
 %         \dot x_4 = -d0 * x_3 + n0 * u1
-%         \dot x_5 = x_6
+%         \dot x_5 = x_6 + d(2)
 %         \dot x_6 = g * tan(x_7)
 %         \dot x_7 = -d1 * x_7 + x_8
 %         \dot x_8 = -d0 * x_7 + n0 * u2
-%         \dot x_9 = x_10 + d(1)
-%         \dot x_10 = kT * u3 - obj.g
 %              uMin <= [u1; u2; u3] <= uMax
 
 dx = cell(obj.nx,1);

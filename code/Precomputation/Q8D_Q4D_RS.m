@@ -1,20 +1,22 @@
-function Q8D_Q4D_RS(gN, visualize)
+function Q8D_Q4D_RS(A, gN, visualize)
 %Q10D_Q4D_RS Summary of this function goes here
 %   Detailed explanation goes here
 
 addpath(genpath('..'))
 
-if nargin < 1
+if nargin < 2
   gN = [41; 41; 25; 21];
 end
 
-if nargin < 2
+if nargin < 3
   visualize = true;
 end
 
+save_name = sprintf('%s_%.2f_%.4f_', mfilename, A, rem(now,1));
+
 %% Grid and cost
-gMin = [-2; -4; -35*pi/180; -1];
-gMax = [ 2;  4;  35*pi/180;  1];
+gMin = [-2; -4; -35*pi/180; -2*pi];
+gMax = [ 2;  4;  35*pi/180;  2*pi];
 sD.grid = createGrid(gMin, gMax, gN);
 
 extraArgs.targets = -sD.grid.xs{1}.^2;
@@ -23,8 +25,8 @@ extraArgs.targets = -sD.grid.xs{1}.^2;
 uMin = [-20/180*pi; -20/180*pi];
 uMax = [20/180*pi; 20/180*pi];
 
-aMin = [-0.5; -0.5];
-aMax = [0.5; 0.5];
+aMin = -A*ones(2,1);
+aMax = A*ones(2,1);
 
 dMax = [0.1; 0.1];
 dMin = [-0.1; -0.1];
@@ -35,7 +37,7 @@ sD.dynSys = Q8D_Q4D_Rel([], uMin, uMax, aMin, aMax, dMin, dMax, dims);
 
 %% Otherparameters
 tMax = 15;
-dt = 0.5;
+dt = 0.2;
 tau = 0:dt:tMax;
 
 sD.uMode = 'max';
@@ -43,10 +45,11 @@ sD.dMode = 'min';
 
 if visualize
   extraArgs.visualize = true;
-  extraArgs.RS_level = -5;
+  extraArgs.RS_level = -3;
   extraArgs.plotData.plotDims = [1 1 1 0];
   extraArgs.plotData.projpt = 0;
   extraArgs.deleteLastPlot = true;
+  extraArgs.fig_filename = save_name;
 end
 
 data = HJIPDE_solve(extraArgs.targets, tau, sD, 'none', extraArgs);
@@ -61,9 +64,8 @@ end
 
 deriv = computeGradients(sD.grid, data);
 
-save_filename = sprintf('%s_%f.mat', mfilename, now);
+save_filename = sprintf('%s.mat', save_name);
 save(save_filename, 'sD', 'data', 'tau', 'minData', 'deriv', '-v7.3');
 
-keyboard
 end
 
