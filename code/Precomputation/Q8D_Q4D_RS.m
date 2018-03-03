@@ -1,4 +1,4 @@
-function Q8D_Q4D_RS(A, gN, visualize)
+function Q8D_Q4D_RS(A, D, gN, visualize)
 %Q10D_Q4D_RS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -28,8 +28,8 @@ uMax = [20/180*pi; 20/180*pi];
 aMin = -A*ones(2,1);
 aMax = A*ones(2,1);
 
-dMax = [0.1; 0.1];
-dMin = [-0.1; -0.1];
+dMax = [D; D];
+dMin = [-D; -D];
 
 dims = 1:4;
 

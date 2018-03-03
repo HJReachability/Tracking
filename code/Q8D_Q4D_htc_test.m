@@ -6,10 +6,10 @@ end
 dynSys = sD.dynSys;
 
 % Simulation parameters
-N = 2000;
+N = 200;
 aMax = sD.dynSys.aMax;
 aMin = sD.dynSys.aMin;
-dt = 0.02;
+dt = 0.005;
 
 start_x = zeros(8,1);
 % start_x([2 6]) = [-1.5 1.5];
