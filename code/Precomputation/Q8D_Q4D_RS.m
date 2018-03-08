@@ -36,8 +36,8 @@ dims = 1:4;
 sD.dynSys = Q8D_Q4D_Rel([], uMin, uMax, aMin, aMax, dMin, dMax, dims);
 
 %% Otherparameters
-tMax = 15;
-dt = 0.2;
+tMax = 25;
+dt = 0.5;
 tau = 0:dt:tMax;
 
 sD.uMode = 'max';

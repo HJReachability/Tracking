@@ -9,7 +9,7 @@ dynSys = sD.dynSys;
 N = 200;
 aMax = sD.dynSys.aMax;
 aMin = sD.dynSys.aMin;
-dt = 0.005;
+dt = 0.01;
 
 start_x = zeros(8,1);
 % start_x([2 6]) = [-1.5 1.5];

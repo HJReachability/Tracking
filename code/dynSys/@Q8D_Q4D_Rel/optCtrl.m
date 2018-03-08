@@ -16,20 +16,20 @@ dims = obj.dims;
 %% Optimal control
 if strcmp(uMode, 'max')
   if any(dims == 4)
-    uOpt{1} = (deriv{dims==4}>=0)*obj.uMax(2) + (deriv{dims==4}<0)*obj.uMin(1);
+    uOpt{1} = (deriv{dims==4}>=0)*obj.uMax(1) + (deriv{dims==4}<0)*obj.uMin(1);
   end
   
   if any(dims == 8)
-    uOpt{2} = (deriv{dims==8}>=0)*obj.uMax(4) + (deriv{dims==8}<0)*obj.uMin(2);
+    uOpt{2} = (deriv{dims==8}>=0)*obj.uMax(2) + (deriv{dims==8}<0)*obj.uMin(2);
   end
   
 elseif strcmp(uMode, 'min')
   if any(dims == 4)
-    uOpt{1} = (deriv{dims==4}<0)*obj.uMax(2) + (deriv{dims==4}>=0)*obj.uMin(1);
+    uOpt{1} = (deriv{dims==4}<0)*obj.uMax(1) + (deriv{dims==4}>=0)*obj.uMin(1);
   end
   
   if any(dims == 8)
-    uOpt{2} = (deriv{dims==8}<0)*obj.uMax(4) + (deriv{dims==8}>=0)*obj.uMin(2);
+    uOpt{2} = (deriv{dims==8}<0)*obj.uMax(2) + (deriv{dims==8}>=0)*obj.uMin(2);
   end
 else
   error('Unknown uMode!')
