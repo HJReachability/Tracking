@@ -19,7 +19,7 @@ gMin = [-2; -4; -35*pi/180; -2*pi];
 gMax = [ 2;  4;  35*pi/180;  2*pi];
 sD.grid = createGrid(gMin, gMax, gN);
 
-extraArgs.targets = -sD.grid.xs{1}.^2;
+extraArgs.targets = -sD.grid.xs{1}.^2 -sD.grid.xs{2}.^2;
 
 %% Dynamical system
 uMin = [-20/180*pi; -20/180*pi];
@@ -36,8 +36,8 @@ dims = 1:4;
 sD.dynSys = Q8D_Q4D_Rel([], uMin, uMax, aMin, aMax, dMin, dMax, dims);
 
 %% Otherparameters
-tMax = 25;
-dt = 0.5;
+tMax = 15;
+dt = 0.2;
 tau = 0:dt:tMax;
 
 sD.uMode = 'max';
