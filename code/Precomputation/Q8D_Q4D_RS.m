@@ -4,23 +4,23 @@ function Q8D_Q4D_RS(A, D, gN, visualize)
 
 addpath(genpath('..'))
 
-if nargin < 2
+if nargin < 3
   gN = [41; 41; 25; 21];
 end
 
-if nargin < 3
+if nargin < 4
   visualize = true;
 end
 
 save_name = sprintf('%s_%.2f_%.4f_', mfilename, A, rem(now,1));
 
 %% Grid and cost
-gMin = [-2; -4; -35*pi/180; -2*pi];
-gMax = [ 2;  4;  35*pi/180;  2*pi];
+gMin = [-2; -2; -35*pi/180; -2*pi];
+gMax = [ 2;  2;  35*pi/180;  2*pi];
 sD.grid = createGrid(gMin, gMax, gN);
 
-extraArgs.targets = -sD.grid.xs{1}.^2 -sD.grid.xs{2}.^2;
-
+extraArgs.targets = -sD.grid.xs{1}.^2 - sD.grid.xs{2}.^2 / 4;
+extraArgs.low_memory = true;
 %% Dynamical system
 uMin = [-20/180*pi; -20/180*pi];
 uMax = [20/180*pi; 20/180*pi];
@@ -45,7 +45,7 @@ sD.dMode = 'min';
 
 if visualize
   extraArgs.visualize = true;
-  extraArgs.RS_level = -3;
+  extraArgs.RS_level = -0.25;
   extraArgs.plotData.plotDims = [1 1 1 0];
   extraArgs.plotData.projpt = 0;
   extraArgs.deleteLastPlot = true;
