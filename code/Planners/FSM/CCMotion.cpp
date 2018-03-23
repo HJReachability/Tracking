@@ -299,7 +299,7 @@ void update(int i,int j,int th,double newValue,struct heapAugmented *h,int***  N
 }
 
 // added by rrtakei
-double LinearInterpX(double x, int j, int k, const int* N, double L, double*** unext, double numInfty) {
+double LinearInterpX(double x, int j, int k, const mwSize* N, double L, double*** unext, double numInfty) {
     int Ni;
     double dx, a;
     int xl,xu;
@@ -328,7 +328,7 @@ double LinearInterpX(double x, int j, int k, const int* N, double L, double*** u
 }
 
 // added by rrtakei
-double LinearInterpY(int i, double y, int k, const int* N, double L, double*** unext, double numInfty) {
+double LinearInterpY(int i, double y, int k, const mwSize* N, double L, double*** unext, double numInfty) {
     int Nj;
     double dy, a;
     int yl,yu;
@@ -356,7 +356,7 @@ double LinearInterpY(int i, double y, int k, const int* N, double L, double*** u
     return (1-a)*DOWN + a*UP;
 }
 
-double LinearInterpDiag(double ux, double uy, int i, int j, int k, const int* N, double L, double*** unext, double*** v, double numInfty) {
+double LinearInterpDiag(double ux, double uy, int i, int j, int k, const mwSize* N, double L, double*** unext, double*** v, double numInfty) {
     int Ni, Nj, Nk;
     double dx, dy, dth;
     double r, psi;
@@ -382,7 +382,7 @@ double LinearInterpDiag(double ux, double uy, int i, int j, int k, const int* N,
 }
 
 // MO!!
-double BilinearInterp(double x, double y, int k, const int* N, double L, double*** unext, double numInfty) {
+double BilinearInterp(double x, double y, int k, const mwSize* N, double L, double*** unext, double numInfty) {
 	int Ni,Nj;
 	double dx, dy, a, b;
 	int xl, xu, yl, yu;
@@ -646,7 +646,7 @@ double updateU16b(double uNNE,double uNWW,double uSEE,double uSSW, double utp, d
 	}	
 }
 
-double updateFormulaPDE(int i, int j, int k, const int* N, double L, double*** unext, 
+double updateFormulaPDE(int i, int j, int k, const mwSize* N, double L, double*** unext, 
 						double*** v, double*** p, int*** sc, double numInfty, int dubin) {
 	/*
 	Finite difference
@@ -754,7 +754,7 @@ double updateFormulaPDE(int i, int j, int k, const int* N, double L, double*** u
 	return ureturn;
 }
 
-double updateFormula(int i, int j, int k, const int* N, double L, double*** unext, 
+double updateFormula(int i, int j, int k, const mwSize* N, double L, double*** unext, 
 						double*** v, double*** p, int*** sc, double numInfty, int dubin) {
 	/*
 	Semi-Lagrangian update scheme:
@@ -940,7 +940,7 @@ double updateFormula(int i, int j, int k, const int* N, double L, double*** unex
 }
 
 
-double updateFormulaAll(int i, int j, int k, const int* N, double L, double*** unext, 
+double updateFormulaAll(int i, int j, int k, const mwSize* N, double L, double*** unext, 
 						double*** v, double*** p, int*** sc, double numInfty, int dubin) {
 	/*
 	Uses both semi-Lagrangian and finite difference update schemes
@@ -1234,7 +1234,7 @@ double updateFormulaAll(int i, int j, int k, const int* N, double L, double*** u
 	
 }
 
-void updateNeighborPDE(int i, int j,int k, const int* N, double L, double*** unext,double*** v,double*** p,
+void updateNeighborPDE(int i, int j,int k, const mwSize* N, double L, double*** unext,double*** v,double*** p,
 						int*** sc,struct heapAugmented *h,int***  Nodes, double numInfty, int dubin) {
 	// finite difference update scheme for fast marching
     double newValue;
@@ -1262,7 +1262,7 @@ void updateNeighborPDE(int i, int j,int k, const int* N, double L, double*** une
 	}
 }
 
-void updateNeighbor(int i, int j,int k, const int* N, double L, double*** unext,double*** v,double*** p,
+void updateNeighbor(int i, int j,int k, const mwSize* N, double L, double*** unext,double*** v,double*** p,
 					int*** sc,struct heapAugmented *h,int***  Nodes, double numInfty, int dubin) {
 	// semi-lagrangian update scheme for fast marching
 
@@ -1289,7 +1289,7 @@ void updateNeighbor(int i, int j,int k, const int* N, double L, double*** unext,
 }
 
 
-void updateNeighborAll(int i, int j,int k, const int* N, double L, double*** unext,double*** v,double*** p,
+void updateNeighborAll(int i, int j,int k, const mwSize* N, double L, double*** unext,double*** v,double*** p,
 					int*** sc,struct heapAugmented *h,int***  Nodes, double numInfty, int dubin) {
     // finite difference and semi-Lagrangian update scheme
 	double newValue;
@@ -1316,7 +1316,7 @@ void updateNeighborAll(int i, int j,int k, const int* N, double L, double*** une
 }
 
 
-void CCM_sweepPDE(double*** unext, double*** v, double*** p, int*** sc, const int* N, double L, double numInfty, int dubin) {
+void CCM_sweepPDE(double*** unext, double*** v, double*** p, int*** sc, const mwSize* N, double L, double numInfty, int dubin) {
 	printf("Fast sweeping with finite difference update \n");
 	
 	// Fast sweeping, using finite difference update
@@ -1339,7 +1339,7 @@ void CCM_sweepPDE(double*** unext, double*** v, double*** p, int*** sc, const in
 	}}}}}
 }
 
-void CCM_sweep(double*** unext, double*** v, double*** p, int*** sc, const int* N, double L, double numInfty, int dubin) {
+void CCM_sweep(double*** unext, double*** v, double*** p, int*** sc, const mwSize* N, double L, double numInfty, int dubin) {
 	printf("Fast sweeping with semi-Lagrangian update \n");
 
 	// fast sweeping, using semi-Lagrangian update
@@ -1361,7 +1361,7 @@ void CCM_sweep(double*** unext, double*** v, double*** p, int*** sc, const int* 
 	}}}}}
 }
 
-void CCM_sweepAll(double*** unext, double*** v, double*** p, int*** sc, const int* N, double L, double numInfty, int dubin) {
+void CCM_sweepAll(double*** unext, double*** v, double*** p, int*** sc, const mwSize* N, double L, double numInfty, int dubin) {
 	printf("Fast sweeping with semi-Lagrangian and finite difference update \n");
 	
 	// fast sweeping, using both semi-Lagrangian and finite difference updating schemes
@@ -1383,7 +1383,7 @@ void CCM_sweepAll(double*** unext, double*** v, double*** p, int*** sc, const in
 	}}}}}
 }
 
-void CCM(double*** unext, double*** v, double*** p, int***  Nodes, int*** sc, const int* N, double L, double numInfty, int dubin) { 
+void CCM(double*** unext, double*** v, double*** p, int***  Nodes, int*** sc, const mwSize* N, double L, double numInfty, int dubin) { 
     // fast marching, using semi-Lagrangian update
 	printf("Fast marching with semi-Lagrangian update \n");
 
@@ -1513,7 +1513,7 @@ void CCM(double*** unext, double*** v, double*** p, int***  Nodes, int*** sc, co
 	
 }
 
-void CCM_PDE(double*** unext, double*** v, double*** p, int***  Nodes, int*** sc, const int* N, double L, double numInfty, int dubin) { 
+void CCM_PDE(double*** unext, double*** v, double*** p, int***  Nodes, int*** sc, const mwSize* N, double L, double numInfty, int dubin) { 
 	printf("Fast marching with finite difference update \n");
 	// fast marching, using finite difference update
     int Ni,Nj,Nk;
@@ -1652,7 +1652,7 @@ void CCM_PDE(double*** unext, double*** v, double*** p, int***  Nodes, int*** sc
     freeHeap(h);//dependability via redundancy, it should never get outside of the while loop without returning 
 }
 
-void CCM_all(double*** unext, double*** v, double*** p, int***  Nodes, int*** sc, const int* N, double L, double numInfty, int dubin) { 
+void CCM_all(double*** unext, double*** v, double*** p, int***  Nodes, int*** sc, const mwSize* N, double L, double numInfty, int dubin) { 
     printf("Fast marching with semi-Lagrangian and finite difference update \n");
 
 	// fast marching, using both finite difference and semi-Lagrangian updating schemes
@@ -1782,7 +1782,7 @@ void CCM_all(double*** unext, double*** v, double*** p, int***  Nodes, int*** sc
 	
 }
 
-double fndiff(double*** fold, double*** fnew, const int* N, double numInfty ){
+double fndiff(double*** fold, double*** fnew, const mwSize* N, double numInfty ){
     int Ni,Nj,Nk;
 	int i, j, k;
 	double diff, maxdiff, avgdiff, totaldiff;
@@ -1848,7 +1848,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	int ***Nodes, ***sc;
 	
     int K = mxGetNumberOfDimensions(prhs[0]); 
-    const int *N = mxGetDimensions(prhs[0]);
+    const mwSize *N = mxGetDimensions(prhs[0]);
 	
 	double difference; 
 	

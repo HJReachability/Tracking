@@ -5,7 +5,7 @@ function P5D_Dubins_RS(gN, visualize)
 addpath(genpath('..'))
 
 if nargin < 1
-  gN = [35; 35; 21; 25; 21];
+  gN = [35; 35; 35; 35; 35];
 end
 
 if nargin < 2
@@ -13,8 +13,8 @@ if nargin < 2
 end
 
 %% Grid and cost
-gMin = [-0.25; -0.25; -30*pi/180; -0.4; -4];
-gMax = [ 0.25;  0.25;  30*pi/180;  0.4;  4];
+gMin = [-0.25; -0.25; -90*pi/180; -0.4; -6];
+gMax = [ 0.25;  0.25;  90*pi/180;  0.4;  6];
 sD.grid = createGrid(gMin, gMax, gN);
 
 extraArgs.targets = -(sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2);
@@ -31,7 +31,7 @@ dims = 1:5;
 sD.dynSys = P5D_Dubins_Rel([], aRange, alphaMax, vOther, wMax, dMax, dims);
 
 %% Other parameters
-tMax = 5;
+tMax = 10;
 dt = 0.01;
 tau = 0:dt:tMax;
 
@@ -39,6 +39,7 @@ sD.uMode = 'max';
 sD.dMode = 'min';
 
 extraArgs.keepLast =  true;
+extraArgs.low_memory = true;
 
 save_name = sprintf('%s_%f', mfilename, now);
 
