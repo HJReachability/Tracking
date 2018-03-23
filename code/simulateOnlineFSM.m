@@ -19,7 +19,7 @@ function simulateOnlineFSM(data_filename, obs_filename, extraArgs)
 %       inputs related to RRT (goal?)
 
 addpath(genpath('.'))
-mex CCMotion.cpp
+mex Planners/FSM/CCMotion.cpp
 
 %% Problem setup
 start = [-0.75; -0.75; pi/6];
@@ -35,11 +35,11 @@ dt = 0.01;
 delta_x = virt_v*dt;
 
 if nargin < 1
-  data_filename = 'FILL_IN_FILENAME.mat';
+  data_filename = 'P5D_Dubins_RS.mat';
 end
 
 if nargin < 2
-  obs_filename = 'obs.mat';
+  obs_filename = 'Planners/FSM/obs.mat';
 end
 
 if nargin < 3
@@ -58,7 +58,7 @@ if ~isfield(extraArgs, 'visualize')
 end
 
 %% Before Looping
-% load(data_filename)
+load(data_filename)
 load(obs_filename)
 
 uMode = 'max';
@@ -88,15 +88,11 @@ if vis
   grid on
 end
 
-% % set initial states to zero
-% true_x = zeros(5,1);
-% true_x(1:3) = start;
+% set initial states to zero
 virt_x = start;
 
-% % Create real quadrotor system
-% rl_ui = [2 4 6];
-% trueQuad = Quad10D(start_x, dynSysX.uMin(rl_ui), dynSysX.uMax(rl_ui), ...
-%   dynSysX.dMin, dynSysX.dMax, 1:10);
+% Create real quadrotor system
+trueCar = Plane5D([start; 0; 0], dynSys.alphaMax, dynSys.aRange, dynSys.dMax);
 
 % % define when to switch from safety control to performance control
 % small = 1;
@@ -138,36 +134,20 @@ while iter < max_iter && norm(virt_x - goal) > 0.25
   newStates(:,1) = [];
 
   %% Hybrid Tracking Controller
-  true_x = virt_x; % perfect tracking
-%   % 1. find relative state
-%   local_start = tic;
-%   rel_x = trueQuad.x - Q*virt_x;
-%   
-%   % 2. Determine which controller to use, find optimal control
-%   %get spatial gradients
-%   pX = eval_u(gX, derivX, rel_x(XDims));
-%   pY = eval_u(gX, derivX, rel_x(YDims));
-%   pZ = eval_u(gZ, derivZ, rel_x(ZDims));
-%   
-%   % Find optimal control of relative system (no performance control)
-%   uX = dynSysX.optCtrl([], rel_x(XDims), pX, uMode);
-%   uY = dynSysX.optCtrl([], rel_x(YDims), pY, uMode);
-%   uZ = dynSysZ.optCtrl([], rel_x(ZDims), pZ, uMode);
-%   u = [uX uY uZ];
-%   u = u(rl_ui);
-%   lookup_time = lookup_time + toc(local_start);
+  u = P5D_Dubins_htc(sD.dynSys, uMode, true_x, virt_x, g, deriv);
+  lookup_time = lookup_time + toc(local_start);
   
   %% True System Block
   % 1. add random disturbance to velocity within given bound
-%   d = dynSysX.dMin + rand(3,1).*(dynSysX.dMax - dynSysX.dMin);
+  d = -dynSys.dMax + 2*rand(4,1).*dynSys.dMax;
   
   % 2. update state of true vehicle
-%   trueQuad.updateState(u, dt, [], d);
-
-%   % Make sure error isn't too big (shouldn't happen)
-%   if norm(virt_x - trueQuad.x([1 5 9])) > 3
-%     keyboard
-%   end
+  trueCar.updateState(u, dt, [], d);
+  
+  % Make sure error isn't too big (shouldn't happen)
+  if norm(virt_x(1:2) - trueCar.x(1:2)) > 3
+    keyboard
+  end
   
   %% Virtual System Block  
 %   fprintf('Iteration took %.2f seconds\n', toc);
