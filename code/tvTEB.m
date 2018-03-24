@@ -18,7 +18,7 @@ else
 end
 
 
-TEB = nan(1,numT);
+TEB = nan(2,numT);
 
 f = figure;
 f.Color = 'white';
@@ -41,7 +41,9 @@ for i = 1:numT
     if ~isempty(h{i}.ContourMatrix)
       indsToKeep = h{i}.ContourMatrix(1,:) ~= level;
       contourPts_x = h{i}.ContourMatrix(1,indsToKeep);
-      TEB(i) = max(abs(contourPts_x));
+      contourPts_y = h{i}.ContourMatrix(2,indsToKeep);
+      TEB(1,i) = max(abs(contourPts_x));
+      TEB(2,i) = max(abs(contourPts_y));
     end
     
   else
@@ -50,8 +52,7 @@ for i = 1:numT
     
     clf
   end
-  
-  
+
 end
 
 if numD == 2

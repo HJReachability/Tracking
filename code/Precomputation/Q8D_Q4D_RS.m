@@ -19,7 +19,11 @@ gMin = [-2; -2; -35*pi/180; -2*pi];
 gMax = [ 2;  2;  35*pi/180;  2*pi];
 sD.grid = createGrid(gMin, gMax, gN);
 
-extraArgs.targets = -sqrt(sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2 / 4);
+% extraArgs.targets = -sqrt(sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2 / 4);
+
+extraArgs.targets = min(-abs(sD.grid.xs{1}), -abs(sD.grid.xs{2}));
+
+
 extraArgs.low_memory = true;
 %% Dynamical system
 uMin = [-20/180*pi; -20/180*pi];
