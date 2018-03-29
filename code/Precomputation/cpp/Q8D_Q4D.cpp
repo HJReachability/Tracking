@@ -138,13 +138,13 @@ bool Q8D_Q4D::optDstb(std::vector<beacls::FloatVec>& dOpts,
 			return (rhs >= 0) ? d_if_p0_pos: d_if_p0_neg; });
 
   // Planning control
-  const FLOAT_TYPE a_if_p1_pos = 
+  const FLOAT_TYPE a_if_minus_p1_pos = 
     (modified_dMode == helperOC::DynSys_DMode_Max) ? aRange[1] : aRange[0];
-  const FLOAT_TYPE a_if_p1_neg =
+  const FLOAT_TYPE a_if_minus_p1_neg =
     (modified_dMode == helperOC::DynSys_DMode_Max) ? aRange[0] : aRange[1];
 	std::transform(deriv1_ptr, deriv1_ptr + deriv0_size, dOpts[1].begin(), 
-		[a_if_p1_pos, a_if_p1_neg](const auto& rhs){ 
-			return (rhs >= 0) ? a_if_p1_pos: a_if_p1_neg; });
+		[a_if_minus_p1_pos, a_if_minus_p1_neg](const auto& rhs){ 
+			return (-rhs >= 0) ? a_if_minus_p1_pos: a_if_minus_p1_neg; });
 
 	return true;
 }

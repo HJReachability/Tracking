@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 	const beacls::FloatVec gMax{(FLOAT_TYPE)2, (FLOAT_TYPE)2, 
       (FLOAT_TYPE)(35.*M_PI/180.), (FLOAT_TYPE)(2*M_PI)};      
 	levelset::HJI_Grid* g = helperOC::createGrid(gMin, gMax, 
-		beacls::IntegerVec{41,41,25,21});
+		beacls::IntegerVec{65,65,35,31});
 
 	const size_t numel = g->get_numel();
 	const size_t num_dim = g->get_num_of_dimensions();
@@ -117,8 +117,8 @@ int main(int argc, char *argv[])
   	  return std::min(a,b); });
 
 	//!< Compute reachable set
-	const FLOAT_TYPE tMax = 0.2;
-	const FLOAT_TYPE dt = 0.05;
+	const FLOAT_TYPE tMax = 15;
+	const FLOAT_TYPE dt = 0.2;
 	beacls::FloatVec tau = generateArithmeticSequence<FLOAT_TYPE>(0., dt, tMax);
 
 	// Dynamical system parameters
