@@ -60,206 +60,191 @@ bool Q8D_Q4D::operator==(const DynSys& rhs) const {
 }
 
 bool Q8D_Q4D::optCtrl(std::vector<beacls::FloatVec>& uOpts,
-	const FLOAT_TYPE,
-	const std::vector<beacls::FloatVec::const_iterator>& y_ites,
-	const std::vector<const FLOAT_TYPE*>& deriv_ptrs,
-	const beacls::IntegerVec& y_sizes,
-	const beacls::IntegerVec& deriv_sizes,
-	const helperOC::DynSys_UMode_Type uMode
-  ) const {
+		const FLOAT_TYPE,
+		const std::vector<beacls::FloatVec::const_iterator>& y_ites,
+		const std::vector<const FLOAT_TYPE*>& deriv_ptrs,
+		const beacls::IntegerVec& y_sizes,
+		const beacls::IntegerVec& deriv_sizes,
+		const helperOC::DynSys_UMode_Type uMode) const {
 	const helperOC::DynSys_UMode_Type modified_uMode = 
 	  (uMode == helperOC::DynSys_UMode_Default) ? 
 	  helperOC::DynSys_UMode_Max : uMode;
 
-	const FLOAT_TYPE* deriv0_ptr = deriv_ptrs[0];
-	const FLOAT_TYPE* deriv1_ptr = deriv_ptrs[1];
-	const FLOAT_TYPE* deriv2_ptr = deriv_ptrs[2];
-	const FLOAT_TYPE* deriv2_ptr = deriv_ptrs[3];
+  const size_t y3_size = y_sizes[3];
+	const FLOAT_TYPE* deriv3_ptr = deriv_ptrs[3];
+	const size_t deriv3_size = deriv_sizes[3];
 
-	beacls::FloatVec::const_iterator ys3 = y_ites[3];
-	const size_t y3_size = y_sizes[3];
-	const size_t deriv0_size = deriv_sizes[0];
-
-	if (y3_size == 0 || deriv0_size == 0 || deriv0_ptr == NULL || 
-		deriv1_ptr == NULL || deriv2_ptr == NULL) {
+	if (y3_size == 0 || deriv3_size == 0|| deriv3_ptr == NULL) {
 		return false;
 	}
 		
 	uOpts.resize(get_nu());
-	uOpts[0].resize(y3_size);
+	uOpts[0].resize(deriv3_size);
 
-	if ((modified_uMode == helperOC::DynSys_UMode_Max) || 
-		(modified_uMode == helperOC::DynSys_UMode_Min)) {
-		const FLOAT_TYPE moded_vrange_max = 
-	    (modified_uMode == helperOC::DynSys_UMode_Max) ? vrange_max : vrange_min;
-		const FLOAT_TYPE moded_vrange_min = 
-		  (modified_uMode == helperOC::DynSys_UMode_Max) ? vrange_min : vrange_max;
-		const FLOAT_TYPE moded_wMax = 
-		  (modified_uMode == helperOC::DynSys_UMode_Max) ? wMax : -wMax;
-
-		if (deriv0_size != y3_size) {
-			const FLOAT_TYPE deriv0 = deriv0_ptr[0];
-			const FLOAT_TYPE deriv1 = deriv1_ptr[0];
-			std::transform(ys3, ys3 + y3_size, uOpt0.begin(), 
-				[deriv0, deriv1, moded_vrange_max, moded_vrange_min](const auto& rhs){
-				const FLOAT_TYPE y3 = rhs;
-				const FLOAT_TYPE det1 = deriv0 * std::cos(y2) + deriv1 * std::sin(y3);
-				return (det1 >= 0) ? moded_vrange_max : moded_vrange_min;
-			});
-		}
-		else {
-			for (size_t index = 0; index < y3_size; ++index) {
-				const FLOAT_TYPE y2 = ys3[index];
-				const FLOAT_TYPE deriv0 = deriv0_ptr[index];
-				const FLOAT_TYPE deriv1 = deriv1_ptr[index];
-				const FLOAT_TYPE det1 = deriv0 * std::cos(y2) + deriv1 * std::sin(y2);
-				uOpt0[index] = (det1 >= 0) ? moded_vrange_max : moded_vrange_min;
-			}
-		}
-		std::transform(deriv2_ptr, deriv2_ptr + deriv0_size, uOpt1.begin(), [moded_wMax](const auto& rhs) { return (rhs >= 0) ? moded_wMax : -moded_wMax;  });
-	}
-	else {
+	if ((modified_uMode != helperOC::DynSys_UMode_Max) && 
+		  (modified_uMode != helperOC::DynSys_UMode_Min)) {
 		std::cerr << "Unknown uMode!: " << uMode << std::endl;
-		return false;
+		return false;		
 	}
+
+  const FLOAT_TYPE u_if_p3_pos = 
+    (modified_uMode == helperOC::DynSys_UMode_Max) ? uRange[1] : uRange[0];
+  const FLOAT_TYPE u_if_p3_neg =
+    (modified_uMode == helperOC::DynSys_UMode_Max) ? uRange[0] : uRange[1];
+	std::transform(deriv3_ptr, deriv3_ptr + deriv3_size, uOpts[0].begin(), 
+		[u_if_p3_pos, u_if_p3_neg](const auto& rhs){ 
+			return (rhs >= 0) ? u_if_p3_pos: u_if_p3_neg; });
+
 	return true;
 }
-bool Q8D_Q4D::optDstb(
-	std::vector<beacls::FloatVec >& dOpts,
-	const FLOAT_TYPE,
-	const std::vector<beacls::FloatVec::const_iterator >&,
-	const std::vector<const FLOAT_TYPE*>& deriv_ptrs,
-	const beacls::IntegerVec&,
-	const beacls::IntegerVec& deriv_sizes,
-	const helperOC::DynSys_DMode_Type dMode
-) const {
-	const helperOC::DynSys_DMode_Type modified_dMode = (dMode == helperOC::DynSys_DMode_Default) ? helperOC::DynSys_DMode_Min : dMode;
+bool Q8D_Q4D::optDstb(std::vector<beacls::FloatVec>& dOpts,
+	  const FLOAT_TYPE,
+	  const std::vector<beacls::FloatVec::const_iterator>&,
+	  const std::vector<const FLOAT_TYPE*>& deriv_ptrs,
+	  const beacls::IntegerVec&,
+	  const beacls::IntegerVec& deriv_sizes,
+	  const helperOC::DynSys_DMode_Type dMode) const {
+	const helperOC::DynSys_DMode_Type modified_dMode = 
+	  (dMode == helperOC::DynSys_DMode_Default) ? 
+	  helperOC::DynSys_DMode_Min : dMode;
+
 	const FLOAT_TYPE* deriv0_ptr = deriv_ptrs[0];
 	const FLOAT_TYPE* deriv1_ptr = deriv_ptrs[1];
-	const FLOAT_TYPE* deriv2_ptr = deriv_ptrs[2];
-
 	const size_t deriv0_size = deriv_sizes[0];
-	if (deriv0_size == 0 || deriv0_ptr == NULL || deriv1_ptr == NULL || deriv2_ptr == NULL) return false;
+
+	if (deriv0_size == 0 || deriv0_ptr == NULL || deriv1_ptr == NULL) 
+		return false;
+
 	dOpts.resize(get_nd());
-	std::for_each(dOpts.begin(), dOpts.end(), [deriv0_size](auto& rhs) { rhs.resize(deriv0_size); });
+	std::for_each(dOpts.begin(), dOpts.end(), [deriv0_size](auto& rhs) 
+		{ rhs.resize(deriv0_size); });
+
 	beacls::FloatVec& dOpt0 = dOpts[0];
 	beacls::FloatVec& dOpt1 = dOpts[1];
-	beacls::FloatVec& dOpt2 = dOpts[2];
+
 	const FLOAT_TYPE dMax_0 = dMax[0];
 	const FLOAT_TYPE dMax_1 = dMax[1];
-
-	if ((modified_dMode == helperOC::DynSys_DMode_Max) || (modified_dMode == helperOC::DynSys_DMode_Min)) {
-		const FLOAT_TYPE moded_dMax_0 = (modified_dMode == helperOC::DynSys_DMode_Max) ? dMax_0 : -dMax_0;
-		const FLOAT_TYPE moded_dMax_1 = (modified_dMode == helperOC::DynSys_DMode_Max) ? dMax_1 : -dMax_1;
-		for (size_t index = 0; index < deriv0_size; ++index) {
-			const FLOAT_TYPE deriv0 = deriv0_ptr[index];
-			const FLOAT_TYPE deriv1 = deriv1_ptr[index];
-			const FLOAT_TYPE deriv2 = deriv2_ptr[index];
-			const FLOAT_TYPE normDeriv01 = std::sqrt(deriv0 * deriv0 + deriv1 * deriv1);
-			dOpt0[index] = (normDeriv01 == 0) ? 0 : moded_dMax_0 * deriv0 / normDeriv01;
-			dOpt1[index] = (normDeriv01 == 0) ? 0 : moded_dMax_0 * deriv1 / normDeriv01;
-			dOpt2[index] = (deriv2 >= 0) ? moded_dMax_1 : -moded_dMax_1;
-		}
-	}
-	else {
+  
+  if ((modified_dMode != helperOC::DynSys_DMode_Max) && 
+  	  (modified_dMode != helperOC::DynSys_DMode_Min)) {
 		std::cerr << "Unknown dMode!: " << modified_dMode << std::endl;
 		return false;
 	}
+
+  // Disturbance
+  const FLOAT_TYPE d_if_p0_pos = 
+    (modified_dMode == helperOC::DynSys_DMode_Max) ? dRange[1] : dRange[0];
+  const FLOAT_TYPE d_if_p0_neg =
+    (modified_dMode == helperOC::DynSys_DMode_Max) ? dRange[0] : dRange[1];
+	std::transform(deriv0_ptr, deriv0_ptr + deriv0_size, dOpts[0].begin(), 
+		[d_if_p0_pos, d_if_p0_neg](const auto& rhs){ 
+			return (rhs >= 0) ? d_if_p0_pos: d_if_p0_neg; });
+
+  // Planning control
+  const FLOAT_TYPE a_if_p1_pos = 
+    (modified_dMode == helperOC::DynSys_DMode_Max) ? aRange[1] : aRange[0];
+  const FLOAT_TYPE a_if_p1_neg =
+    (modified_dMode == helperOC::DynSys_DMode_Max) ? aRange[0] : aRange[1];
+	std::transform(deriv1_ptr, deriv1_ptr + deriv0_size, dOpts[1].begin(), 
+		[a_if_p1_pos, a_if_p1_neg](const auto& rhs){ 
+			return (rhs >= 0) ? a_if_p1_pos: a_if_p1_neg; });
+
 	return true;
 }
 
-bool Q8D_Q4D::dynamics_cell_helper(
-	beacls::FloatVec& dx,
-	const beacls::FloatVec::const_iterator& x_ite,
-	const std::vector<beacls::FloatVec >& us,
-	const std::vector<beacls::FloatVec >& ds,
-	const size_t x_size,
-	const size_t dim
-) const {
+bool Q8D_Q4D::dynamics_cell_helper(beacls::FloatVec& dx,
+		const beacls::FloatVec::const_iterator& x_ite1,
+		const beacls::FloatVec::const_iterator& x_ite2,
+		const beacls::FloatVec::const_iterator& x_ite3,
+		const std::vector<beacls::FloatVec>& us,
+		const std::vector<beacls::FloatVec>& ds,
+		const size_t x_size,
+		const size_t dim) const {
+    // dx[0] = x[1] + d[0]
+    // dx[1] = g * tan(x[2]) - d[1]            (d[1] is planning control)
+    // dx[2] = -d1 * x[2] + x[3]
+    // dx[3] = -d0 * x[2] + n0 * u
 	beacls::FloatVec& dx_dim = dx;
-	const size_t dx_dim_size = (dim == 2) ? us[1].size() : x_size;
+	const size_t dx_dim_size = us[0].size();
 	dx.resize(dx_dim_size);
+
 	bool result = true;
+
 	switch (dim) {
-	case 0:
-		{
+	  case 0:	{
 			const beacls::FloatVec& ds_0 = ds[0];
 			const beacls::FloatVec& us_0 = us[0];
-			if (ds[0].size() == dx_dim_size) {
-				for (size_t index = 0; index < dx_dim_size; ++index) {
-					dx_dim[index] = us_0[index] * std::cos(x_ite[index]) + ds_0[index];
-				}
-			}
-			else {	//!< ds_0_size != dx_dim_size
-				const FLOAT_TYPE d0 = ds_0[0];
-				std::transform(x_ite, x_ite + dx_dim_size, us_0.cbegin(), dx_dim.begin(), [d0](const auto& lhs, const auto& rhs) {
-					return  rhs * std::cos(lhs) + d0;
-				});
-			}
+
+			std::transform(ds_0.cbegin(), ds_0.cbegin() + dx_dim_size, 
+					x_ite1.cbegin(), dx_dim.begin(), std::plus<FLOAT_TYPE>());
 		}
 		break;
-	case 1:
-		{
+
+	  case 1:	{ // dx[1] = g * tan(x[2]) - d[1]
 			const beacls::FloatVec& ds_1 = ds[1];
-			const beacls::FloatVec& us_0 = us[0];
-			if (ds[1].size() == dx_dim_size) {
-				for (size_t index = 0; index < dx_dim_size; ++index) {
-					dx_dim[index] = us_0[index] * std::sin(x_ite[index]) + ds_1[index];
-				}
-			}
-			else {
-				const FLOAT_TYPE d1 = ds_1[0];
-				std::transform(x_ite, x_ite + dx_dim_size, us_0.cbegin(), dx_dim.begin(), [d1](const auto& lhs, const auto& rhs) {
-					return  rhs * std::sin(lhs) + d1;
-				});
-			}
+      
+			std::transform(x_ite2.cbegin(), x_ite2.cbegin() + dx_dim_size, 
+		      ds_1.begin(), dx_dim.begin(), [g](const auto& x2, const auto& d1) { 
+		          return g*std::tan(x2) - d1; });
 		}
 		break;
-	case 2:
-		{
-			const beacls::FloatVec& ds_2 = ds[2];
-			const beacls::FloatVec& us_1 = us[1];
-			if (ds[2].size() == dx_dim_size) {
-				std::transform(us_1.cbegin(), us_1.cbegin() + dx_dim_size, ds_2.cbegin(), dx_dim.begin(), std::plus<FLOAT_TYPE>());
-			}
-			else {
-				std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << " Invalid data size" << std::endl;
-				result = false;
-			}
+
+	  case 2:	{ // dx[2] = -d1 * x[2] + x[3]
+		  std::transform(x_ite2.cbegin(), x_ite2.cbegin() + dx_dim_size, 
+					x_ite3.cbegin(), dx_dim.begin(), [d1](const auto& x2, const auto& x3){
+						  return -d1 * x2 + x3;	});
 		}
 		break;
-	default:
-		std::cerr << "Only dimension 1-4 are defined for dynamics of Q8D_Q4D!" << std::endl;
-		result = false;
+
+		case 3: { // dx[3] = -d0 * x[2] + n0 * u
+			const beacls::FloatVec& us_0 = us[0];			
+		  std::transform(x_ite2.cbegin(), x_ite2.cbegin() + dx_dim_size, 
+					us_0.cbegin(), dx_dim.begin(), 
+					[d0, n0](const auto& x2, const auto& u) { return -d0*x2 + n0*u;	});
+		}
 		break;
+
+		default: {
+			std::cerr << "Only dimension 1-4 are defined for dynamics of Q8D_Q4D!" 
+			    << std::endl;
+			result = false;
+		}
+	  break;
 	}
 	return result;
 }
 
-bool Q8D_Q4D::dynamics(
-	std::vector<beacls::FloatVec >& dxs,
-	const FLOAT_TYPE,
-	const std::vector<beacls::FloatVec::const_iterator >& x_ites,
-	const std::vector<beacls::FloatVec >& us,
-	const std::vector<beacls::FloatVec >& ds,
-	const beacls::IntegerVec& x_sizes,
-	const size_t dst_target_dim
-) const {
-	static const std::vector<beacls::FloatVec >& dummy_ds{ beacls::FloatVec{0},beacls::FloatVec{0},beacls::FloatVec{0} };
-	const std::vector<beacls::FloatVec >& modified_ds = (ds.empty()) ? dummy_ds : ds;
+bool Q8D_Q4D::dynamics(std::vector<beacls::FloatVec >& dxs,
+		const FLOAT_TYPE,
+		const std::vector<beacls::FloatVec::const_iterator >& x_ites,
+		const std::vector<beacls::FloatVec >& us,
+		const std::vector<beacls::FloatVec >& ds,
+		const beacls::IntegerVec& x_sizes,
+		const size_t dst_target_dim) const {
+	static const std::vector<beacls::FloatVec>& 
+	    dummy_ds{beacls::FloatVec{0}, beacls::FloatVec{0}, beacls::FloatVec{0}};
+	const std::vector<beacls::FloatVec >& modified_ds = 
+	    (ds.empty()) ? dummy_ds : ds;
 	const size_t src_x_dim_index = 2;
-	const beacls::FloatVec::const_iterator& x_ites_target_dim = x_ites[src_x_dim_index];
+	const beacls::FloatVec::const_iterator& x_ites_target_dim = 
+	    x_ites[src_x_dim_index];
 	if (dst_target_dim == std::numeric_limits<size_t>::max()) {
-		dynamics_cell_helper(dxs[0], x_ites_target_dim, us, modified_ds, x_sizes[src_x_dim_index], 0);
-		dynamics_cell_helper(dxs[1], x_ites_target_dim, us, modified_ds, x_sizes[src_x_dim_index], 1);
-		dynamics_cell_helper(dxs[2], x_ites_target_dim, us, modified_ds, x_sizes[src_x_dim_index], 2);
+		dynamics_cell_helper(dxs[0], x_ites_target_dim, us, modified_ds, 
+			  x_sizes[src_x_dim_index], 0);
+		dynamics_cell_helper(dxs[1], x_ites_target_dim, us, modified_ds, 
+			  x_sizes[src_x_dim_index], 1);
+		dynamics_cell_helper(dxs[2], x_ites_target_dim, us, modified_ds, 
+			  x_sizes[src_x_dim_index], 2);
 	}
-	else
-	{
-		if (dst_target_dim < x_ites.size())
-			dynamics_cell_helper(dxs[dst_target_dim], x_ites_target_dim, us, modified_ds, x_sizes[src_x_dim_index], dst_target_dim);
-		else
-			std::cerr << "Invalid target dimension for dynamics: " << dst_target_dim << std::endl;
+	else	{
+		if (dst_target_dim < x_ites.size()) {
+			dynamics_cell_helper(dxs[dst_target_dim], x_ites_target_dim, us, 
+				  modified_ds, x_sizes[src_x_dim_index], dst_target_dim);
+		}
+		else {
+			std::cerr << "Invalid target dimension for dynamics: " << dst_target_dim 
+		      << std::endl;
+		}
 	}
 	return true;
 }
