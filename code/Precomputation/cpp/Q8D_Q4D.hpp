@@ -64,7 +64,7 @@ namespace helperOC {
 
 		PREFIX_VC_DLL
 			virtual bool operator==(const Q8D_Q4D& rhs) const;
-			
+
 		PREFIX_VC_DLL
 			virtual bool operator==(const DynSys& rhs) const;
 
@@ -209,12 +209,6 @@ namespace helperOC {
 			) const;
 #endif /* defined(USER_DEFINED_GPU_DYNSYS_FUNC) */
 
-		PREFIX_VC_DLL
-			FLOAT_TYPE get_wMax() const;
-		PREFIX_VC_DLL
-			const beacls::FloatVec& get_vrange() const;
-		PREFIX_VC_DLL
-			const beacls::FloatVec& get_dMax() const;
 	protected:
 		/** @overload
 		Disable copy constructor
@@ -222,23 +216,23 @@ namespace helperOC {
 		PREFIX_VC_DLL
 			Q8D_Q4D(const Q8D_Q4D& rhs) :
 			DynSys(rhs),
-			wMax(rhs.wMax),	//!< Angular control bounds
-			vrange(rhs.vrange),	//!< Speed control bounds
-			dMax(rhs.dMax)	//!< Disturbance
+			uRange(rhs.uRange),	//!< Angular control bounds
+			aRange(rhs.aRange),	//!< Speed control bounds
+			dRange(rhs.dRange)	//!< Disturbance
 		{}
 	private:
 		/** @overload
 		Disable operator=
 		*/
 		Q8D_Q4D& operator=(const Q8D_Q4D& rhs);
-		bool dynamics_cell_helper(
-			beacls::FloatVec& dx,
-			const beacls::FloatVec::const_iterator& x_ite,
-			const std::vector<beacls::FloatVec >& us,
-			const std::vector<beacls::FloatVec >& ds,
-			const size_t x_size,
-			const size_t dim
-		) const;
+		bool dynamics_cell_helper(beacls::FloatVec& dx,
+				const beacls::FloatVec::const_iterator& x_ite1,
+				const beacls::FloatVec::const_iterator& x_ite2,
+				const beacls::FloatVec::const_iterator& x_ite3,
+				const std::vector<beacls::FloatVec >& us,
+				const std::vector<beacls::FloatVec >& ds,
+				const size_t x_size,
+				const size_t dim) const;
 	};
 };
 #endif	/* __Q8D_Q4D_hpp__ */

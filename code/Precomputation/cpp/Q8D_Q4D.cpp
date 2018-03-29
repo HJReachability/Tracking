@@ -23,7 +23,7 @@ Q8D_Q4D::Q8D_Q4D(
 	beacls::IntegerVec{0},	//!< Position dimensions
 	beacls::IntegerVec{1}),	//!< velocity dimensions
 	uRange(uRange), aRange(aRange), dRange(dRange) {
-	if (x.size() != 3) {
+	if (x.size() != 4) {
 		std::cerr << "Error: " << __func__ << " : Initial state does not have right dimension!" << std::endl;
 	}
 
@@ -42,11 +42,11 @@ bool Q8D_Q4D::operator==(const Q8D_Q4D& rhs) const {
 	  !std::equal(uRange.cbegin(), uRange.cend(), rhs.uRange.cbegin())) {
 		return false;	//!< Speed control bounds
 	}
-	else if ((vrange.size() != rhs.vrange.size()) || 
+	else if ((aRange.size() != rhs.aRange.size()) || 
 	  !std::equal(aRange.cbegin(), aRange.cend(), rhs.aRange.cbegin())) {
 	  return false;	//!< Speed control bounds
   }
-	else if ((dMax.size() != rhs.dMax.size()) || 
+	else if ((dRange.size() != rhs.dRange.size()) || 
 	  !std::equal(dRange.cbegin(), dRange.cend(), rhs.dRange.cbegin())) {
 	  return false;	//!< Disturbance
   }
@@ -122,9 +122,6 @@ bool Q8D_Q4D::optDstb(std::vector<beacls::FloatVec>& dOpts,
 	beacls::FloatVec& dOpt0 = dOpts[0];
 	beacls::FloatVec& dOpt1 = dOpts[1];
 
-	const FLOAT_TYPE dMax_0 = dMax[0];
-	const FLOAT_TYPE dMax_1 = dMax[1];
-  
   if ((modified_dMode != helperOC::DynSys_DMode_Max) && 
   	  (modified_dMode != helperOC::DynSys_DMode_Min)) {
 		std::cerr << "Unknown dMode!: " << modified_dMode << std::endl;
@@ -176,31 +173,29 @@ bool Q8D_Q4D::dynamics_cell_helper(beacls::FloatVec& dx,
 			const beacls::FloatVec& us_0 = us[0];
 
 			std::transform(ds_0.cbegin(), ds_0.cbegin() + dx_dim_size, 
-					x_ite1.cbegin(), dx_dim.begin(), std::plus<FLOAT_TYPE>());
+					x_ite1, dx_dim.begin(), std::plus<FLOAT_TYPE>());
 		}
 		break;
 
 	  case 1:	{ // dx[1] = g * tan(x[2]) - d[1]
 			const beacls::FloatVec& ds_1 = ds[1];
       
-			std::transform(x_ite2.cbegin(), x_ite2.cbegin() + dx_dim_size, 
-		      ds_1.begin(), dx_dim.begin(), [g](const auto& x2, const auto& d1) { 
+			std::transform(x_ite2, x_ite2 + dx_dim_size, 
+		      ds_1.begin(), dx_dim.begin(), [this](const auto& x2, const auto& d1) { 
 		          return g*std::tan(x2) - d1; });
 		}
 		break;
 
 	  case 2:	{ // dx[2] = -d1 * x[2] + x[3]
-		  std::transform(x_ite2.cbegin(), x_ite2.cbegin() + dx_dim_size, 
-					x_ite3.cbegin(), dx_dim.begin(), [d1](const auto& x2, const auto& x3){
-						  return -d1 * x2 + x3;	});
+		  std::transform(x_ite2, x_ite2 + dx_dim_size, x_ite3, dx_dim.begin(), 
+		  	[this](const auto& x2, const auto& x3) { return -d1 * x2 + x3;	});
 		}
 		break;
 
 		case 3: { // dx[3] = -d0 * x[2] + n0 * u
 			const beacls::FloatVec& us_0 = us[0];			
-		  std::transform(x_ite2.cbegin(), x_ite2.cbegin() + dx_dim_size, 
-					us_0.cbegin(), dx_dim.begin(), 
-					[d0, n0](const auto& x2, const auto& u) { return -d0*x2 + n0*u;	});
+		  std::transform(x_ite2, x_ite2 +dx_dim_size, us_0.cbegin(), dx_dim.begin(), 
+					[this](const auto& x2, const auto& u) { return -d0*x2 + n0*u;	});
 		}
 		break;
 
@@ -225,41 +220,33 @@ bool Q8D_Q4D::dynamics(std::vector<beacls::FloatVec >& dxs,
 	    dummy_ds{beacls::FloatVec{0}, beacls::FloatVec{0}, beacls::FloatVec{0}};
 	const std::vector<beacls::FloatVec >& modified_ds = 
 	    (ds.empty()) ? dummy_ds : ds;
-	const size_t src_x_dim_index = 2;
-	const beacls::FloatVec::const_iterator& x_ites_target_dim = 
-	    x_ites[src_x_dim_index];
+
+	const beacls::FloatVec::const_iterator& x_ites1 = x_ites[1];
+	const beacls::FloatVec::const_iterator& x_ites2 = x_ites[2];
+	const beacls::FloatVec::const_iterator& x_ites3 = x_ites[3];
+
+  bool result = true;
 	if (dst_target_dim == std::numeric_limits<size_t>::max()) {
-		dynamics_cell_helper(dxs[0], x_ites_target_dim, us, modified_ds, 
-			  x_sizes[src_x_dim_index], 0);
-		dynamics_cell_helper(dxs[1], x_ites_target_dim, us, modified_ds, 
-			  x_sizes[src_x_dim_index], 1);
-		dynamics_cell_helper(dxs[2], x_ites_target_dim, us, modified_ds, 
-			  x_sizes[src_x_dim_index], 2);
+		for (size_t dim = 0; dim < 4; ++dim) {
+			result &= dynamics_cell_helper(dxs[dim], x_ites1, x_ites2, x_ites3, us, ds, 
+				x_sizes[0], dim);
+		}
 	}
 	else	{
 		if (dst_target_dim < x_ites.size()) {
-			dynamics_cell_helper(dxs[dst_target_dim], x_ites_target_dim, us, 
-				  modified_ds, x_sizes[src_x_dim_index], dst_target_dim);
+			dynamics_cell_helper(dxs[dst_target_dim], x_ites1, x_ites2, x_ites3, us, 
+				  modified_ds, x_sizes[0], dst_target_dim);
 		}
 		else {
 			std::cerr << "Invalid target dimension for dynamics: " << dst_target_dim 
 		      << std::endl;
+		  result = false;
 		}
 	}
-	return true;
+	return result;
 }
 
-FLOAT_TYPE Q8D_Q4D::get_wMax() const {
-	return wMax;
-}
-const beacls::FloatVec& Q8D_Q4D::get_vrange() const {
-	return vrange;
-}
-const beacls::FloatVec& Q8D_Q4D::get_dMax() const {
-	return dMax;
-}
-
-
+// ====================================== GPU ONLY
 #if defined(USER_DEFINED_GPU_DYNSYS_FUNC)
 bool Q8D_Q4D::optCtrl_cuda(
 	std::vector<beacls::UVec>& u_uvecs,

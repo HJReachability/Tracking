@@ -66,50 +66,75 @@ int main(int argc, char *argv[])
 		enable_user_defined_dynamics_on_gpu = (atoi(argv[8]) == 0) ? false : true;
 	}
 	//!< Q8D_Q4D parameters
-	const beacls::FloatVec initState{ (FLOAT_TYPE)100, (FLOAT_TYPE)75, (FLOAT_TYPE)(220 * M_PI / 180) };
-	const FLOAT_TYPE wMax = (FLOAT_TYPE)1.2;
-	const beacls::FloatVec vrange{ (FLOAT_TYPE)1.1, (FLOAT_TYPE)1.3 };
-	const beacls::FloatVec dMax{ (FLOAT_TYPE)0, (FLOAT_TYPE)0 };
+	const beacls::FloatVec initState{
+  	  (FLOAT_TYPE)0, (FLOAT_TYPE)0, (FLOAT_TYPE)0, (FLOAT_TYPE)0};
+  const beacls::FloatVec uRange{
+  	  (FLOAT_TYPE)(-20./180.*M_PI), (20./180.*M_PI)};
+	const beacls::FloatVec aRange{ (FLOAT_TYPE)(-1.), (FLOAT_TYPE)1. };
+	const beacls::FloatVec dRange{ (FLOAT_TYPE)(-0.2), (FLOAT_TYPE)0.2 };
 	helperOC::Q8D_Q4D* q8d_q4d = 
-	  new helperOC::Q8D_Q4D(initState, wMax, vrange, dMax);
+	  new helperOC::Q8D_Q4D(initState, uRange, aRange, dRange);
 
 	const FLOAT_TYPE inf = std::numeric_limits<FLOAT_TYPE>::infinity();
 	//!< Target and obstacle
-	levelset::HJI_Grid* g = helperOC::createGrid(
-		beacls::FloatVec{(FLOAT_TYPE)0, (FLOAT_TYPE)0, (FLOAT_TYPE)0}, 
-		beacls::FloatVec{(FLOAT_TYPE)150, (FLOAT_TYPE)150, (FLOAT_TYPE)(2*M_PI)}, 
-		beacls::IntegerVec{41,41,11});
-	std::vector<beacls::FloatVec > targets(1);
-	levelset::ShapeCylinder(beacls::IntegerVec{ 2 }, beacls::FloatVec{ 75., 50., 0. }, (FLOAT_TYPE)10).execute(g, targets[0]);
-	beacls::FloatVec obs1, obs2;
-	levelset::ShapeRectangleByCorner(beacls::FloatVec{ 300, 250, -inf }, beacls::FloatVec{ 350, 300, inf }).execute(g, obs1);
-	levelset::ShapeRectangleByCorner(beacls::FloatVec{ 5, 5, -inf }, beacls::FloatVec{ 145, 145, inf }).execute(g, obs2);
-	std::transform(obs2.cbegin(), obs2.cend(), obs2.begin(), std::negate<FLOAT_TYPE>());
-	std::vector<beacls::FloatVec > obstacles(1);
-	obstacles[0].resize(obs1.size());
-	std::transform(obs1.cbegin(), obs1.cend(), obs2.cbegin(), obstacles[0].begin(), std::ptr_fun<const FLOAT_TYPE&, const FLOAT_TYPE&>(std::min<FLOAT_TYPE>));
+	const beacls::FloatVec gMin{(FLOAT_TYPE)-2, (FLOAT_TYPE)-2, 
+      (FLOAT_TYPE)(-35.*M_PI/180.), (FLOAT_TYPE)(-2*M_PI)};
+	const beacls::FloatVec gMax{(FLOAT_TYPE)2, (FLOAT_TYPE)2, 
+      (FLOAT_TYPE)(35.*M_PI/180.), (FLOAT_TYPE)(2*M_PI)};      
+	levelset::HJI_Grid* g = helperOC::createGrid(gMin, gMax, 
+		beacls::IntegerVec{41,41,25,21});
+
+	const size_t numel = g->get_numel();
+	const size_t num_dim = g->get_num_of_dimensions();
+
+   // Position
+  beacls::FloatVec targetp;
+  targetp.assign(numel, 0);
+
+  const beacls::FloatVec &ps = g->get_xs(0);
+	std::transform(ps.cbegin(), ps.cend(), targetp.begin(), 
+		  [](const auto& a) { return std::abs(a); });
+	std::transform(targetp.cbegin(), targetp.cend(), targetp.begin(), 
+		  std::negate<FLOAT_TYPE>());
+	
+   // Velocity
+  beacls::FloatVec targetv;
+  targetv.assign(numel, 0);
+
+  const beacls::FloatVec &vs = g->get_xs(1);
+	std::transform(vs.cbegin(), vs.cend(), targetv.begin(), 
+		  [](const auto& a) { return std::abs(a); });
+	std::transform(targetv.cbegin(), targetv.cend(), targetv.begin(), 
+		  std::negate<FLOAT_TYPE>());
+  std::transform(targetv.cbegin(), targetv.cend(), targetv.begin(), 
+		  [](const auto& tv) { return tv / (FLOAT_TYPE)2.; });
+
+  // Overall cost
+	std::vector<beacls::FloatVec> targets(1);
+  targets[0].assign(numel, 0);
+  std::transform(targetp.cbegin(), targetp.cend(), targetv.cbegin(), 
+  	  targets[0].begin(), [](const auto& a, const auto& b) { 
+  	  return std::min(a,b); });
 
 	//!< Compute reachable set
-	const FLOAT_TYPE tMax = 500;
-	const FLOAT_TYPE dt = 0.25;
+	const FLOAT_TYPE tMax = 0.2;
+	const FLOAT_TYPE dt = 0.05;
 	beacls::FloatVec tau = generateArithmeticSequence<FLOAT_TYPE>(0., dt, tMax);
 
 	// Dynamical system parameters
 	helperOC::DynSysSchemeData* schemeData = new helperOC::DynSysSchemeData;
 	schemeData->set_grid(g);
 	schemeData->dynSys = q8d_q4d;
-	schemeData->uMode = helperOC::DynSys_UMode_Min;
-	schemeData->dMode = helperOC::DynSys_DMode_Max;
+	schemeData->uMode = helperOC::DynSys_UMode_Max;
+	schemeData->dMode = helperOC::DynSys_DMode_Min;
 
 	// Target set and visualization
 	helperOC::HJIPDE_extraArgs extraArgs;
 	helperOC::HJIPDE_extraOuts extraOuts;
 	extraArgs.targets = targets;
-	extraArgs.obstacles = obstacles;
-	extraArgs.stopInit = q8d_q4d->get_x();
 	extraArgs.visualize = true;
-	extraArgs.plotData.plotDims = beacls::IntegerVec{ 1, 1, 0 };
-	extraArgs.plotData.projpt = beacls::FloatVec{ q8d_q4d->get_x()[2] };
+	extraArgs.plotData.plotDims = beacls::IntegerVec{ 1, 1, 0, 0 };
+	extraArgs.plotData.projpt = beacls::FloatVec{ 0., 0. };
 	extraArgs.deleteLastPlot = true;
 	extraArgs.fig_filename = "figs/Q8D_Q4D_test_BRS";
 
@@ -120,14 +145,16 @@ int main(int argc, char *argv[])
 	extraArgs.execParameters.num_of_gpus = num_of_gpus;
 	extraArgs.execParameters.num_of_threads = num_of_threads;
 	extraArgs.execParameters.delayedDerivMinMax = delayedDerivMinMax;
-	extraArgs.execParameters.enable_user_defined_dynamics_on_gpu = enable_user_defined_dynamics_on_gpu;
+	extraArgs.execParameters.enable_user_defined_dynamics_on_gpu = 
+	    enable_user_defined_dynamics_on_gpu;
 
 	helperOC::HJIPDE* hjipde;
 	hjipde = new helperOC::HJIPDE();
 
 	beacls::FloatVec tau2;
 	std::vector<beacls::FloatVec > datas;
-	hjipde->solve(datas, tau2, extraOuts, targets, tau, schemeData, helperOC::HJIPDE::MinWithType_None, extraArgs);
+	hjipde->solve(datas, tau2, extraOuts, targets, tau, schemeData, 
+		  helperOC::HJIPDE::MinWithType_None, extraArgs);
 
   // save mat file
 	std::string Q8D_Q4D_test_filename("Q8D_Q4D_test.mat");
