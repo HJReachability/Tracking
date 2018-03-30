@@ -28,7 +28,8 @@ int main(int argc, char *argv[])
 	}
 	const bool keepLast = false;
 	const bool calculateTTRduringSolving = false;
-	levelset::DelayedDerivMinMax_Type delayedDerivMinMax = levelset::DelayedDerivMinMax_Disable;
+	levelset::DelayedDerivMinMax_Type delayedDerivMinMax = 
+	  levelset::DelayedDerivMinMax_Disable;
 	if (argc >= 4) {
 		switch (atoi(argv[3])) {
 			default:
@@ -82,7 +83,9 @@ int main(int argc, char *argv[])
 	const beacls::FloatVec gMax{(FLOAT_TYPE)2, (FLOAT_TYPE)2, 
       (FLOAT_TYPE)(35.*M_PI/180.), (FLOAT_TYPE)(2*M_PI)};      
 	levelset::HJI_Grid* g = helperOC::createGrid(gMin, gMax, 
-		beacls::IntegerVec{65,65,35,31});
+      beacls::IntegerVec{65,65,41,35});
+    //beacls::IntegerVec{35,35,25,19});
+		
 
 	const size_t numel = g->get_numel();
 	const size_t num_dim = g->get_num_of_dimensions();
@@ -107,7 +110,7 @@ int main(int argc, char *argv[])
 	std::transform(targetv.cbegin(), targetv.cend(), targetv.begin(), 
 		  std::negate<FLOAT_TYPE>());
   std::transform(targetv.cbegin(), targetv.cend(), targetv.begin(), 
-		  [](const auto& tv) { return tv / (FLOAT_TYPE)2.; });
+		  [](const auto& tv) { return tv / (FLOAT_TYPE)2; });
 
   // Overall cost
 	std::vector<beacls::FloatVec> targets(1);
@@ -132,11 +135,6 @@ int main(int argc, char *argv[])
 	helperOC::HJIPDE_extraArgs extraArgs;
 	helperOC::HJIPDE_extraOuts extraOuts;
 	extraArgs.targets = targets;
-	extraArgs.visualize = true;
-	extraArgs.plotData.plotDims = beacls::IntegerVec{ 1, 1, 0, 0 };
-	extraArgs.plotData.projpt = beacls::FloatVec{ 0., 0. };
-	extraArgs.deleteLastPlot = true;
-	extraArgs.fig_filename = "figs/Q8D_Q4D_test_BRS";
 
 	extraArgs.execParameters.line_length_of_chunk = line_length_of_chunk;
 	extraArgs.execParameters.calcTTR = calculateTTRduringSolving;
