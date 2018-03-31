@@ -1,20 +1,25 @@
 % Script for saving figures of 2D projection of value function at a suitable
 % level for automatically determining time-varying tracking error bound
 
-function TEB = tvTEB(numD, fig_filename, level, sD, data, tau)
+function TEB = tvTEB(numD, fig_filename, level, g, data)
 
 if numD ~= 2 && numD ~= 3
   return
 end
 
-numT = length(tau);
+
+if iscell(data)
+  [g, data] = cpp2matG(g, data);
+end
+
+numT = size(data, 5);
 
 if numD == 2
-  [g2D, data2D] = proj(sD.grid, data, [0 0 1 1], 'max');
+  [g2D, data2D] = proj(g, data, [0 0 1 1], 'max');
   colors = jet(numT);
   h = cell(numT,1);
 else
-  [g3D, data3D] = proj(sD.grid, data, [0 0 1 0], 'max');
+  [g3D, data3D] = proj(g, data, [0 0 1 0], 'max');
 end
 
 
@@ -56,6 +61,7 @@ for i = 1:numT
 end
 
 if numD == 2
+  grid on
   savefig(sprintf('%s.fig', fig_filename));
 end
 end
