@@ -180,7 +180,7 @@ bool Q8D_Q4D::dynamics_cell_helper(beacls::FloatVec& dx,
       const beacls::FloatVec& ds_1 = ds[1];
       
       std::transform(x_ite2, x_ite2 + dx_dim_size, 
-          ds_1.begin(), dx_dim.begin(), [this](const auto& x2, const auto& ds1) { 
+          ds_1.begin(), dx_dim.begin(), [this](const auto& x2, const auto& ds1){ 
               return g*std::tan(x2) - ds1; });
     }
     break;

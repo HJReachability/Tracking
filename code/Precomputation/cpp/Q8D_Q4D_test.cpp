@@ -74,52 +74,69 @@ int main(int argc, char *argv[])
 	const beacls::FloatVec aRange{ (FLOAT_TYPE)(-1.), (FLOAT_TYPE)1. };
 	const beacls::FloatVec dRange{ (FLOAT_TYPE)(-0.2), (FLOAT_TYPE)0.2 };
 	helperOC::Q8D_Q4D* q8d_q4d = 
-	  new helperOC::Q8D_Q4D(initState, uRange, aRange, dRange);
+	    new helperOC::Q8D_Q4D(initState, uRange, aRange, dRange);
 
 	const FLOAT_TYPE inf = std::numeric_limits<FLOAT_TYPE>::infinity();
-	//!< Target and obstacle
-	const beacls::FloatVec gMin{(FLOAT_TYPE)-2, (FLOAT_TYPE)-2, 
-      (FLOAT_TYPE)(-35.*M_PI/180.), (FLOAT_TYPE)(-2*M_PI)};
-	const beacls::FloatVec gMax{(FLOAT_TYPE)2, (FLOAT_TYPE)2, 
-      (FLOAT_TYPE)(35.*M_PI/180.), (FLOAT_TYPE)(2*M_PI)};      
+
+	// Grid
+	const beacls::FloatVec gMin{(FLOAT_TYPE)-3, (FLOAT_TYPE)-3, 
+      (FLOAT_TYPE)(-50.*M_PI/180.), (FLOAT_TYPE)(-2*M_PI)};
+	const beacls::FloatVec gMax{(FLOAT_TYPE)3, (FLOAT_TYPE)3, 
+      (FLOAT_TYPE)(50.*M_PI/180.), (FLOAT_TYPE)(2*M_PI)};      
 	levelset::HJI_Grid* g = helperOC::createGrid(gMin, gMax, 
-      beacls::IntegerVec{65,65,41,35});
-    //beacls::IntegerVec{35,35,25,19});
+    beacls::IntegerVec{35,35,25,19});
+    //beacls::IntegerVec{65,65,41,35});
+    
 		
 
 	const size_t numel = g->get_numel();
 	const size_t num_dim = g->get_num_of_dimensions();
+  
+  // Target
+ //  // Position
+ //  beacls::FloatVec targetp;
+ //  targetp.assign(numel, 0);
 
-   // Position
-  beacls::FloatVec targetp;
-  targetp.assign(numel, 0);
-
-  const beacls::FloatVec &ps = g->get_xs(0);
-	std::transform(ps.cbegin(), ps.cend(), targetp.begin(), 
-		  [](const auto& a) { return std::abs(a); });
-	std::transform(targetp.cbegin(), targetp.cend(), targetp.begin(), 
-		  std::negate<FLOAT_TYPE>());
+ //  const beacls::FloatVec &ps = g->get_xs(0);
+	// std::transform(ps.cbegin(), ps.cend(), targetp.begin(), 
+	// 	  [](const auto& a) { return std::abs(a); });
+	// std::transform(targetp.cbegin(), targetp.cend(), targetp.begin(), 
+	// 	  std::negate<FLOAT_TYPE>());
 	
-   // Velocity
-  beacls::FloatVec targetv;
-  targetv.assign(numel, 0);
-
-  const beacls::FloatVec &vs = g->get_xs(1);
-	std::transform(vs.cbegin(), vs.cend(), targetv.begin(), 
-		  [](const auto& a) { return std::abs(a); });
-	std::transform(targetv.cbegin(), targetv.cend(), targetv.begin(), 
-		  std::negate<FLOAT_TYPE>());
-  std::transform(targetv.cbegin(), targetv.cend(), targetv.begin(), 
-		  [](const auto& tv) { return tv / (FLOAT_TYPE)2; });
+ //   // Velocity
+ //  beacls::FloatVec targetv;
+ //  targetv.assign(numel, 0);
+  
+ //  const beacls::FloatVec &vs = g->get_xs(1);
+	// std::transform(vs.cbegin(), vs.cend(), targetv.begin(), 
+	// 	  [](const auto& a) { return std::abs(a); });
+	// std::transform(targetv.cbegin(), targetv.cend(), targetv.begin(), 
+	// 	  std::negate<FLOAT_TYPE>());
+ //  // std::transform(targetv.cbegin(), targetv.cend(), targetv.begin(), 
+	// 	//   [](const auto& tv) { return tv / (FLOAT_TYPE)2; });
 
   // Overall cost
 	std::vector<beacls::FloatVec> targets(1);
   targets[0].assign(numel, 0);
-  std::transform(targetp.cbegin(), targetp.cend(), targetv.cbegin(), 
-  	  targets[0].begin(), [](const auto& a, const auto& b) { 
-  	  return std::min(a,b); });
+  for (size_t dim = 0; dim < num_dim; ++dim) {
+    const beacls::FloatVec &xs = g->get_xs(dim);
 
-	//!< Compute reachable set
+    if (dim == 0 || dim == 1) {
+      std::transform(xs.cbegin(), xs.cend(), targets[0].begin(), 
+          targets[0].begin(), [](const auto &xs_i, const auto &t_i) {
+          return t_i + std::pow(xs_i, 2); });      
+    }
+  }
+  std::transform(targets[0].cbegin(), targets[0].cend(), targets[0].begin(), 
+        [](const auto &t_i) { return std::sqrt(t_i); });   
+  std::transform(targets[0].cbegin(), targets[0].cend(), targets[0].begin(), 
+        std::negate<FLOAT_TYPE>()); 
+
+  // std::transform(targetp.cbegin(), targetp.cend(), targetv.cbegin(), 
+  // 	  targets[0].begin(), [](const auto& a, const auto& b) { 
+  // 	  return std::min(a,b); });
+
+	// Time
 	const FLOAT_TYPE tMax = 15;
 	const FLOAT_TYPE dt = 0.2;
 	beacls::FloatVec tau = generateArithmeticSequence<FLOAT_TYPE>(0., dt, tMax);
@@ -163,8 +180,12 @@ int main(int argc, char *argv[])
 		beacls::IntegerVec Ns = g->get_Ns();
 
 		g->save_grid(std::string("g"), fs);
-		if (!datas.empty()) save_vector_of_vectors(datas, std::string("data"), Ns, false, fs);
-		if (!tau2.empty()) save_vector(tau2, std::string("tau2"), Ns, false, fs);
+		if (!datas.empty()) {
+      save_vector_of_vectors(datas, std::string("data"), Ns, false, fs);
+    }
+		if (!tau2.empty()) {
+      save_vector(tau2, std::string("tau2"), Ns, false, fs);
+    }
 	}
 
 	beacls::closeMatFStream(fs);
