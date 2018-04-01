@@ -20,8 +20,8 @@ Q8D_Q4D::Q8D_Q4D(
   const beacls::FloatVec& aRange,
   const beacls::FloatVec& dRange): 
   DynSys(4, 1, 2, // # states, # control inputs, # disturbances
-  beacls::IntegerVec{0},  //!< Position dimensions
-  beacls::IntegerVec{1}), //!< velocity dimensions
+  beacls::IntegerVec{0},  // Position dimensions
+  beacls::IntegerVec{1}), // velocity dimensions
   uRange(uRange), aRange(aRange), dRange(dRange) {
   if (x.size() != 4) {
     std::cerr << "Error: " << __func__ << " : Initial state does not have right dimension!" << std::endl;
@@ -88,12 +88,12 @@ bool Q8D_Q4D::optCtrl(std::vector<beacls::FloatVec>& uOpts,
   }
 
   const FLOAT_TYPE u_if_p3_pos = 
-    (modified_uMode == helperOC::DynSys_UMode_Max) ? uRange[1] : uRange[0];
+      (modified_uMode == helperOC::DynSys_UMode_Max) ? uRange[1] : uRange[0];
   const FLOAT_TYPE u_if_p3_neg =
-    (modified_uMode == helperOC::DynSys_UMode_Max) ? uRange[0] : uRange[1];
+      (modified_uMode == helperOC::DynSys_UMode_Max) ? uRange[0] : uRange[1];
   std::transform(deriv3_ptr, deriv3_ptr + deriv3_size, uOpts[0].begin(), 
-    [u_if_p3_pos, u_if_p3_neg](const auto& rhs){ 
-      return (rhs >= 0) ? u_if_p3_pos: u_if_p3_neg; });
+      [u_if_p3_pos, u_if_p3_neg](const auto& p3){ 
+      return (p3 >= 0) ? u_if_p3_pos : u_if_p3_neg; });
 
   return true;
 }
