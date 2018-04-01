@@ -70,10 +70,12 @@ int main(int argc, char *argv[])
   const beacls::FloatVec initState{
       (FLOAT_TYPE)0, (FLOAT_TYPE)0, (FLOAT_TYPE)0, (FLOAT_TYPE)0 };
   const beacls::FloatVec uRange{
-      (FLOAT_TYPE)(-20./180.*M_PI), (20./180.*M_PI)};
+      (FLOAT_TYPE)(-20./180.*M_PI), (FLOAT_TYPE)(20./180.*M_PI)};
+  //const beacls::FloatVec uRange{ (FLOAT_TYPE)0., (FLOAT_TYPE)0. };
   const beacls::FloatVec aRange{ (FLOAT_TYPE)(-1.), (FLOAT_TYPE)1. };
-  //const beacls::FloatVec dRange{ (FLOAT_TYPE)(-0.2), (FLOAT_TYPE)0.2 };
-  const beacls::FloatVec dRange{ (FLOAT_TYPE)0., (FLOAT_TYPE)0. };
+  //const beacls::FloatVec aRange{ (FLOAT_TYPE)0., (FLOAT_TYPE)0. };
+  const beacls::FloatVec dRange{ (FLOAT_TYPE)(-0.2), (FLOAT_TYPE)0.2 };
+  //const beacls::FloatVec dRange{ (FLOAT_TYPE)0., (FLOAT_TYPE)0. };
   helperOC::Q8D_Q4D* q8d_q4d = 
       new helperOC::Q8D_Q4D(initState, uRange, aRange, dRange);
 
@@ -85,8 +87,9 @@ int main(int argc, char *argv[])
   const beacls::FloatVec gMax{(FLOAT_TYPE)3, (FLOAT_TYPE)3, 
       (FLOAT_TYPE)(50.*M_PI/180.), (FLOAT_TYPE)(2*M_PI)};      
   levelset::HJI_Grid* g = helperOC::createGrid(gMin, gMax, 
-    beacls::IntegerVec{65,65,41,35});
+      beacls::IntegerVec{65,65,41,35});    
     //beacls::IntegerVec{35,35,25,19});
+  
 
   const size_t numel = g->get_numel();
   const size_t num_dim = g->get_num_of_dimensions();
@@ -171,6 +174,9 @@ int main(int argc, char *argv[])
 
   // save mat file
   std::string Q8D_Q4D_test_filename("Q8D_Q4D_test.mat");
+  //std::string Q8D_Q4D_test_filename("Q8D_Q4D_test_noU.mat");  
+  //std::string Q8D_Q4D_test_filename("Q8D_Q4D_test_noA.mat");
+  //std::string Q8D_Q4D_test_filename("Q8D_Q4D_test_noD.mat");
   beacls::MatFStream* fs = beacls::openMatFStream(Q8D_Q4D_test_filename, 
       beacls::MatOpenMode_Write);
 
