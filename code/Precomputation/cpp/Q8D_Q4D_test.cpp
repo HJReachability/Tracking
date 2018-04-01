@@ -83,11 +83,11 @@ int main(int argc, char *argv[])
 
   // Grid
   const beacls::FloatVec gMin{(FLOAT_TYPE)-4, (FLOAT_TYPE)-4, 
-      (FLOAT_TYPE)(-50.*M_PI/180.), (FLOAT_TYPE)(-2*M_PI)};
+      (FLOAT_TYPE)(-60.*M_PI/180.), (FLOAT_TYPE)(-2*M_PI)};
   const beacls::FloatVec gMax{(FLOAT_TYPE)4, (FLOAT_TYPE)4, 
-      (FLOAT_TYPE)(50.*M_PI/180.), (FLOAT_TYPE)(2*M_PI)};      
+      (FLOAT_TYPE)(60.*M_PI/180.), (FLOAT_TYPE)(2*M_PI)};      
   levelset::HJI_Grid* g = helperOC::createGrid(gMin, gMax, 
-      beacls::IntegerVec{81,81,51,45});    
+      beacls::IntegerVec{81,81,65,65});    
     //beacls::IntegerVec{35,35,25,19});
   
 
