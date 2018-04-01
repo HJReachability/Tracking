@@ -134,8 +134,8 @@ bool Q8D_Q4D::optDstb(std::vector<beacls::FloatVec>& dOpts,
   const FLOAT_TYPE d_if_p0_neg =
     (modified_dMode == helperOC::DynSys_DMode_Max) ? dRange[0] : dRange[1];
   std::transform(deriv0_ptr, deriv0_ptr + deriv0_size, dOpts[0].begin(), 
-      [d_if_p0_pos, d_if_p0_neg](const auto& rhs){ 
-      return (rhs >= 0) ? d_if_p0_pos: d_if_p0_neg; });
+      [d_if_p0_pos, d_if_p0_neg](const auto& p0){ 
+      return (p0 >= 0) ? d_if_p0_pos: d_if_p0_neg; });
 
   // Planning control
   const FLOAT_TYPE a_if_minus_p1_pos = 
@@ -143,8 +143,8 @@ bool Q8D_Q4D::optDstb(std::vector<beacls::FloatVec>& dOpts,
   const FLOAT_TYPE a_if_minus_p1_neg =
     (modified_dMode == helperOC::DynSys_DMode_Max) ? aRange[0] : aRange[1];
   std::transform(deriv1_ptr, deriv1_ptr + deriv0_size, dOpts[1].begin(), 
-      [a_if_minus_p1_pos, a_if_minus_p1_neg](const auto& rhs){ 
-      return (-rhs >= 0) ? a_if_minus_p1_pos: a_if_minus_p1_neg; });
+      [a_if_minus_p1_pos, a_if_minus_p1_neg](const auto& p1){ 
+      return (-p1 >= 0) ? a_if_minus_p1_pos: a_if_minus_p1_neg; });
 
   return true;
 }
