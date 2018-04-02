@@ -61,6 +61,7 @@ for i = 1:numT
 end
 
 if numD == 2
+  grid on
   savefig(sprintf('%s.fig', fig_filename));
 end
 end
