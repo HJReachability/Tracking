@@ -9,10 +9,15 @@ end
 
 
 if iscell(data)
-  [g, data] = cpp2matG(g, data);
+  g = cpp2matG(g);
 end
 
-numT = size(data, 5);
+if iscell(data)
+  numT = length(data);
+else
+  numT = size(data, 5);
+end
+
 
 if numD == 2
   [g2D, data2D] = proj(g, data, [0 0 1 1], 'max');
@@ -21,7 +26,6 @@ if numD == 2
 else
   [g3D, data3D] = proj(g, data, [0 0 1 0], 'max');
 end
-
 
 TEB = nan(2,numT);
 
@@ -34,10 +38,6 @@ grid on
 
 for i = 1:numT
   if numD == 2
-    
-    if i == 1
-      
-    end
     h{i} = visSetIm(g2D, data2D(:,:,i), colors(i,:), level);
     
     hold on
