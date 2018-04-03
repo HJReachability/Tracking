@@ -7,7 +7,6 @@ if numD ~= 2 && numD ~= 3
   return
 end
 
-
 if iscell(data)
   g = cpp2matG(g);
 end
@@ -17,7 +16,6 @@ if iscell(data)
 else
   numT = size(data, 5);
 end
-
 
 if numD == 2
   [g2D, data2D] = proj(g, data, [0 0 1 1], 'max');
@@ -57,7 +55,6 @@ for i = 1:numT
     
     clf
   end
-
 end
 
 if numD == 2
