@@ -1,7 +1,50 @@
 % !TEX root = tracking.tex
 \section{8D Quadrotor MPC Example \label{sec:results}}
-
-\MCnote{Add time-varying obstacle size}
+%
+In this section, we demonstrate the online computation framework in Algorithm~\ref{alg:algOnline} with a 8D quadrotor tracking example. Different from the one in Section~\ref{sec:results}, we consider a time-varying tracking error bound and utilize the Model Predictive Control (MPC) technique as the online planner. 
+%
+\subsection{Add time-varying obstacle size}
+\color{blue} notations for time-varying tracking error bounds and Minkowski addition?\color{black}
+%
+\subsection{Online planner based on MPC}
+%
+We utilize the MPC design introduced in \cite{zhang_2017_MPC} for the online path planning. See in Problem~\ref{pr: MPC}.
+%
+\begin{problem}\label{pr: MPC}
+\begin{align*}
+\min_{x,u}  & \quad \sum^{N-1}_{t=0} l(x_t,u_t)  \\
+s.t. \quad &x_{t+1} = f_p(x_t,u_t)\\
+& x_t \in \mathbb{X}_t\quad u_t \in \mathbb{U}_t\\
+& \mathbb{S}(x_t)\cup\mathcal{O}_{aug,t} = \emptyset,\\
+& x_N = x_f ,\quad x(0) = \bar{x} \enspace.
+\end{align*}
+\end{problem}
+\noindent where $l_i(\cdot,\cdot)$ is a  convex stage cost function and $N$ is the horizon for the MPC problem. The dynamical system $f_p(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \ref{eq:Quad8D}. The state and input sequences along the horizon  are denoted by $x=[x^{T}_0,x^{T}_1,\cdots,x^{T}_N]^{T}$ and $u=[u^{T}_0,u^{T}_1,\cdots,u^{T}_{N-1}]^{T}$. The states and inputs are subject to convex time-varying constraints:
+%
+\begin{equation}
+x_t \in \mathbb{X}_t :=\mathbb{X}\oplus\TEB_\pstate(t) \quad u_t \in\mathbb{U}_t := \mathbb{U}\oplus\TEB_\pstate(t)  \enspace ,
+\end{equation}
+%
+where $\oplus$ denotes the Minkowski addition, and $\mathbb{X}$ and $\mathbb{U}$ denote the original state and input constraints, respectively. Given the state $x_t$, we denote the position of the controlled objective by $\mathbb{S}(x_t)\subset \mathbb{R}^{2}$. To avoid obstacle collision, the state $x_t$ is also subject to the following constraint: 
+%
+\begin{equation}
+\mathbb{S}(x_t)\cup\mathcal{O}_{aug,t} = \emptyset \enspace ,
+\end{equation}
+%
+with 
+%
+\begin{equation}
+\mathcal{O}_{aug,t} := \obsSense\oplus\TEB_\pstate(t) \enspace .
+\end{equation}
+%
+In this paper, we represent the obstacles as polytopes, i.e., $\obsSense = \cap \mathcal{O}^{i}$ with $\mathcal{O}^{i}:= \{x\in\mathbb{R}^{n} \mid A^{i}x\leq b^{i}\}$ for $i = 1,\cdots ,M.$. Therefore, the collision avoidance constraint is non-convex and computationally expensive. We follow the approach presented in \cite{zhang_2017_MPC} to compute a local minimal solution, by involving extra variable $\lambda^{i}$ for each obstacle and reformulating the collision avoidance constraint equivalently as follows: 
+%
+\begin{equation}
+\exists \lambda^{i} >0, \; \mbox{s.t.} \; (A^{i}x- b^{i})^{T}\lambda^{i}  > 0, \; \|A^{i^{T}}\lambda^{i}\|\leq 1\enspace .
+\end{equation}
+%
+\subsubsection{Implement of the MPC planner with ACADO Toolbox}
+ 
 
 \subsection{Precomputation of 10D-4D system}
 First we define the 10D dynamics of the tracking quadrotor and the simple 4D dynamics of a quadrotor:
