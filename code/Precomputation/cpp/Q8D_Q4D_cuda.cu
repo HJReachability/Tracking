@@ -1068,7 +1068,10 @@ bool dynamics_cell_helper_execute_cuda(
 			FLOAT_TYPE cos_y2;
 			FLOAT_TYPE sin_y2;
 			sincos_float_type<FLOAT_TYPE>(y2, sin_y2, cos_y2);
-			return getAlpha(cos_y2, sin_y2, cos_y2, derivMin0, derivMax0, derivMin1, derivMax1, dL0, dU0, vrange_min, vrange_max);
+
+			return getAlpha(cos_y2, sin_y2, cos_y2, derivMin0, derivMax0, derivMin1,
+			  derivMax1, dL0, dU0, vrange_min, vrange_max);
+		
 		}
 	};
 	struct PartialFunction_dim1 {
@@ -1105,7 +1108,8 @@ bool dynamics_cell_helper_execute_cuda(
 			FLOAT_TYPE cos_y2;
 			FLOAT_TYPE sin_y2;
 			sincos_float_type<FLOAT_TYPE>(y2, sin_y2, cos_y2);
-			return getAlpha(cos_y2, sin_y2, sin_y2, derivMin0, derivMax0, derivMin1, derivMax1, dL1, dU1, vrange_min, vrange_max);
+			return getAlpha(cos_y2, sin_y2, sin_y2, derivMin0, derivMax0, derivMin1, 
+				derivMax1, dL1, dU1, vrange_min, vrange_max);
 		}
 	};
 	bool PartialFunction_cuda(

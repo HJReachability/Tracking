@@ -66,6 +66,7 @@ bool Q8D_Q4D::optCtrl(std::vector<beacls::FloatVec>& uOpts,
     const beacls::IntegerVec& y_sizes,
     const beacls::IntegerVec& deriv_sizes,
     const helperOC::DynSys_UMode_Type uMode) const {
+  
   const helperOC::DynSys_UMode_Type modified_uMode = 
     (uMode == helperOC::DynSys_UMode_Default) ? 
     helperOC::DynSys_UMode_Max : uMode;
@@ -454,7 +455,7 @@ bool Q8D_Q4D::HamFunction_cuda(
   const helperOC::DynSys_DMode_Type modified_dMode = 
     (schemeData->dMode == helperOC::DynSys_DMode_Default) ? 
     helperOC::DynSys_DMode_Min : schemeData->dMode;
-    
+
   return Q8D_Q4D_CUDA::HamFunction_cuda(hamValue_uvec, x_uvecs, deriv_uvecs, 
     wMax, vrange_min, vrange_max, dMax, modified_uMode, modified_dMode, negate);
 }

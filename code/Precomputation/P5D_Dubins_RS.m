@@ -52,6 +52,8 @@ if visualize
   extraArgs.fig_filename = save_name;
 end
 
+extraArgs.stopConverge = true;
+
 data = HJIPDE_solve(extraArgs.targets, tau, sD, 'none', extraArgs);
 
 deriv = computeGradients(sD.grid, data);
