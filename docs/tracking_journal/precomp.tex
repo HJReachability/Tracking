@@ -56,7 +56,7 @@ In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result
 \end{aligned}
 \end{equation}
 
-This is the tracking error bound that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. Within this bound the tracking system may use any controller, but on the border of this bound the tracking system must use the safety optimal controller. We now formally state and prove the propositions. Note that an interpretation of \eqref{eq:TEBp} is that $\walfunc(\rstate, t) := \valfunc(\rstate, \thor - \tvar)$ and $\valfunc_infty(\rstate)$ are control-Lyapunov functions for the relative dynamics between the tracking system and the planning system.
+This is the tracking error bound that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. Within this bound the tracking system may use any controller, but on the border of this bound the tracking system must use the safety optimal controller. We now formally state and prove the propositions. Note that an interpretation of \eqref{eq:TEBp} is that $\walfunc(\rstate, t) := \valfunc(\rstate, \thor - \tvar)$ and $\valfunc_\infty(\rstate)$ are control-Lyapunov functions for the relative dynamics between the tracking system and the planning system.
 
 \begin{prop}
   \label{prop:nonconv}
