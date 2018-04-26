@@ -58,16 +58,9 @@ data = HJIPDE_solve(extraArgs.targets, tau, sD, 'none', extraArgs);
 
 deriv = computeGradients(sD.grid, data);
 
-%% Save and output worst value
-minData = ones(size(tau));
-for i = 1:size(data,5)
-  data_i = data(:,:,:,:,i);
-  minData(i) = max(data_i(:));
-  minData(i)
-end
-
+%% Save
 save_filename = sprintf('%s.mat', save_name);
-save(save_filename, 'sD', 'data', 'tau', 'minData', 'deriv', '-v7.3');
+save(save_filename, 'sD', 'data', 'tau', 'deriv', '-v7.3');
 
 keyboard
 end
