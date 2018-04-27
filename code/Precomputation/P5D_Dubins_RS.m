@@ -31,7 +31,7 @@ dims = 1:5;
 sD.dynSys = P5D_Dubins_Rel([], aRange, alphaMax, vOther, wMax, dMax, dims);
 
 %% Other parameters
-tMax = 10;
+tMax = 1;
 dt = 0.01;
 tau = 0:dt:tMax;
 
