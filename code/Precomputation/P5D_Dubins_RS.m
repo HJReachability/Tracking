@@ -38,7 +38,7 @@ tau = 0:dt:tMax;
 sD.uMode = 'max';
 sD.dMode = 'min';
 
-extraArgs.keepLast =  true;
+extraArgs.keepLast =  false;
 extraArgs.low_memory = true;
 
 save_name = sprintf('%s_%f', mfilename, now);
