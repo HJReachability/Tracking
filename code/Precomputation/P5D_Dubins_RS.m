@@ -31,14 +31,14 @@ dims = 1:5;
 sD.dynSys = P5D_Dubins_Rel([], aRange, alphaMax, vOther, wMax, dMax, dims);
 
 %% Other parameters
-tMax = 10;
+tMax = 1;
 dt = 0.01;
 tau = 0:dt:tMax;
 
 sD.uMode = 'max';
 sD.dMode = 'min';
 
-extraArgs.keepLast =  true;
+extraArgs.keepLast =  false;
 extraArgs.low_memory = true;
 
 save_name = sprintf('%s_%f', mfilename, now);
@@ -58,16 +58,9 @@ data = HJIPDE_solve(extraArgs.targets, tau, sD, 'none', extraArgs);
 
 deriv = computeGradients(sD.grid, data);
 
-%% Save and output worst value
-minData = ones(size(tau));
-for i = 1:size(data,5)
-  data_i = data(:,:,:,:,i);
-  minData(i) = max(data_i(:));
-  minData(i)
-end
-
+%% Save
 save_filename = sprintf('%s.mat', save_name);
-save(save_filename, 'sD', 'data', 'tau', 'minData', 'deriv', '-v7.3');
+save(save_filename, 'sD', 'data', 'tau', 'deriv', '-v7.3');
 
 keyboard
 end
