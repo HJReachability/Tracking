@@ -67,30 +67,32 @@ We now formally state and prove the propositions. Note that an interpretation of
 
 \begin{prop}
   \label{prop:nonconv}
-  Finite time horizon invariance of value function.
+  \textbf{Finite time horizon guaranteed TEB.}
   Given $\tvar, \tvar' \in [0, \thor]$,
   
-  \begin{align}
-    \forall \tvar' \ge \tvar, &~ \rstate \in \TEB(\tvar) \Rightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB(\tvar'), \\
-    \text{where} &\quad \rtraj^*(\tvar; \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))), \\
-    &\quad
-    \begin{aligned}
-    &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\\
-    & \quad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \big\},\\
-    \end{aligned} \\
-    &\quad
-    \begin{aligned}
-    & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \\
-    & \quad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \dstb^*(\cdot))) \big\} \\
-    \end{aligned} \\
-    &\quad
-    \begin{aligned}
-    & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
-    & \quad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))) \big\}
-    \end{aligned}
-  \end{align}
-\end{prop}
+  \begin{subequations} \label{eq:fin_thor_prop}
+      \begin{align}
+      \forall \tvar' \ge \tvar, &~ \rstate \in \TEB(\tvar) \Rightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB(\tvar'), \\
+      \text{where} &\quad \rtraj^*(\tvar; \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))), \label{eq:fin_thor_prop:here} \\
+      &\quad
+      \begin{aligned}
+      &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\\
+      & \quad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \big\},\\
+      \end{aligned} \\
+      &\quad
+      \begin{aligned}
+      & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \\
+      & \quad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \dstb^*(\cdot))) \big\} \\
+      \end{aligned} \\
+      &\quad
+      \begin{aligned}
+      & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
+      & \quad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))) \big\}
+      \end{aligned} \label{eq:fin_thor_prop:there}
+      \end{align}
+  \end{subequations}
 
+\end{prop}
 
 \begin{IEEEproof}
   
@@ -133,80 +135,70 @@ Now, we finish the proof as follows:
   \end{align}
 \end{subequations}
 
-
 \noindent where $\eqref{eq:vf_nondec}$ is used for the step in \eqref{eq:fin_hor:2}.
 
 \end{IEEEproof} 
 
  \begin{prop}
    \label{prop:main}
-   Infinite time horizon invariance of value function.
+   \textbf{Infinite time horizon guaranteed TEB}. Given $\tvar \ge 0$,
    
-   Suppose that the value function converges, and define
-      \begin{equation}
-      \label{eq:conv_valfunc}
-      \valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty}\valfunc(\rstate, T)
-      \end{equation}
-   Then $\forall \tvar_1, \tvar_2$ with $\tvar_2 \ge \tvar_1$,
    \begin{equation}
-   \label{eq:invariant}
-   \valfunc_\infty(\rstate) \ge \valfunc_\infty\Big(\rtraj^*(\tvar_2; \rstate, \tvar_1)\Big), \text{where}
+     \forall \tvar' \ge \tvar, ~\rstate\in\TEB_\infty \Rightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB_\infty,
    \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   \rtraj^*(\tvar; \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \\
-   \end{aligned}
-   \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\\
-   & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \big\}\\
-    \end{aligned}
-   \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \\
-   & \qquad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \dstb^*(\cdot))) \big\} \\
-    \end{aligned}
-   \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
-   & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))) \big\}
-   \end{aligned}
-   \end{equation}
+   
+   \noindent with $\rtraj^*$ defined the same way as in \eqref{eq:fin_thor_prop:here} to \eqref{eq:fin_thor_prop:there}.
+   
  \end{prop}
 
 
 \begin{IEEEproof}
-Without loss of generality, assume $\tvar_1=0$. By definition, we have
-\begin{equation}
-\begin{aligned}
-\valfunc_\infty(\rstate) & = \lim_{\thor\rightarrow\infty}\max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0))\\
-\end{aligned}
-\end{equation}
-By time-invariance, for some $\tvar_2 > 0$,
-\begin{equation}
-\label{eq:valfunc_ineq}
-  \begin{aligned}
-\valfunc_\infty(\rstate) &= \lim_{\thor\rightarrow\infty}\max_{\tvar \in [-\tvar_2, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, -\tvar_2)) \\
-&\ge \lim_{\thor\rightarrow\infty}\max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, -\tvar_2)) 
-  \end{aligned}
-\end{equation}  
-\noindent where the sub-interval $[-\tvar_2, 0)$ has been removed in the last line. Next, by time invariance again, we  have
-\begin{equation}
-\begin{aligned}
-\rtraj^*(\tvar; \rstate, -\tau) &= \rtraj^*(\tvar; \rtraj^*(0; \rstate, -\tvar_2), 0) \\
-&= \rtraj^*(\tvar; \rtraj^*(\tvar_2; \rstate, 0), 0)
-\end{aligned}
-\end{equation}
-Now, \eqref{eq:valfunc_ineq} implies
-\begin{equation}
-\begin{aligned}
-\valfunc_\infty(\rstate) &\ge \lim_{\thor\rightarrow\infty}\max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rtraj^*(\tvar_2; \rstate, 0), 0)) \\
-&= \valfunc_\infty(\rtraj^*(\tvar_2; \rstate, 0))
-\end{aligned}
-\end{equation} 
+  
+  Suppose that the value function converges, and define
+  \begin{equation}
+  \label{eq:conv_valfunc}
+  \valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty}\valfunc(\rstate, T)
+  \end{equation}
+  
+  We first show that for all $\tvar, \tvar'$ with $\tvar' \ge \tvar$,
+  \begin{equation}
+  \label{eq:invariant}
+  \valfunc_\infty(\rstate) \ge \valfunc_\infty(\rtraj^*(\tvar'; \rstate, \tvar)).
+  \end{equation}
+  
+Without loss of generality, assume $\tvar=0$. By definition, we have
+
+\begin{subequations} \label{eq:inf_thor_steps}
+  \begin{align}
+  \valfunc_\infty(\rstate) & = \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rstate, 0)) \label{eq:inf_thor_steps:1}\\
+  &= \lim_{\thor\rightarrow\infty}\max_{\tau \in [-\tvar', \thor]} \errfunc(\rtraj^*(\tau; \rstate, -\tvar')) \label{eq:inf_thor_steps:2}\\
+  &\ge \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rstate, -\tvar')) \label{eq:inf_thor_steps:3}\\
+  & = \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rtraj^*(0; \rstate, -\tvar'), 0)) \label{eq:inf_thor_steps:4}\\
+  & = \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rtraj^*(\tvar'; \rstate, 0), 0)) \label{eq:inf_thor_steps:5}\\
+  & = \valfunc_\infty(\rtraj^*(\tvar'; \rstate, 0)) \label{eq:inf_thor_steps:6}
+  \end{align}
+\end{subequations}
+
+Explanation of steps:
+\begin{itemize}
+  \item \eqref{eq:inf_thor_steps:1} and \eqref{eq:fin_thor_steps:6}: by definition of value function
+  \item \eqref{eq:inf_thor_steps:2}: shifting time by $-\tvar'$
+  \item \eqref{eq:inf_thor_steps:3}: removing the time interval $[-\tvar',0)$ in the $\max$ operator
+  \item \eqref{eq:inf_thor_steps:4}: splitting trajectory $\rtraj^*(\tau; \rstate, -\tvar')$ into two stages corresponding to time intervals $[-\tvar', 0]$ and $[0, \tau]$
+  \item \eqref{eq:inf_thor_steps:5}: shifting time reference in $\rtraj^*(0; \rstate, -\tvar')$ by $\tvar'$, since dynamics are time-invariant
+\end{itemize}
+
+Now, we finish the proof as follows:
+\begin{subequations} \label{eq:inf_hor}
+  \begin{align}
+  \rstate \in \TEB_\infty &\Leftrightarrow \valfunc_\infty(\rstate) \le \underline\valfunc \\
+  & \Rightarrow \valfunc_\infty(\rtraj^*(\tvar'; \rstate, \tvar)) \le \underline\valfunc \label{eq:inf_hor:2}\\
+  & \Leftrightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB_\infty,
+  \end{align}
+\end{subequations}
+
+\noindent where $\eqref{eq:invariant}$ is used for the step in \eqref{eq:inf_hor:2}.
+
 \end{IEEEproof} 
  \begin{rem} 
    Propositions \ref{prop:nonconv} and \ref{prop:main} are very similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc$ or $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In this work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to effectively solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
