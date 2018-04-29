@@ -1,9 +1,9 @@
 % !TEX root = tracking.tex
-\section{8D Quadrotor MPC Example \label{sec:results}}
+\subsection{8D Quadrotor MPC Example \label{sec:resultsMPC}}
 %
 In this section, we demonstrate the online computation framework in Algorithm~\ref{alg:algOnline} with a 8D quadrotor example. Different from the experiment in Section~\ref{sec:results}, we consider a time-varying tracking error bound and utilize the Model Predictive Control (MPC) technique as the online planner. 
 %
-\subsection{Add time-varying obstacle size}
+\subsubsection{Offline precomputation}
 \color{blue} notations for time-varying tracking error bounds and Minkowski addition?modify Alg. 1\color{black}
 
 The time-varying tracking error bound $\{\mathcal{B}_{p,t}$ consists of three elements:
@@ -12,7 +12,7 @@ The time-varying tracking error bound $\{\mathcal{B}_{p,t}$ consists of three el
 \end{equation}
 where the subscript $t$ denotes for the time index. The elements $\mathcal{X}_{aug,t}$,  $\mathcal{U}_{aug,t}$ and  $\mathcal{S}_{aug,t}$ represent the error bounds for state, input and obstacles at time $t$, respectively.
 %
-\subsection{Online planner based on MPC}
+\subsection{Online computation}
 %
 We utilize the MPC design introduced in \cite{zhang_2017_MPC}, given in Problem~\ref{pr: MPC}, for the online path planning.
 %
