@@ -19,7 +19,12 @@ function simulateOnlineFSM(data_filename, obs_filename, extraArgs)
 %       inputs related to RRT (goal?)
 
 addpath(genpath('.'))
-mex CCMotion.cpp
+
+if ~(exist('CCMotion') == 3)
+  mex Planners/FSM/CCMotion.cpp
+end
+
+warning off
 
 %% Problem setup
 start = [-0.75; -0.75; pi/6];
@@ -29,28 +34,19 @@ sense_range = 0.5;
 sense_angle = pi/6;
 sense_region = create_sensing_region(sense_range, sense_angle);
 
-virt_v = 0.5;
+dt = 0.001;
 
-dt = 0.01;
-delta_x = virt_v*dt;
 
 if nargin < 1
-  data_filename = 'FILL_IN_FILENAME.mat';
+  data_filename = 'P5D_Dubins_RS.mat';
 end
 
 if nargin < 2
-  obs_filename = 'obs.mat';
+  obs_filename = 'Planners/FSM/obs.mat';
 end
 
 if nargin < 3
   extraArgs = [];
-end
-
-% matrix to compare position states (virt vs. true)
-if ~isfield(extraArgs,'Q')
-  Q = zeros(8,2);
-  Q(1,1) = 1;
-  Q(5,2) = 1;
 end
 
 if ~isfield(extraArgs, 'visualize')
@@ -58,10 +54,12 @@ if ~isfield(extraArgs, 'visualize')
 end
 
 %% Before Looping
-% load(data_filename)
+load(data_filename)
 load(obs_filename)
 
+dynSys = sD.dynSys;
 uMode = 'max';
+delta_x = dynSys.vOther*dt;
 % dMode = 'min'; % Not needed since we're not using worst-case control
 
 obsMap = ObstacleMapLS(g2D, obs2D);
@@ -88,15 +86,11 @@ if vis
   grid on
 end
 
-% % set initial states to zero
-% true_x = zeros(5,1);
-% true_x(1:3) = start;
+% set initial states to zero
 virt_x = start;
 
-% % Create real quadrotor system
-% rl_ui = [2 4 6];
-% trueQuad = Quad10D(start_x, dynSysX.uMin(rl_ui), dynSysX.uMax(rl_ui), ...
-%   dynSysX.dMin, dynSysX.dMax, 1:10);
+% Create real quadrotor system
+trueCar = Plane5D([start; 0.1; 0], dynSys.alphaMax, dynSys.aRange, dynSys.dMax);
 
 % % define when to switch from safety control to performance control
 % small = 1;
@@ -109,23 +103,25 @@ newStates = [];
 iter = 0;
 global_start = tic; % Time entire simulation
 
-max_iter = 5000;
+max_iter = 50000;
 lookup_time = 0;
 
 % while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
-while iter < max_iter && norm(virt_x - goal) > 0.25
+while iter < max_iter && norm(virt_x - goal) > 0.1
+  local_start = tic;
   iter = iter + 1;
 
   % 1. Sense your environment, locate obstacles
   % 2. Expand sensed obstacles by tracking error bound
-  sensed_new = obsMap.sense_update(virt_x, sense_region, trackErr);
+  sensed_new = obsMap.sense_update(trueCar.x(1:3), sense_region, trackErr);
   
   %% Path Planner Block
   % Replan if a new obstacle is seen
   if isempty(newStates) || sensed_new
     % Update next virtual state
     obs3D = repmat(obsMap.padded_obs, [1 1 g.N(3)]);
-    newStates = fsmNextState(virt_x, goal, L, g, obs3D, delta_x, false);
+    newStates = fsmNextState(virt_x, goal, L, g, obs3D, delta_x, ...
+      dynSys.vOther, dynSys.wMax, false);
     
     if iter == 1
       hPath = plot(newStates(1,:), newStates(2,:), ':');
@@ -138,36 +134,20 @@ while iter < max_iter && norm(virt_x - goal) > 0.25
   newStates(:,1) = [];
 
   %% Hybrid Tracking Controller
-  true_x = virt_x; % perfect tracking
-%   % 1. find relative state
-%   local_start = tic;
-%   rel_x = trueQuad.x - Q*virt_x;
-%   
-%   % 2. Determine which controller to use, find optimal control
-%   %get spatial gradients
-%   pX = eval_u(gX, derivX, rel_x(XDims));
-%   pY = eval_u(gX, derivX, rel_x(YDims));
-%   pZ = eval_u(gZ, derivZ, rel_x(ZDims));
-%   
-%   % Find optimal control of relative system (no performance control)
-%   uX = dynSysX.optCtrl([], rel_x(XDims), pX, uMode);
-%   uY = dynSysX.optCtrl([], rel_x(YDims), pY, uMode);
-%   uZ = dynSysZ.optCtrl([], rel_x(ZDims), pZ, uMode);
-%   u = [uX uY uZ];
-%   u = u(rl_ui);
-%   lookup_time = lookup_time + toc(local_start);
+  u = P5D_Dubins_htc(sD.dynSys, uMode, trueCar.x, virt_x, sD.grid, deriv);
+  lookup_time = lookup_time + toc(local_start);
   
   %% True System Block
   % 1. add random disturbance to velocity within given bound
-%   d = dynSysX.dMin + rand(3,1).*(dynSysX.dMax - dynSysX.dMin);
+  d = -dynSys.dMax + 2*rand(4,1).*dynSys.dMax;
   
   % 2. update state of true vehicle
-%   trueQuad.updateState(u, dt, [], d);
-
-%   % Make sure error isn't too big (shouldn't happen)
-%   if norm(virt_x - trueQuad.x([1 5 9])) > 3
-%     keyboard
-%   end
+  trueCar.updateState(u, dt, [], d);
+  
+  % Make sure error isn't too big (shouldn't happen)
+  if norm(virt_x(1:2) - trueCar.x(1:2)) > 0.1
+    keyboard
+  end
   
   %% Virtual System Block  
 %   fprintf('Iteration took %.2f seconds\n', toc);
@@ -189,14 +169,22 @@ while iter < max_iter && norm(virt_x - goal) > 0.25
       hV.YData = virt_x(2);
       hV.UData = 0.2*cos(virt_x(3));
       hV.VData = 0.2*sin(virt_x(3));
+      
+      hV_true.XData = trueCar.x(1);
+      hV_true.YData = trueCar.x(2);
+      hV_true.UData = 0.2*cos(trueCar.x(3));
+      hV_true.VData = 0.2*sin(trueCar.x(3));
     else
       hV = quiver(virt_x(1), virt_x(2), 0.2*cos(virt_x(3)), ...
         0.2*sin(virt_x(3)), '*', 'color', [0 0.75 0]);
+      
+      hV_true = quiver(trueCar.x(1), trueCar.x(2), 0.2*cos(trueCar.x(3)), ...
+        0.2*sin(trueCar.x(3)));
     end
     
     drawnow
 
-    export_fig(sprintf('pics/%d', iter), '-png')
+%     export_fig(sprintf('pics/%d', iter), '-png')
 %     savefig(sprintf('pics/%d.fig', iter))    
   end
 end

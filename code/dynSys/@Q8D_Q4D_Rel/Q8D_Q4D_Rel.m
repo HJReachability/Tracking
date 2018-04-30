@@ -38,7 +38,7 @@ classdef Q8D_Q4D_Rel < DynSys
       %     \dot x_6 = g*tan(x_7)               - d{4}
       %     \dot x_7 = -d1*x_7 + x_8
       %     \dot x_8 = -d0*x_7       + n0*u{2}
-      %         uMin <= [u1; u2; u3] <= uMax
+      %         uMin <= [u1; u2] <= uMax
       
       % u       <- control of 8D quadrotor (tracker)
       % d{2,4}  <- control of 4D quadrotor (planner)

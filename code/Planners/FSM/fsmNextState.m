@@ -1,4 +1,5 @@
-function newStates = fsmNextState(start, goal, L, g, obs, delta_x, vis)
+function newStates = fsmNextState(start, goal, L, g, obs, delta_x, speed, ...
+  turn_rate, vis)
 % newStates = fsmNextState(start, goal, L, g, obs, delta_x, vis)
 %     Computes optimal path from start to goal using the fast sweeping method
 
@@ -27,17 +28,19 @@ if nargin < 6
   delta_x = 0.005;
 end
 
-if nargin < 7
+if nargin < 9
   vis = true;
 end
 
 %% Problem parameters
 dubin = 1; % 1 for Dubin's car, -1 for RS's car
 
-v = ones(g.N'); % velocity, uniform except at obstacles
+v = speed*ones(g.N'); % velocity, uniform except at obstacles
 v(obs<0) = 0;
 
-turn_radius = 0.05;
+time_to_turn_2pi = 2*pi/turn_rate;      % 2*pi radians / radians/s --> s
+turn_circum = time_to_turn_2pi * speed; % seconds * distance/second --> distance
+turn_radius = turn_circum/2/pi;         % circumference / (2*pi) --> radius  
 p = turn_radius*ones(g.N');   % turning radius, uniform for now
 
 % Target set
@@ -81,10 +84,6 @@ toc;
 % use central differencing to calculate Du3
 P = computeGradients(g, uf);
 
-C = 2*pi*turn_radius; % Amount of distance to travel in time T
-speed = 0.1;
-T = C / speed;
-turn_rate = 2*pi / T;
 delta_t = delta_x / speed;
 
 newStates = start;
@@ -153,7 +152,7 @@ if vis
   plot(newStates(1,:), newStates(2,:), 'r.')
 end
 
-keyboard
+% keyboard
 end
 
 function error_check(p, g, params, vis)
