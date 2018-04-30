@@ -77,7 +77,7 @@ sD.dynSys = P3D_Q2D_Rel([], uMin, uMax, pMin, pMax, dMin, dMax, vel, dims);
 %% Otherparameters
 sD.uMode = 'min';
 sD.dMode = 'max';
-sD.accuracy = 'veryHigh';
+sD.accuracy = 'low';
 
 if video
   dt = 0.01;
@@ -258,7 +258,7 @@ if video
 else
   if visualize
     extraArgs.visualize = true;
-    extraArgs.RS_level = 5;
+    extraArgs.RS_level = 2;
     extraArgs.fig_num = 2;
     %extraArgs.plotData.plotDims = [0 0 1];
     %extraArgs.plotData.projpt = 0;

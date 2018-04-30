@@ -48,6 +48,7 @@ if nargin < 3
   extraArgs = [];
 end
 
+
 % matrix to compare position states (virt vs. true)
 if ~isfield(extraArgs,'Q')
   Q = zeros(10,3);
@@ -57,7 +58,7 @@ if ~isfield(extraArgs,'Q')
 end
 
 if ~isfield(extraArgs, 'visualize')
-  vis = false;
+  vis = true;
 else
   vis = true;
 end
@@ -66,8 +67,8 @@ end
 load(data_filename)
 load(obs_filename)
 
-uMode = 'max';
-% dMode = 'min'; % Not needed since we're not using worst-case control
+uMode = 'min';
+% dMode = 'max'; % Not needed since we're not using worst-case control
 
 obsMap = ObstacleMapRRT(obs);
 
@@ -102,8 +103,8 @@ start_x([1 5 9]) = start;
 
 % Create real quadrotor system
 rl_ui = [2 4 6];
-trueQuad = Quad10D(start_x, dynSysX.uMin(rl_ui), dynSysX.uMax(rl_ui), ...
-  dynSysX.dMin, dynSysX.dMax, 1:10);
+trueQuad = Quad10D(start_x, sD_X.dynSys.uMin(rl_ui), sD_X.dynSys.uMax(rl_ui), ...
+  sD_X.dynSys.dMin, sD_X.dynSys.dMax, 1:10);
 
 % % define when to switch from safety control to performance control
 % small = 1;
@@ -119,6 +120,8 @@ global_start = tic; % Time entire simulation
 max_iter = 5000;
 lookup_time = 0;
 
+% while we haven't reached the final iteraction and we haven't reached the
+% goal
 while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   iter = iter + 1;
 
@@ -143,21 +146,21 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   
   % 2. Determine which controller to use, find optimal control
   %get spatial gradients
-  pX = eval_u(gX, derivX, rel_x(XDims));
-  pY = eval_u(gX, derivX, rel_x(YDims));
-  pZ = eval_u(gZ, derivZ, rel_x(ZDims));
+  pX = eval_u(sD_X.grid, derivX, rel_x(XDims));
+  pY = eval_u(sD_X.grid, derivX, rel_x(YDims));
+  pZ = eval_u(sD_Z.grid, derivZ, rel_x(ZDims));
   
   % Find optimal control of relative system (no performance control)
-  uX = dynSysX.optCtrl([], rel_x(XDims), pX, uMode);
-  uY = dynSysX.optCtrl([], rel_x(YDims), pY, uMode);
-  uZ = dynSysZ.optCtrl([], rel_x(ZDims), pZ, uMode);
+  uX = sD_X.dynSys.optCtrl([], rel_x(XDims), pX, uMode);
+  uY = sD_X.dynSys.optCtrl([], rel_x(YDims), pY, uMode);
+  uZ = sD_Z.dynSys.optCtrl([], rel_x(ZDims), pZ, uMode);
   u = [uX uY uZ];
   u = u(rl_ui);
   lookup_time = lookup_time + toc(local_start);
   
   %% True System Block
   % 1. add random disturbance to velocity within given bound
-  d = dynSysX.dMin + rand(3,1).*(dynSysX.dMax - dynSysX.dMin);
+  d = sD_X.dynSys.dMin + rand(3,1).*(sD_X.dynSys.dMax - sD_X.dynSys.dMin);
   
   % 2. update state of true vehicle
   trueQuad.updateState(u, dt, [], d);

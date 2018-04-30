@@ -1,28 +1,54 @@
-function [sD_X, sD_Z, dataX, dataZ, dataX0, dataZ0, tauX, tauZ, TEB] = ...
+function [sD_X, sD_Z, dataX, dataZ, dataX0, dataZ0, derivX,derivZ,tauX, tauZ, TEB, runtime_X, runtime_Z] = ...
   Q10D_Q3D_RS(gNX, gNZ, dt, tMax, extraArgs)
-% extraArgs.visualize
-% extraArgs.dMax
-% extraArgs.targetType
-% extraArgs.accuracy
-%     Compares reachable set/tube computation using direct and decomposition
-%     methods
+% Computes the tracking error bound and optimal control policy for a 10D
+% quadrotor tracking a 3D point source.
+% Inputs:
+%   gNX  - Number of grid points in x subsystem (y is symmetric)
+%   gNZ  - Number of grid points in z subsystem
+%   dt   - Time step
+%   tMax - Max time to compute
+%   extraArgs - other useful inputs:
+%               .accuracy = accuracy of computation (defaults to medium)
+%               .targetType = type of initial implicit surface function
+%                   g(x) (defaults to quadratic because we get smoother
+%                   gradients)
+%               .visualize = whether or not to visualize results (defaults
+%                   to no)
+%               .uMax = max control bounds
+%               .uMin = min control bounds
+%               .dMax = max disturbance bounds
+%
+% Outputs:
+%   sD_X   - SchemeData in X
+%   sD_Z   - SchemeData in Z
+%   dataX  - Value function in x-subsystem
+%   dataZ  - Value function in z-subsystem
+%   dataX0 - Initial implicit surface function in x-subsystem
+%   dataZ0 - Initial implicit surface function in z-subsystem
+%   tauX   - time stamps for computing x-subsystem
+%   tauZ   - time stamps for computing z-subsystem
+%   TEB    - Tracking error bound
 
+% number of grid points in each dimension
 if nargin < 1
   gNX = [101 101 ceil(101/8) ceil(101/5)];
   gNZ = [101 101];
 end
 
+% time step
 if nargin < 2
   dt = 0.01;
 end
 
+% max # of seconds to compute back in time (should converge before this)
 if nargin<3
-  tMax = 20;
+  tMax = 5;
 end
 
 t0 = 0;
 tau = t0:dt:tMax;
 
+% set up extraArgs stuff
 if nargin<4
   extraArgs = [];
 end
@@ -46,7 +72,7 @@ else
 end
 
 
-% Grid
+%% Set up grid
 gMinX = [-5; -5; -35*pi/180; -1];
 gMaxX = [ 5;  5;  35*pi/180;  1];
 gMinZ = [-5; -5];
@@ -141,9 +167,6 @@ else
   HJIextraArgs.convergeThreshold = .1;
 end
 
-HJIextraArgs.obstacles = -dataZ0;
-HJIextraArgs.keepLast = 1;
-
 if visualize
   HJIextraArgs.visualize = 1;
   HJIextraArgs.RS_level = 2;
@@ -152,9 +175,9 @@ if visualize
   clf
 end
 
-[dataZ, tauZ] = HJIPDE_solve(dataZ0, tau, sD_Z, 'none', HJIextraArgs);
-
-
+tic
+[dataZ, tauZ] = HJIPDE_solve(dataZ0, tau, sD_Z, 'maxVOverTime', HJIextraArgs);
+runtime_Z = toc;
 
 if visualize
   HJIextraArgs.plotData.plotDims = [1 1 0 0];
@@ -165,11 +188,9 @@ if visualize
   clf
 end
 
-HJIextraArgs.obstacles = -dataX0;
-HJIextraArgs.keepLast = 1;
-
-[dataX, tauX] = HJIPDE_solve(dataX0, tau, sD_X, 'none', HJIextraArgs);
-
+tic
+[dataX, tauX] = HJIPDE_solve(dataX0, tau, sD_X, 'maxVOverTime', HJIextraArgs);
+runtime_X = toc;
 
 TEB_Z = min(dataZ(:));
 TEB_X = min(dataX(:));
@@ -179,9 +200,12 @@ if strcmp(targetType,'quadratic')
   TEB = sqrt(TEB);
 end
 
+derivX = computeGradients(sD_X.grid,dataX);
+derivZ = computeGradients(sD_Z.grid,dataZ);
+
 save(['Quad10D_g' num2str(gNZ(1)) '_dt0' num2str(dt*100) '_t' ...
     num2str(tMax) '_' accuracy '_' targetType '.mat'], 'sD_X', ...
-    'sD_Z', 'dataX', 'dataZ', 'tau', '-v7.3')
+    'sD_Z', 'dataX', 'dataZ','derivX','derivZ', 'tau', '-v7.3')
 %save(sprintf('%s_%f.mat', mfilename, now), 'sD_X', 'sD_Z', 'dataX', 'dataZ', ...
 %  'tau', '-v7.3')
 end
