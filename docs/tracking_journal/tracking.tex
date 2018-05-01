@@ -86,9 +86,14 @@
 \newcommand{\dx}{\Delta x} %distance allowed in a time step
 \newcommand{\dt}{\Delta t} %time step
 
-\newcommand{\constr}{\mathcal C}
-\newcommand{\constrSense}{\constr_\text{sense}}
-\newcommand{\constrAug}{\constr_\text{aug}}
+\newcommand{\tgoal}{\mathcal G}
+\newcommand{\goal}{\tgoal_\pstate}
+
+\newcommand{\tconstr}{\mathcal C}
+\newcommand{\constr}{\tconstr_\pstate}
+\newcommand{\constrSense}{\tconstr_{\pstate,\text{sense}}}
+\newcommand{\constrAug}{\tconstr_{\pstate,\text{aug}}}
+
 %\newcommand{\obsSense}{\mathcal{O}_\text{sense}}
 %\newcommand{\obsAug}{\mathcal{O}_\text{aug}}
 
