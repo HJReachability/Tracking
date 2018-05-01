@@ -17,10 +17,10 @@ The TEB in the planning frame of reference is then computed using \eqref{eq:TEBp
     \STATE Set initial time: $\tvar \leftarrow 0$. \label{ln:Iend}
 		\WHILE{Planning goal is not reached OR planning horizon is exceeded}
 		\STATE \textbf{TEB Block}: \label{ln:obsStart}
-		\STATE $\obsAug \leftarrow \obsSense + \TEB_\pstate(\tvar)$ (or $\TEB_{\pstate, \infty}$)\label{ln:obsEnd}
+		\STATE $\constrAug \leftarrow \constrSense + \TEB_\pstate(\tvar)$ (or $\TEB_{\pstate, \infty}$)\label{ln:obsEnd}
 		
 		\STATE \textbf{Path Planner Block}:\label{ln:plannerStart}
-		\STATE $\pstate_\text{next} \leftarrow \plannerfunc(\pstate, \obsAug)$\label{ln:plannerEnd}
+		\STATE $\pstate_\text{next} \leftarrow \plannerfunc(\pstate, \constrAug)$\label{ln:plannerEnd}
 		
 		\STATE \textbf{Hybrid Tracking Controller Block}:\label{ln:controllerStart}
 		\STATE $\rstate_\text{next} = \tstate - \ptmat\pstate_\text{next}$
@@ -40,12 +40,12 @@ The TEB in the planning frame of reference is then computed using \eqref{eq:TEBp
 	\end{algorithmic}
 \end{algorithm}
 The TEB block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. 
-The sensor detects obstacles $\obsSense$ within the sensing distance around the vehicle.
+The sensor detects obstacles $\constrSense$ within the sensing distance around the vehicle.
 Note that obstacles are defined in the state space of the planning system, and therefore can represent constraints not only in position but also in, for example, velocity or angular space.
 The sensed obstacles are augmented by $\TEB_\pstate(0)$ (or $\TEB_{\pstate, \infty}$) using the Minkowski sum. 
 This is done to ensure that no unsafe path can be generated\footnote{The minimum allowable sensing distance is $\senseDist = 2\TEB_\pstate(0) + \dx$, where $\dx$ is the largest step in space that the planner can make in one time step.}.
 
-The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented obstacles $\obsAug$, and outputs the next state of the planning system $\pstate_{next}$ through the function $\plannerfunc(\cdot, \cdot)$.
+The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented obstacles $\constrAug$, and outputs the next state of the planning system $\pstate_{next}$ through the function $\plannerfunc(\cdot, \cdot)$.
 As mentioned, FaSTrack is agnostic to the planning algorithm used, so we assume that $\plannerfunc(\cdot, \cdot)$ has been provided.
 The hybrid tracking controller block (lines \ref{ln:controllerStart}-\ref{ln:controllerEnd}) first computes the updated relative state $\rstate_\text{next}$. 
 If the $\rstate_\text{next}$ is on the boundary of the TEB $\TEB_\pstate(0)$ (or $\TEB_{\pstate, \infty}$), the safety controller must be used to remain within the safe bound. 
