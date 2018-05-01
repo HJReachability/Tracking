@@ -15,7 +15,7 @@ To determine the relative distance that may occur over time we must first define
 where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}). The relative states $\rstate$ now represent the tracking states relative to the planning states. Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. This will be used to update the planning model in the online algorithm.
 
 \subsection{Formalizing the Pursuit-Evasion Game}
-Given the relative dynamics between the tracking system and the planning system, we would like to compute a guaranteed tracking error bound between these systems. This is done by first defining a error function $\errfunc(\rstate)$ in the relative state space of the systems. One example of an error function is distance to the origin, which corresponds to the tracking error in terms of Euclidean distance between the tracking and planning systems. This error function is shown in Fig. \ref{fig:quad4D_example}-a. Of course, the error function can be defined in any desired manner; an example of an error function defined using the one-norm of the displacement between the two systems is shown in the example in Section \ref{sec:results}. The contour rings beneath the function represent varying level sets of the cost function. In our pursuit-evasion game formulation, the tracking system tries to minimize this cost to reduce the relative distance, while the planning system and any disturbances experienced by the tracking system try to do the opposite.
+Given the relative dynamics between the tracking system and the planning system, we would like to compute a guaranteed TEB between these systems. This is done by first defining a error function $\errfunc(\rstate)$ in the relative state space of the systems. One example of an error function is distance to the origin, which corresponds to the tracking error in terms of Euclidean distance between the tracking and planning systems. This error function is shown in Fig. \ref{fig:quad4D_example}-a. Of course, the error function can be defined in any desired manner; an example of an error function defined using the one-norm of the displacement between the two systems is shown in the example in Section \ref{sec:results}. The contour rings beneath the function represent varying level sets of the cost function. In our pursuit-evasion game formulation, the tracking system tries to minimize this cost to reduce the relative distance, while the planning system and any disturbances experienced by the tracking system try to do the opposite.
 \begin{figure}
 	\centering
 	\includegraphics[width=0.45\textwidth]{fig/quad4D_example}
@@ -37,7 +37,7 @@ Before constructing the differential game we must first determine the method eac
  
  By implementing HJ reachability analysis we solve for this value function over some desired time horizon. If the control authority of the tracking system is powerful enough to always eventually remain within some distance from the planning system, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. An example of this converged value function is in Fig. \ref{fig:quad4D_example}-b. In the next section we will prove that the sub-level sets of $\valfunc(\rstate,\tvar)$ and $\valfunc_\infty(\rstate$ map initial relative states to the guaranteed furthest possible tracking error over some finite and infinite time horizon respectively, as seen in Fig. \ref{fig:quad4D_example}-c.
  
-In the context of the online framework, the value function $\valfunc(\rstate, \thor)$ or $\valfunc_\infty(\rstate)$ is the tracking error bound function. The spatial gradients of the value function, $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$, comprise the safety controller function (as described in Section \ref{sec:online}). When the framework is executed on a computer, these two functions are saved as look-up tables over a grid representing the state space of the relative system.
+In the context of the online framework, the value function $\valfunc(\rstate, \thor)$ or $\valfunc_\infty(\rstate)$ is the TEB function. The spatial gradients of the value function, $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$, comprise the safety controller function (as described in Section \ref{sec:online}). When the framework is executed on a computer, these two functions are saved as look-up tables over a grid representing the state space of the relative system.
  
 \subsection{Error Bound Guarantee via Value Function}
 We now state the main theoretical results of this paper in Propositions \ref{prop:nonconv} and \ref{prop:main}, which state that every level set of $\valfunc(\rstate, \tvar)$ in the finite time horizon case and $\valfunc_\infty(\rstate)$ in the infinite time horizon case respectively is invariant under the following conditions:
@@ -46,135 +46,159 @@ We now state the main theoretical results of this paper in Propositions \ref{pro
   \item The planning system applies (at worst) the optimal control that tries to escape from the tracking system; \label{ln:plan}
   \item The tracking system experiences (at worst) the optimal disturbance that tries to prevent successful tracking. \label{ln:dist}
 \end{enumerate}
-In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking system and will make it easier to stay within its current level set of $\valfunc(\rstate, \tvar$ or $\valfunc_\infty(\rstate)$. The smallest level set corresponding to the value $\underline\valfunc(t) := \min_{\rstate} \valfunc(\rstate,t)$ or $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. The tracking error bound is given by\footnote{In practice, since $\valfunc_\infty$ is obtained numerically, we set, for example, $\TEB = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc + \epsilon\}$ for some suitably small $\epsilon>0$} the set $\TEB(t) = \{\rstate: \valfunc(\rstate, \thor - \tvar) \le \underline\valfunc\}$ in the finite time horizon case, and $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc\}$ in the infinite time horizon case. This tracking error bound in the planner's frame of reference is given by
+In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking system and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$ or $\valfunc_\infty(\rstate)$. 
+The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ or $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. 
+The TEB is given by the set $\TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc\}$ in the finite time horizon case, and $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty\}$ in the infinite time horizon case\footnote{In practice, since $\valfunc$ is obtained numerically, we set, for example, $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty + \epsilon\}$ for some suitably small $\epsilon>0$}. 
+This TEB in the planner's frame of reference is given by
 \begin{equation} \label{eq:TEBp}
 \begin{aligned}
-\TEB_\pstate(\tstate,t) = \{\pstate: \valfunc(\tstate-\ptmat\pstate, \thor-\tvar) \le \underline\valfunc\} \\
+\TEB_\pstate(\tau) = \{\pstate: \exists s, \valfunc(\tstate-\ptmat\pstate, \thor-\tau) \le \underline\valfunc\} \\
 \quad \text{(Finite time horizon)}\\
-\TEB_\pstate(\tstate) = \{\pstate: \valfunc_\infty(\tstate-\ptmat\pstate) \le \underline\valfunc_\infty\} \\
+\TEB_{\pstate, \infty} = \{\pstate: \exists s, \valfunc_\infty(\tstate-\ptmat\pstate) \le \underline\valfunc_\infty\} \\
 \quad \text{(Infinite time horizon)}\\
 \end{aligned}
 \end{equation}
 
-This is the tracking error bound that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. Within this bound the tracking system may use any controller, but on the border of this bound the tracking system must use the safety optimal controller. We now formally state and prove the propositions. Note that an interpretation of \eqref{eq:TEBp} is that $\walfunc(\rstate, t) := \valfunc(\rstate, \thor - \tvar)$ and $\valfunc_infty(\rstate)$ are control-Lyapunov functions for the relative dynamics between the tracking system and the planning system.
+This is the TEB that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. 
+Within this bound the tracking system may use any controller, but on the boundary\footnote{Practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and are not the focus of our paper.} of this bound the tracking system must use the safety optimal controller.
+In general, the TEB is defined as a set in the state space of the planning system, which allows the TEB to not only be in terms of position, but any state of the planning system such as velocity, as demonstrated in the example in Section \ref{sec:resultsMPC}.
+
+We now formally state and prove the propositions. Note that an interpretation of \eqref{eq:TEBp} is that $\walfunc(\rstate, t) := \valfunc(\rstate, \thor - \tvar)$ and $\valfunc_\infty(\rstate)$ are control-Lyapunov functions for the relative dynamics between the tracking system and the planning system.
 
 \begin{prop}
   \label{prop:nonconv}
-  Finite time horizon invariance of value function.
+  \textbf{Finite time horizon guaranteed TEB.}
+  Given $\tvar, \tvar' \in [0, \thor]$,
+  
+  \begin{subequations} \label{eq:fin_thor_prop}
+      \begin{align}
+      \forall \tvar' \ge \tvar, &~ \rstate \in \TEB(\tvar) \Rightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB(\tvar'), \\
+      \text{where} &\quad \rtraj^*(\tvar; \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))), \label{eq:fin_thor_prop:here} \\
+      &\quad
+      \begin{aligned}
+      &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\\
+      & \quad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \big\},\\
+      \end{aligned} \\
+      &\quad
+      \begin{aligned}
+      & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \\
+      & \quad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \dstb^*(\cdot))) \big\} \\
+      \end{aligned} \\
+      &\quad
+      \begin{aligned}
+      & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
+      & \quad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))) \big\}
+      \end{aligned} \label{eq:fin_thor_prop:there}
+      \end{align}
+  \end{subequations}
 
-  $\forall \tvar \ge 0$,
-  \begin{equation}
-  \label{eq:invariant_nonconv}
-  \valfunc(\rstate,\thor) \ge \valfunc\Big(\rtraj^*(\tvar; \rstate, 0), \thor - \tvar \Big), \text{where}
-  \end{equation}
-  \begin{equation}
-  \begin{aligned}
-  \rtraj^*(\tvar; \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \\
-  \end{aligned}
-  \end{equation}
-  \begin{equation}
-  \begin{aligned}
-  &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\\
-  & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \big\}\\
-  \end{aligned}
-  \end{equation}
-  \begin{equation}
-  \begin{aligned}
-  & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \\
-  & \qquad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \dstb^*(\cdot))) \big\} \\
-  \end{aligned}
-  \end{equation}
-  \begin{equation}
-  \begin{aligned}
-  & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
-  & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))) \big\}
-  \end{aligned}
-  \end{equation}
 \end{prop}
 
-
 \begin{IEEEproof}
-The result follows from the definition of value function.
-  \begin{equation}
-    \begin{aligned}
-      \valfunc(\rstate,\thor) & = \max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0))\\
-      & = \max\{ \max_{\tau \in [0, \thor-\tvar]} \errfunc(\rtraj^*(\tau; \rstate, 0)), \\
-      &\qquad\qquad\max_{\tau \in [\thor-\tvar, \thor]} \errfunc(\rtraj^*(\tau; \rstate, 0)) \}\\
-      & \ge \max_{\tau \in [0, \thor-\tvar]} \errfunc(\rtraj^*(\tau; \rstate, 0))\\
-      & = \valfunc\Big(\rtraj^*(\tvar; \rstate, 0), \thor - \tvar \Big)
-    \end{aligned}
+  
+  We first show that given $\tvar, \tvar' \in [0, \thor]$,
+  
+  \begin{equation} \label{eq:vf_nondec}
+    \forall \tvar' \ge \tvar, ~\valfunc(\rstate, \thor - \tvar) \ge \valfunc(\rtraj^*(\tvar'; \rstate, \tvar), \thor - \tvar')
   \end{equation}
+  
+  This follows from the definition of value function.
+  \begin{subequations} \label{eq:fin_thor_steps}
+    \begin{align}
+      \valfunc(\rstate, \thor - \tvar) & = \max_{\tau \in [0, \thor-\tvar]} \errfunc(\rtraj^*(\tau; \rstate, 0)) \label{eq:fin_thor_steps:1} \\
+      & = \max\{ \max_{\tau \in [0, \tvar'-\tvar]} \errfunc(\rtraj^*(\tau; \rstate, 0)), \nonumber\\
+      &\qquad\qquad \max_{\tau \in [\tvar'-\tvar, \thor-\tvar]} \errfunc(\rtraj^*(\tau; \rstate, 0)) \} \label{eq:fin_thor_steps:2}\\
+      & \ge \max_{\tau \in [\tvar'-\tvar, \thor-\tvar]} \errfunc(\rtraj^*(\tau; \rstate, 0)) \label{eq:fin_thor_steps:3}\\
+      & = \max_{\tau \in [0, \thor-\tvar']} \errfunc(\rtraj^*(\tau; \rstate, \tvar-\tvar')) \label{eq:fin_thor_steps:4}\\
+      & = \max_{\tau \in [0, \thor-\tvar']} \errfunc(\rtraj^*(\tau; \rtraj^*(0; \rstate, \tvar-\tvar'), 0)) \label{eq:fin_thor_steps:5}\\  
+      & = \max_{\tau \in [0, \thor-\tvar']} \errfunc(\rtraj^*(\tau; \rtraj^*(\tvar'; \rstate, \tvar), 0)) \label{eq:fin_thor_steps:6}\\      
+      & = \valfunc(\rtraj^*(\tvar'; \rstate, \tvar), \thor - \tvar') \label{eq:fin_thor_steps:7}
+    \end{align}
+  \end{subequations}
+
+Explanation of steps:
+\begin{itemize}
+  \item \eqref{eq:fin_thor_steps:1} and \eqref{eq:fin_thor_steps:7}: by definition of value function
+  \item \eqref{eq:fin_thor_steps:2}: rewriting $\max_{\tau \in [0, \thor-\tvar]}$ by splitting up the time interval $[0, \thor-\tvar]$ into $[0, \tvar'-\tvar]$ and $[\tvar'-\tvar, \thor-\tvar]$
+  \item \eqref{eq:fin_thor_steps:3}: ignoring first argument of the outside $\max$ operator
+  \item \eqref{eq:fin_thor_steps:4}: shifting time reference by $\tvar-\tvar'$, since dynamics are time-invariant
+  \item \eqref{eq:fin_thor_steps:5}: splitting trajectory $\rtraj^*(\tau; \rstate, \tvar-\tvar')$ into two stages corresponding to time intervals $[\tvar-\tvar', 0]$ and $[0, \tau]$
+  \item \eqref{eq:fin_thor_steps:6}: shifting time reference in $\rtraj^*(0; \rstate, \tvar-\tvar')$ by $\tvar'$, since dynamics are time-invariant
+\end{itemize}
+
+Now, we finish the proof as follows:
+\begin{subequations} \label{eq:fin_hor}
+  \begin{align}
+  \rstate \in \TEB(\tvar) &\Leftrightarrow \valfunc(\rstate, \thor - \tvar) \le \underline\valfunc \\
+  & \Rightarrow  \valfunc(\rtraj^*(\tvar'; \rstate, \tvar), \thor - \tvar') \le \underline\valfunc \label{eq:fin_hor:2}\\
+  & \Leftrightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB(\tvar'),
+  \end{align}
+\end{subequations}
+
+\noindent where $\eqref{eq:vf_nondec}$ is used for the step in \eqref{eq:fin_hor:2}.
+
 \end{IEEEproof} 
 
  \begin{prop}
    \label{prop:main}
-   Infinite time horizon invariance of value function.
+   \textbf{Infinite time horizon guaranteed TEB}. Given $\tvar \ge 0$,
    
-   Suppose that the value function converges, and define
-      \begin{equation}
-      \label{eq:conv_valfunc}
-      \valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty}\valfunc(\rstate, T)
-      \end{equation}
-   Then $\forall \tvar_1, \tvar_2$ with $\tvar_2 \ge \tvar_1$,
    \begin{equation}
-   \label{eq:invariant}
-   \valfunc_\infty(\rstate) \ge \valfunc_\infty\Big(\rtraj^*(\tvar_2; \rstate, \tvar_1)\Big), \text{where}
+     \forall \tvar' \ge \tvar, ~\rstate\in\TEB_\infty \Rightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB_\infty,
    \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   \rtraj^*(\tvar; \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \\
-   \end{aligned}
-   \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\\
-   & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \big\}\\
-    \end{aligned}
-   \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \\
-   & \qquad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \dstb^*(\cdot))) \big\} \\
-    \end{aligned}
-   \end{equation}
-   \begin{equation}
-   \begin{aligned}
-   & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
-   & \qquad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))) \big\}
-   \end{aligned}
-   \end{equation}
+   
+   \noindent with $\rtraj^*$ defined the same way as in \eqref{eq:fin_thor_prop:here} to \eqref{eq:fin_thor_prop:there}.
+   
  \end{prop}
 
 
 \begin{IEEEproof}
-Without loss of generality, assume $\tvar_1=0$. By definition, we have
-\begin{equation}
-\begin{aligned}
-\valfunc_\infty(\rstate) & = \lim_{\thor\rightarrow\infty}\max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, 0))\\
-\end{aligned}
-\end{equation}
-By time-invariance, for some $\tvar_2 > 0$,
-\begin{equation}
-\label{eq:valfunc_ineq}
-  \begin{aligned}
-\valfunc_\infty(\rstate) &= \lim_{\thor\rightarrow\infty}\max_{\tvar \in [-\tvar_2, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, -\tvar_2)) \\
-&\ge \lim_{\thor\rightarrow\infty}\max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rstate, -\tvar_2)) 
-  \end{aligned}
-\end{equation}  
-\noindent where the sub-interval $[-\tvar_2, 0)$ has been removed in the last line. Next, by time invariance again, we  have
-\begin{equation}
-\begin{aligned}
-\rtraj^*(\tvar; \rstate, -\tau) &= \rtraj^*(\tvar; \rtraj^*(0; \rstate, -\tvar_2), 0) \\
-&= \rtraj^*(\tvar; \rtraj^*(\tvar_2; \rstate, 0), 0)
-\end{aligned}
-\end{equation}
-Now, \eqref{eq:valfunc_ineq} implies
-\begin{equation}
-\begin{aligned}
-\valfunc_\infty(\rstate) &\ge \lim_{\thor\rightarrow\infty}\max_{\tvar \in [0, \thor]} \errfunc(\rtraj^*(\tvar; \rtraj^*(\tvar_2; \rstate, 0), 0)) \\
-&= \valfunc_\infty(\rtraj^*(\tvar_2; \rstate, 0))
-\end{aligned}
-\end{equation} 
+  
+  Suppose that the value function converges, and define
+  \begin{equation}
+  \label{eq:conv_valfunc}
+  \valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty}\valfunc(\rstate, T)
+  \end{equation}
+  
+  We first show that for all $\tvar, \tvar'$ with $\tvar' \ge \tvar$,
+  \begin{equation}
+  \label{eq:invariant}
+  \valfunc_\infty(\rstate) \ge \valfunc_\infty(\rtraj^*(\tvar'; \rstate, \tvar)).
+  \end{equation}
+  
+Without loss of generality, assume $\tvar=0$. By definition, we have
+
+\begin{subequations} \label{eq:inf_thor_steps}
+  \begin{align}
+  \valfunc_\infty(\rstate) & = \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rstate, 0)) \label{eq:inf_thor_steps:1}\\
+  &= \lim_{\thor\rightarrow\infty}\max_{\tau \in [-\tvar', \thor]} \errfunc(\rtraj^*(\tau; \rstate, -\tvar')) \label{eq:inf_thor_steps:2}\\
+  &\ge \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rstate, -\tvar')) \label{eq:inf_thor_steps:3}\\
+  & = \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rtraj^*(0; \rstate, -\tvar'), 0)) \label{eq:inf_thor_steps:4}\\
+  & = \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rtraj^*(\tvar'; \rstate, 0), 0)) \label{eq:inf_thor_steps:5}\\
+  & = \valfunc_\infty(\rtraj^*(\tvar'; \rstate, 0)) \label{eq:inf_thor_steps:6}
+  \end{align}
+\end{subequations}
+
+Explanation of steps:
+\begin{itemize}
+  \item \eqref{eq:inf_thor_steps:1} and \eqref{eq:fin_thor_steps:6}: by definition of value function
+  \item \eqref{eq:inf_thor_steps:2}: shifting time by $-\tvar'$
+  \item \eqref{eq:inf_thor_steps:3}: removing the time interval $[-\tvar',0)$ in the $\max$ operator
+  \item \eqref{eq:inf_thor_steps:4}: splitting trajectory $\rtraj^*(\tau; \rstate, -\tvar')$ into two stages corresponding to time intervals $[-\tvar', 0]$ and $[0, \tau]$
+  \item \eqref{eq:inf_thor_steps:5}: shifting time reference in $\rtraj^*(0; \rstate, -\tvar')$ by $\tvar'$, since dynamics are time-invariant
+\end{itemize}
+
+Now, we finish the proof as follows:
+\begin{subequations} \label{eq:inf_hor}
+  \begin{align}
+  \rstate \in \TEB_\infty &\Leftrightarrow \valfunc_\infty(\rstate) \le \underline\valfunc \\
+  & \Rightarrow \valfunc_\infty(\rtraj^*(\tvar'; \rstate, \tvar)) \le \underline\valfunc \label{eq:inf_hor:2}\\
+  & \Leftrightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB_\infty,
+  \end{align}
+\end{subequations}
+
+\noindent where $\eqref{eq:invariant}$ is used for the step in \eqref{eq:inf_hor:2}.
+
 \end{IEEEproof} 
  \begin{rem} 
    Propositions \ref{prop:nonconv} and \ref{prop:main} are very similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc$ or $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In this work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to effectively solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
