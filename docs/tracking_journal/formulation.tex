@@ -5,7 +5,7 @@ In this paper we seek to simultaneously plan and track a trajectory (or path con
 \subsection{Tracking (System) Model}
 The tracking model, or system model, is a representation of the autonomous system dynamics, and in general may be nonlinear and higher-dimensional than the planning model presented in Section \ref{sec:planning_model}. 
 Let $\tstate$ represent the state variables of the tracking model. 
-The evolution of the dynamics satisfy ordinary differential equation
+The evolution of the dynamics satisfy ordinary differential equation (ODE)
 
 \begin{equation}
 \begin{aligned}
@@ -26,32 +26,44 @@ We assume that the system dynamics $\tdyn : \tset\ \times\ \tcset \times \dset \
 
 \noindent where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn}) for a given $\tctrl(\cdot) \in \tcset$ \cite{Coddington84}. The trajectories of (\ref{eq:tdyn}) that solve this ODE will be denoted as $\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot))$, where $\tvar_0,\tvar \in [0, \thor]$ and $\tvar_0 \leq \tvar$. These trajectories will satisfy the initial condition and the ODE (\ref{eq:tdyn}) almost everywhere:
 
-\begin{equation}
-\label{eq:fdyn_traj}
-\begin{aligned}
-\frac{d}{d\tvar}\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot)) &= \tdyn(\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot)), \tctrl(\tvar)) \\
-\ttraj(\tvar; \tstate, \tvar, \tctrl(\cdot)) &= \tstate
-\end{aligned}
-\end{equation}
+\begin{align*}
+\frac{d}{d\tvar}\ttraj(\tvar; \tstate_0, \tvar_0, \tctrl(\cdot)) &= \tdyn(\ttraj(\tvar; \tstate_0, \tvar_0, \tctrl(\cdot)), \tctrl(\tvar)) \\
+\ttraj(\tvar_0; \tstate_0, \tvar_0, \tctrl(\cdot)) &= \tstate_0
+\end{align*}
 
-Let 
-
-The goal of the system is to
+Let $\goal \subset \tset$ represent the set of goal states, and let $\tconstr \subset \tset$ represent state constraints that must be satisfied for all time.
+Often, $\tconstr$ represents the complement of obstacles that the system must avoid; however, more generally, $\tconstr$ also represents general state constraints.
 
 \subsection{Planning Model \label{sec:planning_model}}
-The planning model is used by the path or trajectory planner to solve for the desired path online. Kinematics or low-dimensional dynamics are typically used depending on the requirements of the planner. Let $\pstate$ represent the state variables of the planning model, with control $\pctrl$. The planning states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$. The dynamics similarly satisfy the ordinary differential equation:
-\begin{equation}
-\begin{aligned}
+The planning model is a simpler or lower-dimensional model of the system used for planning a desired trajectory or path.
+For navigation in unknown environments, real-time re-planning is necessary, so the planning model is typically one for which a real-time planning algorithm exists.
+For examples of planning models, see Section \ref{sec:results}.
+
+Let $\pstate$ represent the state variables of the planning model, with control $\pctrl$. 
+We assume that the planning states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$, so that $\pset$ is a subspace within $\tset$. 
+The dynamics satisfy the ODE
+
+\begin{align}
 \label{eq:pdyn}
-\frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \pstate \in \pset, \ \underline{\pctrl} \leq \pctrl \leq \overline{\pctrl}
-\end{aligned}
-\end{equation}
-Note that the planning model does not involve a disturbance input. This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances.
+\frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \\
+\pstate \in \pset, \pctrl \in \pcset
+\end{align}
+
+\noindent with the analogous assumptions on continuity and boundedness as those for \eqref{eq:tdyn}.
+
+Note that the planning model does not involve a disturbance input. 
+This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances.
+
+Let $\goal \subset \pset$ and $\constr \subset \pset$ denote the projection of $\tgoal$ and $\tconstr$ respectively onto the subspace $\pset$.
+We will assume that $\constr$ is \textbf{a priori} unknown, and must be sensed as the vehicle, or the tracking system, moves around in the environment.
+Therefore, for convenience, we denote the currently known, or ``sensed'' constraints as $\constrSense(t)$.
+Note that $\constrSense(t)$ depends on time, since the system may gather more information about, for example, obstacles over time.
+In addition, as described throughout the paper, we will augment $\constrSense(t)$ according to the TEB between the tracking and planning systems.
+We denote the augmented obstacles as $\constrAug(t)$.
 
 \subsection{Goals of This Paper}
-The goals of the paper are threefold:
-\begin{enumerate}
-	\item To provide a tool for precomputing functions (or look-up tables) to determine a guaranteed tracking error bound between tracking and planning models, and optimal safety controller for robust motion planning with nonlinear dynamic systems
-	\item To develop a framework for easily implementing this tool with fast real-time path and trajectory planners.
-	\item To demonstrate the tool and framework in an example using a high dimensional system
-\end{enumerate}
+Given system dynamics in \eqref{eq:tdyn}, initial state $\tstate_0$, goal states $\goal$, and constraints $\tconstr$ such that $\constr$ is \textit{a priori} unknown and determined in real-time, we would like to steer the system to $\goal$ with formally guaranteed satisfaction of $\tconstr$.
+
+
+
+We demonstrate the FaSTrack framework in three representative simulations involving three different tracker system-planning system pairs, using three different planning algorithms.

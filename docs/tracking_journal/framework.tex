@@ -1,6 +1,14 @@
 % !TEX root = tracking.tex
 \section{General Framework \label{sec:framework}}
-The overall framework of FaSTrack is summarized in Figs. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, \ref{fig:fw_offline}. The online real-time framework is shown in Fig. \ref{fig:fw_online}. At the center of this framework is the path or trajectory planner; our framework is agnostic to the planner, so any may be used (e.g. MPC, RRT, neural networks). We will present an example using an RRT planner in Section \ref{sec:results}.
+To achieve our goals, we propose FaSTrack, a framework that decouples the formal guarantee of safety from the planning algorithm.
+Instead of having the system, represented by the tracking model, directly plan trajectories towards $\goal$, in our framework the tracking system ``chases'' the planning system, which uses any planning algorithm to obtain trajectories in real-time.
+Safety is formally guaranteed through a precomputed of a TEB along with a corresponding tracking controller, in combination with augmentation of constraints based on this TEB.
+An illustrate of our framework is shown in Figure \ref{fig:chasing}.
+
+More details of the framework is summarized in Figs. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, \ref{fig:fw_offline}. 
+The online real-time framework is shown in Fig. \ref{fig:fw_online}. 
+At the center of this framework is the path or trajectory planner; our framework is agnostic to the planner, so any may be used (e.g. MPC, RRT, neural networks). 
+We will present three example using FSM, RRT, and MPC planners in Section \ref{sec:results}.
 \begin{figure}[h!]
   \centering
 	\includegraphics[width=1\columnwidth]{fig/framework_online}
