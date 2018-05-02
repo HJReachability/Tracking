@@ -1,6 +1,10 @@
 % !TEX root = tracking.tex
 \section{Offline Computation \label{sec:precomp}}
-The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking system and the planning system, which we then analyze using HJ reachability. In this game, the tracking system will try to ``capture" the planning system, while the planning system is doing everything it can to avoid capture. In reality the planner is typically not actively trying to avoid the tracking system, but this allows us to account for worst-case scenarios. If both systems are acting optimally in this way, we want to determine the largest relative distance that may occur over time. This distance is the maximum possible tracking error between the two systems.
+The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking system and the planning system. 
+In this game, the tracking system will try to ``capture" the planning system, while the planning system is doing everything it can to avoid capture. 
+In reality the planner is typically not actively trying to avoid the tracking system, but this allows us to account for worst-case scenarios and more crucially, ensure that the TEB is \textit{trajectory-independent}. 
+If both systems are acting optimally in this way, we want to determine the largest relative distance (based on some suitable metric) that may occur over time. 
+This distance is the maximum possible tracking error between the two systems, and is captured by the value function obtained from solving the HJ VI \eqref{eq:HJVI}.
 
 \subsection{Relative Dynamics}
 To determine the relative distance that may occur over time we must first define the relative states and dynamics between the tracking and planning models. The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). The relative system is found by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model, as shown below.
@@ -12,35 +16,65 @@ To determine the relative distance that may occur over time we must first define
 \end{aligned}
 \end{equation}
 
-where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}). The relative states $\rstate$ now represent the tracking states relative to the planning states. Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. This will be used to update the planning model in the online algorithm.
+\noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}).
+The relative states $\rstate$ now represent the tracking states relative to the planning states. 
+Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. 
+This will be used to update the planning state in the online algorithm.
 
 \subsection{Formalizing the Pursuit-Evasion Game}
-Given the relative dynamics between the tracking system and the planning system, we would like to compute a guaranteed TEB between these systems. This is done by first defining a error function $\errfunc(\rstate)$ in the relative state space of the systems. One example of an error function is distance to the origin, which corresponds to the tracking error in terms of Euclidean distance between the tracking and planning systems. This error function is shown in Fig. \ref{fig:quad4D_example}-a. Of course, the error function can be defined in any desired manner; an example of an error function defined using the one-norm of the displacement between the two systems is shown in the example in Section \ref{sec:results}. The contour rings beneath the function represent varying level sets of the cost function. In our pursuit-evasion game formulation, the tracking system tries to minimize this cost to reduce the relative distance, while the planning system and any disturbances experienced by the tracking system try to do the opposite.
+Given the relative dynamics between the tracking system and the planning system, we would like to compute a guaranteed TEB between these systems. 
+This is done by first defining a error function $\errfunc(\rstate)$ in the relative state space of the systems. 
+One typical error function is distance to the origin, which corresponds to the tracking error in terms of Euclidean distance between the tracking and planning systems. 
+This error function is shown in Fig. \ref{fig:vf_TEB:5D3D}. 
+Of course, the error function can be defined in any desired manner, and involve planning state variables other than position.
+For example, the error function, which corresponds to $\valfunc(\rstate, 0)$ in Fig. \ref{fig:vf_TEB:8D4D}, is defined in both position and velocity space; Fig. \ref{fig:vf_TEB_10D3D} shows yet another error function defined using the one-norm of the displacement between the two systems. 
+In our pursuit-evasion game formulation, the tracking system tries to minimize this cost, while the planning system and any disturbances experienced by the tracking system try to do the opposite -- maximize.
 \begin{figure}
 	\centering
-	\includegraphics[width=0.45\textwidth]{fig/tv_valfunc}
-	\caption{illustrative example of the precomputation steps for a 4D quadrotor model tracking a 2D kinematic planning model. All graphs are defined over a 2D slice of the 4D system. a) Cost function $\errfunc(\rstate)$ defined on relative states as distance to the origin, b) Value function $\valfunc(\rstate)$ computed using HJ reachability, c) Level sets of $\errfunc(\rstate)$ (solid) and $\valfunc(\rstate)$ (dashed). If the initial relative state is contained within the dashed set the system is guaranteed to remain within the corresponding solid set.}
-	\label{fig:quad4D_example}
-	\vspace{-.2in}
+  \begin{subfigure}[b]{0.48\columnwidth}
+	\includegraphics[width=\columnwidth]{fig/tv_valfunc}
+  \caption{\scriptsize Infinite time horizon value function (top) and TEB (bottom) for the 5D car tracking 3D Dubins car example in Section \ref{sec:reach_planner}.}
+  \label{fig:vf_TEB:5D3D}
+  \end{subfigure}
+  ~
+  \begin{subfigure}[b]{0.48\columnwidth}
+  \includegraphics[width=\columnwidth]{fig/tv_valfunc}
+  \caption{\scriptsize Finite time horizon value function (top) and TEBs (bottom) for the 8D quadrotor tracking 4D double integrator example in Section \ref{sec:resultsMPC}.}  
+  \label{fig:vf_TEB:8D4D}
+  \end{subfigure}
+	\caption{Projections of value functions and their corresponding projected TEBs for two numerical examples. The 2D contours are intersection points of the horizontal plane with the value function.}
+	\label{fig:vf_TEB}
 \end{figure} 
 
-Before constructing the differential game we must first determine the method each player must use for making decisions. We define a strategy for planning system as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a control for the planning model based on the control of the planning model. We restrict $\gamma$ to draw from only non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$, as defined in \cite{Mitchell05}. We similarly define the disturbance strategy $\gamma_{\dstb}: \tcset \rightarrow \dset$, $\gamma_{\dstb} \in \Gamma_\dstb(t)$.
+Before constructing the pursuit-evasion game we must first define the method each player must use for making decisions. 
+We define a strategy for planning system as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a control for the planning model based on the control of the planning model. We restrict $\gamma$ to draw from only non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$, as defined in \cite{Mitchell05}. 
+We similarly define the disturbance strategy $\gamma_{\dstb}: \tcset \rightarrow \dset$, $\gamma_{\dstb} \in \Gamma_\dstb(t)$.
 
- We determine the farthest distance (and thus highest cost) that this game will ever reach when both players are acting optimally. 
- Therefore we want to find a mapping between the initial relative state of the system and the maximum possible cost achieved over the time horizon. This mapping is through our value function, defined as
- \begin{equation}
- \begin{aligned}
- \label{eq:valfunc}
- 	&V(\rstate,\thor)= \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t), \gamma_{\dstb} \in \Gamma_\dstb(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
-  &\qquad\qquad \max_{\tvar\in [0, \thor]} \errfunc\Big(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))\Big)\big\}
- 	\end{aligned}
- \end{equation} 
+We compute the highest cost that this game will ever attain when both players are acting optimally. 
+This is expressed through the following value function:
+\begin{align}
+&V(\rstate,\thor)= \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t), \gamma_{\dstb} \in \Gamma_\dstb(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \nonumber \\
+&\qquad\qquad \max_{\tvar\in [0, \thor]} \errfunc\Big(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))\Big)\big\}. \label{eq:valfunc}
+\end{align} 
+
+The value function can be computed via existing methods in HJ reachability analysis \cite{}.
+Adapting the formulation in \cite{Fisac15}, we compute the value function by solving the following HJ VI:
+
+\begin{align}
+\max \Big\{&\frac{\partial \valfunc}{\partial \tvar} + \min_{\tctrl\in\tset} \max_{\pctrl\in\pset, \dstb\in\dset} \deriv \cdot \rdyn(\rstate, \tctrl, \pctrl, \dstb), \nonumber \\
+&\qquad\errfunc(\rstate) - \valfunc(\rstate, \tvar)\Big\} = 0, \quad \tvar \in [-T, 0], \label{eq:HJVI} \\
+&\valfunc(\rstate, 0) = \errfunc(\rstate). \nonumber
+\end{align}
+
+If the control authority of the tracking system is powerful enough to always eventually remain within some distance from the planning system, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. 
+An example of this converged value function is in Fig. \ref{fig:vf_TEB:5D3D}. 
+In some cases, the value function does not converge, and provides a finite time horizon, time-varying TEB, an example of which is shown in Fig. \ref{fig:vf_TEB:8D4D}.
+In Section \ref{sec:proofs}, we will formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ and $\valfunc_\infty(\rstate$ respectively provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case, and time-invariant $\TEB_\infty$ for the infinite time horizon case.
  
- By implementing HJ reachability analysis we solve for this value function over some desired time horizon. If the control authority of the tracking system is powerful enough to always eventually remain within some distance from the planning system, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. An example of this converged value function is in Fig. \ref{fig:quad4D_example}-b. In the next section we will prove that the sub-level sets of $\valfunc(\rstate,\tvar)$ and $\valfunc_\infty(\rstate$ map initial relative states to the guaranteed furthest possible tracking error over some finite and infinite time horizon respectively, as seen in Fig. \ref{fig:quad4D_example}-c.
+The spatial gradients of the value function, $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$, comprise the safety controller function (as described in Section \ref{sec:online}). 
+When the framework is executed on a computer, these two functions are saved as look-up tables over a grid representing the state space of the relative system.
  
-In the context of the online framework, the value function $\valfunc(\rstate, \thor)$ or $\valfunc_\infty(\rstate)$ is the TEB function. The spatial gradients of the value function, $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$, comprise the safety controller function (as described in Section \ref{sec:online}). When the framework is executed on a computer, these two functions are saved as look-up tables over a grid representing the state space of the relative system.
- 
-\subsection{Error Bound Guarantee via Value Function}
+\subsection{Error Bound Guarantee via Value Function} \label{sec:proofs}
 We now state the main theoretical results of this paper in Propositions \ref{prop:nonconv} and \ref{prop:main}, which state that every level set of $\valfunc(\rstate, \tvar)$ in the finite time horizon case and $\valfunc_\infty(\rstate)$ in the infinite time horizon case respectively is invariant under the following conditions:
 \begin{enumerate}
   \item The tracking system applies the optimal control which tries to track the planning system;
