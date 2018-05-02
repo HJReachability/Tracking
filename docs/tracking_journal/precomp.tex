@@ -26,7 +26,8 @@ Given the relative dynamics between the tracking system and the planning system,
 
 Before constructing the differential game we must first determine the method each player must use for making decisions. We define a strategy for planning system as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a control for the planning model based on the control of the planning model. We restrict $\gamma$ to draw from only non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$, as defined in \cite{Mitchell05}. We similarly define the disturbance strategy $\gamma_{\dstb}: \tcset \rightarrow \dset$, $\gamma_{\dstb} \in \Gamma_\dstb(t)$.
 
- We want to find the farthest distance (and thus highest cost) that this game will ever reach when both players are acting optimally. Therefore we want to find a mapping between the initial relative state of the system and the maximum possible cost achieved over the time horizon. This mapping is through our value function, defined as
+ We determine the farthest distance (and thus highest cost) that this game will ever reach when both players are acting optimally. 
+ Therefore we want to find a mapping between the initial relative state of the system and the maximum possible cost achieved over the time horizon. This mapping is through our value function, defined as
  \begin{equation}
  \begin{aligned}
  \label{eq:valfunc}
