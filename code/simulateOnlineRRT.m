@@ -23,9 +23,7 @@ addpath(genpath('.'))
 % Problem setup
 start = [-12; 0; 0];
 goal = [12; 0; 0];
-trackErr = 0.8;
-senseRange = 2;
-
+small = 0.1;
 virt_v = 0.5;
 
 dt = 0.1;
@@ -37,7 +35,7 @@ YDims = 5:8;
 ZDims = 9:10;
 
 if nargin < 1
-  data_filename = 'Quad10D_g61_dt01_t50_veryHigh_quadratic.mat';
+  data_filename = 'Quad10D_g101_dt01_t5_low_quadratic.mat';
 end
 
 if nargin < 2
@@ -66,6 +64,9 @@ end
 %% Before Looping
 load(data_filename)
 load(obs_filename)
+trackErr = TEB;
+senseRange = 2*TEB + small;
+
 
 uMode = 'min';
 % dMode = 'max'; % Not needed since we're not using worst-case control
@@ -166,7 +167,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   trueQuad.updateState(u, dt, [], d);
 
   % Make sure error isn't too big (shouldn't happen)
-  if norm(virt_x - trueQuad.x([1 5 9])) > 3
+  if norm(virt_x - trueQuad.x([1 5 9])) > trackErr
     keyboard
   end
   
