@@ -101,6 +101,7 @@ end
 % set initial states to zero
 start_x = zeros(10,1);
 start_x([1 5 9]) = start;
+virt_x = start;
 
 % Create real quadrotor system
 rl_ui = [2 4 6];
@@ -134,8 +135,10 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   % Replan if a new obstacle is seen
   if isempty(newStates) || sensed_new
     % Update next virtual state
-    newStates = rrtNextState(trueQuad.x([1 5 9]), goal, obsMap.padded_obs, ...
-      delta_x, [], false);
+    newStates = rrtNextState(virt_x, goal, obsMap.padded_obs, ...
+        delta_x, [], false);
+    %(trueQuad.x([1 5 9]), goal, obsMap.padded_obs, ...
+    %  delta_x, [], false);
   end
   virt_x = newStates(1,:)';
   newStates(1,:) = [];
