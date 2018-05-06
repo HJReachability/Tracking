@@ -213,12 +213,14 @@ while iter < max_iter
       hV_true.UData = 0.1*cos(trueCar.x(3));
       hV_true.VData = 0.1*sin(trueCar.x(3));
     else
-      hV = quiver(virt_x(1), virt_x(2), 0.2*cos(virt_x(3)), ...
-        0.2*sin(virt_x(3)), '*', 'color', [0 0.75 0]);
+      hV = quiver(virt_x(1), virt_x(2), 0.1*cos(virt_x(3)), ...
+        0.1*sin(virt_x(3)), '*', 'color', [0 0.75 0]);
       
-      hV_true = quiver(trueCar.x(1), trueCar.x(2), 0.2*cos(trueCar.x(3)), ...
-        0.2*sin(trueCar.x(3)));
+      hV_true = quiver(trueCar.x(1), trueCar.x(2), 0.1*cos(trueCar.x(3)), ...
+        0.1*sin(trueCar.x(3)));
     end
+    
+    title(sprintf("t = %.1f", (iter-1)*dt))
     
     drawnow
 
