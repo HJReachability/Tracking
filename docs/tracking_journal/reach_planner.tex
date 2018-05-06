@@ -118,6 +118,19 @@ The sensing range is $r = $ meters.
 
 We used a C implementation of FSM.
 
+Computation times:
+\begin{itemize}
+\item === TOTAL ===
+\item  512 iterations in 637.5527 seconds
+\item 1.2452 seconds per iteration on average
+\item === PLANNING ===
+\item 512 iterations in 33.5683 seconds
+\item 0.0656 seconds per iteration on average
+\item === TRACKING ===
+\item 512 iterations in 0.8991 seconds
+\item 0.0018 seconds per iteration on average
+\end{itemize}
+
 On an unoptimized MATLAB implementation on a desktop computer with a Core i7-2600K CPU, each iteration took approximately ?? ms on average. Most of this time is spent on planning: obtaining the tracking controller took approximately ?? ms per iteration on average. The frequency of control was once every ?? ms.
 
 \MCnote{Fig. ?? shows the simulation results. 
