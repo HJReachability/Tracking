@@ -1,31 +1,32 @@
 function P5D_Dubins_htc_test(g, deriv, dynSys)
 
+% Preprocess look-up table for speed (since augmenting matrices is very
+% slow in 5D)
+[~, deriv{4}] = augmentPeriodicData(g, deriv{4});
+[g, deriv{5}] = augmentPeriodicData(g, deriv{5});
+g.bdry{3} = g.bdry{2};
+
 if nargin < 3
   aRange = [-0.5 0.5];
   alphaMax = 6;
   vOther = 0.1;
   wMax = 1.5;
-  dMax = [0.02 0.02 0 0.2 0.02];
+  dMax = [0.02 0.02 0.2 0.02];
   
   dynSys = P5D_Dubins_Rel([], aRange, alphaMax, vOther, wMax, dMax);
 end
 
 % Simulation parameters
-
-N = 1000;
-dt = 0.01;
-
-[~, deriv{4}] = augmentPeriodicData(g, deriv{4});
-[g, deriv{5}] = augmentPeriodicData(g, deriv{5});
-g.bdry{3} = g.bdry{2};
+N = 200;
+dt = 0.05;
 
 start_x = zeros(5,1);
 start_x(4) = 0.1; % Initial speed
 
-% uP = linspace(0,1,N); % Planner
+uP = 1.5*linspace(0,1,N); % Planner
 % uP = zeros(1,N);
-uP = 0.5*ones(1,N);
-uP(floor(N/2):end) = 0;
+% uP = 1*ones(1,N);
+% uP(floor(N/2):end) = 0;
 
 % Virtual system / planner (has no disturbance)
 dCar = DubinsCar(start_x(1:3), dynSys.wMax, dynSys.vOther);
@@ -43,7 +44,7 @@ f = figure;
 f.Color = 'white';
 f.Position = [100 100 1260 540];
 
-plot_pd = 5;
+plot_pd = 10;
 for i = 2:N
   if ~mod(i, plot_pd)
     fprintf('Iteration %d...\n', i)

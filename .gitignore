@@ -48,3 +48,5 @@ ros/src/CMakeLists.txt
 *.dylib
 *.la
 *.a
+
+code/figs/

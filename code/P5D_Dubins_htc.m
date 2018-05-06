@@ -12,6 +12,7 @@ rot_mat = [cos(p(3)) sin(p(3)); -sin(p(3)) cos(p(3))];
 
 rel_x(1:2) = rot_mat*rel_x(1:2);
 
+rel_x(3) = wrapToPi(rel_x(3));
 
 dV4 = eval_u(g, deriv{4}, rel_x);
 dV5 = eval_u(g, deriv{5}, rel_x);
