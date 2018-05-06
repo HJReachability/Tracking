@@ -29,22 +29,22 @@ This error function is shown in Fig. \ref{fig:vf_TEB:5D3D}.
 Of course, the error function can be defined in any desired manner, and involve planning state variables other than position.
 For example, the error function, which corresponds to $\valfunc(\rstate, 0)$ in Fig. \ref{fig:vf_TEB:8D4D}, is defined in both position and velocity space; Fig. \ref{fig:vf_TEB_10D3D} shows yet another error function defined using the one-norm of the displacement between the two systems. 
 In our pursuit-evasion game formulation, the tracking system tries to minimize this cost, while the planning system and any disturbances experienced by the tracking system try to do the opposite -- maximize.
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{fig/ti_valfunc_5d3d}
+  \caption{\scriptsize Infinite time horizon value function (top) and TEB (bottom) for the 5D car tracking 3D Dubins car example in Section \ref{sec:reach_planner}.}
+  \label{fig:vf_TEB:5D3D}  
+\end{figure}
+
 \begin{figure}
 	\centering
-  \begin{subfigure}[b]{0.48\columnwidth}
-	\includegraphics[width=\columnwidth]{fig/tv_valfunc}
-  \caption{\scriptsize Infinite time horizon value function (top) and TEB (bottom) for the 5D car tracking 3D Dubins car example in Section \ref{sec:reach_planner}.}
-  \label{fig:vf_TEB:5D3D}
-  \end{subfigure}
-  ~
-  \begin{subfigure}[b]{0.48\columnwidth}
   \includegraphics[width=\columnwidth]{fig/tv_valfunc}
   \caption{\scriptsize Finite time horizon value function (top) and TEBs (bottom) for the 8D quadrotor tracking 4D double integrator example in Section \ref{sec:resultsMPC}.}  
   \label{fig:vf_TEB:8D4D}
-  \end{subfigure}
-	\caption{Projections of value functions and their corresponding projected TEBs for two numerical examples. The 2D contours are intersection points of the horizontal plane with the value function.}
-	\label{fig:vf_TEB}
 \end{figure} 
+
+
+
 
 Before constructing the pursuit-evasion game we must first define the method each player must use for making decisions. 
 We define a strategy for planning system as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a control for the planning model based on the control of the planning model. We restrict $\gamma$ to draw from only non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$, as defined in \cite{Mitchell05}. 

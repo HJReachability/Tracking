@@ -26,21 +26,21 @@ addpath(genpath('.'))
 
 warning off
 
-% % Video
-% vout = VideoWriter('figs/video.mp4', 'MPEG-4');
-% vout.Quality = 100;
-% vout.FrameRate = 30;
-% vout.open;
+% Video
+vout = VideoWriter('figs/video.mp4', 'MPEG-4');
+vout.Quality = 100;
+vout.FrameRate = 10;
+vout.open;
 
 %% Problem setup
-start = [-0.75; -0.75; pi/6];
-goal = [0.5; 0.5; pi/2];
-goal_size = [0.45; 0.45; pi/6];
-
-trackErr = 0.22; %%%%%%%
+trackErr = 0.065; %%%%%%%
 sense_range = 0.5;
 sense_angle = pi/6;
 sense_region = create_sensing_region(sense_range, sense_angle);
+
+start = [-0.75; -0.75; pi/6];
+goal = [0.5; 0.5; pi/2];
+goal_size = [2.1*trackErr; 2.1*trackErr; pi/6];
 
 dt = 0.1;
 
@@ -120,36 +120,43 @@ global_start = tic; % Time entire simulation
 max_iter = 50000;
 lookup_time = 0;
 plan_time = 0;
-% while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
+
+% Smaller grid for planning
+gs = createGrid(g.min, g.max, 31*ones(3,1), 3);
+sensed_new_total = 0;
 while iter < max_iter
-  
   iter = iter + 1;
 
   % 1. Sense your environment, locate obstacles
   % 2. Expand sensed obstacles by tracking error bound
-  
-  plan_start = tic;
   sensed_new = obsMap.sense_update(trueCar.x(1:3), sense_region, trackErr);
 
   %% Path Planner Block
   % Replan if a new obstacle is seen
-  plan_this_iter = isempty(newStates) || sensed_new;
+  
+  if sensed_new
+    sensed_new_total = sensed_new_total + 1;
+  end
+  
+  plan_this_iter = isempty(newStates) || sensed_new_total >= 10;
+  
   if plan_this_iter
+    sensed_new_total = 0;
+    
     % Update next virtual state
     obs3D = repmat(obsMap.padded_obs, [1 1 g.N(3)]);
     
+    obs3Ds = migrateGrid(g, obs3D, gs);
+    plan_start = tic;
     if iter == 1
-      [newStates, uPlan] = fsmNextState(virt_x, goal, goal_size, L, g, ...
-        obs3D, dt, dynSys.vOther, dynSys.wMax, [], false);
+      [newStates, uPlan] = fsmNextState(virt_x, goal, goal_size, L, gs, ...
+        obs3Ds, dt, dynSys.vOther, dynSys.wMax, [], false);
     else
-      [newStates, uPlan] = fsmNextState(virt_x, goal, goal_size, L, g, ...
-        obs3D, dt, dynSys.vOther, dynSys.wMax, uPlan, false);
+      [newStates, uPlan] = fsmNextState(virt_x, goal, goal_size, L, gs, ...
+        obs3Ds, dt, dynSys.vOther, dynSys.wMax, uPlan, false);
     end
-  end
-  
-  plan_time = plan_time + toc(plan_start);
-  
-  if plan_this_iter
+    plan_time = plan_time + toc(plan_start);
+    
     if vis
       if iter == 1
         hPath = plot(newStates(1,:), newStates(2,:), ':');
@@ -157,8 +164,8 @@ while iter < max_iter
         hPath.XData = newStates(1,:);
         hPath.YData = newStates(2,:);
       end
-    end
-  end  
+    end    
+  end
   
   virt_x = newStates(:,1);
   newStates(:,1) = [];
@@ -215,11 +222,11 @@ while iter < max_iter
     
     drawnow
 
-%     export_fig(sprintf('figs/%d', iter), '-pdf')
-%     savefig(sprintf('figs/%d.fig', iter))
-%     
-%     current_frame = getframe(gcf); % gca does just the plot
-%     writeVideo(vout, current_frame);
+    export_fig(sprintf('figs/%d', iter), '-pdf')
+    savefig(sprintf('figs/%d.fig', iter))
+    
+    current_frame = getframe(gcf); % gca does just the plot
+    writeVideo(vout, current_frame);
   end
   
   % Check goal status
