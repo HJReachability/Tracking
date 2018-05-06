@@ -26,11 +26,11 @@ addpath(genpath('.'))
 
 warning off
 
-% Video
-vout = VideoWriter('figs/video.mp4', 'MPEG-4');
-vout.Quality = 100;
-vout.FrameRate = 30;
-vout.open;
+% % Video
+% vout = VideoWriter('figs/video.mp4', 'MPEG-4');
+% vout.Quality = 100;
+% vout.FrameRate = 30;
+% vout.open;
 
 %% Problem setup
 start = [-0.75; -0.75; pi/6];
@@ -42,7 +42,7 @@ sense_range = 0.5;
 sense_angle = pi/6;
 sense_region = create_sensing_region(sense_range, sense_angle);
 
-dt = 0.05;
+dt = 0.1;
 
 if nargin < 3
   obs_filename = 'Planners/FSM/obs.mat';
@@ -215,11 +215,11 @@ while iter < max_iter
     
     drawnow
 
-    export_fig(sprintf('figs/%d', iter), '-pdf')
-    savefig(sprintf('figs/%d.fig', iter))
-    
-    current_frame = getframe(gcf); % gca does just the plot
-    writeVideo(vout, current_frame);
+%     export_fig(sprintf('figs/%d', iter), '-pdf')
+%     savefig(sprintf('figs/%d.fig', iter))
+%     
+%     current_frame = getframe(gcf); % gca does just the plot
+%     writeVideo(vout, current_frame);
   end
   
   % Check goal status
@@ -234,7 +234,7 @@ while iter < max_iter
   
 end
 
-vout.close
+% vout.close
 comp_time = toc(global_start);
 fprintf('=== TOTAL ===\n')
 fprintf('%d iterations in %.4f seconds\n', iter, comp_time)
