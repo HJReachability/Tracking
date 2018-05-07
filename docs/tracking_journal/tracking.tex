@@ -71,7 +71,7 @@
 \newcommand{\pdyn}{h} % Planner Dynamics
 \newcommand{\rdyn}{g} % Relative dynamics
 
-\newcommand{\plannerfunc}{j}
+\newcommand{\plannerfunc}{\text{nextState}}
 
 \newcommand{\ptind}{i} % Index of vehicle state corresponding to planner state
 \newcommand{\ptmat}{Q} % Matrix for transforming planner state to the same length as tracker state
@@ -86,8 +86,16 @@
 \newcommand{\dx}{\Delta x} %distance allowed in a time step
 \newcommand{\dt}{\Delta t} %time step
 
-\newcommand{\obsSense}{\mathcal{O}_{sense}}
-\newcommand{\obsAug}{\mathcal{O}_{aug}}
+\newcommand{\tgoal}{\mathcal G}
+\newcommand{\goal}{\tgoal_\pstate}
+
+\newcommand{\tconstr}{\mathcal C}
+\newcommand{\constr}{\tconstr_\pstate}
+\newcommand{\constrSense}{\tconstr_{\pstate,\text{sense}}}
+\newcommand{\constrAug}{\tconstr_{\pstate,\text{aug}}}
+
+%\newcommand{\obsSense}{\mathcal{O}_\text{sense}}
+%\newcommand{\obsAug}{\mathcal{O}_\text{aug}}
 
 
 
@@ -103,7 +111,7 @@
 \newcommand{\MCnote}{\textcolor{blue}}
 \newcommand{\SHnote}{\textcolor{red}}
 
-\title{\LARGE \bf FaSTrack Journal Version}
+\title{\LARGE \bf FaSTrack: a Modular Framework for Real-Time Motion Planning and Guaranteed Safe Tracking}
 
 \author{}
 %\author{Sylvia L. Herbert*, Mo Chen*, SooJean Han, Somil Bansal, Jaime F. Fisac, and Claire J. Tomlin
@@ -118,7 +126,15 @@
 
 %%%
 \begin{abstract}
-Real-time and safe trajectory planning in unknown environments is vital to many applications of autonomous systems. Real-time trajectory planning typically requires simplified system dynamics planning at best, while safe trajectory planning tends to be computationally intensive. We propose FaSTrack, Fast and Safe Tracking, . A path or trajectory planner using simplified dynamics to plan quickly can be incorporated into the FaSTrack framework, which provides a safety controller for the vehicle along with a guaranteed tracking error bound. This bound captures all possible deviations due to high dimensional dynamics and external disturbances. Note that FaSTrack is modular and can be used with most current path or trajectory planners. We demonstrate this framework using a 10D nonlinear quadrotor model tracking a 3D path obtained from an RRT planner.
+Real-time and guaranteed safe trajectory planning in unknown environments is vital to many applications of autonomous systems. 
+However, algorithms for real-time trajectory planning typically sacrifice robustness to achieve computation speed, while provably safe trajectory planning tends to be computationally intensive and cannot re-plan trajectories in real-time, often a requirement for exploring unknown environments. 
+We propose FaSTrack, Fast and Safe Tracking, to obtain the best of both worlds. 
+In this framework, any path or trajectory planner using simplified dynamics to plan quickly can be used. 
+In conjunction, a differential game approach produces a safety controller for the vehicle along with a guaranteed tracking error bound. 
+This bound captures all possible deviations in the planning space due to model mismatch between higher-dimensional and simplified models of the system, as well as external disturbances.
+The tracking error bound can be either finite time horizon or infinite time horizon.
+In the former case, a time-invariant TEB is obtained, and in the latter, a time-varying TEB is obtained.
+We demonstrate FaSTrack using Hamilton-Jacobi reachability and three different trajectory planners with three different tracker-planner pairs.
 \end{abstract}
 
 \input{introduction.tex}
