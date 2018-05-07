@@ -247,4 +247,23 @@ M.~Chen, S.~L. Herbert, M.~S. Vashishtha, S.~Bansal, and C.~J. Tomlin, ``A
   \url{https://www.mathworks.com/matlabcentral/fileexchange/21443-multiple-rapidly-exploring-random-tree--rrt-}
 \BIBentrySTDinterwordspacing
 
+\bibitem{Zhang2017}
+\BIBentryALTinterwordspacing
+X.~Zhang, A.~Liniger, and F.~Borrelli, ``{Optimization-Based Collision
+  Avoidance},'' Nov. 2017. [Online]. Available:
+  \url{http://arxiv.org/abs/1711.03449}
+\BIBentrySTDinterwordspacing
+
+\bibitem{Houska2011a}
+B.~Houska, H.~Ferreau, and M.~Diehl, ``{ACADO} {T}oolkit -- {A}n {O}pen
+  {S}ource {F}ramework for {A}utomatic {C}ontrol and {D}ynamic
+  {O}ptimization,'' \emph{Optimal Control Applications and Methods}, vol.~32,
+  no.~3, pp. 298--312, 2011.
+
+\bibitem{Ferreau2014}
+H.~Ferreau, C.~Kirches, A.~Potschka, H.~Bock, and M.~Diehl, ``qp{OASES}: A
+  parametric active-set algorithm for quadratic programming,''
+  \emph{Mathematical Programming Computation}, vol.~6, no.~4, pp. 327–--363,
+  2014.
+
 \end{thebibliography}
