@@ -179,21 +179,35 @@ This is expressed through the following value function:
 &\qquad\qquad \max_{\tvar\in [0, \thor]} \errfunc\Big(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))\Big)\big\}. \label{eq:valfunc}
 \end{align} 
 
-The value function can be computed via existing methods in HJ reachability analysis \cite{}.
-Adapting the formulation in \cite{Fisac15}, we compute the value function by solving the following HJ VI:
+The value function can be computed via existing methods in HJ reachability analysis \cite{Mitchell05, Fisac15}.
+Adapting the formulation in \cite{Fisac15} and taking a convention of negative time in the backward reachability literature \cite{Chen2016DecouplingJournal, Chen2018}, we compute the value function by solving the HJ VI
 
 \begin{align}
-\max \Big\{&\frac{\partial \valfunc}{\partial \tvar} + \min_{\tctrl\in\tset} \max_{\pctrl\in\pset, \dstb\in\dset} \deriv \cdot \rdyn(\rstate, \tctrl, \pctrl, \dstb), \nonumber \\
-&\qquad\errfunc(\rstate) - \valfunc(\rstate, \tvar)\Big\} = 0, \quad \tvar \in [-T, 0], \label{eq:HJVI} \\
-&\valfunc(\rstate, 0) = \errfunc(\rstate). \nonumber
+\max \Big\{&\frac{\partial \tilde\valfunc}{\partial \tvar} + \min_{\tctrl\in\tset} \max_{\pctrl\in\pset, \dstb\in\dset} \nabla \tilde\valfunc \cdot \rdyn(\rstate, \tctrl, \pctrl, \dstb), \nonumber \\
+&\qquad\errfunc(\rstate) - \tilde\valfunc(\rstate, \tvar)\Big\} = 0, \quad \tvar \in [-T, 0], \label{eq:HJVI} \\
+&\tilde\valfunc(\rstate, 0) = \errfunc(\rstate), \nonumber
 \end{align}
+
+\noindent from which we obtain the value function $\valfunc(\rstate, t)$.
+
 
 If the control authority of the tracking system is powerful enough to always eventually remain within some distance from the planning system, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. 
 An example of this converged value function is in Fig. \ref{fig:vf_TEB:5D3D}. 
+
 In some cases, the value function does not converge, and provides a finite time horizon, time-varying TEB, an example of which is shown in Fig. \ref{fig:vf_TEB:8D4D}.
-In Section \ref{sec:proofs}, we will formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ and $\valfunc_\infty(\rstate$ respectively provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case, and time-invariant $\TEB_\infty$ for the infinite time horizon case.
+In Section \ref{sec:proofs}, we will formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ and $\valfunc_\infty(\rstate)$ respectively provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case, and time-invariant $\TEB_\infty$ for the infinite time horizon case.
  
-The spatial gradients of the value function, $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$, comprise the safety controller function (as described in Section \ref{sec:online}). 
+The optimal tracking controller is obtained from the spatial gradients of the value function \cite{Mitchell05, Fisac15, Chen2018}, $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$ as
+
+\begin{subequations} \label{eq:opt_ctrl}
+  \begin{align}
+  \tctrl^*(\rstate, \tvar) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb), \\
+  \tctrl^*(\rstate) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb). 
+  \end{align}
+\end{subequations}
+
+For control and disturbance affine systems, this minimization is given analytically.
+
 When the framework is executed on a computer, these two functions are saved as look-up tables over a grid representing the state space of the relative system.
  
 \subsection{Error Bound Guarantee via Value Function} \label{sec:proofs}
@@ -209,9 +223,9 @@ The TEB is given by the set $\TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \
 This TEB in the planner's frame of reference is given by
 \begin{equation} \label{eq:TEBp}
 \begin{aligned}
-\TEB_\pstate(\tau) = \{\pstate: \exists s, \valfunc(\tstate-\ptmat\pstate, \thor-\tau) \le \underline\valfunc\} \\
+\TEB_\pstate(\tau) = \{\pstate: \exists s, \valfunc(\rtrans(\tstate-\ptmat\pstate), \thor-\tau) \le \underline\valfunc\} \\
 \quad \text{(Finite time horizon)}\\
-\TEB_{\pstate, \infty} = \{\pstate: \exists s, \valfunc_\infty(\tstate-\ptmat\pstate) \le \underline\valfunc_\infty\} \\
+\TEB_{\pstate, \infty} = \{\pstate: \exists s, \valfunc_\infty(\rtrans(\tstate-\ptmat\pstate)) \le \underline\valfunc_\infty\} \\
 \quad \text{(Infinite time horizon)}\\
 \end{aligned}
 \end{equation}
