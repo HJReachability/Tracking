@@ -1818,8 +1818,8 @@ double fndiff(double*** fold, double*** fnew, const mwSize* N, double numInfty )
 	avgdiff = totaldiff/Ni/Nj/Nk;
 	
 	//return (double) numBigDiff;
-	return avgdiff;
-	//return maxdiff;
+	//return avgdiff;
+	return maxdiff;
 }
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
@@ -1956,7 +1956,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	difference = numInfty;
 	
 	numIter = 0;
-	minIter = 5;
+	minIter = 2;
 	maxIter = numInfty;
 	// for (numIter = 0; numIter<10; numIter+=0) {
 	//while (difference > 0.01*Ni*Nj*Nk && numIter < maxIter) {

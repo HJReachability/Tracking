@@ -23,9 +23,7 @@ addpath(genpath('.'))
 % Problem setup
 start = [-12; 0; 0];
 goal = [12; 0; 0];
-trackErr = 0.8;
-senseRange = 2;
-
+small = 0.1;
 virt_v = 0.5;
 
 dt = 0.1;
@@ -37,7 +35,7 @@ YDims = 5:8;
 ZDims = 9:10;
 
 if nargin < 1
-  data_filename = 'Quad10D_g61_dt01_t50_veryHigh_quadratic.mat';
+  data_filename = 'Quad10D_g101_dt01_t5_low_quadratic.mat';
 end
 
 if nargin < 2
@@ -48,6 +46,7 @@ if nargin < 3
   extraArgs = [];
 end
 
+
 % matrix to compare position states (virt vs. true)
 if ~isfield(extraArgs,'Q')
   Q = zeros(10,3);
@@ -57,7 +56,7 @@ if ~isfield(extraArgs,'Q')
 end
 
 if ~isfield(extraArgs, 'visualize')
-  vis = false;
+  vis = true;
 else
   vis = true;
 end
@@ -65,9 +64,12 @@ end
 %% Before Looping
 load(data_filename)
 load(obs_filename)
+trackErr = TEB;
+senseRange = 2*TEB + small;
 
-uMode = 'max';
-% dMode = 'min'; % Not needed since we're not using worst-case control
+
+uMode = 'min';
+% dMode = 'max'; % Not needed since we're not using worst-case control
 
 obsMap = ObstacleMapRRT(obs);
 
@@ -99,11 +101,12 @@ end
 % set initial states to zero
 start_x = zeros(10,1);
 start_x([1 5 9]) = start;
+virt_x = start;
 
 % Create real quadrotor system
 rl_ui = [2 4 6];
-trueQuad = Quad10D(start_x, dynSysX.uMin(rl_ui), dynSysX.uMax(rl_ui), ...
-  dynSysX.dMin, dynSysX.dMax, 1:10);
+trueQuad = Quad10D(start_x, sD_X.dynSys.uMin(rl_ui), sD_X.dynSys.uMax(rl_ui), ...
+  sD_X.dynSys.dMin, sD_X.dynSys.dMax, 1:10);
 
 % % define when to switch from safety control to performance control
 % small = 1;
@@ -119,6 +122,8 @@ global_start = tic; % Time entire simulation
 max_iter = 5000;
 lookup_time = 0;
 
+% while we haven't reached the final iteraction and we haven't reached the
+% goal
 while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   iter = iter + 1;
 
@@ -130,8 +135,10 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   % Replan if a new obstacle is seen
   if isempty(newStates) || sensed_new
     % Update next virtual state
-    newStates = rrtNextState(trueQuad.x([1 5 9]), goal, obsMap.padded_obs, ...
-      delta_x, [], false);
+    newStates = rrtNextState(virt_x, goal, obsMap.padded_obs, ...
+        delta_x, [], false);
+    %(trueQuad.x([1 5 9]), goal, obsMap.padded_obs, ...
+    %  delta_x, [], false);
   end
   virt_x = newStates(1,:)';
   newStates(1,:) = [];
@@ -143,27 +150,27 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   
   % 2. Determine which controller to use, find optimal control
   %get spatial gradients
-  pX = eval_u(gX, derivX, rel_x(XDims));
-  pY = eval_u(gX, derivX, rel_x(YDims));
-  pZ = eval_u(gZ, derivZ, rel_x(ZDims));
+  pX = eval_u(sD_X.grid, derivX, rel_x(XDims));
+  pY = eval_u(sD_X.grid, derivX, rel_x(YDims));
+  pZ = eval_u(sD_Z.grid, derivZ, rel_x(ZDims));
   
   % Find optimal control of relative system (no performance control)
-  uX = dynSysX.optCtrl([], rel_x(XDims), pX, uMode);
-  uY = dynSysX.optCtrl([], rel_x(YDims), pY, uMode);
-  uZ = dynSysZ.optCtrl([], rel_x(ZDims), pZ, uMode);
+  uX = sD_X.dynSys.optCtrl([], rel_x(XDims), pX, uMode);
+  uY = sD_X.dynSys.optCtrl([], rel_x(YDims), pY, uMode);
+  uZ = sD_Z.dynSys.optCtrl([], rel_x(ZDims), pZ, uMode);
   u = [uX uY uZ];
   u = u(rl_ui);
   lookup_time = lookup_time + toc(local_start);
   
   %% True System Block
   % 1. add random disturbance to velocity within given bound
-  d = dynSysX.dMin + rand(3,1).*(dynSysX.dMax - dynSysX.dMin);
+  d = sD_X.dynSys.dMin + rand(3,1).*(sD_X.dynSys.dMax - sD_X.dynSys.dMin);
   
   % 2. update state of true vehicle
   trueQuad.updateState(u, dt, [], d);
 
   % Make sure error isn't too big (shouldn't happen)
-  if norm(virt_x - trueQuad.x([1 5 9])) > 3
+  if norm(virt_x - trueQuad.x([1 5 9])) > trackErr
     keyboard
   end
   

@@ -66,6 +66,7 @@ bool Q8D_Q4D::optCtrl(std::vector<beacls::FloatVec>& uOpts,
     const beacls::IntegerVec& y_sizes,
     const beacls::IntegerVec& deriv_sizes,
     const helperOC::DynSys_UMode_Type uMode) const {
+  
   const helperOC::DynSys_UMode_Type modified_uMode = 
     (uMode == helperOC::DynSys_UMode_Default) ? 
     helperOC::DynSys_UMode_Max : uMode;
@@ -248,58 +249,86 @@ bool Q8D_Q4D::dynamics(std::vector<beacls::FloatVec >& dxs,
 // ====================================== GPU ONLY
 #if defined(USER_DEFINED_GPU_DYNSYS_FUNC)
 bool Q8D_Q4D::optCtrl_cuda(
-  std::vector<beacls::UVec>& u_uvecs,
-  const FLOAT_TYPE,
-  const std::vector<beacls::UVec>& x_uvecs,
-  const std::vector<beacls::UVec>& deriv_uvecs,
-  const helperOC::DynSys_UMode_Type uMode
-) const {
-  if (x_uvecs.size() < 3 || x_uvecs[2].empty() || deriv_uvecs.size() < 3 || deriv_uvecs[0].empty() || deriv_uvecs[1].empty() || deriv_uvecs[2].empty()) return false;
-  const helperOC::DynSys_UMode_Type modified_uMode = (uMode == helperOC::DynSys_UMode_Default) ? helperOC::DynSys_UMode_Max : uMode;
-  const auto vrange_minmax = beacls::minmax_value<FLOAT_TYPE>(vrange.cbegin(), vrange.cend());
+    std::vector<beacls::UVec>& u_uvecs,
+    const FLOAT_TYPE,
+    const std::vector<beacls::UVec>& x_uvecs,
+    const std::vector<beacls::UVec>& deriv_uvecs,
+    const helperOC::DynSys_UMode_Type uMode) const {
+
+  if (x_uvecs.size() < 3 || x_uvecs[2].empty() || deriv_uvecs.size() < 3 || 
+      deriv_uvecs[0].empty() || deriv_uvecs[1].empty() || 
+      deriv_uvecs[2].empty()) {
+    return false;
+  }
+    
+  const helperOC::DynSys_UMode_Type modified_uMode = 
+    (uMode == helperOC::DynSys_UMode_Default) ? 
+    helperOC::DynSys_UMode_Max : uMode;
+
+  const auto vrange_minmax = 
+    beacls::minmax_value<FLOAT_TYPE>(vrange.cbegin(), vrange.cend());
+
   const FLOAT_TYPE vrange_min = vrange_minmax.first;
   const FLOAT_TYPE vrange_max = vrange_minmax.second;
-  return Q8D_Q4D_CUDA::optCtrl_execute_cuda(u_uvecs, x_uvecs, deriv_uvecs, wMax, vrange_max, vrange_min, modified_uMode);
+
+  return Q8D_Q4D_CUDA::optCtrl_execute_cuda(u_uvecs, x_uvecs, deriv_uvecs, 
+    wMax, vrange_max, vrange_min, modified_uMode);
 }
+
 bool Q8D_Q4D::optDstb_cuda(
-  std::vector<beacls::UVec>& d_uvecs,
-  const FLOAT_TYPE,
-  const std::vector<beacls::UVec>& x_uvecs,
-  const std::vector<beacls::UVec>& deriv_uvecs,
-  const helperOC::DynSys_DMode_Type dMode
-) const {
-  if (deriv_uvecs.size() < 3 || deriv_uvecs[0].empty() || deriv_uvecs[1].empty() || deriv_uvecs[2].empty()) return false;
-  const helperOC::DynSys_DMode_Type modified_dMode = (dMode == helperOC::DynSys_DMode_Default) ? helperOC::DynSys_DMode_Min : dMode;
-  return Q8D_Q4D_CUDA::optDstb_execute_cuda(d_uvecs, x_uvecs, deriv_uvecs, dMax, modified_dMode);
+    std::vector<beacls::UVec>& d_uvecs,
+    const FLOAT_TYPE,
+    const std::vector<beacls::UVec>& x_uvecs,
+    const std::vector<beacls::UVec>& deriv_uvecs,
+    const helperOC::DynSys_DMode_Type dMode) const {
+
+  if (deriv_uvecs.size() < 3 || deriv_uvecs[0].empty() || deriv_uvecs[1].empty()
+      || deriv_uvecs[2].empty()) {
+    return false;
+  }
+  
+  const helperOC::DynSys_DMode_Type modified_dMode = 
+    (dMode == helperOC::DynSys_DMode_Default) ? 
+    helperOC::DynSys_DMode_Min : dMode;
+
+  return Q8D_Q4D_CUDA::optDstb_execute_cuda(d_uvecs, x_uvecs, deriv_uvecs, dMax,
+    modified_dMode);
 }
+
 bool Q8D_Q4D::dynamics_cuda(
-  std::vector<beacls::UVec>& dx_uvecs,
-  const FLOAT_TYPE,
-  const std::vector<beacls::UVec>& x_uvecs,
-  const std::vector<beacls::UVec>& u_uvecs,
-  const std::vector<beacls::UVec>& d_uvecs,
-  const size_t dst_target_dim
-) const {
+    std::vector<beacls::UVec>& dx_uvecs,
+    const FLOAT_TYPE,
+    const std::vector<beacls::UVec>& x_uvecs,
+    const std::vector<beacls::UVec>& u_uvecs,
+    const std::vector<beacls::UVec>& d_uvecs,
+    const size_t dst_target_dim) const {
+
   beacls::FloatVec dummy_d_vec{ 0 };
   std::vector<beacls::UVec> dummy_d_uvecs;
+
   if (d_uvecs.empty()) {
     dummy_d_uvecs.resize(get_nd());
-    std::for_each(dummy_d_uvecs.begin(), dummy_d_uvecs.end(), [&dummy_d_vec](auto& rhs) {
-      rhs = beacls::UVec(dummy_d_vec, beacls::UVecType_Vector, false);
-    });
+    std::for_each(dummy_d_uvecs.begin(), dummy_d_uvecs.end(), 
+      [&dummy_d_vec](auto& rhs) { 
+      rhs = beacls::UVec(dummy_d_vec, beacls::UVecType_Vector, false); });
   }
-  const std::vector<beacls::UVec>& modified_d_uvecs = (d_uvecs.empty()) ? dummy_d_uvecs : d_uvecs;
+
+  const std::vector<beacls::UVec>& modified_d_uvecs = 
+    (d_uvecs.empty()) ? dummy_d_uvecs : d_uvecs;
+
   bool result = true;
   if (dst_target_dim == std::numeric_limits<size_t>::max()) {
-    result &= Q8D_Q4D_CUDA::dynamics_cell_helper_execute_cuda_dimAll(dx_uvecs, x_uvecs, u_uvecs, modified_d_uvecs);
+    result &= Q8D_Q4D_CUDA::dynamics_cell_helper_execute_cuda_dimAll(
+      dx_uvecs, x_uvecs, u_uvecs, modified_d_uvecs);
   }
-  else
-  {
+  else {
     if (dst_target_dim < x_uvecs.size()) {
-      Q8D_Q4D_CUDA::dynamics_cell_helper_execute_cuda(dx_uvecs[dst_target_dim], x_uvecs, u_uvecs, modified_d_uvecs, dst_target_dim);
+      Q8D_Q4D_CUDA::dynamics_cell_helper_execute_cuda(dx_uvecs[dst_target_dim], 
+        x_uvecs, u_uvecs, modified_d_uvecs, dst_target_dim);
     }
     else {
-      std::cerr << "Invalid target dimension for dynamics: " << dst_target_dim << std::endl;
+      std::cerr << "Invalid target dimension for dynamics: " << dst_target_dim 
+        << std::endl;
       result = false;
     }
   }
@@ -307,105 +336,169 @@ bool Q8D_Q4D::dynamics_cuda(
 }
 
 bool Q8D_Q4D::optCtrl_cuda(
-  std::vector<beacls::UVec>& uU_uvecs,
-  std::vector<beacls::UVec>& uL_uvecs,
-  const FLOAT_TYPE,
-  const std::vector<beacls::UVec>& x_uvecs,
-  const std::vector<beacls::UVec>& derivMax_uvecs,
-  const std::vector<beacls::UVec>& derivMin_uvecs,
-  const helperOC::DynSys_UMode_Type uMode
-) const {
-  if (x_uvecs.size() < 3 || x_uvecs[2].empty() || derivMax_uvecs.size() < 3 || derivMax_uvecs[0].empty() || derivMax_uvecs[1].empty() || derivMax_uvecs[2].empty()) return false;
-  const helperOC::DynSys_UMode_Type modified_uMode = (uMode == helperOC::DynSys_UMode_Default) ? helperOC::DynSys_UMode_Max : uMode;
-  const auto vrange_minmax = beacls::minmax_value<FLOAT_TYPE>(vrange.cbegin(), vrange.cend());
+    std::vector<beacls::UVec>& uU_uvecs,
+    std::vector<beacls::UVec>& uL_uvecs,
+    const FLOAT_TYPE,
+    const std::vector<beacls::UVec>& x_uvecs,
+    const std::vector<beacls::UVec>& derivMax_uvecs,
+    const std::vector<beacls::UVec>& derivMin_uvecs,
+    const helperOC::DynSys_UMode_Type uMode) const {
+
+  if (x_uvecs.size() < 3 || x_uvecs[2].empty() || derivMax_uvecs.size() < 3 || 
+      derivMax_uvecs[0].empty() || derivMax_uvecs[1].empty() || 
+      derivMax_uvecs[2].empty()) {
+    return false;
+  }
+
+  const helperOC::DynSys_UMode_Type modified_uMode = 
+    (uMode == helperOC::DynSys_UMode_Default) ? 
+    helperOC::DynSys_UMode_Max : uMode;
+
+  const auto vrange_minmax = 
+    beacls::minmax_value<FLOAT_TYPE>(vrange.cbegin(), vrange.cend());
+
   const FLOAT_TYPE vrange_min = vrange_minmax.first;
   const FLOAT_TYPE vrange_max = vrange_minmax.second;
-  return Q8D_Q4D_CUDA::optCtrl_execute_cuda(uU_uvecs, uL_uvecs, x_uvecs, derivMax_uvecs, derivMin_uvecs, wMax, vrange_max, vrange_min, modified_uMode);
+
+  return Q8D_Q4D_CUDA::optCtrl_execute_cuda(uU_uvecs, uL_uvecs, x_uvecs, 
+    derivMax_uvecs, derivMin_uvecs, wMax, vrange_max, vrange_min, modified_uMode);
 }
+
 bool Q8D_Q4D::optDstb_cuda(
-  std::vector<beacls::UVec>& dU_uvecs,
-  std::vector<beacls::UVec>& dL_uvecs,
-  const FLOAT_TYPE,
-  const std::vector<beacls::UVec>& x_uvecs,
-  const std::vector<beacls::UVec>& derivMax_uvecs,
-  const std::vector<beacls::UVec>& derivMin_uvecs,
-  const helperOC::DynSys_DMode_Type dMode
-) const {
-  if (derivMax_uvecs.size() < 3 || derivMax_uvecs[0].empty() || derivMax_uvecs[1].empty() || derivMax_uvecs[2].empty()) return false;
-  const helperOC::DynSys_DMode_Type modified_dMode = (dMode == helperOC::DynSys_DMode_Default) ? helperOC::DynSys_DMode_Min : dMode;
-  return Q8D_Q4D_CUDA::optDstb_execute_cuda(dU_uvecs, dL_uvecs, x_uvecs, derivMax_uvecs, derivMin_uvecs, dMax, modified_dMode);
+    std::vector<beacls::UVec>& dU_uvecs,
+    std::vector<beacls::UVec>& dL_uvecs,
+    const FLOAT_TYPE,
+    const std::vector<beacls::UVec>& x_uvecs,
+    const std::vector<beacls::UVec>& derivMax_uvecs,
+    const std::vector<beacls::UVec>& derivMin_uvecs,
+    const helperOC::DynSys_DMode_Type dMode) const {
+
+  if (derivMax_uvecs.size() < 3 || derivMax_uvecs[0].empty() || 
+      derivMax_uvecs[1].empty() || derivMax_uvecs[2].empty()) {
+    return false;
+  }
+
+  const helperOC::DynSys_DMode_Type modified_dMode = 
+    (dMode == helperOC::DynSys_DMode_Default) ? 
+    helperOC::DynSys_DMode_Min : dMode;
+
+  return Q8D_Q4D_CUDA::optDstb_execute_cuda(dU_uvecs, dL_uvecs, x_uvecs, 
+    derivMax_uvecs, derivMin_uvecs, dMax, modified_dMode);
 }
+
 bool Q8D_Q4D::dynamics_cuda(
-  beacls::UVec& alpha_uvec,
-  const FLOAT_TYPE,
-  const std::vector<beacls::UVec>& x_uvecs,
-  const std::vector<beacls::UVec>& uU_uvecs,
-  const std::vector<beacls::UVec>& uL_uvecs,
-  const std::vector<beacls::UVec>& dU_uvecs,
-  const std::vector<beacls::UVec>& dL_uvecs,
-  const size_t dst_target_dim
-) const {
+    beacls::UVec& alpha_uvec,
+    const FLOAT_TYPE,
+    const std::vector<beacls::UVec>& x_uvecs,
+    const std::vector<beacls::UVec>& uU_uvecs,
+    const std::vector<beacls::UVec>& uL_uvecs,
+    const std::vector<beacls::UVec>& dU_uvecs,
+    const std::vector<beacls::UVec>& dL_uvecs,
+    const size_t dst_target_dim) const {
+
   beacls::FloatVec dummy_d_vec{ 0 };
   std::vector<beacls::UVec> dummy_d_uvecs;
+
   if (dU_uvecs.empty() || dL_uvecs.empty()) {
     dummy_d_uvecs.resize(get_nd());
-    std::for_each(dummy_d_uvecs.begin(), dummy_d_uvecs.end(), [&dummy_d_vec](auto& rhs) {
+    std::for_each(dummy_d_uvecs.begin(), dummy_d_uvecs.end(), 
+      [&dummy_d_vec](auto& rhs) {
       rhs = beacls::UVec(dummy_d_vec, beacls::UVecType_Vector, false);
     });
   }
-  const std::vector<beacls::UVec>& modified_dU_uvecs = (dU_uvecs.empty()) ? dummy_d_uvecs : dU_uvecs;
-  const std::vector<beacls::UVec>& modified_dL_uvecs = (dL_uvecs.empty()) ? dummy_d_uvecs : dL_uvecs;
+  const std::vector<beacls::UVec>& modified_dU_uvecs = 
+    (dU_uvecs.empty()) ? dummy_d_uvecs : dU_uvecs;
+  const std::vector<beacls::UVec>& modified_dL_uvecs = 
+    (dL_uvecs.empty()) ? dummy_d_uvecs : dL_uvecs;
+
   bool result = true;
   if (dst_target_dim < x_uvecs.size()) {
-    Q8D_Q4D_CUDA::dynamics_cell_helper_execute_cuda(alpha_uvec, x_uvecs, uU_uvecs, uL_uvecs, modified_dU_uvecs, modified_dL_uvecs, dst_target_dim);
+    Q8D_Q4D_CUDA::dynamics_cell_helper_execute_cuda(alpha_uvec, x_uvecs, 
+      uU_uvecs, uL_uvecs, modified_dU_uvecs, modified_dL_uvecs, dst_target_dim);
   }
   else {
-    std::cerr << "Invalid target dimension for dynamics: " << dst_target_dim << std::endl;
+    std::cerr << "Invalid target dimension for dynamics: " << dst_target_dim 
+      << std::endl;
     result = false;
   }
   return result;
 }
+
 bool Q8D_Q4D::HamFunction_cuda(
-  beacls::UVec& hamValue_uvec,
-  const DynSysSchemeData* schemeData,
-  const FLOAT_TYPE,
-  const beacls::UVec&,
-  const std::vector<beacls::UVec>& x_uvecs,
-  const std::vector<beacls::UVec>& deriv_uvecs,
-  const size_t,
-  const size_t,
-  const bool negate
-) const {
-  if (x_uvecs.size() < 3 || x_uvecs[2].empty() || deriv_uvecs.size() < 3 || deriv_uvecs[0].empty() || deriv_uvecs[1].empty() || deriv_uvecs[2].empty()) return false;
-  if (deriv_uvecs.size() < 3 || deriv_uvecs[0].empty() || deriv_uvecs[1].empty() || deriv_uvecs[2].empty()) return false;
-  const auto vrange_minmax = beacls::minmax_value<FLOAT_TYPE>(vrange.cbegin(), vrange.cend());
+    beacls::UVec& hamValue_uvec,
+    const DynSysSchemeData* schemeData,
+    const FLOAT_TYPE,
+    const beacls::UVec&,
+    const std::vector<beacls::UVec>& x_uvecs,
+    const std::vector<beacls::UVec>& deriv_uvecs,
+    const size_t,
+    const size_t,
+    const bool negate) const {
+  if (x_uvecs.size() < 3 || x_uvecs[2].empty() || deriv_uvecs.size() < 3 || 
+    deriv_uvecs[0].empty() || deriv_uvecs[1].empty() || deriv_uvecs[2].empty()) {
+    return false;
+  }
+
+  if (deriv_uvecs.size() < 3 || deriv_uvecs[0].empty() || deriv_uvecs[1].empty() 
+    || deriv_uvecs[2].empty()) {
+    return false;
+  }
+
+  const auto vrange_minmax = beacls::minmax_value<FLOAT_TYPE>(vrange.cbegin(), 
+    vrange.cend());
   const FLOAT_TYPE vrange_min = vrange_minmax.first;
   const FLOAT_TYPE vrange_max = vrange_minmax.second;
-  const helperOC::DynSys_UMode_Type modified_uMode = (schemeData->uMode == helperOC::DynSys_UMode_Default) ? helperOC::DynSys_UMode_Max : schemeData->uMode;
-  const helperOC::DynSys_DMode_Type modified_dMode = (schemeData->dMode == helperOC::DynSys_DMode_Default) ? helperOC::DynSys_DMode_Min : schemeData->dMode;
-  return Q8D_Q4D_CUDA::HamFunction_cuda(hamValue_uvec, x_uvecs, deriv_uvecs, wMax, vrange_min, vrange_max, dMax, modified_uMode, modified_dMode, negate);
+  const helperOC::DynSys_UMode_Type modified_uMode = 
+    (schemeData->uMode == helperOC::DynSys_UMode_Default) ? 
+    helperOC::DynSys_UMode_Max : schemeData->uMode;
+
+  const helperOC::DynSys_DMode_Type modified_dMode = 
+    (schemeData->dMode == helperOC::DynSys_DMode_Default) ? 
+    helperOC::DynSys_DMode_Min : schemeData->dMode;
+
+  return Q8D_Q4D_CUDA::HamFunction_cuda(hamValue_uvec, x_uvecs, deriv_uvecs, 
+    wMax, vrange_min, vrange_max, dMax, modified_uMode, modified_dMode, negate);
 }
 
 
 bool Q8D_Q4D::PartialFunction_cuda(
-  beacls::UVec& alpha_uvec,
-  const DynSysSchemeData* schemeData,
-  const FLOAT_TYPE,
-  const beacls::UVec&,
-  const std::vector<beacls::UVec>& x_uvecs,
-  const std::vector<beacls::UVec>& derivMin_uvecs,
-  const std::vector<beacls::UVec>& derivMax_uvecs,
-  const size_t dim,
-  const size_t,
-  const size_t
-  ) const {
-  if (x_uvecs.size() < 3 || x_uvecs[2].empty() || derivMax_uvecs.size() < 3 || derivMax_uvecs[0].empty() || derivMax_uvecs[1].empty() || derivMax_uvecs[2].empty()) return false;
-  if (derivMax_uvecs.size() < 3 || derivMax_uvecs[0].empty() || derivMax_uvecs[1].empty() || derivMax_uvecs[2].empty()) return false;
-  const auto vrange_minmax = beacls::minmax_value<FLOAT_TYPE>(vrange.cbegin(), vrange.cend());
+    beacls::UVec& alpha_uvec,
+    const DynSysSchemeData* schemeData,
+    const FLOAT_TYPE,
+    const beacls::UVec&,
+    const std::vector<beacls::UVec>& x_uvecs,
+    const std::vector<beacls::UVec>& derivMin_uvecs,
+    const std::vector<beacls::UVec>& derivMax_uvecs,
+    const size_t dim,
+    const size_t,
+    const size_t) const {
+  if (x_uvecs.size() < 3 || x_uvecs[2].empty() || derivMax_uvecs.size() < 3 || 
+      derivMax_uvecs[0].empty() || derivMax_uvecs[1].empty() || 
+      derivMax_uvecs[2].empty()) {
+    return false; 
+  }
+
+  if (derivMax_uvecs.size() < 3 || derivMax_uvecs[0].empty() || 
+    derivMax_uvecs[1].empty() || derivMax_uvecs[2].empty()) {
+    return false;
+  }
+
+  const auto vrange_minmax = 
+    beacls::minmax_value<FLOAT_TYPE>(vrange.cbegin(), vrange.cend());
+
   const FLOAT_TYPE vrange_min = vrange_minmax.first;
   const FLOAT_TYPE vrange_max = vrange_minmax.second;
-  const helperOC::DynSys_UMode_Type modified_uMode = (schemeData->uMode == helperOC::DynSys_UMode_Default) ? helperOC::DynSys_UMode_Max : schemeData->uMode;
-  const helperOC::DynSys_DMode_Type modified_dMode = (schemeData->dMode == helperOC::DynSys_DMode_Default) ? helperOC::DynSys_DMode_Min : schemeData->dMode;
-  return Q8D_Q4D_CUDA::PartialFunction_cuda(alpha_uvec, x_uvecs, derivMin_uvecs, derivMax_uvecs, dim, wMax, vrange_min, vrange_max, dMax, modified_uMode, modified_dMode);
+
+  const helperOC::DynSys_UMode_Type modified_uMode = 
+    (schemeData->uMode == helperOC::DynSys_UMode_Default) ? 
+    helperOC::DynSys_UMode_Max : schemeData->uMode;
+
+  const helperOC::DynSys_DMode_Type modified_dMode = 
+    (schemeData->dMode == helperOC::DynSys_DMode_Default) ? 
+    helperOC::DynSys_DMode_Min : schemeData->dMode;
+
+  return Q8D_Q4D_CUDA::PartialFunction_cuda(alpha_uvec, x_uvecs, derivMin_uvecs, 
+    derivMax_uvecs, dim, wMax, vrange_min, vrange_max, dMax, modified_uMode, 
+    modified_dMode);
 }
 #endif /* defined(USER_DEFINED_GPU_DYNSYS_FUNC) */

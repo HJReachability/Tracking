@@ -87,45 +87,68 @@ public:
 };
 
 bool optCtrl_execute_cuda(
-	std::vector<beacls::UVec>& u_uvecs,
-	const std::vector<beacls::UVec>& x_uvecs,
-	const std::vector<beacls::UVec>& deriv_uvecs,
-	const FLOAT_TYPE wMax,
-	const FLOAT_TYPE vrange_min,
-	const FLOAT_TYPE vrange_max,
-	const helperOC::DynSys_UMode_Type uMode
-)
-{
+		std::vector<beacls::UVec>& u_uvecs,
+		const std::vector<beacls::UVec>& x_uvecs,
+		const std::vector<beacls::UVec>& deriv_uvecs,
+		const FLOAT_TYPE wMax,
+		const FLOAT_TYPE vrange_min,
+		const FLOAT_TYPE vrange_max,
+		const helperOC::DynSys_UMode_Type uMode) {
+
 	bool result = true;
-	if ((uMode == helperOC::DynSys_UMode_Max) || (uMode == helperOC::DynSys_UMode_Min)) {
-		const FLOAT_TYPE moded_vrange_max = (uMode == helperOC::DynSys_UMode_Max) ? vrange_max : vrange_min;
-		const FLOAT_TYPE moded_vrange_min = (uMode == helperOC::DynSys_UMode_Max) ? vrange_min : vrange_max;
-		const FLOAT_TYPE moded_wMax = (uMode == helperOC::DynSys_UMode_Max) ? wMax : -wMax;
+	if ((uMode == helperOC::DynSys_UMode_Max) || 
+		  (uMode == helperOC::DynSys_UMode_Min)) {
+		const FLOAT_TYPE moded_vrange_max = 
+	    (uMode == helperOC::DynSys_UMode_Max) ? vrange_max : vrange_min;
+		const FLOAT_TYPE moded_vrange_min = 
+		  (uMode == helperOC::DynSys_UMode_Max) ? vrange_min : vrange_max;
+		const FLOAT_TYPE moded_wMax = 
+		  (uMode == helperOC::DynSys_UMode_Max) ? wMax : -wMax;
+
 		beacls::reallocateAsSrc(u_uvecs[0], x_uvecs[2]);
 		beacls::reallocateAsSrc(u_uvecs[1], deriv_uvecs[2]);
+
 		FLOAT_TYPE* uOpt0_ptr = beacls::UVec_<FLOAT_TYPE>(u_uvecs[0]).ptr();
 		FLOAT_TYPE* uOpt1_ptr = beacls::UVec_<FLOAT_TYPE>(u_uvecs[1]).ptr();
+
 		const FLOAT_TYPE* y2_ptr = beacls::UVec_<FLOAT_TYPE>(x_uvecs[2]).ptr();
-		const FLOAT_TYPE* deriv0_ptr = beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[0]).ptr();
-		const FLOAT_TYPE* deriv1_ptr = beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[1]).ptr();
-		const FLOAT_TYPE* deriv2_ptr = beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[2]).ptr();
-		thrust::device_ptr<const FLOAT_TYPE> y2_dev_ptr = thrust::device_pointer_cast(y2_ptr);
+		const FLOAT_TYPE* deriv0_ptr = 
+		  beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[0]).ptr();
+		const FLOAT_TYPE* deriv1_ptr = 
+		  beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[1]).ptr();
+		const FLOAT_TYPE* deriv2_ptr = 
+		  beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[2]).ptr();
+
+		thrust::device_ptr<const FLOAT_TYPE> y2_dev_ptr = 
+		  thrust::device_pointer_cast(y2_ptr);
+
 		if (is_cuda(deriv_uvecs[2])){
-			thrust::device_ptr<const FLOAT_TYPE> deriv0_dev_ptr = thrust::device_pointer_cast(deriv0_ptr);
-			thrust::device_ptr<const FLOAT_TYPE> deriv1_dev_ptr = thrust::device_pointer_cast(deriv1_ptr);
-			thrust::device_ptr<const FLOAT_TYPE> deriv2_dev_ptr = thrust::device_pointer_cast(deriv2_ptr);
-			thrust::device_ptr<FLOAT_TYPE> uOpt0_dev_ptr = thrust::device_pointer_cast(uOpt0_ptr);
-			thrust::device_ptr<FLOAT_TYPE> uOpt1_dev_ptr = thrust::device_pointer_cast(uOpt1_ptr);
+			thrust::device_ptr<const FLOAT_TYPE> deriv0_dev_ptr = 
+			  thrust::device_pointer_cast(deriv0_ptr);
+			thrust::device_ptr<const FLOAT_TYPE> deriv1_dev_ptr = 
+			  thrust::device_pointer_cast(deriv1_ptr);
+			thrust::device_ptr<const FLOAT_TYPE> deriv2_dev_ptr = 
+			  thrust::device_pointer_cast(deriv2_ptr);
+			thrust::device_ptr<FLOAT_TYPE> uOpt0_dev_ptr = 
+			  thrust::device_pointer_cast(uOpt0_ptr);
+			thrust::device_ptr<FLOAT_TYPE> uOpt1_dev_ptr = 
+			  thrust::device_pointer_cast(uOpt1_ptr);
+
 			cudaStream_t u_stream = beacls::get_stream(u_uvecs[0]);
 			u_uvecs[1].set_cudaStream(u_uvecs[0].get_cudaStream());
+
 			auto dst_src_Tuple = thrust::make_tuple(uOpt0_dev_ptr, uOpt1_dev_ptr, 
 				y2_dev_ptr, deriv0_dev_ptr, deriv1_dev_ptr, deriv2_dev_ptr);
+
 			auto dst_src_Iterator = thrust::make_zip_iterator(dst_src_Tuple);
+
 			thrust::for_each(thrust::cuda::par.on(u_stream), 
 				dst_src_Iterator, dst_src_Iterator + x_uvecs[2].size(), 
 				Get_optCtrl_D(moded_vrange_min, moded_vrange_max, moded_wMax));
-		} else {
-			thrust::device_ptr<FLOAT_TYPE> uOpt0_dev_ptr = thrust::device_pointer_cast(uOpt0_ptr);
+		} 
+		else {
+			thrust::device_ptr<FLOAT_TYPE> uOpt0_dev_ptr = 
+			  thrust::device_pointer_cast(uOpt0_ptr);
 			cudaStream_t u_stream = beacls::get_stream(u_uvecs[0]);
 			const FLOAT_TYPE d0 = deriv0_ptr[0];
 			const FLOAT_TYPE d1 = deriv1_ptr[0];
@@ -147,11 +170,11 @@ struct Get_optDstb_dim0dim1dim2 {
 public:
 	const FLOAT_TYPE dMax_0;
 	const FLOAT_TYPE dMax_1;
-	Get_optDstb_dim0dim1dim2(const FLOAT_TYPE dMax_0, const FLOAT_TYPE dMax_1) : dMax_0(dMax_0), dMax_1(dMax_1) {}
+	Get_optDstb_dim0dim1dim2(const FLOAT_TYPE dMax_0, const FLOAT_TYPE dMax_1) : 
+	  dMax_0(dMax_0), dMax_1(dMax_1) {}
 	template<typename Tuple>
 	__host__ __device__
-	void operator()(Tuple v) const
-	{
+	void operator()(Tuple v) const {
 		const FLOAT_TYPE d0 = thrust::get<3>(v);
 		const FLOAT_TYPE d1 = thrust::get<4>(v);
 		const FLOAT_TYPE d2 = thrust::get<5>(v);
@@ -168,39 +191,59 @@ public:
 };
 
 bool optDstb_execute_cuda(
-	std::vector<beacls::UVec>& d_uvecs,
-	const std::vector<beacls::UVec>& x_uvecs,
-	const std::vector<beacls::UVec>& deriv_uvecs,
-	const std::vector<FLOAT_TYPE>& dMax,
-	const helperOC::DynSys_DMode_Type dMode
-)
-{
+		std::vector<beacls::UVec>& d_uvecs,
+		const std::vector<beacls::UVec>& x_uvecs,
+		const std::vector<beacls::UVec>& deriv_uvecs,
+		const std::vector<FLOAT_TYPE>& dMax,
+		const helperOC::DynSys_DMode_Type dMode) {
+
 	bool result = true;
 	const FLOAT_TYPE dMax_0 = dMax[0];
 	const FLOAT_TYPE dMax_1 = dMax[1];
-	if ((dMode == helperOC::DynSys_DMode_Max) || (dMode == helperOC::DynSys_DMode_Min)) {
-		const FLOAT_TYPE moded_dMax_0 = (dMode == helperOC::DynSys_DMode_Max) ? dMax_0 : -dMax_0;
-		const FLOAT_TYPE moded_dMax_1 = (dMode == helperOC::DynSys_DMode_Max) ? dMax_1 : -dMax_1;
+	if ((dMode == helperOC::DynSys_DMode_Max) || 
+		  (dMode == helperOC::DynSys_DMode_Min)) {
+
+		const FLOAT_TYPE moded_dMax_0 = 
+	    (dMode == helperOC::DynSys_DMode_Max) ? dMax_0 : -dMax_0;
+		const FLOAT_TYPE moded_dMax_1 = 
+		  (dMode == helperOC::DynSys_DMode_Max) ? dMax_1 : -dMax_1;
+
 		beacls::reallocateAsSrc(d_uvecs[0], deriv_uvecs[0]);
 		beacls::reallocateAsSrc(d_uvecs[1], deriv_uvecs[0]);
 		beacls::reallocateAsSrc(d_uvecs[2], deriv_uvecs[2]);
+
 		FLOAT_TYPE* dOpt0_ptr = beacls::UVec_<FLOAT_TYPE>(d_uvecs[0]).ptr();
 		FLOAT_TYPE* dOpt1_ptr = beacls::UVec_<FLOAT_TYPE>(d_uvecs[1]).ptr();
 		FLOAT_TYPE* dOpt2_ptr = beacls::UVec_<FLOAT_TYPE>(d_uvecs[2]).ptr();
-		const FLOAT_TYPE* deriv0_ptr = beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[0]).ptr();
-		const FLOAT_TYPE* deriv1_ptr = beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[1]).ptr();
-		const FLOAT_TYPE* deriv2_ptr = beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[2]).ptr();
 
-		if (is_cuda(deriv_uvecs[0]) && is_cuda(deriv_uvecs[1]) && is_cuda(deriv_uvecs[2])) {
-			thrust::device_ptr<FLOAT_TYPE> dOpt0_dev_ptr = thrust::device_pointer_cast(dOpt0_ptr);
-			thrust::device_ptr<FLOAT_TYPE> dOpt1_dev_ptr = thrust::device_pointer_cast(dOpt1_ptr);
-			thrust::device_ptr<FLOAT_TYPE> dOpt2_dev_ptr = thrust::device_pointer_cast(dOpt2_ptr);
-			thrust::device_ptr<const FLOAT_TYPE> deriv0_dev_ptr = thrust::device_pointer_cast(deriv0_ptr);
-			thrust::device_ptr<const FLOAT_TYPE> deriv1_dev_ptr = thrust::device_pointer_cast(deriv1_ptr);
-			thrust::device_ptr<const FLOAT_TYPE> deriv2_dev_ptr = thrust::device_pointer_cast(deriv2_ptr);
+		const FLOAT_TYPE* deriv0_ptr = 
+		  beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[0]).ptr();
+		const FLOAT_TYPE* deriv1_ptr = 
+		  beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[1]).ptr();
+		const FLOAT_TYPE* deriv2_ptr = 
+	    beacls::UVec_<FLOAT_TYPE>(deriv_uvecs[2]).ptr();
+
+		if (is_cuda(deriv_uvecs[0]) && is_cuda(deriv_uvecs[1]) && 
+			  is_cuda(deriv_uvecs[2])) {
+
+			thrust::device_ptr<FLOAT_TYPE> dOpt0_dev_ptr = 
+		    thrust::device_pointer_cast(dOpt0_ptr);
+			thrust::device_ptr<FLOAT_TYPE> dOpt1_dev_ptr = 
+			  thrust::device_pointer_cast(dOpt1_ptr);
+			thrust::device_ptr<FLOAT_TYPE> dOpt2_dev_ptr = 
+			  thrust::device_pointer_cast(dOpt2_ptr);
+
+			thrust::device_ptr<const FLOAT_TYPE> deriv0_dev_ptr = 
+			  thrust::device_pointer_cast(deriv0_ptr);
+			thrust::device_ptr<const FLOAT_TYPE> deriv1_dev_ptr = 
+			  thrust::device_pointer_cast(deriv1_ptr);
+			thrust::device_ptr<const FLOAT_TYPE> deriv2_dev_ptr = 
+			  thrust::device_pointer_cast(deriv2_ptr);
+
 			cudaStream_t d_stream = beacls::get_stream(d_uvecs[0]);
 			d_uvecs[1].set_cudaStream(d_uvecs[0].get_cudaStream());
 			d_uvecs[2].set_cudaStream(d_uvecs[0].get_cudaStream());
+
 			auto dst_src_Tuple = thrust::make_tuple(
 				dOpt0_dev_ptr, dOpt1_dev_ptr, dOpt2_dev_ptr,
 				deriv0_dev_ptr, deriv1_dev_ptr, deriv2_dev_ptr);
@@ -209,7 +252,8 @@ bool optDstb_execute_cuda(
 			thrust::for_each(thrust::cuda::par.on(d_stream), 
 			dst_src_Iterator, dst_src_Iterator + deriv_uvecs[0].size(), 
 				Get_optDstb_dim0dim1dim2(moded_dMax_0, moded_dMax_1));
-		} else {
+		} 
+		else {
 			const FLOAT_TYPE d0 = deriv0_ptr[0];
 			const FLOAT_TYPE d1 = deriv1_ptr[0];
 			const FLOAT_TYPE d2 = deriv2_ptr[0];
@@ -217,7 +261,8 @@ bool optDstb_execute_cuda(
 			if (normDeriv == 0) {
 				dOpt0_ptr[0] = 0;
 				dOpt1_ptr[0] = 0;
-			} else {
+			} 
+			else {
 				dOpt0_ptr[0] = moded_dMax_0 * d0 / normDeriv;
 				dOpt1_ptr[0] = moded_dMax_0 * d1 / normDeriv;
 			}
@@ -256,7 +301,8 @@ struct Get_dynamics_dim01_U0_d0_d1
 {
 	const FLOAT_TYPE d0;
 	const FLOAT_TYPE d1;
-	Get_dynamics_dim01_U0_d0_d1(const FLOAT_TYPE d0, const FLOAT_TYPE d1) : d0(d0), d1(d1) {}
+	Get_dynamics_dim01_U0_d0_d1(const FLOAT_TYPE d0, const FLOAT_TYPE d1) : 
+	  d0(d0), d1(d1) {}
 	template<typename Tuple>
 	__host__ __device__
 	void operator()(Tuple v) const
@@ -316,55 +362,73 @@ public:
 };
 
 bool dynamics_cell_helper_execute_cuda_dimAll(
-	std::vector<beacls::UVec>& dx_uvecs,
-	const std::vector<beacls::UVec>& x_uvecs,
-	const std::vector<beacls::UVec>& u_uvecs,
-	const std::vector<beacls::UVec>& d_uvecs
-) {
+		std::vector<beacls::UVec>& dx_uvecs,
+		const std::vector<beacls::UVec>& x_uvecs,
+		const std::vector<beacls::UVec>& u_uvecs,
+		const std::vector<beacls::UVec>& d_uvecs) {
+
 	bool result = true;
 	const size_t src_x_dim_index = 2;
 	beacls::reallocateAsSrc(dx_uvecs[0], x_uvecs[src_x_dim_index]);
 	beacls::reallocateAsSrc(dx_uvecs[1], x_uvecs[src_x_dim_index]);
 	beacls::reallocateAsSrc(dx_uvecs[2], u_uvecs[1]);
+
 	FLOAT_TYPE* dx_dim0_ptr = beacls::UVec_<FLOAT_TYPE>(dx_uvecs[0]).ptr();
 	FLOAT_TYPE* dx_dim1_ptr = beacls::UVec_<FLOAT_TYPE>(dx_uvecs[1]).ptr();
 	FLOAT_TYPE* dx_dim2_ptr = beacls::UVec_<FLOAT_TYPE>(dx_uvecs[2]).ptr();
+
 	const FLOAT_TYPE* us_0_ptr = beacls::UVec_<FLOAT_TYPE>(u_uvecs[0]).ptr();
 	const FLOAT_TYPE* us_1_ptr = beacls::UVec_<FLOAT_TYPE>(u_uvecs[1]).ptr();
 	const FLOAT_TYPE* ds_0_ptr = beacls::UVec_<FLOAT_TYPE>(d_uvecs[0]).ptr();
 	const FLOAT_TYPE* ds_1_ptr = beacls::UVec_<FLOAT_TYPE>(d_uvecs[1]).ptr();
 	const FLOAT_TYPE* ds_2_ptr = beacls::UVec_<FLOAT_TYPE>(d_uvecs[2]).ptr();
-	const FLOAT_TYPE* x_ptr = beacls::UVec_<FLOAT_TYPE>(x_uvecs[src_x_dim_index]).ptr();
+	const FLOAT_TYPE* x_ptr = 
+	  beacls::UVec_<FLOAT_TYPE>(x_uvecs[src_x_dim_index]).ptr();
 
-	thrust::device_ptr<FLOAT_TYPE> dx_dim0_dev_ptr = thrust::device_pointer_cast(dx_dim0_ptr);
-	thrust::device_ptr<FLOAT_TYPE> dx_dim1_dev_ptr = thrust::device_pointer_cast(dx_dim1_ptr);
-	thrust::device_ptr<const FLOAT_TYPE> us_0_dev_ptr = thrust::device_pointer_cast(us_0_ptr);
-	thrust::device_ptr<const FLOAT_TYPE> x_dev_ptr = thrust::device_pointer_cast(x_ptr);
+	thrust::device_ptr<FLOAT_TYPE> dx_dim0_dev_ptr = 
+	  thrust::device_pointer_cast(dx_dim0_ptr);
+	thrust::device_ptr<FLOAT_TYPE> dx_dim1_dev_ptr = 
+	  thrust::device_pointer_cast(dx_dim1_ptr);
+	thrust::device_ptr<const FLOAT_TYPE> us_0_dev_ptr = 
+	  thrust::device_pointer_cast(us_0_ptr);
+	thrust::device_ptr<const FLOAT_TYPE> x_dev_ptr = 
+	  thrust::device_pointer_cast(x_ptr);
+
 	cudaStream_t dx_stream = beacls::get_stream(dx_uvecs[0]);
 	dx_uvecs[1].set_cudaStream(dx_uvecs[0].get_cudaStream());
 
 	beacls::synchronizeUVec(u_uvecs[0]);
-	if (is_cuda(d_uvecs[0]) && is_cuda(d_uvecs[1]) && is_cuda(u_uvecs[1]) && is_cuda(d_uvecs[2])) {
+	if (is_cuda(d_uvecs[0]) && is_cuda(d_uvecs[1]) && is_cuda(u_uvecs[1]) && 
+		  is_cuda(d_uvecs[2])) {
+
 		beacls::synchronizeUVec(d_uvecs[0]);
-		thrust::device_ptr<FLOAT_TYPE> dx_dim2_dev_ptr = thrust::device_pointer_cast(dx_dim2_ptr);
+		thrust::device_ptr<FLOAT_TYPE> dx_dim2_dev_ptr = 
+		  thrust::device_pointer_cast(dx_dim2_ptr);
+		thrust::device_ptr<const FLOAT_TYPE> us_1_dev_ptr = 
+		  thrust::device_pointer_cast(us_1_ptr);
+		thrust::device_ptr<const FLOAT_TYPE> ds_0_dev_ptr = 
+		  thrust::device_pointer_cast(ds_0_ptr);
+		thrust::device_ptr<const FLOAT_TYPE> ds_1_dev_ptr = 
+		  thrust::device_pointer_cast(ds_1_ptr);
+		thrust::device_ptr<const FLOAT_TYPE> ds_2_dev_ptr = 
+		  thrust::device_pointer_cast(ds_2_ptr);
 
-		thrust::device_ptr<const FLOAT_TYPE> us_1_dev_ptr = thrust::device_pointer_cast(us_1_ptr);
-		thrust::device_ptr<const FLOAT_TYPE> ds_0_dev_ptr = thrust::device_pointer_cast(ds_0_ptr);
-		thrust::device_ptr<const FLOAT_TYPE> ds_1_dev_ptr = thrust::device_pointer_cast(ds_1_ptr);
-		thrust::device_ptr<const FLOAT_TYPE> ds_2_dev_ptr = thrust::device_pointer_cast(ds_2_ptr);
-
-		auto dst_src_Tuple = thrust::make_tuple(dx_dim0_dev_ptr, dx_dim1_dev_ptr, dx_dim2_dev_ptr, 
-			x_dev_ptr, us_0_dev_ptr, us_1_dev_ptr, ds_0_dev_ptr, ds_1_dev_ptr, ds_2_dev_ptr);
+		auto dst_src_Tuple = thrust::make_tuple(dx_dim0_dev_ptr, dx_dim1_dev_ptr, 
+			dx_dim2_dev_ptr, x_dev_ptr, us_0_dev_ptr, us_1_dev_ptr, ds_0_dev_ptr, 
+			ds_1_dev_ptr, ds_2_dev_ptr);
 		auto dst_src_Iterator = thrust::make_zip_iterator(dst_src_Tuple);
 		
 		thrust::for_each(thrust::cuda::par.on(dx_stream),
 			dst_src_Iterator, dst_src_Iterator + x_uvecs[src_x_dim_index].size(), 
 			Get_dynamics_dimAll_U0_U1_D0_D1_U2());
 	}
-	else if (!is_cuda(d_uvecs[0]) && !is_cuda(d_uvecs[1]) && !is_cuda(u_uvecs[1]) && !is_cuda(d_uvecs[2])) {
+	else if (!is_cuda(d_uvecs[0]) && !is_cuda(d_uvecs[1]) && 
+		  !is_cuda(u_uvecs[1]) && !is_cuda(d_uvecs[2])) {
+
 		const FLOAT_TYPE d0 = ds_0_ptr[0];
 		const FLOAT_TYPE d1 = ds_1_ptr[0];
-		auto dst_src_Tuple = thrust::make_tuple(dx_dim0_dev_ptr, dx_dim1_dev_ptr, x_dev_ptr, us_0_dev_ptr);
+		auto dst_src_Tuple = thrust::make_tuple(dx_dim0_dev_ptr, dx_dim1_dev_ptr, 
+			x_dev_ptr, us_0_dev_ptr);
 		auto dst_src_Iterator = thrust::make_zip_iterator(dst_src_Tuple);
 		thrust::for_each(thrust::cuda::par.on(dx_stream),
 			dst_src_Iterator, dst_src_Iterator + x_uvecs[src_x_dim_index].size(), 
@@ -372,8 +436,10 @@ bool dynamics_cell_helper_execute_cuda_dimAll(
 		const FLOAT_TYPE u1 = us_1_ptr[0];
 		const FLOAT_TYPE d2 = ds_2_ptr[0];
 		dx_dim2_ptr[0] = u1 + d2;
-	} else {
-		std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << " Invalid data size" << std::endl;
+	} 
+	else {
+		std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ 
+		  << " Invalid data size" << std::endl;
 		result = false;
 	}
 	return result;
@@ -1002,7 +1068,10 @@ bool dynamics_cell_helper_execute_cuda(
 			FLOAT_TYPE cos_y2;
 			FLOAT_TYPE sin_y2;
 			sincos_float_type<FLOAT_TYPE>(y2, sin_y2, cos_y2);
-			return getAlpha(cos_y2, sin_y2, cos_y2, derivMin0, derivMax0, derivMin1, derivMax1, dL0, dU0, vrange_min, vrange_max);
+
+			return getAlpha(cos_y2, sin_y2, cos_y2, derivMin0, derivMax0, derivMin1,
+			  derivMax1, dL0, dU0, vrange_min, vrange_max);
+		
 		}
 	};
 	struct PartialFunction_dim1 {
@@ -1039,7 +1108,8 @@ bool dynamics_cell_helper_execute_cuda(
 			FLOAT_TYPE cos_y2;
 			FLOAT_TYPE sin_y2;
 			sincos_float_type<FLOAT_TYPE>(y2, sin_y2, cos_y2);
-			return getAlpha(cos_y2, sin_y2, sin_y2, derivMin0, derivMax0, derivMin1, derivMax1, dL1, dU1, vrange_min, vrange_max);
+			return getAlpha(cos_y2, sin_y2, sin_y2, derivMin0, derivMax0, derivMin1, 
+				derivMax1, dL1, dU1, vrange_min, vrange_max);
 		}
 	};
 	bool PartialFunction_cuda(

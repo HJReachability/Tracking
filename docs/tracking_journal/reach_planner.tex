@@ -1,9 +1,159 @@
 % !TEX root = tracking.tex
-\section{5D Car Reachability Example \label{sec:reach_planner}}
-\MCnote{5D Car tracking Dubins car.}
+\section{Numerical examples} \label{sec:results}
 
-\MCnote{Jaime is computing tracking reachable set via GPU}
+In this section, we demonstrate the FaSTrack framework in three numerical examples involving a 5D car tracking a Dubins car model with the FSM planner, a 10D quadrotor tracking a single integrator model with the RRT planner, and an 8D quadrotor tracking a double integrator model with the MPC planner.
+In each example, obstacles in the environment are \textit{a priori} unknown, and are revealed to the vehicle when they are sensed.
+Whenever, obstacle map is updated, the planner re-plans a trajectory in real-time.
+In this paper, the details of sensing are kept as simple as possible; we aim to only demonstrate our framework for real-time guaranteed safe planning and re-planning.
+In general, any other planner can be used for planning in unknown environments, as long as planning and re-planning can be done in real-time.
 
-\MCnote{Mo is implementing 3D Dubins Car real-time tracking with fast sweeping method.}
+For each example, we first describe the tracking and planning models. 
+Next, we present the relative dynamics as well as the precomputation results. 
+Afterwards, we briefly describe the planning algorithm and how obstacles are sensed by the vehicle. 
+Finally, we show trajectory simulation results.
 
-\MCnote{(Actually, FSM is actually not the same as time-dependent reachability)}
+\subsection{5D-3D example with FSM planner \label{sec:reach_planner}}
+
+For our first example, we demonstrate the combination of fast planning and provably robust tracking by combining fast sweeping method (FSM) \cite{Takei2013} with our computed TEB. 
+FSM is an efficient optimal control-based planner for car-like systems, and provides numerically convergent globally optimal trajectory in real-time.
+
+Consider the 5D car model and the Dubins car dynamics as follows:
+
+\begin{equation}
+\label{eq:5D_and_3D_dyn}
+\begin{aligned}
+\begin{array}{c}
+\left[
+\begin{array}{c}
+\dot x\\
+\dot y\\
+\dot\theta\\
+\dot v\\
+\dot \omega
+\end{array}
+\right]
+=
+\left[
+\begin{array}{c}
+v \cos \theta + d_x\\
+v \sin \theta + d_y\\
+\omega \\
+a\\
+\alpha
+\end{array}
+\right], \quad
+\left[
+\begin{array}{c}
+\dot {\hat x}\\
+\dot {\hat y}\\
+\dot {\hat \theta}\\
+\end{array}
+\right] 
+=
+\left[
+\begin{array}{c}
+\hat v \cos \hat\theta\\
+\hat v \sin \hat\theta\\
+\hat \omega
+\end{array}
+\right],
+\end{array}\\
+\end{aligned}
+\end{equation}
+
+\noindent where $(x,y,\theta),(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 5D car model and the Dubins car model respectively. The speed and turn rate $(v, \omega)$ are states for the 5D car model; for the Dubins car the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control. The control of the 5D car consists of the linear and angular acceleration, $(a, \alpha)$.
+
+In this example, we use FSM to perform real-time planning for the Dubins car model, whose trajectory is tracked by the 5D car model.
+
+\subsubsection{Offline computation}
+
+We define a coordinate system $(x_r, y_r, \theta_r, v, \omega)$ such that $(x_r, y_r, \theta_r)$ is the position and heading of the 5D car in the frame of the Dubins car, and $(v, \omega)$ represents the speed and turn rate of the 5D car. Following \cite{Mitchell05} for the time derivative of $(x_r, y_r, \theta_r)$, we obtain the following relative dynamics:
+
+\begin{equation}
+\label{eq:5D_and_3D_rdyn}
+\begin{aligned}
+\left[
+\begin{array}{c}
+\dot x_r\\
+\dot y_r\\
+\dot\theta_r\\
+\dot v\\
+\dot \omega
+\end{array}
+\right]
+=
+\left[
+\begin{array}{c}
+- \hat v + v \cos \theta_r + \hat \omega y_r + d_x\\
+v \sin \theta_r - \hat \omega x_r + d_y\\
+\omega - \hat \omega \\
+a\\
+\alpha
+\end{array}
+\right].
+\end{aligned}
+\end{equation}
+
+\MCnote{Show tracking error bound}
+
+\MCnote{Offline computation details (time etc.)}
+
+\subsubsection{Online sensing and planning}
+Besides planning a trajectory to the goal, the car must also sense obstacles in the vicinity. For illustration, we chose a simple virtual sensor that reveals obstacles within a range of $r$ meters.
+
+Once an obstacle is sensed, the FSM planner replans the trajectory while taking into account all obstacles that have been sensed so far. 
+To ensure that the 5D car does not collide with the obstacles despite error in tracking, planning is done with respect to augmented obstacles that are ``expanded'' from the sensed obstacles by $\underline\valfunc$ in $(x,y)$ position space.
+
+\MCnote{Online computation details (time etc.)}
+
+\subsubsection{Simulations}
+
+The Dubins car parameters are
+
+The control bounds for the 5D car are $a \in []$, $|\alpha| < $.
+
+The disturbance bound is $\|(d_x, d_y)\|_2 < $.
+
+The sensing range is $r = $ meters.
+
+We used a C implementation of FSM.
+
+Computation times:
+\begin{itemize}
+\item === TOTAL ===
+\item  512 iterations in 637.5527 seconds
+\item 1.2452 seconds per iteration on average
+\item === PLANNING ===
+\item 512 iterations in 33.5683 seconds
+\item 0.0656 seconds per iteration on average
+\item === TRACKING ===
+\item 512 iterations in 0.8991 seconds
+\item 0.0018 seconds per iteration on average
+\end{itemize}
+
+On an unoptimized MATLAB implementation on a desktop computer with a Core i7-2600K CPU, each iteration took approximately ?? ms on average. Most of this time is spent on planning: obtaining the tracking controller took approximately ?? ms per iteration on average. The frequency of control was once every ?? ms.
+
+\MCnote{Fig. ?? shows the simulation results. 
+Four time snapshots are shown. The initial position is $(-12, 0, 0)$, and the goal position is $(12, 0, 0)$. The top left subplot shows the entire trajectory from beginning to end. In all plots, a magenta star represents the position of the planning model; its movement is based on the paths planned by RRT, and is modeled by a 3D holonomic vehicle with a maximum speed. The blue box around the magenta star represents the tracking error bound.}
+
+\begin{figure}
+  \label{fig:5D3Dsim}
+  \centering
+  \begin{subfigure}[t]{0.49\columnwidth} \label{fig:5D3Dsim:1}
+    \includegraphics[width=\columnwidth]{fig/P5D_Dubins/36}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\columnwidth} \label{fig:5D3Dsim:2}
+    \includegraphics[width=\columnwidth]{fig/P5D_Dubins/101}
+    \caption{}
+  \end{subfigure}  
+
+  \begin{subfigure}[t]{0.49\columnwidth}\label{fig:5D3Dsim:3}
+    \includegraphics[width=\columnwidth]{fig/P5D_Dubins/136}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\columnwidth}\label{fig:5D3Dsim:4}
+    \includegraphics[width=\columnwidth]{fig/P5D_Dubins/240}
+    \caption{}
+  \end{subfigure}
+  \caption{}
+\end{figure}

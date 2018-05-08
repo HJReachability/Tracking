@@ -1,5 +1,5 @@
-function newStates = fsmNextState(start, goal, L, g, obs, delta_x, speed, ...
-  turn_rate, vis)
+function [newStates, uf] = fsmNextState(start, goal, goal_size, L, g, ...
+  obs, dt, speed, turn_rate, u, vis)
 % newStates = fsmNextState(start, goal, L, g, obs, delta_x, vis)
 %     Computes optimal path from start to goal using the fast sweeping method
 
@@ -11,7 +11,7 @@ if nargin < 2
   goal = [0.5; 0.5; pi/6];
 end
 
-if nargin < 3
+if nargin < 6
   load('obs.mat')
   obs = inf(g.N');
 end
@@ -21,14 +21,13 @@ end
 numInfty = 1e6;
 
 % Semi-axes of ellipsoid target
-semi_axes = [0.2; 0.2; pi/6];
-target = shapeEllipsoid(g, goal, semi_axes);
+target = shapeEllipsoid(g, goal, goal_size);
 
 if nargin < 6
-  delta_x = 0.005;
+  dt = 0.01;
 end
 
-if nargin < 9
+if nargin < 10
   vis = true;
 end
 
@@ -43,9 +42,13 @@ turn_circum = time_to_turn_2pi * speed; % seconds * distance/second --> distance
 turn_radius = turn_circum/2/pi;         % circumference / (2*pi) --> radius  
 p = turn_radius*ones(g.N');   % turning radius, uniform for now
 
-% Target set
-u = numInfty * ones(g.N');
-u(target<0) = 0;
+if true; isempty(u);
+  u = numInfty * ones(g.N');
+  u(target<0) = 0;
+else
+  u(obs<0) = numInfty;
+end
+
 
 %% Solver parameters
 % === fast marching parameters ===
@@ -84,11 +87,9 @@ toc;
 % use central differencing to calculate Du3
 P = computeGradients(g, uf);
 
-delta_t = delta_x / speed;
-
 newStates = start;
-maxIter = 500;
-small = 0.1;
+maxIter = 200;
+small = 1e-6;
 
 for i = 1:maxIter
   % Compute local gradient
@@ -97,17 +98,16 @@ for i = 1:maxIter
   p3 = eval_u(g, P{3}, x);
   
   % Update
-  xNext = [x(1) + speed*cos(x(3)) * delta_t; ...
-           x(2) + speed*sin(x(3)) * delta_t; ...
-           x(3) - numSgn(p3) * turn_rate * delta_t];
+  xNext = [x(1) + speed*cos(x(3)) * dt; ...
+           x(2) + speed*sin(x(3)) * dt; ...
+           x(3) - numSgn(p3) * turn_rate * dt];
   
   newStates = cat(2, newStates, xNext);
-      
 
   target_val = eval_u(g, target, xNext);
   if vis
     fprintf('Target value = %.2f\n', target_val)
-  end  
+  end
   
   if target_val <= small
     break

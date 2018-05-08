@@ -46,7 +46,6 @@ namespace helperOC {
           \dot x_3 = -d1*x_3 + x_4
           \dot x_4 = -d0*x_3       + n0*u{1}
               uMin <= [u1; u2] <= uMax
-		@param	[in]		x	state [xpos; ypos; theta]
 		@param	[in]		wMax	maximum turn rate
 		@param	[in]		vrange	speed range
 		@param	[in]		dMax	disturbance bounds

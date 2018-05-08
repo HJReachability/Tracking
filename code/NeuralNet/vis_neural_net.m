@@ -123,25 +123,25 @@ level = 1.25;
 l_overlay = legend;
 h_overlay{1} = contour(sD.grid.xs{1}, sD.grid.xs{2}, Value_R, ...
         [level level],'DisplayName','HJ Reachability Grid Computation',...
-        'color','black','lineWidth',2);
+        'color','black','lineWidth',3);
 legend show
 hold on
 
 h_overlay{2} = contour(g_NN.xs{1}, g_NN.xs{2}, Value_NN_analydist, ...
         [level level],'DisplayName','Neural Net with Analytical Dist',...
-        'color','blue','lineWidth',2,'lineStyle','-.');
+        'color','blue','lineWidth',3,'lineStyle','-.');
     legend show
     
 
 h_overlay{3} = contour(sD.grid.xs{1}, sD.grid.xs{2}, Value_NN, ...
         [level level],'DisplayName','Neural Net Learned',...
-        'color','red','lineWidth',2,'lineStyle','--');
+        'color','red','lineWidth',3,'lineStyle','--');
 legend show
 
 %axis square
-axis([-2.6 2.6 -1.5 2])
+axis([-2.6 2.6 -1.5 2.5])
 %axis(ax_xy)
-set(gca,'FontSize',font_size_other)
+set(gca,'FontSize',font_size_axes)
 xlabel(x_axis,'interpreter','latex','FontSize',font_size_axes)
 ylabel(y_axis,'interpreter','latex','FontSize',font_size_axes)
 set(gcf,'Color','white')
