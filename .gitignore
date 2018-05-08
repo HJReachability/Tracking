@@ -49,6 +49,5 @@ ros/src/CMakeLists.txt
 *.la
 *.a
 
-docs/tracking_journal/tracking\.pdf
-
+docs/tracking_journal/tracking.pdf
 code/figs/

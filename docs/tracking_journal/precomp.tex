@@ -33,7 +33,7 @@ In this paper, we assume that a suitable $\rtrans$ is available so that the dime
 
 To be concrete, let the tracking model be a 5D car model, and the planning model be a 3D kinematic car model as follows:
 
-\begin{align}
+\begin{equation}
 \label{eq:5D_and_3D_dyn}
 \dot \tstate = 
 \begin{bmatrix}
@@ -54,7 +54,7 @@ a\\
 \begin{bmatrix}
 \dot {\hat x}\\
 \dot {\hat y}\\
-\dot {\hat \theta}\\
+\dot {\hat \theta}
 \end{bmatrix}
 =
 \begin{bmatrix}
@@ -62,16 +62,16 @@ a\\
 \hat v \sin \hat\theta\\
 \hat \omega
 \end{bmatrix},
-\end{align}
+\end{equation}
 
 \noindent where $(x,y,\theta),(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 5D and 3D car model respectively.
 The speed and turn rate $(v, \omega)$ are states for the 5D model; for the 3D model the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control.
-The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$.
+The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$, and the disturbances are $(\dstb_x, \dstb_y)$.
 
 We define the relative system state to be $(x_r, y_r, \theta_r, v, \omega)$, such that $(x_r, y_r, \theta_r)$ is the position and heading of the 5D model  in the frame of the 3D model, and $(v, \omega)$ represents the speed and turn rate of the 5D model.
 The relative system state $\rstate$, tracking model state $\tstate$, and planning model state $\pstate$ are related through $\rtrans$ and $\ptmat$ as follows:
 
-\begin{align}\small
+\begin{equation}\small
 \label{eq:5D_and_3D_err_state}
 \underbrace{
 \begin{bmatrix}
@@ -116,34 +116,29 @@ v \\
 \end{bmatrix}
 }_\pstate
 \Bigg),
-\end{align}
+\end{equation}
 
 \noindent where $\mathbf 0, \mathbf I$ denote the zero and identity matrices of the indicated sizes.
 Taking the time derivative, we obtain the following relative system dynamics:
 
 \begin{equation}
 \label{eq:5D_and_3D_rdyn}
-\begin{aligned}
-\left[
-\begin{array}{c}
+\dot \rstate = 
+\begin{bmatrix}
 \dot x_r\\
 \dot y_r\\
 \dot\theta_r\\
 \dot v\\
 \dot \omega
-\end{array}
-\right]
+\end{bmatrix}
 =
-\left[
-\begin{array}{c}
+\begin{bmatrix}
 - \hat v + v \cos \theta_r + \hat \omega y_r + d_x\\
 v \sin \theta_r - \hat \omega x_r + d_y\\
 \omega - \hat \omega \\
 a\\
 \alpha
-\end{array}
-\right].
-\end{aligned}
+\end{bmatrix}.
 \end{equation}
 
 More examples of relative systems can be found in Sections \ref{sec:resultsRRT} and \ref{sec:resultsMPC}.
