@@ -225,6 +225,11 @@ A.~K. Akametalu, J.~F. Fisac, J.~H. Gillula, S.~Kaynama, M.~N. Zeilinger, and
   C.~J. Tomlin, ``{Reachability-based safe learning with Gaussian processes},''
   in \emph{Proc. IEEE Conf. on Decision and Control}, Dec. 2014.
 
+\bibitem{Takei2013}
+R.~Takei and R.~Tsai, ``{Optimal Trajectories of Curvature Constrained Motion
+  in the Hamilton–Jacobi Formulation},'' \emph{J. Scientific Computing},
+  vol.~54, no. 2-3, pp. 622--644, Feb. 2013.
+
 \bibitem{Bouffard12}
 P.~Bouffard, ``On-board model predictive control of a quadrotor helicopter:
   Design, implementation, and experiments,'' Master's thesis, University of

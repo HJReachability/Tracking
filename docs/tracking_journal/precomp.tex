@@ -12,11 +12,11 @@ To determine the relative distance that may occur over time we must first define
 \begin{equation}
 \label{eq:rdyn}
 \begin{aligned}
-\rstate = \tstate - \ptmat\pstate, \qquad \dot\rstate = \rdyn(\rstate, \tctrl, \pctrl, \dstb)
+\rstate = \rtrans(\tstate - \ptmat\pstate), \qquad \dot\rstate = \rdyn(\rstate, \tctrl, \pctrl, \dstb)
 \end{aligned}
 \end{equation}
 
-\noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}).
+\noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}), and $\rtrans$ is a nonlinear transform that maps .
 The relative states $\rstate$ now represent the tracking states relative to the planning states. 
 Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. 
 This will be used to update the planning state in the online algorithm.

@@ -14,8 +14,8 @@ Finally, we show trajectory simulation results.
 
 \subsection{5D-3D example with FSM planner \label{sec:reach_planner}}
 
-For our first example, we demonstrate the combination of fast planning and provably robust tracking by combining the fast sweeping method (FSM) \cite{} with our computed TEB. 
-FSM is an efficient optimal control-based planner for car-like systems, and provides the globally optimal trajectory in real-time.
+For our first example, we demonstrate the combination of fast planning and provably robust tracking by combining fast sweeping method (FSM) \cite{Takei2013} with our computed TEB. 
+FSM is an efficient optimal control-based planner for car-like systems, and provides numerically convergent globally optimal trajectory in real-time.
 
 Consider the 5D car model and the Dubins car dynamics as follows:
 
@@ -63,11 +63,11 @@ a\\
 
 \noindent where $(x,y,\theta),(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 5D car model and the Dubins car model respectively. The speed and turn rate $(v, \omega)$ are states for the 5D car model; for the Dubins car the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control. The control of the 5D car consists of the linear and angular acceleration, $(a, \alpha)$.
 
-In this example, we use FSM \cite{} to perform real-time planning for the Dubins car model, whose trajectory is tracked by the 5D car model.
+In this example, we use FSM to perform real-time planning for the Dubins car model, whose trajectory is tracked by the 5D car model.
 
 \subsubsection{Offline computation}
 
-We define a coordinate system $(x_r, y_r, \theta_r, v, \omega)$ such that $(x_r, y_r, \theta_r)$ is the position and heading of the 5D car in the frame of the Dubins car, as shown in Figure \cite{}, and $(v, \omega)$ represents the speed and turn rate of the 5D car. Following \cite{Mitchell05} for the time derivative of $(x_r, y_r, \theta_r)$, we obtain the following relative dynamics:
+We define a coordinate system $(x_r, y_r, \theta_r, v, \omega)$ such that $(x_r, y_r, \theta_r)$ is the position and heading of the 5D car in the frame of the Dubins car, and $(v, \omega)$ represents the speed and turn rate of the 5D car. Following \cite{Mitchell05} for the time derivative of $(x_r, y_r, \theta_r)$, we obtain the following relative dynamics:
 
 \begin{equation}
 \label{eq:5D_and_3D_rdyn}
