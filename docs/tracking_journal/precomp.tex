@@ -44,11 +44,11 @@ To be concrete, let the tracking model be a 5D car model, and the planning model
 \dot \omega
 \end{bmatrix} =
 \begin{bmatrix}
-v \cos \theta + d_x\\
-v \sin \theta + d_y\\
+v \cos \theta + \dstb_x\\
+v \sin \theta + \dstb_y\\
 \omega \\
-a\\
-\alpha
+a + \dstb_a\\
+\alpha + \dstb_\alpha
 \end{bmatrix}, \quad
 \dot \pstate = 
 \begin{bmatrix}
@@ -66,7 +66,7 @@ a\\
 
 \noindent where $(x,y,\theta),(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 5D and 3D car model respectively.
 The speed and turn rate $(v, \omega)$ are states for the 5D model; for the 3D model the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control.
-The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$, and the disturbances are $(\dstb_x, \dstb_y)$.
+The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$, and the disturbances are $(\dstb_x, \dstb_y, \dstb_a, \dstb_\alpha)$.
 
 We define the relative system state to be $(x_r, y_r, \theta_r, v, \omega)$, such that $(x_r, y_r, \theta_r)$ is the position and heading of the 5D model  in the frame of the 3D model, and $(v, \omega)$ represents the speed and turn rate of the 5D model.
 The relative system state $\rstate$, tracking model state $\tstate$, and planning model state $\pstate$ are related through $\rtrans$ and $\ptmat$ as follows:
@@ -133,11 +133,11 @@ Taking the time derivative, we obtain the following relative system dynamics:
 \end{bmatrix}
 =
 \begin{bmatrix}
-- \hat v + v \cos \theta_r + \hat \omega y_r + d_x\\
-v \sin \theta_r - \hat \omega x_r + d_y\\
+- \hat v + v \cos \theta_r + \hat \omega y_r + \dstb_x\\
+v \sin \theta_r - \hat \omega x_r + \dstb_y\\
 \omega - \hat \omega \\
-a\\
-\alpha
+a + \dstb_a\\
+\alpha + \dstb_\alpha
 \end{bmatrix}.
 \end{equation}
 
@@ -221,15 +221,14 @@ In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result
 The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ or $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. 
 The TEB is given by the set $\TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc\}$ in the finite time horizon case, and $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty\}$ in the infinite time horizon case\footnote{In practice, since $\valfunc$ is obtained numerically, we set, for example, $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty + \epsilon\}$ for some suitably small $\epsilon>0$}. 
 This TEB in the planner's frame of reference is given by
-\begin{equation} \label{eq:TEBp}
-\begin{aligned}
-\TEB_\pstate(\tau) = \{\pstate: \exists s, \valfunc(\rtrans(\tstate-\ptmat\pstate), \thor-\tau) \le \underline\valfunc\} \\
-\quad \text{(Finite time horizon)}\\
-\TEB_{\pstate, \infty} = \{\pstate: \exists s, \valfunc_\infty(\rtrans(\tstate-\ptmat\pstate)) \le \underline\valfunc_\infty\} \\
-\quad \text{(Infinite time horizon)}\\
-\end{aligned}
-\end{equation}
-
+\begin{subequations} \label{eq:TEBp}
+  \begin{align} 
+  \TEB_\pstate(\tau) = \{\pstate: \exists s, \valfunc(\rtrans(\tstate-\ptmat\pstate), \thor-\tau) \le \underline\valfunc\}\label{eq:TEBp:inf} \\
+  \quad \text{(Finite time horizon)} \nonumber\\
+  \TEB_{\pstate, \infty} = \{\pstate: \exists s, \valfunc_\infty(\rtrans(\tstate-\ptmat\pstate)) \le \underline\valfunc_\infty\} \label{eq:TEBp:fin} \\
+  \quad \text{(Infinite time horizon)} \nonumber
+  \end{align}
+\end{subequations}
 This is the TEB that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. 
 Within this bound the tracking system may use any controller, but on the boundary\footnote{Practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and are not the focus of our paper.} of this bound the tracking system must use the safety optimal controller.
 In general, the TEB is defined as a set in the state space of the planning system, which allows the TEB to not only be in terms of position, but any state of the planning system such as velocity, as demonstrated in the example in Section \ref{sec:resultsMPC}.

@@ -17,13 +17,27 @@ Finally, we show trajectory simulation results.
 For our first example, we demonstrate the combination of fast planning and provably robust tracking by combining fast sweeping method (FSM) \cite{Takei2013} with our computed TEB. 
 FSM is an efficient optimal control-based planner for car-like systems, and provides numerically convergent globally optimal trajectory in real-time.
 
-In this example, we use FSM to perform real-time planning for the Dubins car model, whose trajectory is tracked by the 5D car model.
+In this example, we use FSM to perform real-time planning for the 3D kinematic car model, whose trajectory is tracked by the 5D car model.
+The dynamics of these models are given in \eqref{eq:5D_and_3D_dyn}.
+The parameters are chosen to be $a \in [-0.5, 0.5]$, $|\alpha|\le 6$, $\hat v = 0.1$, $|\hat\omega|\le 1.5$, $|\dstb_x|, |\dstb_y|, |\dstb_\alpha|\le0.02$, $|\dstb_a| \le 0.2$.
 
 \subsubsection{Offline computation}
 
-\MCnote{Show tracking error bound}
+Using the relative system dynamics given in \eqref{eq:5D_and_3D_rdyn}, we defined the error function to be $\errfunc(\rstate) = x_\rstate^2 + y_\rstate^2$, and computed $\valfunc_\infty(\rstate)$, which is shown in Fig. \ref{fig:vf_TEB:5D3D}.
+The minimum of the value function was approximately $\underline\valfunc = $
 
-\MCnote{Offline computation details (time etc.)}
+The top left plot shows the TEB $\TEB_{\pstate, \infty}$, which is obtained from \eqref{eq:TEBp:inf}, in green.
+The tracking model, which represents the system of interest, must apply the optimal control \eqref{eq:opt_ctrl} when it is on the green boundary.
+The cross sectional area of the TEB is the largest area in when $\theta_r = 0, \pi$. 
+This agrees with intuition, since at these $\theta_r$ values the 5D car model is either aligned with or opposite to the 3D car model.
+Since the 5D car is able to move both forward and backward, these two alignments make tracking the easiest.
+For the same reasoning, the cross sectional area is the smallest at $\theta_r = -\pi/2, \pi/2,$ etc.
+
+The magenta and cyan planes indicate slices of the TEB at $\theta_r = \pi/2, -3\pi/4$, respectively.
+With these $\theta_r$ values fixed, corresponding projections of the value function onto $(x_r, y_r)$ space are shown in the top right and bottom left plots.
+Here, $\underline\valfunc$ is shown as the gray plane, with  the intersection of the gray plane and the value function projection shown by the curve in the value $=0$ plane. 
+These curves are slices of $\TEB_{\pstate, \infty}$ at the $\theta_r = \pi/2, -3\pi/4$ levels.
+
 
 \subsubsection{Online sensing and planning}
 Besides planning a trajectory to the goal, the car must also sense obstacles in the vicinity. For illustration, we chose a simple virtual sensor that reveals obstacles within a range of $r$ meters.
