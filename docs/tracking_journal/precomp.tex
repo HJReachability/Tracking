@@ -7,19 +7,146 @@ If both systems are acting optimally in this way, we want to determine the large
 This distance is the maximum possible tracking error between the two systems, and is captured by the value function obtained from solving the HJ VI \eqref{eq:HJVI}.
 
 \subsection{Relative Dynamics}
-To determine the relative distance that may occur over time we must first define the relative states and dynamics between the tracking and planning models. The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). The relative system is found by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model, as shown below.
+To determine the relative distance (or another error metric) that may occur over time, we must first define the relative system derived from the tracking and planning models. 
+The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). 
+The relative system is obtained by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model.
+Defining $\rstate$ to be the relative system state, we write
+
+\begin{equation}
+\label{eq:rstate}
+\rstate = \rtrans(\tstate - \ptmat\pstate)
+\end{equation}
+
+\noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model.
+The relative system states $\rstate$ represent the tracking states relative to the planning states. 
+
+The function $\rtrans$ is a nonlinear transform, usually either the identity function or a rotation, that facilitates simplification of the relative system dynamics to be of the form
 
 \begin{equation}
 \label{eq:rdyn}
+\dot\rstate = \rdyn(\rstate, \tctrl, \pctrl, \dstb),
+\end{equation}
+
+\noindent which only depends on the relative system state $r$.
+A transform $\rtrans$ that achieves the relative system dynamics \eqref{eq:rdyn} is not strictly needed and may not exist; however, in principle the theory we present in this paper can be easily adapted to this case.
+In this paper, we assume that a suitable $\rtrans$ is available so that the dimensionality of the relative system state space is at most that of the tracking model.
+
+To be concrete, let the tracking model be a 5D car model, and the planning model be a 3D kinematic car model as follows:
+
+\begin{align}
+\label{eq:5D_and_3D_dyn}
+\dot \tstate = 
+\begin{bmatrix}
+\dot x\\
+\dot y\\
+\dot\theta\\
+\dot v\\
+\dot \omega
+\end{bmatrix} =
+\begin{bmatrix}
+v \cos \theta + d_x\\
+v \sin \theta + d_y\\
+\omega \\
+a\\
+\alpha
+\end{bmatrix}, \quad
+\dot \pstate = 
+\begin{bmatrix}
+\dot {\hat x}\\
+\dot {\hat y}\\
+\dot {\hat \theta}\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+\hat v \cos \hat\theta\\
+\hat v \sin \hat\theta\\
+\hat \omega
+\end{bmatrix},
+\end{align}
+
+\noindent where $(x,y,\theta),(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 5D and 3D car model respectively.
+The speed and turn rate $(v, \omega)$ are states for the 5D model; for the 3D model the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control.
+The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$.
+
+We define the relative system state to be $(x_r, y_r, \theta_r, v, \omega)$, such that $(x_r, y_r, \theta_r)$ is the position and heading of the 5D model  in the frame of the 3D model, and $(v, \omega)$ represents the speed and turn rate of the 5D model.
+The relative system state $\rstate$, tracking model state $\tstate$, and planning model state $\pstate$ are related through $\rtrans$ and $\ptmat$ as follows:
+
+\begin{align}\small
+\label{eq:5D_and_3D_err_state}
+\underbrace{
+\begin{bmatrix}
+x_r\\
+y_r\\
+\theta_r \\
+v \\
+\omega
+\end{bmatrix}
+}_\rstate
+=
+\underbrace{
+\begin{bmatrix}
+  \begin{bmatrix}
+  \cos\hat\theta & \sin\hat\theta \\
+  -\sin\hat\theta & \cos\hat\theta
+  \end{bmatrix} & \mathbf{0_{2\times 3}} \\
+  \mathbf{0_{3\times 2}} & \mathbf I_3
+\end{bmatrix}
+}_\rtrans
+\Bigg(
+\underbrace{
+\begin{bmatrix}
+x\\
+y\\
+\theta \\
+v \\
+\omega
+\end{bmatrix}
+}_\tstate -
+\underbrace{
+\begin{bmatrix}
+\mathbf I_3 \\
+\mathbf{0_{2\times 3}}
+\end{bmatrix}
+}_\ptmat
+\underbrace{
+\begin{bmatrix}
+\hat x\\
+\hat y \\
+\hat \theta \\
+\end{bmatrix}
+}_\pstate
+\Bigg),
+\end{align}
+
+\noindent where $\mathbf 0, \mathbf I$ denote the zero and identity matrices of the indicated sizes.
+Taking the time derivative, we obtain the following relative system dynamics:
+
+\begin{equation}
+\label{eq:5D_and_3D_rdyn}
 \begin{aligned}
-\rstate = \rtrans(\tstate - \ptmat\pstate), \qquad \dot\rstate = \rdyn(\rstate, \tctrl, \pctrl, \dstb)
+\left[
+\begin{array}{c}
+\dot x_r\\
+\dot y_r\\
+\dot\theta_r\\
+\dot v\\
+\dot \omega
+\end{array}
+\right]
+=
+\left[
+\begin{array}{c}
+- \hat v + v \cos \theta_r + \hat \omega y_r + d_x\\
+v \sin \theta_r - \hat \omega x_r + d_y\\
+\omega - \hat \omega \\
+a\\
+\alpha
+\end{array}
+\right].
 \end{aligned}
 \end{equation}
 
-\noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}), and $\rtrans$ is a nonlinear transform that maps .
-The relative states $\rstate$ now represent the tracking states relative to the planning states. 
-Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. 
-This will be used to update the planning state in the online algorithm.
+More examples of relative systems can be found in Sections \ref{sec:resultsRRT} and \ref{sec:resultsMPC}.
 
 \subsection{Formalizing the Pursuit-Evasion Game}
 Given the relative dynamics between the tracking system and the planning system, we would like to compute a guaranteed TEB between these systems. 
