@@ -24,7 +24,7 @@ The parameters are chosen to be $a \in [-0.5, 0.5]$, $|\alpha|\le 6$, $\hat v = 
 \subsubsection{Offline computation}
 
 Using the relative system dynamics given in \eqref{eq:5D_and_3D_rdyn}, we defined the error function to be $\errfunc(\rstate) = x_\rstate^2 + y_\rstate^2$, and computed $\valfunc_\infty(\rstate)$, which is shown in Fig. \ref{fig:vf_TEB:5D3D}.
-The minimum of the value function was approximately $\underline\valfunc = $
+The minimum of the value function was approximately $\underline\valfunc = 0.004$, and the size of the TEB in $(x_r, y_r)$ space is approximately $0.065$.
 
 The top left plot shows the TEB $\TEB_{\pstate, \infty}$, which is obtained from \eqref{eq:TEBp:inf}, in green.
 The tracking model, which represents the system of interest, must apply the optimal control \eqref{eq:opt_ctrl} when it is on the green boundary.
@@ -35,47 +35,36 @@ For the same reasoning, the cross sectional area is the smallest at $\theta_r = 
 
 The magenta and cyan planes indicate slices of the TEB at $\theta_r = \pi/2, -3\pi/4$, respectively.
 With these $\theta_r$ values fixed, corresponding projections of the value function onto $(x_r, y_r)$ space are shown in the top right and bottom left plots.
-Here, $\underline\valfunc$ is shown as the gray plane, with  the intersection of the gray plane and the value function projection shown by the curve in the value $=0$ plane. 
+Here, $\underline\valfunc$ is shown as the gray plane, with the intersection of the gray plane and the value function projection shown by the curve in the $0$-level plane. 
 These curves are slices of $\TEB_{\pstate, \infty}$ at the $\theta_r = \pi/2, -3\pi/4$ levels.
 
+Computation was done on a desktop computer with a Core i7 5820K processor, on a $41\times41\times59\times35\times61$ grid, and took approximately 125 hours and required approximately 10 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
 
 \subsubsection{Online sensing and planning}
-Besides planning a trajectory to the goal, the car must also sense obstacles in the vicinity. For illustration, we chose a simple virtual sensor that reveals obstacles within a range of $r$ meters.
+The simulation showing the combination of tracking and planning is shown in Fig. \ref{fig:5D3Dsim}.
+The goal of the system, the 5D car, is to reach the blue circle at $(0.5, 0.5)$ with a heading that is within $\pi/6$ of the direction indicated by the arrow inside the blue circle, $\pi/2$.
+Three initially unknown obstacles, whose boundaries are shown in dotted black, make up the constraints $\constr$.
 
-Once an obstacle is sensed, the FSM planner replans the trajectory while taking into account all obstacles that have been sensed so far. 
-To ensure that the 5D car does not collide with the obstacles despite error in tracking, planning is done with respect to augmented obstacles that are ``expanded'' from the sensed obstacles by $\underline\valfunc$ in $(x,y)$ position space.
+While planning a trajectory to the goal, the car also senses obstacles in the vicinity.
+For this example, we chose a simple virtual sensor that reveals obstacles within a range of $0.5$ units and in front of the vehicle within an angle of $\pi/6$.
+This sensing region is depicted as the light green fan.
 
-\MCnote{Online computation details (time etc.)}
+When a portion of the unknown obstacles is within this region, that portion is made known to the vehicle, and is shown in red.
+These make up the sensed constraints $\constrSense$.
+To ensure that the 5D car does not collide with the obstacles despite error in tracking, planning is done with respect to augmented constraints $\constrAug$, shown in dashed blue.
 
-\subsubsection{Simulations}
+Given the current planning constraints $\constrAug$, the 3D planning system plans, in real-time using FSM, towards the goal.
+This plan is shown in dotted black.
+The 5D system robustly tracks the 3D system within the TEB in Fig. \ref{fig:vf_TEB:5D3D}.
 
-The Dubins car parameters are
+Fig. \ref{fig:5D3Dsim} shows four time snapshots of the simulation.
+In the top left subplot, the system has sensed only a very small portion of the obstacles, and hence plans a trajectory through an unknown obstacle to the target.
+However, while tracking this initial trajectory, more of the L-shaped obstacle is made known to the system, and therefore the system plans around this obstacle, as shown in the top right subplot.
+The bottom subplots show that eventually more obstacles are made known, and the system reaches the goal at $t=23.9$.
 
-The control bounds for the 5D car are $a \in []$, $|\alpha| < $.
-
-The disturbance bound is $\|(d_x, d_y)\|_2 < $.
-
-The sensing range is $r = $ meters.
-
-We used a C implementation of FSM.
-
-Computation times:
-\begin{itemize}
-\item === TOTAL ===
-\item  512 iterations in 637.5527 seconds
-\item 1.2452 seconds per iteration on average
-\item === PLANNING ===
-\item 512 iterations in 33.5683 seconds
-\item 0.0656 seconds per iteration on average
-\item === TRACKING ===
-\item 512 iterations in 0.8991 seconds
-\item 0.0018 seconds per iteration on average
-\end{itemize}
-
-On an unoptimized MATLAB implementation on a desktop computer with a Core i7-2600K CPU, each iteration took approximately ?? ms on average. Most of this time is spent on planning: obtaining the tracking controller took approximately ?? ms per iteration on average. The frequency of control was once every ?? ms.
-
-\MCnote{Fig. ?? shows the simulation results. 
-Four time snapshots are shown. The initial position is $(-12, 0, 0)$, and the goal position is $(12, 0, 0)$. The top left subplot shows the entire trajectory from beginning to end. In all plots, a magenta star represents the position of the planning model; its movement is based on the paths planned by RRT, and is modeled by a 3D holonomic vehicle with a maximum speed. The blue box around the magenta star represents the tracking error bound.}
+The simulation was done in MATLAB on a desktop computer with a Core i7 2600K CPU.
+Time was discretized in increments of $0.1$.
+Averaged over the duration of the simulation, planning with FSM took approximately $0.066$ seconds per iteration, and obtaining the tracking controller from \eqref{eq:opt_ctrl} took approximately $0.0018$ seconds per iteration.
 
 \begin{figure}
   \label{fig:5D3Dsim}
