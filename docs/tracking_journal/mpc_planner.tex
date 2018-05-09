@@ -92,11 +92,10 @@ g \tan \theta_y - \hat a_y\\
 \end{bmatrix}.
 \end{equation}
 
-
 As in the 10D-3D example in Section \ref{sec:resultsRRT}, the relative dynamics are decomposable into two 4D subsystems, and so computations were done in 4D space.
-On a laptop computer with an Intel Core I7 4702HQ CPU, the offline computation on a $\times\times$ grid took approximately ... and  required approximately GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
+On a desktop computer with an Intel Core i7 2600K CPU, the offline computation on a $81\times81\times65\times65$ grid took approximately 35 hours and  required approximately 1 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
 
-\subsubsection{Online computation}
+\subsubsection{Online sensing and planning}
 %
 We utilize the MPC design introduced in \cite{Zhang2017} for the online path planning. See in Problem~\ref{pr: MPC}.
 %
