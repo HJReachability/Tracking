@@ -1,5 +1,5 @@
 % !TEX root = tracking.tex
-\subsection{10D-3D example with RRT planner\label{sec:resultsRRT}}
+\subsection{10D quadrotor-3D single integrator example with RRT\label{sec:resultsRRT}}
 
 \MCnote{Convergence (2 slices for 4D, 2D, 3D space)}
 
@@ -69,7 +69,7 @@ The disturbances in the 10D system $(\dstb_x, \dstb_y, \dstb_z)$ are caused by w
 The model parameters are chosen to be $d_0=10$, $d_1=8$, $n_0=10$, $k_T=0.91$, $g=9.81$, $|u_x| \le $, $|u_y| \le $, $u_z \in []$, $|\hat v_x|, |\hat v_y|, |\hat v_z| \le $.
 
 \subsubsection{Offline computation}
-We define the relative system states to consist of the relative error states, or positions $(x_r, y_r, z_r)$, concatenated with the rest of the state variables of the 10D quadrotor model.
+We define the relative system states to consist of the error states, or relative position $(x_r, y_r, z_r)$, concatenated with the rest of the state variables of the 10D quadrotor model.
 Defining $\rtrans = \mathbf I_{10}$ and 
 
 \begin{equation*}
@@ -77,11 +77,11 @@ Defining $\rtrans = \mathbf I_{10}$ and
 \begin{bmatrix}
   \begin{bmatrix}
     1 & \mathbf 0_{1 \times 3} \\
-    0_{3 \times 1} & \mathbf 0_{3 \times 3}
+    \mathbf 0_{3 \times 1} & \mathbf 0_{3 \times 3}
   \end{bmatrix} & \mathbf 0_{4\times 4} & \mathbf 0_{4\times 2} \\
   \mathbf 0_{4\times 4} & \begin{bmatrix}
     1 & \mathbf 0_{1 \times 3} \\
-    0_{3 \times 1} & \mathbf 0_{3 \times 3}
+    \mathbf 0_{3 \times 1} & \mathbf 0_{3 \times 3}
   \end{bmatrix} &  \mathbf 0_{4\times 2} \\
   \mathbf 0_{2\times 4} & \mathbf 0_{2\times 4} & \begin{bmatrix}
     1 & 0 \\
@@ -117,7 +117,7 @@ g \tan \theta_y\\
 -d_0 \theta_y + n_0 u_y\\
 v_z - \hat v_z + d_z\\
 k_T u_z - g
-\end{bmatrix}
+\end{bmatrix}.
 \end{equation}
 
 Next, we follow the setup in section \ref{sec:precomp} to create a cost function, which we then evaluate using HJ reachability until convergence to produce the invariant value function as in (\ref{eq:valfunc}). Historically this 10D nonlinear relative system would be intractable for HJ reachability analysis, but using new methods in \cite{Chen2016DecouplingExact, Chen2016DecouplingJournal} we can decompose this system into 3 subsystems (for each positional dimension). Doing this also requires decomposing the cost function; therefore we represent the cost function as a 1-norm instead of a 2-norm. This cost function as well as the resulting value function can be seen projected onto the $x,y$ dimensions in Fig. \ref{fig:quad10D_example}.

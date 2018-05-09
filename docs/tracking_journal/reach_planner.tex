@@ -12,7 +12,7 @@ Next, we present the relative dynamics as well as the precomputation results.
 Afterwards, we briefly describe the planning algorithm and how obstacles are sensed by the vehicle. 
 Finally, we show trajectory simulation results.
 
-\subsection{5D-3D example with FSM planner \label{sec:reach_planner}}
+\subsection{5D car-3D car example with FSM \label{sec:reach_planner}}
 
 For our first example, we demonstrate the combination of fast planning and provably robust tracking by combining fast sweeping method (FSM) \cite{Takei2013} with our computed TEB. 
 FSM is an efficient optimal control-based planner for car-like systems, and provides numerically convergent globally optimal trajectory in real-time.
@@ -38,7 +38,7 @@ With these $\theta_r$ values fixed, corresponding projections of the value funct
 Here, $\underline\valfunc$ is shown as the gray plane, with the intersection of the gray plane and the value function projection shown by the curve in the $0$-level plane. 
 These curves are slices of $\TEB_{\pstate, \infty}$ at the $\theta_r = \pi/2, -3\pi/4$ levels.
 
-Computation was done on a desktop computer with a Core i7 5820K processor, on a $41\times41\times59\times35\times61$ grid, and took approximately 125 hours and required approximately 10 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
+Computation was done on a desktop computer with an Intel Core i7 5820K processor, on a $41\times41\times59\times35\times61$ grid, and took approximately 125 hours and required approximately 10 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
 
 \subsubsection{Online sensing and planning}
 The simulation showing the combination of tracking and planning is shown in Fig. \ref{fig:5D3Dsim}.
@@ -62,7 +62,7 @@ In the top left subplot, the system has sensed only a very small portion of the 
 However, while tracking this initial trajectory, more of the L-shaped obstacle is made known to the system, and therefore the system plans around this obstacle, as shown in the top right subplot.
 The bottom subplots show that eventually more obstacles are made known, and the system reaches the goal at $t=23.9$.
 
-The simulation was done in MATLAB on a desktop computer with a Core i7 2600K CPU.
+The simulation was done in MATLAB on a desktop computer with an Intel Core i7 2600K CPU.
 Time was discretized in increments of $0.1$.
 Averaged over the duration of the simulation, planning with FSM took approximately $0.066$ seconds per iteration, and obtaining the tracking controller from \eqref{eq:opt_ctrl} took approximately $0.0018$ seconds per iteration.
 

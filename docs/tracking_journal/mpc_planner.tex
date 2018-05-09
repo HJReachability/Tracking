@@ -1,16 +1,15 @@
 % !TEX root = tracking.tex
-\subsection{8D Quadrotor MPC Example \label{sec:resultsMPC}}
+\subsection{8D quadrotor-4D double integrator example with MPC \label{sec:resultsMPC}}
 
-In this section, we demonstrate the online computation framework in Algorithm~\ref{alg:algOnline} with an 8D quadrotor example. Unlike in Sections \ref{sec:reach_planner} and \ref{sec:resultsRRT}, we consider a time-varying TEB and utilize the Model Predictive Control (MPC) technique as the online planner. 
+In this section, we demonstrate the online computation framework in Algorithm \ref{alg:algOnline} with an 8D quadrotor example. 
+Unlike in Sections \ref{sec:reach_planner} and \ref{sec:resultsRRT}, we consider a time-varying TEB and utilize MPC as the online planner.
+In addition, the TEB depends on both position and speed, as opposed to just position.
 
-First we define the 8D dynamics of the tracking quadrotor, and the 4D dynamics of a double integrator, which serves as the planning system to be used in MPC:
+First we define the 8D dynamics of the near-hover quadrotor, and the 4D dynamics of a double integrator, which serves as the planning system to be used in MPC:
 
 \begin{equation}
 \label{eq:Quad8D_dyn}
-\begin{aligned}
-\begin{array}{c}
-\left[
-\begin{array}{c}
+\begin{bmatrix}
 \dot x\\
 \dot v_x\\
 \dot \theta_x\\
@@ -19,62 +18,59 @@ First we define the 8D dynamics of the tracking quadrotor, and the 4D dynamics o
 \dot v_y\\
 \dot \theta_y\\
 \dot \omega_y
-\end{array}
-\right]
-=
-\left[
-\begin{array}{c}
+\end{bmatrix} =
+\begin{bmatrix}
 v_{x,s} + d_x\\
 g \tan \theta_x\\
 -d_1 \theta_x + \omega_x\\
 -d_0 \theta_x + n_0 a_x\\
-v_y + d_{v_y}\\
+v_y + d_y\\
 g \tan \theta_y\\
 -d_1 \theta_y + \omega_y\\
 -d_0 \theta_y + n_0 a_y
-\end{array}
-\right], \quad
-\left[
-\begin{array}{c}
+\end{bmatrix}, \quad
+\begin{bmatrix}
 \dot {\hat x}\\
 \dot {\hat v}_x\\
 \dot {\hat y}\\
 \dot {\hat v}_y\\
-\end{array}
-\right] 
-=
-\left[
-\begin{array}{c}
+\end{bmatrix} =
+\begin{bmatrix}
 \hat v_x\\
 \hat a_x\\
 \hat v_y\\
 \hat a_y\\
-\end{array}
-\right],
-\end{array}\\
-\end{aligned}
+\end{bmatrix}
 \end{equation}
-where the states and controls of the 8D system are defined the same as \eqref{eq:Quad10D_dyn}. The position $(\hat x,\hat y)$ and velocity $(\hat v_x, \hat v_y)$ are the states of the 4D system. The controls are $(\hat a_x, \hat a_y)$, which represent the acceleration in each positional dimension. Note that the disturbances in the 8D system $(d_{v_x},d_{v_y})$ act on the \MCnote{acceleration} in each direction. \MCnote{***Explain where the disturbances come from (physically)***}
+
+\noindent where the states, controls, and disturbances are the same as the first 8 components of the dynamics in \eqref{eq:Quad10D_dyn}. 
+The position $(\hat x,\hat y)$ and velocity $(\hat v_x, \hat v_y)$ are the states of the 4D system. 
+The controls are $(\hat a_x, \hat a_y)$, which represent the acceleration in each positional dimension. 
+
+The model parameters are chosen to be $d_0=10$, $d_1=8$, $n_0=10$, $k_T=0.91$, $g=9.81$, $|u_x|, |u_y| \le \pi/9$, $|\hat a_x|, |\hat a_y| \le 1$, $|\dstb_x|, |\dstb_y| \le 0.2$.
 
 \subsubsection{Offline precomputation}
+We define the relative states to be the error states $(x_r, v_{x,r}, y_r, v_{y,r})$, which are the relative position and velocity, concatenated with the rest of the states in the 8D system.
+Defining $\rtrans = \mathbf I_8$ and 
 
-The relative dynamics between the 8D and the 4D system are defined using (\ref{eq:rdyn}):
-%
-% \begin{equation}
-% \begin{aligned}
-% \dot x_r &= \dot x - \dot{\hat x} = v_x - \hat v_x = v_{x,r}\\
-% \dot v_{x,r} &= \dot v_x - \dot{\hat v}_x = g \tan \theta_x - \hat a_x  + \MCnote{d_{v_x}}\\
-% \dot y_r &= \dot y - \dot{\hat y} = v_y - \hat v_y = v_{y,r}\\
-% \dot v_{y,r} &= \dot v_y - \dot{\hat v}_y = g \tan \theta_y - \hat a_y  + \MCnote{d_{v_y}}\\
-% \end{aligned}
-% \end{equation}
-%
+\begin{equation*}
+\ptmat = 
+\begin{bmatrix}
+  \begin{bmatrix}
+    1 & \mathbf 0_{1 \times 3} \\
+    \mathbf 0_{3 \times 1} & \mathbf 0_{3 \times 3}
+  \end{bmatrix} & \mathbf 0_{4\times 4} \\
+  \mathbf 0_{4\times 4} & \begin{bmatrix}
+    1 & \mathbf 0_{1 \times 3} \\
+    \mathbf 0_{3 \times 1} & \mathbf 0_{3 \times 3}
+  \end{bmatrix} 
+\end{bmatrix},
+\end{equation*}
+
+\noindent we obtain the following relative system dynamics:
 \begin{equation}
 \label{eq:Quad8DRel_dyn}
-\begin{aligned}
-\begin{array}{c}
-\left[
-\begin{array}{c}
+\begin{bmatrix}
 \dot x_r\\
 \dot v_{x,r}\\
 \dot \theta_x\\
@@ -83,28 +79,22 @@ The relative dynamics between the 8D and the 4D system are defined using (\ref{e
 \dot v_{y,r}\\
 \dot \theta_y\\
 \dot \omega_y\\
-\end{array}
-\right]
-=
-\left[
-\begin{array}{c}
-v_{x,r}\\
-g \tan \theta_x - \hat a_x + d_{v_x}\\
+\end{bmatrix} =
+\begin{bmatrix}
+v_{x,r} + \dstb_x\\
+g \tan \theta_x - \hat a_x\\
 -d_1 \theta_x + \omega_x\\
 -d_0 \theta_x + n_0 a_x\\
-v_{y,r}\\
-g \tan \theta_y - \hat a_y + d_{v_y}\\
+v_{y,r} + \dstb_y\\
+g \tan \theta_y - \hat a_y\\
 -d_1 \theta_y + \omega_y\\
 -d_0 \theta_y + n_0 a_y\\
-\end{array}
-\right],
-\end{array}\\
-\end{aligned}
+\end{bmatrix}.
 \end{equation}
-where the states $(x_r,v_{x,r},y_r,v_{y,r})$ are the position and velocity of the 8D quadrotor in the frame of the double integrator. The remaining states $(\theta_x,\omega_x,\theta_y,\omega_y)$ are the pitch (rate) and roll (rate) of the 8D quadrotor.
 
-\MCnote{Added offline reachability computation results and the range of velocity and positional TEBs.}   
-\color{blue} notations for time-varying TEBs and Minkowski addition?modify Alg. 1\color{black}
+
+As in the 10D-3D example in Section \ref{sec:resultsRRT}, the relative dynamics are decomposable into two 4D subsystems, and so computations were done in 4D space.
+On a laptop computer with an Intel Core I7 4702HQ CPU, the offline computation on a $\times\times$ grid took approximately ... and  required approximately GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
 
 \subsubsection{Online computation}
 %
@@ -165,15 +155,15 @@ The procedure of finding the next state of the planning system using the propose
 
 \subsubsection{Simulations}
 
-The values for parameters $d_0,d_1,n_0,k_T,g$ used for the 8D model are: $d_0=10,d_1=8,n_0=10,k_T=0.91,g=9.81$.
+%The values for parameters $d_0,d_1,n_0,k_T,g$ used for the 8D model are: $d_0=10,d_1=8,n_0=10,k_T=0.91,g=9.81$.
 
-The 8D control bounds are $|a_x|,|a_y|\leq10$ degrees.
+%The 8D control bounds are $|a_x|,|a_y|\leq10$ degrees.
 
-The 4D control bound is $\|(\hat a_x,\hat a_y)\|_2\leq1.0$ m/s$^{2}$.
+%The 4D control bound is $\|(\hat a_x,\hat a_y)\|_2\leq1.0$ m/s$^{2}$.
 
-The disturbance bounds are $|d_{v_x}|,|d_{v_y}|\leq0.1$ m/s.
+%The disturbance bounds are $|d_{v_x}|,|d_{v_y}|\leq0.1$ m/s.
 
-The sensing range is $\MCnote{r = 5}$ meters.
+%The sensing range is $\MCnote{r = 5}$ meters.
 
 For the MPC problem we used a horizon $N=8$ with sampling interval $\Delta t = 0.2$ s.
 
