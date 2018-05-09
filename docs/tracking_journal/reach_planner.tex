@@ -19,7 +19,7 @@ FSM is an efficient optimal control-based planner for car-like systems, and prov
 
 In this example, we use FSM to perform real-time planning for the 3D kinematic car model, whose trajectory is tracked by the 5D car model.
 The dynamics of these models are given in \eqref{eq:5D_and_3D_dyn}.
-The parameters are chosen to be $a \in [-0.5, 0.5]$, $|\alpha|\le 6$, $\hat v = 0.1$, $|\hat\omega|\le 1.5$, $|\dstb_x|, |\dstb_y|, |\dstb_\alpha|\le0.02$, $|\dstb_a| \le 0.2$.
+The model parameters are chosen to be $a \in [-0.5, 0.5]$, $|\alpha|\le 6$, $\hat v = 0.1$, $|\hat\omega|\le 1.5$, $|\dstb_x|, |\dstb_y|, |\dstb_\alpha|\le0.02$, $|\dstb_a| \le 0.2$.
 
 \subsubsection{Offline computation}
 
@@ -67,7 +67,6 @@ Time was discretized in increments of $0.1$.
 Averaged over the duration of the simulation, planning with FSM took approximately $0.066$ seconds per iteration, and obtaining the tracking controller from \eqref{eq:opt_ctrl} took approximately $0.0018$ seconds per iteration.
 
 \begin{figure}
-  \label{fig:5D3Dsim}
   \centering
   \begin{subfigure}[t]{0.49\columnwidth}
     \includegraphics[width=\columnwidth]{fig/P5D_Dubins/36}
@@ -82,5 +81,5 @@ Averaged over the duration of the simulation, planning with FSM took approximate
   \begin{subfigure}[t]{0.49\columnwidth}
     \includegraphics[width=\columnwidth]{fig/P5D_Dubins/240}
   \end{subfigure}
-  \caption{Simulation of the 5D-3D example. As the vehicle with 5D car dynamics senses new obstacles in the sensing region (light green), the 3D model replans trajectories, which are robustly tracked by the 5D system. Augmentation of the constraints resulting from the obstacles ensures safety of the 5D system using the optimal tracking controller.}
+  \caption{Simulation of the 5D-3D example. As the vehicle with 5D car dynamics senses new obstacles in the sensing region (light green), the 3D model replans trajectories, which are robustly tracked by the 5D system. Augmentation of the constraints resulting from the obstacles ensures safety of the 5D system using the optimal tracking controller.} \label{fig:5D3Dsim}
 \end{figure}
