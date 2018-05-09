@@ -7,19 +7,141 @@ If both systems are acting optimally in this way, we want to determine the large
 This distance is the maximum possible tracking error between the two systems, and is captured by the value function obtained from solving the HJ VI \eqref{eq:HJVI}.
 
 \subsection{Relative Dynamics}
-To determine the relative distance that may occur over time we must first define the relative states and dynamics between the tracking and planning models. The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). The relative system is found by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model, as shown below.
+To determine the relative distance (or another error metric) that may occur over time, we must first define the relative system derived from the tracking and planning models. 
+The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). 
+The relative system is obtained by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model.
+Defining $\rstate$ to be the relative system state, we write
+
+\begin{equation}
+\label{eq:rstate}
+\rstate = \rtrans(\tstate - \ptmat\pstate)
+\end{equation}
+
+\noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model.
+The relative system states $\rstate$ represent the tracking states relative to the planning states. 
+
+The function $\rtrans$ is a nonlinear transform, usually either the identity function or a rotation, that facilitates simplification of the relative system dynamics to be of the form
 
 \begin{equation}
 \label{eq:rdyn}
-\begin{aligned}
-\rstate = \rtrans(\tstate - \ptmat\pstate), \qquad \dot\rstate = \rdyn(\rstate, \tctrl, \pctrl, \dstb)
-\end{aligned}
+\dot\rstate = \rdyn(\rstate, \tctrl, \pctrl, \dstb),
 \end{equation}
 
-\noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model (as shown in Section \ref{sec:results}), and $\rtrans$ is a nonlinear transform that maps .
-The relative states $\rstate$ now represent the tracking states relative to the planning states. 
-Similarly, $\tpmat$ projects the state space of the tracking model onto the planning model: $\pstate = \tpmat(\tstate-\rstate)$. 
-This will be used to update the planning state in the online algorithm.
+\noindent which only depends on the relative system state $r$.
+A transform $\rtrans$ that achieves the relative system dynamics \eqref{eq:rdyn} is not strictly needed and may not exist; however, in principle the theory we present in this paper can be easily adapted to this case.
+In this paper, we assume that a suitable $\rtrans$ is available so that the dimensionality of the relative system state space is at most that of the tracking model.
+
+To be concrete, let the tracking model be a 5D car model, and the planning model be a 3D kinematic car model as follows:
+
+\begin{equation}
+\label{eq:5D_and_3D_dyn}
+\dot \tstate = 
+\begin{bmatrix}
+\dot x\\
+\dot y\\
+\dot\theta\\
+\dot v\\
+\dot \omega
+\end{bmatrix} =
+\begin{bmatrix}
+v \cos \theta + \dstb_x\\
+v \sin \theta + \dstb_y\\
+\omega \\
+a + \dstb_a\\
+\alpha + \dstb_\alpha
+\end{bmatrix}, \quad
+\dot \pstate = 
+\begin{bmatrix}
+\dot {\hat x}\\
+\dot {\hat y}\\
+\dot {\hat \theta}
+\end{bmatrix}
+=
+\begin{bmatrix}
+\hat v \cos \hat\theta\\
+\hat v \sin \hat\theta\\
+\hat \omega
+\end{bmatrix},
+\end{equation}
+
+\noindent where $(x,y,\theta),(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 5D and 3D car model respectively.
+The speed and turn rate $(v, \omega)$ are states for the 5D model; for the 3D model the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control.
+The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$, and the disturbances are $(\dstb_x, \dstb_y, \dstb_a, \dstb_\alpha)$.
+
+We define the relative system state to be $(x_r, y_r, \theta_r, v, \omega)$, such that $(x_r, y_r, \theta_r)$ is the position and heading of the 5D model in the reference frame of the 3D model, and $(v, \omega)$ represents the speed and turn rate of the 5D model.
+The relative system state $\rstate$, tracking model state $\tstate$, and planning model state $\pstate$ are related through $\rtrans$ and $\ptmat$ as follows:
+
+\begin{equation}\small
+\label{eq:5D_and_3D_err_state}
+\underbrace{
+\begin{bmatrix}
+x_r\\
+y_r\\
+\theta_r \\
+v \\
+\omega
+\end{bmatrix}
+}_\rstate
+=
+\underbrace{
+\begin{bmatrix}
+  \begin{bmatrix}
+  \cos\hat\theta & \sin\hat\theta \\
+  -\sin\hat\theta & \cos\hat\theta
+  \end{bmatrix} & \mathbf{0_{2\times 3}} \\
+  \mathbf{0_{3\times 2}} & \mathbf I_3
+\end{bmatrix}
+}_\rtrans
+\Bigg(
+\underbrace{
+\begin{bmatrix}
+x\\
+y\\
+\theta \\
+v \\
+\omega
+\end{bmatrix}
+}_\tstate -
+\underbrace{
+\begin{bmatrix}
+\mathbf I_3 \\
+\mathbf{0_{2\times 3}}
+\end{bmatrix}
+}_\ptmat
+\underbrace{
+\begin{bmatrix}
+\hat x\\
+\hat y \\
+\hat \theta \\
+\end{bmatrix}
+}_\pstate
+\Bigg),
+\end{equation}
+
+\noindent where $\mathbf 0, \mathbf I$ denote the zero and identity matrices of the indicated sizes.
+Taking the time derivative, we obtain the following relative system dynamics:
+
+\begin{equation}
+\label{eq:5D_and_3D_rdyn}
+\dot \rstate = 
+\begin{bmatrix}
+\dot x_r\\
+\dot y_r\\
+\dot\theta_r\\
+\dot v\\
+\dot \omega
+\end{bmatrix}
+=
+\begin{bmatrix}
+- \hat v + v \cos \theta_r + \hat \omega y_r + \dstb_x\\
+v \sin \theta_r - \hat \omega x_r + \dstb_y\\
+\omega - \hat \omega \\
+a + \dstb_a\\
+\alpha + \dstb_\alpha
+\end{bmatrix}.
+\end{equation}
+
+More examples of relative systems can be found in Sections \ref{sec:resultsRRT} and \ref{sec:resultsMPC}.
 
 \subsection{Formalizing the Pursuit-Evasion Game}
 Given the relative dynamics between the tracking system and the planning system, we would like to compute a guaranteed TEB between these systems. 
@@ -57,21 +179,35 @@ This is expressed through the following value function:
 &\qquad\qquad \max_{\tvar\in [0, \thor]} \errfunc\Big(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))\Big)\big\}. \label{eq:valfunc}
 \end{align} 
 
-The value function can be computed via existing methods in HJ reachability analysis \cite{}.
-Adapting the formulation in \cite{Fisac15}, we compute the value function by solving the following HJ VI:
+The value function can be computed via existing methods in HJ reachability analysis \cite{Mitchell05, Fisac15}.
+Adapting the formulation in \cite{Fisac15} and taking a convention of negative time in the backward reachability literature \cite{Chen2016DecouplingJournal, Chen2018}, we compute the value function by solving the HJ VI
 
 \begin{align}
-\max \Big\{&\frac{\partial \valfunc}{\partial \tvar} + \min_{\tctrl\in\tset} \max_{\pctrl\in\pset, \dstb\in\dset} \deriv \cdot \rdyn(\rstate, \tctrl, \pctrl, \dstb), \nonumber \\
-&\qquad\errfunc(\rstate) - \valfunc(\rstate, \tvar)\Big\} = 0, \quad \tvar \in [-T, 0], \label{eq:HJVI} \\
-&\valfunc(\rstate, 0) = \errfunc(\rstate). \nonumber
+\max \Big\{&\frac{\partial \tilde\valfunc}{\partial \tvar} + \min_{\tctrl\in\tset} \max_{\pctrl\in\pset, \dstb\in\dset} \nabla \tilde\valfunc \cdot \rdyn(\rstate, \tctrl, \pctrl, \dstb), \nonumber \\
+&\qquad\errfunc(\rstate) - \tilde\valfunc(\rstate, \tvar)\Big\} = 0, \quad \tvar \in [-T, 0], \label{eq:HJVI} \\
+&\tilde\valfunc(\rstate, 0) = \errfunc(\rstate), \nonumber
 \end{align}
+
+\noindent from which we obtain the value function $\valfunc(\rstate, t)$.
+
 
 If the control authority of the tracking system is powerful enough to always eventually remain within some distance from the planning system, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. 
 An example of this converged value function is in Fig. \ref{fig:vf_TEB:5D3D}. 
+
 In some cases, the value function does not converge, and provides a finite time horizon, time-varying TEB, an example of which is shown in Fig. \ref{fig:vf_TEB:8D4D}.
-In Section \ref{sec:proofs}, we will formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ and $\valfunc_\infty(\rstate$ respectively provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case, and time-invariant $\TEB_\infty$ for the infinite time horizon case.
+In Section \ref{sec:proofs}, we will formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ and $\valfunc_\infty(\rstate)$ respectively provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case, and time-invariant $\TEB_\infty$ for the infinite time horizon case.
  
-The spatial gradients of the value function, $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$, comprise the safety controller function (as described in Section \ref{sec:online}). 
+The optimal tracking controller is obtained from the spatial gradients of the value function \cite{Mitchell05, Fisac15, Chen2018}, $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$ as
+
+\begin{subequations} \label{eq:opt_ctrl}
+  \begin{align}
+  \tctrl^*(\rstate, \tvar) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb), \\
+  \tctrl^*(\rstate) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb). 
+  \end{align}
+\end{subequations}
+
+For control and disturbance affine systems, this minimization is given analytically.
+
 When the framework is executed on a computer, these two functions are saved as look-up tables over a grid representing the state space of the relative system.
  
 \subsection{Error Bound Guarantee via Value Function} \label{sec:proofs}
@@ -85,15 +221,14 @@ In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result
 The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ or $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. 
 The TEB is given by the set $\TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc\}$ in the finite time horizon case, and $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty\}$ in the infinite time horizon case\footnote{In practice, since $\valfunc$ is obtained numerically, we set, for example, $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty + \epsilon\}$ for some suitably small $\epsilon>0$}. 
 This TEB in the planner's frame of reference is given by
-\begin{equation} \label{eq:TEBp}
-\begin{aligned}
-\TEB_\pstate(\tau) = \{\pstate: \exists s, \valfunc(\tstate-\ptmat\pstate, \thor-\tau) \le \underline\valfunc\} \\
-\quad \text{(Finite time horizon)}\\
-\TEB_{\pstate, \infty} = \{\pstate: \exists s, \valfunc_\infty(\tstate-\ptmat\pstate) \le \underline\valfunc_\infty\} \\
-\quad \text{(Infinite time horizon)}\\
-\end{aligned}
-\end{equation}
-
+\begin{subequations} \label{eq:TEBp}
+  \begin{align} 
+  \TEB_\pstate(\tau) = \{\pstate: \exists s, \valfunc(\rtrans(\tstate-\ptmat\pstate), \thor-\tau) \le \underline\valfunc\}\label{eq:TEBp:inf} \\
+  \quad \text{(Finite time horizon)} \nonumber\\
+  \TEB_{\pstate, \infty} = \{\pstate: \exists s, \valfunc_\infty(\rtrans(\tstate-\ptmat\pstate)) \le \underline\valfunc_\infty\} \label{eq:TEBp:fin} \\
+  \quad \text{(Infinite time horizon)} \nonumber
+  \end{align}
+\end{subequations}
 This is the TEB that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. 
 Within this bound the tracking system may use any controller, but on the boundary\footnote{Practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and are not the focus of our paper.} of this bound the tracking system must use the safety optimal controller.
 In general, the TEB is defined as a set in the state space of the planning system, which allows the TEB to not only be in terms of position, but any state of the planning system such as velocity, as demonstrated in the example in Section \ref{sec:resultsMPC}.

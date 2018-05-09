@@ -1,10 +1,12 @@
 *.aux
 *.blg
 *.log
-docs/Tracking Journal/tracking.pdf
 *.gz
 ~*
 *.png
+docs/tracking_journal/tracking.pdf
+code/figs/
+
 
 *.mat
 !ros/src/meta_planner/precomputation/
@@ -48,7 +50,5 @@ ros/src/CMakeLists.txt
 *.dylib
 *.la
 *.a
-
-docs/tracking_journal/tracking\.pdf
-
-code/figs/
+
+

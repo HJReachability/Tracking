@@ -17,143 +17,69 @@ Finally, we show trajectory simulation results.
 For our first example, we demonstrate the combination of fast planning and provably robust tracking by combining fast sweeping method (FSM) \cite{Takei2013} with our computed TEB. 
 FSM is an efficient optimal control-based planner for car-like systems, and provides numerically convergent globally optimal trajectory in real-time.
 
-Consider the 5D car model and the Dubins car dynamics as follows:
-
-\begin{equation}
-\label{eq:5D_and_3D_dyn}
-\begin{aligned}
-\begin{array}{c}
-\left[
-\begin{array}{c}
-\dot x\\
-\dot y\\
-\dot\theta\\
-\dot v\\
-\dot \omega
-\end{array}
-\right]
-=
-\left[
-\begin{array}{c}
-v \cos \theta + d_x\\
-v \sin \theta + d_y\\
-\omega \\
-a\\
-\alpha
-\end{array}
-\right], \quad
-\left[
-\begin{array}{c}
-\dot {\hat x}\\
-\dot {\hat y}\\
-\dot {\hat \theta}\\
-\end{array}
-\right] 
-=
-\left[
-\begin{array}{c}
-\hat v \cos \hat\theta\\
-\hat v \sin \hat\theta\\
-\hat \omega
-\end{array}
-\right],
-\end{array}\\
-\end{aligned}
-\end{equation}
-
-\noindent where $(x,y,\theta),(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 5D car model and the Dubins car model respectively. The speed and turn rate $(v, \omega)$ are states for the 5D car model; for the Dubins car the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control. The control of the 5D car consists of the linear and angular acceleration, $(a, \alpha)$.
-
-In this example, we use FSM to perform real-time planning for the Dubins car model, whose trajectory is tracked by the 5D car model.
+In this example, we use FSM to perform real-time planning for the 3D kinematic car model, whose trajectory is tracked by the 5D car model.
+The dynamics of these models are given in \eqref{eq:5D_and_3D_dyn}.
+The model parameters are chosen to be $a \in [-0.5, 0.5]$, $|\alpha|\le 6$, $\hat v = 0.1$, $|\hat\omega|\le 1.5$, $|\dstb_x|, |\dstb_y|, |\dstb_\alpha|\le0.02$, $|\dstb_a| \le 0.2$.
 
 \subsubsection{Offline computation}
 
-We define a coordinate system $(x_r, y_r, \theta_r, v, \omega)$ such that $(x_r, y_r, \theta_r)$ is the position and heading of the 5D car in the frame of the Dubins car, and $(v, \omega)$ represents the speed and turn rate of the 5D car. Following \cite{Mitchell05} for the time derivative of $(x_r, y_r, \theta_r)$, we obtain the following relative dynamics:
+Using the relative system dynamics given in \eqref{eq:5D_and_3D_rdyn}, we defined the error function to be $\errfunc(\rstate) = x_\rstate^2 + y_\rstate^2$, and computed $\valfunc_\infty(\rstate)$, which is shown in Fig. \ref{fig:vf_TEB:5D3D}.
+The minimum of the value function was approximately $\underline\valfunc = 0.004$, and the size of the TEB in $(x_r, y_r)$ space is approximately $0.065$.
 
-\begin{equation}
-\label{eq:5D_and_3D_rdyn}
-\begin{aligned}
-\left[
-\begin{array}{c}
-\dot x_r\\
-\dot y_r\\
-\dot\theta_r\\
-\dot v\\
-\dot \omega
-\end{array}
-\right]
-=
-\left[
-\begin{array}{c}
-- \hat v + v \cos \theta_r + \hat \omega y_r + d_x\\
-v \sin \theta_r - \hat \omega x_r + d_y\\
-\omega - \hat \omega \\
-a\\
-\alpha
-\end{array}
-\right].
-\end{aligned}
-\end{equation}
+The top left plot shows the TEB $\TEB_{\pstate, \infty}$, which is obtained from \eqref{eq:TEBp:inf}, in green.
+The tracking model, which represents the system of interest, must apply the optimal control \eqref{eq:opt_ctrl} when it is on the green boundary.
+The cross sectional area of the TEB is the largest area in when $\theta_r = 0, \pi$. 
+This agrees with intuition, since at these $\theta_r$ values the 5D car model is either aligned with or opposite to the 3D car model.
+Since the 5D car is able to move both forward and backward, these two alignments make tracking the easiest.
+For the same reasoning, the cross sectional area is the smallest at $\theta_r = -\pi/2, \pi/2,$ etc.
 
-\MCnote{Show tracking error bound}
+The magenta and cyan planes indicate slices of the TEB at $\theta_r = \pi/2, -3\pi/4$, respectively.
+With these $\theta_r$ values fixed, corresponding projections of the value function onto $(x_r, y_r)$ space are shown in the top right and bottom left plots.
+Here, $\underline\valfunc$ is shown as the gray plane, with the intersection of the gray plane and the value function projection shown by the curve in the $0$-level plane. 
+These curves are slices of $\TEB_{\pstate, \infty}$ at the $\theta_r = \pi/2, -3\pi/4$ levels.
 
-\MCnote{Offline computation details (time etc.)}
+Computation was done on a desktop computer with a Core i7 5820K processor, on a $41\times41\times59\times35\times61$ grid, and took approximately 125 hours and required approximately 10 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
 
 \subsubsection{Online sensing and planning}
-Besides planning a trajectory to the goal, the car must also sense obstacles in the vicinity. For illustration, we chose a simple virtual sensor that reveals obstacles within a range of $r$ meters.
+The simulation showing the combination of tracking and planning is shown in Fig. \ref{fig:5D3Dsim}.
+The goal of the system, the 5D car, is to reach the blue circle at $(0.5, 0.5)$ with a heading that is within $\pi/6$ of the direction indicated by the arrow inside the blue circle, $\pi/2$.
+Three initially unknown obstacles, whose boundaries are shown in dotted black, make up the constraints $\constr$.
 
-Once an obstacle is sensed, the FSM planner replans the trajectory while taking into account all obstacles that have been sensed so far. 
-To ensure that the 5D car does not collide with the obstacles despite error in tracking, planning is done with respect to augmented obstacles that are ``expanded'' from the sensed obstacles by $\underline\valfunc$ in $(x,y)$ position space.
+While planning a trajectory to the goal, the car also senses obstacles in the vicinity.
+For this example, we chose a simple virtual sensor that reveals obstacles within a range of $0.5$ units and in front of the vehicle within an angle of $\pi/6$.
+This sensing region is depicted as the light green fan.
 
-\MCnote{Online computation details (time etc.)}
+When a portion of the unknown obstacles is within this region, that portion is made known to the vehicle, and is shown in red.
+These make up the sensed constraints $\constrSense$.
+To ensure that the 5D car does not collide with the obstacles despite error in tracking, planning is done with respect to augmented constraints $\constrAug$, shown in dashed blue.
 
-\subsubsection{Simulations}
+Given the current planning constraints $\constrAug$, the 3D planning system plans, in real-time using FSM, towards the goal.
+This plan is shown in dotted black.
+The 5D system robustly tracks the 3D system within the TEB in Fig. \ref{fig:vf_TEB:5D3D}.
 
-The Dubins car parameters are
+Fig. \ref{fig:5D3Dsim} shows four time snapshots of the simulation.
+In the top left subplot, the system has sensed only a very small portion of the obstacles, and hence plans a trajectory through an unknown obstacle to the target.
+However, while tracking this initial trajectory, more of the L-shaped obstacle is made known to the system, and therefore the system plans around this obstacle, as shown in the top right subplot.
+The bottom subplots show that eventually more obstacles are made known, and the system reaches the goal at $t=23.9$.
 
-The control bounds for the 5D car are $a \in []$, $|\alpha| < $.
-
-The disturbance bound is $\|(d_x, d_y)\|_2 < $.
-
-The sensing range is $r = $ meters.
-
-We used a C implementation of FSM.
-
-Computation times:
-\begin{itemize}
-\item === TOTAL ===
-\item  512 iterations in 637.5527 seconds
-\item 1.2452 seconds per iteration on average
-\item === PLANNING ===
-\item 512 iterations in 33.5683 seconds
-\item 0.0656 seconds per iteration on average
-\item === TRACKING ===
-\item 512 iterations in 0.8991 seconds
-\item 0.0018 seconds per iteration on average
-\end{itemize}
-
-On an unoptimized MATLAB implementation on a desktop computer with a Core i7-2600K CPU, each iteration took approximately ?? ms on average. Most of this time is spent on planning: obtaining the tracking controller took approximately ?? ms per iteration on average. The frequency of control was once every ?? ms.
-
-\MCnote{Fig. ?? shows the simulation results. 
-Four time snapshots are shown. The initial position is $(-12, 0, 0)$, and the goal position is $(12, 0, 0)$. The top left subplot shows the entire trajectory from beginning to end. In all plots, a magenta star represents the position of the planning model; its movement is based on the paths planned by RRT, and is modeled by a 3D holonomic vehicle with a maximum speed. The blue box around the magenta star represents the tracking error bound.}
+The simulation was done in MATLAB on a desktop computer with a Core i7 2600K CPU.
+Time was discretized in increments of $0.1$.
+Averaged over the duration of the simulation, planning with FSM took approximately $0.066$ seconds per iteration, and obtaining the tracking controller from \eqref{eq:opt_ctrl} took approximately $0.0018$ seconds per iteration.
 
 \begin{figure}
-  \label{fig:5D3Dsim}
   \centering
-  \begin{subfigure}[t]{0.49\columnwidth} \label{fig:5D3Dsim:1}
+  \begin{subfigure}[t]{0.49\columnwidth}
     \includegraphics[width=\columnwidth]{fig/P5D_Dubins/36}
   \end{subfigure}
-  \begin{subfigure}[t]{0.49\columnwidth} \label{fig:5D3Dsim:2}
+  \begin{subfigure}[t]{0.49\columnwidth}
     \includegraphics[width=\columnwidth]{fig/P5D_Dubins/101}
-    \caption{}
   \end{subfigure}  
 
-  \begin{subfigure}[t]{0.49\columnwidth}\label{fig:5D3Dsim:3}
+  \begin{subfigure}[t]{0.49\columnwidth}
     \includegraphics[width=\columnwidth]{fig/P5D_Dubins/136}
-    \caption{}
   \end{subfigure}
-  \begin{subfigure}[t]{0.49\columnwidth}\label{fig:5D3Dsim:4}
+  \begin{subfigure}[t]{0.49\columnwidth}
     \includegraphics[width=\columnwidth]{fig/P5D_Dubins/240}
-    \caption{}
   \end{subfigure}
-  \caption{}
+  \caption{Simulation of the 5D-3D example. As the vehicle with 5D car dynamics senses new obstacles in the sensing region (light green), the 3D model replans trajectories, which are robustly tracked by the 5D system. Augmentation of the constraints resulting from the obstacles ensures safety of the 5D system using the optimal tracking controller.} \label{fig:5D3Dsim}
 \end{figure}
