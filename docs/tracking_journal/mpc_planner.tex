@@ -93,7 +93,20 @@ g \tan \theta_y - \hat a_y\\
 \end{equation}
 
 As in the 10D-3D example in Section \ref{sec:resultsRRT}, the relative dynamics are decomposable into two 4D subsystems, and so computations were done in 4D space.
-On a desktop computer with an Intel Core i7 2600K CPU, the offline computation on a $81\times81\times65\times65$ grid took approximately 35 hours and  required approximately 1 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
+
+Fig. \ref{fig:vf_TEB:8D4D} shows the $(x_r, v_{x,r})$-projection of value function across several different times on the left subplot.
+The total time horizon was $T=15$, and the value function did not converge.
+The gray horizontal plane indicates the value of $\underline V$, which was $1.14$.
+Note that with increasing $\tau$, $V(\rstate,\thor-\tau)$ is non-increasing, as proven in Proposition \ref{prop:nonconv}.
+
+The right subplot of Fig. \ref{fig:vf_TEB:8D4D} shows the $(x_r, v_{x,r})$-projection of the time-varying TEB.
+At $\tau=0$, the TEB is the smallest, and as $\tau$ increases, the size of TEB also increases, consistent with Proposition \ref{prop:nonconv}.
+In other words, the set of possible error states $(x_r, v_{x,r})$ in the relative system increases with time, which makes intuitive sense.
+
+The TEB shown in Fig. \ref{fig:vf_TEB:8D4D} are used to augment planning constraints in the $\hat x$ and $\hat v_x$ dimensions.
+Since we have chosen identical parameters for the first four and last four states, the TEB in the $\hat y$ and $\hat v_y$ dimensions is identical.
+
+On a desktop computer with an Intel Core i7 2600K CPU, the offline computation on a $81\times81\times65\times65$ grid took approximately 35 hours and  required approximately 17 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
 
 \subsubsection{Online sensing and planning}
 %
