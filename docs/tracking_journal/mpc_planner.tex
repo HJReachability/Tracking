@@ -106,7 +106,8 @@ In other words, the set of possible error states $(x_r, v_{x,r})$ in the relativ
 The TEB shown in Fig. \ref{fig:vf_TEB:8D4D} are used to augment planning constraints in the $\hat x$ and $\hat v_x$ dimensions.
 Since we have chosen identical parameters for the first four and last four states, the TEB in the $\hat y$ and $\hat v_y$ dimensions is identical.
 
-On a desktop computer with an Intel Core i7 2600K CPU, the offline computation on a $81\times81\times65\times65$ grid took approximately 35 hours and  required approximately 17 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
+On a desktop computer with an Intel Core i7 5820K CPU, the offline computation on a $81\times81\times65\times65$ grid with $75$ time discretization points took approximately 30 hours and  required approximately 17 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
+Note that unlike the other numerical examples, look-up tables representing the value function and its gradient must be stored at each time discretization point.
 
 \subsubsection{Online sensing and planning}
 %
