@@ -6,7 +6,7 @@ In reality the planner is typically not actively trying to avoid the tracking sy
 If both systems are acting optimally in this way, we want to determine the largest relative distance (based on some suitable metric) that may occur over time. 
 This distance is the maximum possible tracking error between the two systems, and is captured by the value function obtained from solving the HJ VI \eqref{eq:HJVI}.
 
-\subsection{Relative Dynamics}
+\subsection{Relative System Dynamics}
 To determine the relative distance (or another error metric) that may occur over time, we must first define the relative system derived from the tracking and planning models. 
 The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). 
 The relative system is obtained by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model.
@@ -18,7 +18,7 @@ Defining $\rstate$ to be the relative system state, we write
 \end{equation}
 
 \noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model.
-The relative system states $\rstate$ represent the tracking states relative to the planning states. 
+The relative system states $\rstate$ represent the tracking system states relative to the planning states.
 
 The function $\rtrans$ is a nonlinear transform, usually either the identity function or a rotation, that facilitates simplification of the relative system dynamics to be of the form
 
@@ -28,8 +28,11 @@ The function $\rtrans$ is a nonlinear transform, usually either the identity fun
 \end{equation}
 
 \noindent which only depends on the relative system state $r$.
-A transform $\rtrans$ that achieves the relative system dynamics \eqref{eq:rdyn} is not strictly needed and may not exist; however, in principle the theory we present in this paper can be easily adapted to this case.
+A transform $\rtrans$ that achieves the relative system dynamics \eqref{eq:rdyn} is not strictly needed and may not exist; however, in principle the theory we present can be easily adapted to this case, albeit at a cost of having a higher-dimensional relative system.
 In this paper, we assume that a suitable $\rtrans$ is available so that the dimensionality of the relative system state space is at most that of the tracking model.
+
+In addition, we define the error state $\estate$ to be the relative system state \textit{excluding} the absolute states of the tracking system, and the auxiliary states $\astate$ to be the relative system state \textit{excluding} the error state.
+Hence, $\rstate = (\estate, \astate)$.
 
 To be concrete, let the tracking model be a 5D car model, and the planning model be a 3D kinematic car model as follows:
 
@@ -68,8 +71,8 @@ a + \dstb_a\\
 The speed and turn rate $(v, \omega)$ are states for the 5D model; for the 3D model the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control.
 The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$, and the disturbances are $(\dstb_x, \dstb_y, \dstb_a, \dstb_\alpha)$.
 
-We define the relative system state to be $(x_r, y_r, \theta_r, v, \omega)$, such that $(x_r, y_r, \theta_r)$ is the position and heading of the 5D model in the reference frame of the 3D model, and $(v, \omega)$ represents the speed and turn rate of the 5D model.
-The relative system state $\rstate$, tracking model state $\tstate$, and planning model state $\pstate$ are related through $\rtrans$ and $\ptmat$ as follows:
+We define the relative system state to be $(x_r, y_r, \theta_r, v, \omega)$, such that the error state $\estate=(x_r, y_r, \theta_r)$ is the position and heading of the 5D model in the reference frame of the 3D model, and the auxiliary state $\astate = (v, \omega)$ represents the speed and turn rate of the 5D model.
+The relative system state $\rstate = (\estate, \astate)$, tracking model state $\tstate$, and planning model state $\pstate$ are related through $\rtrans$ and $\ptmat$ as follows:
 
 \begin{equation}\small
 \label{eq:5D_and_3D_err_state}
@@ -124,6 +127,11 @@ Taking the time derivative, we obtain the following relative system dynamics:
 \begin{equation}
 \label{eq:5D_and_3D_rdyn}
 \dot \rstate = 
+\begin{bmatrix}
+\dot \estate\\
+\dot \astate
+\end{bmatrix}
+=
 \begin{bmatrix}
 \dot x_r\\
 \dot y_r\\
@@ -217,20 +225,22 @@ We now state the main theoretical results of this paper in Propositions \ref{pro
 In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking system and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$ or $\valfunc_\infty(\rstate)$. 
 The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ or $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. 
 The TEB is given by the set $\TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc\}$ in the finite time horizon case, and $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty\}$ in the infinite time horizon case\footnote{In practice, since $\valfunc$ is obtained numerically, we set, for example, $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty + \epsilon\}$ for some suitably small $\epsilon>0$}. 
-This TEB in the planner's frame of reference is given by
+Recall that we write the relative system state as $\rstate = (\estate, \astate)$, where $\estate,\astate$ are the error and auxiliary states.
+Therefore, the TEB in the error state subspace is given by projecting away the auxiliary states $\astate$ in $\TEB(\tau)$ or $\TEB_\infty$:
 \begin{subequations} \label{eq:TEBp}
   \begin{align} 
-  \TEB_\pstate(\tau) = \{\pstate: \exists s, \valfunc(\rtrans(\tstate-\ptmat\pstate), \thor-\tau) \le \underline\valfunc\}\label{eq:TEBp:inf} \\
+  \TEB_\estate(\tau) = \{\estate: \exists \astate, \valfunc(\estate, \astate, \thor-\tau) \le \underline\valfunc\},\label{eq:TEBp:inf} \\
   \quad \text{(Finite time horizon)} \nonumber\\
-  \TEB_{\pstate, \infty} = \{\pstate: \exists s, \valfunc_\infty(\rtrans(\tstate-\ptmat\pstate)) \le \underline\valfunc_\infty\} \label{eq:TEBp:fin} \\
+  \TEB_{\estate, \infty} = \{\estate: \exists \astate, \valfunc_\infty(\estate, \astate) \le \underline\valfunc_\infty\}. \label{eq:TEBp:fin} \\
   \quad \text{(Infinite time horizon)} \nonumber
   \end{align}
 \end{subequations}
 This is the TEB that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. 
 Within this bound the tracking system may use any controller, but on the boundary\footnote{Practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and are not the focus of our paper.} of this bound the tracking system must use the safety optimal controller.
-In general, the TEB is defined as a set in the state space of the planning system, which allows the TEB to not only be in terms of position, but any state of the planning system such as velocity, as demonstrated in the example in Section \ref{sec:resultsMPC}.
+In general, the TEB is defined as a set in the error space, which allows the TEB to not only be in terms of position, but any state of the planning system such as velocity, as demonstrated in the example in Section \ref{sec:resultsMPC}.
 
-We now formally state and prove the propositions. Note that an interpretation of \eqref{eq:TEBp} is that $\walfunc(\rstate, t) := \valfunc(\rstate, \thor - \tvar)$ and $\valfunc_\infty(\rstate)$ are control-Lyapunov functions for the relative dynamics between the tracking system and the planning system.
+We now formally state and prove the propositions. 
+Note that an interpretation of \eqref{eq:TEBp} is that $\walfunc(\rstate, t) := \valfunc(\rstate, \thor - \tvar)$ and $\valfunc_\infty(\rstate)$ are control-Lyapunov functions for the relative dynamics between the tracking system and the planning system.
 
 \begin{prop}
   \label{prop:nonconv}

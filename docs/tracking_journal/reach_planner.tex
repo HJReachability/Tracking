@@ -1,7 +1,7 @@
 % !TEX root = tracking.tex
 \section{Numerical examples} \label{sec:results}
 
-In this section, we demonstrate the FaSTrack framework in three numerical examples involving a 5D car tracking a Dubins car model with the FSM planner, a 10D quadrotor tracking a single integrator model with the RRT planner, and an 8D quadrotor tracking a double integrator model with the MPC planner.
+In this section, we demonstrate the FaSTrack framework in three numerical examples involving a 5D car tracking a 3D car model with the FSM planner, a 10D quadrotor tracking a single integrator model with the RRT planner, and an 8D quadrotor tracking a double integrator model with the MPC planner.
 In each example, obstacles in the environment are \textit{a priori} unknown, and are revealed to the vehicle when they are sensed.
 Whenever, obstacle map is updated, the planner re-plans a trajectory in real-time.
 In this paper, the details of sensing are kept as simple as possible; we aim to only demonstrate our framework for real-time guaranteed safe planning and re-planning.
