@@ -28,7 +28,7 @@ The function $\rtrans$ is a nonlinear transform, usually either the identity fun
 \end{equation}
 
 \noindent which only depends on the relative system state $r$.
-A transform $\rtrans$ that achieves the relative system dynamics \eqref{eq:rdyn} is not strictly needed and may not exist; however, in principle the theory we present can be easily adapted to this case, albeit at a cost of having a higher-dimensional relative system.
+A transform $\rtrans$ that achieves the relative system dynamics in the form of \eqref{eq:rdyn} is not strictly needed and may not exist; however, in principle the theory we present can be easily adapted to this case, albeit at a cost of having a higher-dimensional relative system.
 In this paper, we assume that a suitable $\rtrans$ is available so that the dimensionality of the relative system state space is at most that of the tracking model.
 
 In addition, we define the error state $\estate$ to be the relative system state \textit{excluding} the absolute states of the tracking system, and the auxiliary states $\astate$ to be the relative system state \textit{excluding} the error state.
@@ -224,7 +224,16 @@ We now state the main theoretical results of this paper in Propositions \ref{pro
 \end{enumerate}
 In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking system and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$ or $\valfunc_\infty(\rstate)$. 
 The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ or $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. 
-The TEB is given by the set $\TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc\}$ in the finite time horizon case, and $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty\}$ in the infinite time horizon case\footnote{In practice, since $\valfunc$ is obtained numerically, we set, for example, $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty + \epsilon\}$ for some suitably small $\epsilon>0$}. 
+The TEB is given by the set\footnote{In practice, since $\valfunc$ is obtained numerically, we set, for example, $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty + \epsilon\}$ for some suitably small $\epsilon>0$}
+\begin{subequations} \label{eq:TEB}
+  \begin{align}
+  \TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc\}, \\
+  \quad \text{(Finite time horizon)} \nonumber\\
+  \TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty\}. \\
+  \quad \text{(Infinite time horizon)} \nonumber
+  \end{align}
+\end{subequations}
+
 Recall that we write the relative system state as $\rstate = (\estate, \astate)$, where $\estate,\astate$ are the error and auxiliary states.
 Therefore, the TEB in the error state subspace is given by projecting away the auxiliary states $\astate$ in $\TEB(\tau)$ or $\TEB_\infty$:
 \begin{subequations} \label{eq:TEBp}
@@ -249,22 +258,22 @@ Note that an interpretation of \eqref{eq:TEBp} is that $\walfunc(\rstate, t) := 
   
   \begin{subequations} \label{eq:fin_thor_prop}
       \begin{align}
-      \forall \tvar' \ge \tvar, &~ \rstate \in \TEB(\tvar) \Rightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB(\tvar'), \\
-      \text{where} &\quad \rtraj^*(\tvar; \rstate, 0) := \rtraj(\tvar; \rstate, 0, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))), \label{eq:fin_thor_prop:here} \\
+      \forall \tvar' \ge \tvar, &~ \rstate \in \TEB(\tvar) \Rightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB(\tvar'), \label{eq:fin_thor_prop:statement}\\
+      \text{where} &\quad \rtraj^*(\tvar'; \rstate, \tvar) := \rtraj(\tvar'; \rstate, \tvar, \tctrl^*(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))), \label{eq:fin_thor_prop:here} \\
       &\quad
       \begin{aligned}
       &\tctrl^*(\cdot) = \arg \inf_{\tctrl(\cdot)\in\tcfset(t)}\big\{\\
-      & \quad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \big\},\\
+      & \quad \max_{\tvar' \in [\tvar, \thor]} \errfunc(\rtraj(\tvar'; \rstate, \tvar, \tctrl(\cdot), \pctrl^*(\cdot), \dstb^*(\cdot))) \big\}, \label{eq:fin_thor_prop:ctrl}\\
       \end{aligned} \\
       &\quad
       \begin{aligned}
-      & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{ \\
-      & \quad \max_{t \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \dstb^*(\cdot))) \big\} \\
+      & \pctrl^*(\cdot) := \gamma_\pstate^*[\tctrl](\cdot) = \arg \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(\tvar)} \big\{ \\
+      & \quad \max_{\tvar' \in [\tvar, \thor]} \errfunc(\rtraj(\tvar'; \rstate, \tvar, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \dstb^*(\cdot))) \big\} \\
       \end{aligned} \\
       &\quad
       \begin{aligned}
       & \dstb^*(\cdot) = \arg \sup_{\gamma_{\dstb} \in \Gamma_\dstb(t)} \sup_{\gamma_{\pstate} \in \Gamma_\pstate(t)} \inf_{\tctrl(\cdot) \in \tcfset(t)} \big\{\\
-      & \quad \max_{\tvar \in [0, \thor]} \errfunc(\rtraj(\tvar; \rstate, 0, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))) \big\}
+      & \quad \max_{\tvar' \in [\tvar, \thor]} \errfunc(\rtraj(\tvar'; \rstate, \tvar, \tctrl(\cdot), \gamma_\pstate[\tctrl](\cdot), \gamma_\dstb[\tctrl](\cdot))) \big\}
       \end{aligned} \label{eq:fin_thor_prop:there}
       \end{align}
   \end{subequations}
@@ -295,7 +304,7 @@ Note that an interpretation of \eqref{eq:TEBp} is that $\walfunc(\rstate, t) := 
 
 Explanation of steps:
 \begin{itemize}
-  \item \eqref{eq:fin_thor_steps:1} and \eqref{eq:fin_thor_steps:7}: by definition of value function
+  \item \eqref{eq:fin_thor_steps:1} and \eqref{eq:fin_thor_steps:7}: by definition of value function, after shifting the time interval in \eqref{eq:fin_thor_prop:ctrl} to \eqref{eq:fin_thor_prop:there} from $[\tvar, \thor]$ to $[0, \thor-\tvar]$.
   \item \eqref{eq:fin_thor_steps:2}: rewriting $\max_{\tau \in [0, \thor-\tvar]}$ by splitting up the time interval $[0, \thor-\tvar]$ into $[0, \tvar'-\tvar]$ and $[\tvar'-\tvar, \thor-\tvar]$
   \item \eqref{eq:fin_thor_steps:3}: ignoring first argument of the outside $\max$ operator
   \item \eqref{eq:fin_thor_steps:4}: shifting time reference by $\tvar-\tvar'$, since dynamics are time-invariant
@@ -315,6 +324,13 @@ Now, we finish the proof as follows:
 \noindent where $\eqref{eq:vf_nondec}$ is used for the step in \eqref{eq:fin_hor:2}.
 
 \end{IEEEproof} 
+
+\begin{rem}
+  As already mentioned, proposition \ref{prop:nonconv} assumes that the planning control $\pctrl$ and disturbance $\dstb$ are optimally trying to maximize the value function $\valfunc$, and thereby increasing the size of the TEB $\TEB$.
+  Despite this, \eqref{eq:fin_thor_prop:statement} still holds.
+  In reality, $\pctrl$ and $\dstb$ do not behave in a worst-case fashion, and it is often the case that when $\tvar' \ge \tvar$, we have $\rstate \in \TEB(\tvar) \Rightarrow \rtraj(\tvar'; \rstate, \tvar) \in \TEB(\tau)$ for some $\tau \le \tvar'$.
+  Thus, one can ``take advantage'' of the suboptimality of $\pctrl$ and $\dstb$ by finding the earliest $\tau$ such that $\rtraj(\tvar'; \rstate, \tvar) \in \TEB(\tau)$ in order to have the tighter TEB over a longer time-horizon.
+\end{rem}
 
  \begin{prop}
    \label{prop:main}

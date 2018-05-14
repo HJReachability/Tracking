@@ -10,20 +10,23 @@ The TEB in the planning frame of reference is then computed using \eqref{eq:TEBp
 	\caption{Online Trajectory Planning}
 	\label{alg:algOnline}
 	\begin{algorithmic}[1]
-		%\STATE Inputs: tracking error function $\valfunc(\rstate)$, safety control function $\deriv(\rstate)$
-		\STATE \textbf{Initialization}: \label{ln:Istart}
- 		\STATE Initialize $\TEB(0)$ (finite time horizon) or $\TEB_\infty$ (infinite time horizon) from \eqref{eq:TEBp}. 
-		\STATE Choose $\pstate, \tstate$ such that $\rstate \in  \TEB_\estate(0)$ (or $\rstate\in\TEB_{\estate,\infty}$).
+		\STATE \textbf{Given}: \label{ln:given}
+		\STATE $\valfunc(\rstate, \tvar''), \tvar'' \in [0, \thor]$ or $\valfunc_\infty(\rstate)$, and gradient $\nabla \valfunc(\rstate, \tvar'')$ or $\deriv_\infty(\rstate)$
+ 		\STATE $\TEB(\tvar'), \tvar' \in [0,\thor]$ (finite time horizon) or $\TEB_\infty$ (infinite time horizon) from \eqref{eq:TEB}, and $\TEB_\estate$ from \eqref{eq:TEBp}
+    \STATE \textbf{Initialization}: \label{ln:Istart}
+		\STATE Choose $\pstate, \tstate$ such that $\rstate \in \TEB(0)$ (or $\rstate\in\TEB_\infty$).
     \STATE Set initial time: $\tvar \leftarrow 0$. \label{ln:Iend}
 		\WHILE{Planning goal is not reached OR planning horizon is exceeded}
 		\STATE \textbf{TEB Block}: \label{ln:obsStart}
-		\STATE $\constrAug \leftarrow \constrSense \ominus \TEB_\estate(\tvar)$ (or $\TEB_{\estate, \infty}$)\label{ln:obsEnd}
+    \STATE Look for the smallest $\tau$ such that $\rstate \in \TEB(\tau)$ (finite time-horizon case only)
+		\STATE $\constrAug(\tvar + \tvar') \leftarrow \constrSense \ominus \TEB_\estate(\tau + \tvar')$ \label{ln:obsEnd}
+    \STATE (or $\constrAug \leftarrow \constrSense \ominus \TEB_{\estate, \infty}$) 
 		
 		\STATE \textbf{Path Planner Block}:\label{ln:plannerStart}
 		\STATE $\pstate_\text{next} \leftarrow \plannerfunc(\pstate, \constrAug)$\label{ln:plannerEnd}
 		
 		\STATE \textbf{Hybrid Tracking Controller Block}:\label{ln:controllerStart}
-		\STATE $\rstate_\text{next} = \tstate - \ptmat\pstate_\text{next}$
+		\STATE $\rstate_\text{next} = \rtrans(\tstate - \ptmat\pstate_\text{next})$
 		
 		\IF{$\rstate_\text{next}$ is on boundary $\TEB_\estate(\tvar)$ (or $\TEB_{\estate, \infty}$)} 
 		\STATE {use safety controller: $\tctrl \leftarrow \tctrl^*$ in \eqref{eq:opt_ctrl}}
@@ -36,6 +39,8 @@ The TEB in the planning frame of reference is then computed using \eqref{eq:TEBp
 		\STATE \textbf{Planning Model Block}:\label{ln:planningStart}
 		\STATE update planning state $\pstate \leftarrow \pstate_\text{next}$
 		\STATE check if $\pstate$ is at planning goal \label{ln:planningEnd}
+    \STATE \textbf{Update time}:
+    \STATE $\tvar \leftarrow \tvar + \Delta \tvar$
 		\ENDWHILE
 	\end{algorithmic}
 \end{algorithm}
