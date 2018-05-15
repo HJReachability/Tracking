@@ -154,12 +154,26 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   pY = eval_u(sD_X.grid, derivX, rel_x(YDims));
   pZ = eval_u(sD_Z.grid, derivZ, rel_x(ZDims));
   
+  if norm(virt_x - trueQuad.x([1 5 9])) > trackErr/4
+      uX = sD_X.dynSys.optCtrl([], rel_x(XDims), pX, uMode);
+      uY = sD_X.dynSys.optCtrl([], rel_x(YDims), pY, uMode);
+      uZ = sD_Z.dynSys.optCtrl([], rel_x(ZDims), pZ, uMode);
+      u = [uX uY uZ];
+      u = u(rl_ui);
+      up = u;
+      boxColor = 'r';
+      
+   else
+       uX = LQR_Q2D(rel_x(XDims),.5);
+       uY = LQR_Q2D(rel_x(YDims),.5);
+       uZ = LQR_Q2D(rel_x(ZDims),.01);
+       
+       u = [uX uY uZ];
+       boxColor = 'b';
+   end
   % Find optimal control of relative system (no performance control)
-  uX = sD_X.dynSys.optCtrl([], rel_x(XDims), pX, uMode);
-  uY = sD_X.dynSys.optCtrl([], rel_x(YDims), pY, uMode);
-  uZ = sD_Z.dynSys.optCtrl([], rel_x(ZDims), pZ, uMode);
-  u = [uX uY uZ];
-  u = u(rl_ui);
+ 
+
   lookup_time = lookup_time + toc(local_start);
   
   %% True System Block
@@ -170,7 +184,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   trueQuad.updateState(u, dt, [], d);
 
   % Make sure error isn't too big (shouldn't happen)
-  if norm(virt_x - trueQuad.x([1 5 9])) > trackErr
+  if max(virt_x - trueQuad.x([1 5 9])) > trackErr
     keyboard
   end
   
@@ -242,7 +256,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
     else
       boxMap.global_obs = boxShape;
     end
-    boxMap.plotGlobal('b', '-');
+    boxMap.plotGlobal(boxColor, '-');
 
     drawnow
 
