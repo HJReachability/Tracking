@@ -109,6 +109,12 @@ else
 end
 dMin = -dMax;
 
+if isfield(extraArgs,'keepLast')
+  keepLast = extraArgs.keepLast;
+else
+  keepLast = 1;
+end
+
 % dMax = [1/72*pi; 1/72*pi; 1/72*pi];
 % dMin = -dMax;
 
@@ -180,7 +186,7 @@ if visualize
   figure(HJIextraArgs.fig_num)
   clf
 end
-HJIextraArgs.keepLast = 1;
+HJIextraArgs.keepLast = keepLast;
 
 %% Run z subsystem
 [dataZ, tauZ] = HJIPDE_solve(dataZ0, tau, sD_Z, 'maxVOverTime', HJIextraArgs);
