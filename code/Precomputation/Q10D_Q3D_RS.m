@@ -1,5 +1,5 @@
 function [sD_X, sD_Z, dataX, dataZ, derivX, derivZ, TEB] = ...
-  Q10D_Q3D(gNX, gNZ, dt, tMax, extraArgs)
+  Q10D_Q3D_RS(gNX, gNZ, dt, tMax, extraArgs)
 % Computes the tracking error bound and optimal control policy for a 10D
 % quadrotor tracking a 3D point source.
 % Inputs:
