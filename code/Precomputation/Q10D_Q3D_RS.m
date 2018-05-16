@@ -219,19 +219,19 @@ if visualize
   figure(4)
   clf
   subplot(2,1,1)
-  hZ = surf(sD_Z.grid.xs{1},sD_Z.grid.xs{2},sqrt(dataZ));
+  hZ = surf(sD_Z.grid.xs{1},sD_Z.grid.xs{2},sqrt(dataZ(:,:,end)));
   xlabel('$z_r$','Interpreter','latex','FontSize',20)
   ylabel('$v_z$','Interpreter','latex','FontSize',20)
   
   subplot(2,1,2)
-  [g2DX,data2DX]=proj(sD_X.grid,sqrt(dataX),[0 0 1 1],[0 0]);
+  [g2DX,data2DX]=proj(sD_X.grid,sqrt(dataX(:,:,:,:,end)),[0 0 1 1],[0 0]);
   hX = surf(g2DX.xs{1},g2DX.xs{2},data2DX);
   xlabel('$x_r$','Interpreter','latex','FontSize',20)
   ylabel('$v_x$','Interpreter','latex','FontSize',20)
 end
 %% compute gradients (for controller)
-derivX = computeGradients(sD_X.grid,dataX);
-derivZ = computeGradients(sD_Z.grid,dataZ);
+derivX = computeGradients(sD_X.grid,dataX(:,:,:,:,end));
+derivZ = computeGradients(sD_Z.grid,dataZ(:,:,end));
 
 %% save
 save(['Quad10D_g' num2str(gNZ(1)) '_dt0' num2str(dt*100) '_t' ...
