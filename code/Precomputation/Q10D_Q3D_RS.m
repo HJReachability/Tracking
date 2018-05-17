@@ -1,5 +1,5 @@
 function [sD_X, sD_Z, dataX, dataZ, derivX, derivZ, TEB] = ...
-  Q10D_Q3D(gNX, gNZ, dt, tMax, extraArgs)
+  Q10D_Q3D_RS(gNX, gNZ, dt, tMax, extraArgs)
 % Computes the tracking error bound and optimal control policy for a 10D
 % quadrotor tracking a 3D point source.
 % Inputs:
@@ -109,6 +109,12 @@ else
 end
 dMin = -dMax;
 
+if isfield(extraArgs,'keepLast')
+  keepLast = extraArgs.keepLast;
+else
+  keepLast = 1;
+end
+
 % dMax = [1/72*pi; 1/72*pi; 1/72*pi];
 % dMin = -dMax;
 
@@ -180,7 +186,7 @@ if visualize
   figure(HJIextraArgs.fig_num)
   clf
 end
-HJIextraArgs.keepLast = 1;
+HJIextraArgs.keepLast = keepLast;
 
 %% Run z subsystem
 [dataZ, tauZ] = HJIPDE_solve(dataZ0, tau, sD_Z, 'maxVOverTime', HJIextraArgs);
@@ -213,19 +219,19 @@ if visualize
   figure(4)
   clf
   subplot(2,1,1)
-  hZ = surf(sD_Z.grid.xs{1},sD_Z.grid.xs{2},sqrt(dataZ));
+  hZ = surf(sD_Z.grid.xs{1},sD_Z.grid.xs{2},sqrt(dataZ(:,:,end)));
   xlabel('$z_r$','Interpreter','latex','FontSize',20)
   ylabel('$v_z$','Interpreter','latex','FontSize',20)
   
   subplot(2,1,2)
-  [g2DX,data2DX]=proj(sD_X.grid,sqrt(dataX),[0 0 1 1],[0 0]);
+  [g2DX,data2DX]=proj(sD_X.grid,sqrt(dataX(:,:,:,:,end)),[0 0 1 1],[0 0]);
   hX = surf(g2DX.xs{1},g2DX.xs{2},data2DX);
   xlabel('$x_r$','Interpreter','latex','FontSize',20)
   ylabel('$v_x$','Interpreter','latex','FontSize',20)
 end
 %% compute gradients (for controller)
-derivX = computeGradients(sD_X.grid,dataX);
-derivZ = computeGradients(sD_Z.grid,dataZ);
+derivX = computeGradients(sD_X.grid,dataX(:,:,:,:,end));
+derivZ = computeGradients(sD_Z.grid,dataZ(:,:,end));
 
 %% save
 save(['Quad10D_g' num2str(gNZ(1)) '_dt0' num2str(dt*100) '_t' ...
