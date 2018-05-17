@@ -31,18 +31,18 @@ function [sD_X, sD_Z, dataX, dataZ, derivX, derivZ, TEB] = ...
 
 % number of grid points in each dimension
 if nargin < 1
-  gNX = [101 101 ceil(101/8) ceil(101/5)];
+  gNX = [61 61 41 41];
   gNZ = [101 101];
 end
 
 % time step
 if nargin < 2
-  dt = 0.01;
+  dt = 0.5;
 end
 
 % max # of seconds to compute back in time (should converge before this)
 if nargin<3
-  tMax = 5;
+  tMax = 10;
 end
 
 t0 = 0;
@@ -56,7 +56,7 @@ end
 if isfield(extraArgs,'accuracy')
   accuracy = extraArgs.accuracy;
 else
-  accuracy = 'low';
+  accuracy = 'veryHigh';
 end
 
 if isfield(extraArgs,'targetType')
@@ -73,10 +73,10 @@ end
 
 
 %% Set up grid
-gMinX = [-5; -5; -35*pi/180; -1];
-gMaxX = [ 5;  5;  35*pi/180;  1];
-gMinZ = [-5; -5];
-gMaxZ = [ 5;  5];
+gMinX = [-2; -2; -45*pi/180; -4];
+gMaxX = [ 2;  2;  45*pi/180;  4];
+gMinZ = [-2; -2];
+gMaxZ = [ 2;  2];
 
 sD_X.grid = createGrid(gMinX, gMaxX, gNX);
 sD_Z.grid = createGrid(gMinZ, gMaxZ, gNZ);
@@ -101,11 +101,10 @@ else
   uMin = [-.5; -20/180*pi; -.5; -20/180*pi; -0.5; 0];
 end
 
-
 if isfield(extraArgs,'dMax')
   dMax = extraArgs.dMax;
 else
-  dMax = [0; 0; 0];
+  dMax = [0.1; 0.1; 0.1];
 end
 dMin = -dMax;
 
@@ -206,8 +205,10 @@ end
 [dataX, tauX] = HJIPDE_solve(dataX0, tau, sD_X, 'maxVOverTime', HJIextraArgs);
 
 %% Find tracking error bound
-TEB_Z = min(dataZ(:));
-TEB_X = min(dataX(:));
+dataX_last = dataZ(:,:,:,:,end);
+dataZ_last = dataZ(:,:,end);
+TEB_Z = min(dataZ_last);
+TEB_X = min(dataX_last);
 TEB = max(TEB_Z,TEB_X);
 
 if strcmp(targetType,'quadratic')
@@ -219,19 +220,19 @@ if visualize
   figure(4)
   clf
   subplot(2,1,1)
-  hZ = surf(sD_Z.grid.xs{1},sD_Z.grid.xs{2},sqrt(dataZ(:,:,end)));
+  hZ = surf(sD_Z.grid.xs{1}, sD_Z.grid.xs{2}, sqrt(dataZ_last));
   xlabel('$z_r$','Interpreter','latex','FontSize',20)
   ylabel('$v_z$','Interpreter','latex','FontSize',20)
   
   subplot(2,1,2)
-  [g2DX,data2DX]=proj(sD_X.grid,sqrt(dataX(:,:,:,:,end)),[0 0 1 1],[0 0]);
+  [g2DX,data2DX]=proj(sD_X.grid, sqrt(dataX_last), [0 0 1 1],[0 0]);
   hX = surf(g2DX.xs{1},g2DX.xs{2},data2DX);
   xlabel('$x_r$','Interpreter','latex','FontSize',20)
   ylabel('$v_x$','Interpreter','latex','FontSize',20)
 end
 %% compute gradients (for controller)
-derivX = computeGradients(sD_X.grid,dataX(:,:,:,:,end));
-derivZ = computeGradients(sD_Z.grid,dataZ(:,:,end));
+derivX = computeGradients(sD_X.grid, dataX_last);
+derivZ = computeGradients(sD_Z.grid, dataZ_last);
 
 %% save
 save(['Quad10D_g' num2str(gNZ(1)) '_dt0' num2str(dt*100) '_t' ...

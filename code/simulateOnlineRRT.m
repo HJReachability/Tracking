@@ -1,4 +1,5 @@
-function simulateOnlineRRT(data_filename, obs_filename, extraArgs)
+function [trueQuad, virt_x] = ...
+  simulateOnlineRRT(sD_X, derivX, sD_Z, derivZ, TEB, obs, extraArgs)
 % simulateOnlineRRT(data_filename, obs_filename, extraArgs)
 %     Includes tracking
 %
@@ -20,13 +21,19 @@ function simulateOnlineRRT(data_filename, obs_filename, extraArgs)
 
 addpath(genpath('.'))
 
+% Video
+% vout = VideoWriter('figs/videoRRT.mp4', 'MPEG-4');
+% vout.Quality = 100;
+% vout.FrameRate = 10;
+% vout.open;
+
 % Problem setup
 start = [-12; 0; 0];
 goal = [12; 0; 0];
 small = 0.1;
-virt_v = 0.5;
+virt_v = sD_X.dynSys.uMax(1);
 
-dt = 0.1;
+dt = 0.01;
 delta_x = virt_v*dt;
 
 % Subsystems
@@ -34,15 +41,7 @@ XDims = 1:4;
 YDims = 5:8;
 ZDims = 9:10;
 
-if nargin < 1
-  data_filename = 'Quad10D_g101_dt01_t5_low_quadratic.mat';
-end
-
-if nargin < 2
-  obs_filename = 'obs.mat';
-end
-
-if nargin < 3
+if nargin < 7
   extraArgs = [];
 end
 
@@ -55,15 +54,13 @@ if ~isfield(extraArgs,'Q')
   Q(9,3) = 1;
 end
 
-if ~isfield(extraArgs, 'visualize')
-  vis = true;
+if isfield(extraArgs, 'visualize')
+  vis = extraArgs.visualize;
 else
   vis = true;
 end
 
 %% Before Looping
-load(data_filename)
-load(obs_filename)
 trackErr = TEB;
 senseRange = 2*TEB + small;
 
@@ -101,7 +98,7 @@ end
 % set initial states to zero
 start_x = zeros(10,1);
 start_x([1 5 9]) = start;
-virt_x = start;
+
 
 % Create real quadrotor system
 rl_ui = [2 4 6];
@@ -116,12 +113,15 @@ trueQuad = Quad10D(start_x, sD_X.dynSys.uMin(rl_ui), sD_X.dynSys.uMax(rl_ui), ..
 %input: environment, sensing
 %output: augmented obstacles
 newStates = [];
-iter = 0;
+iter = 1;
 global_start = tic; % Time entire simulation
 
-max_iter = 5000;
+max_iter = 50000;
 lookup_time = 0;
+plan_time = 0;
 
+virt_x = nan(3, max_iter);
+virt_x(:,1) = start;
 % while we haven't reached the final iteraction and we haven't reached the
 % goal
 while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
@@ -133,20 +133,22 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   
   %% Path Planner Block
   % Replan if a new obstacle is seen
+  plan_start = tic;
   if isempty(newStates) || sensed_new
     % Update next virtual state
-    newStates = rrtNextState(virt_x, goal, obsMap.padded_obs, ...
+    newStates = rrtNextState(virt_x(:,iter-1), goal, obsMap.padded_obs, ...
         delta_x, [], false);
     %(trueQuad.x([1 5 9]), goal, obsMap.padded_obs, ...
     %  delta_x, [], false);
   end
-  virt_x = newStates(1,:)';
+  plan_time = plan_time + toc(plan_start);
+  virt_x(:,iter) = newStates(1,:)';
   newStates(1,:) = [];
 
   %% Hybrid Tracking Controller
   % 1. find relative state
-  local_start = tic;
-  rel_x = trueQuad.x - Q*virt_x;
+  look_up_start = tic;
+  rel_x = trueQuad.x - Q*virt_x(:,iter);
   
   % 2. Determine which controller to use, find optimal control
   %get spatial gradients
@@ -154,7 +156,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   pY = eval_u(sD_X.grid, derivX, rel_x(YDims));
   pZ = eval_u(sD_Z.grid, derivZ, rel_x(ZDims));
   
-  if norm(virt_x - trueQuad.x([1 5 9])) > trackErr/4
+  if norm(virt_x(:,iter) - trueQuad.x([1 5 9])) > trackErr/4
       uX = sD_X.dynSys.optCtrl([], rel_x(XDims), pX, uMode);
       uY = sD_X.dynSys.optCtrl([], rel_x(YDims), pY, uMode);
       uZ = sD_Z.dynSys.optCtrl([], rel_x(ZDims), pZ, uMode);
@@ -170,11 +172,10 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
        
        u = [uX uY uZ];
        boxColor = 'b';
-   end
+  end
+   
   % Find optimal control of relative system (no performance control)
- 
-
-  lookup_time = lookup_time + toc(local_start);
+  lookup_time = lookup_time + toc(look_up_start);
   
   %% True System Block
   % 1. add random disturbance to velocity within given bound
@@ -184,15 +185,16 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   trueQuad.updateState(u, dt, [], d);
 
   % Make sure error isn't too big (shouldn't happen)
-  if max(virt_x - trueQuad.x([1 5 9])) > trackErr
-    keyboard
-  end
+  max(virt_x(:,iter) - trueQuad.x([1 5 9]))
+%   if max(virt_x - trueQuad.x([1 5 9])) > 1.5*trackErr
+%     keyboard
+%   end
   
   %% Virtual System Block  
 %   fprintf('Iteration took %.2f seconds\n', toc);
   
   % Visualize
-  if vis
+  if (vis && ~mod(iter,50)) || iter == 2
     % Local obstacles and true position
     obsMap.plotLocal;
     plot3(trueQuad.x(1), trueQuad.x(5), trueQuad.x(9), 'b.')
@@ -200,20 +202,21 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
     
     % Virtual state
     if exist('hV', 'var')
-      hV.XData = virt_x(1);
-      hV.YData = virt_x(2);
-      hV.ZData = virt_x(3);
+      hV.XData = virt_x(1,iter);
+      hV.YData = virt_x(2,iter);
+      hV.ZData = virt_x(3,iter);
     else
-      hV = plot3(virt_x(1,end), virt_x(2,end), virt_x(3,end), '*', 'color', [0 0.75 0]);
+      hV = plot3(virt_x(1,iter), virt_x(2,iter), virt_x(3,iter), '*', ...
+        'color', [0 0.75 0]);
     end
     
     % Tracking error bound
-    left_bd = virt_x(1) - trackErr;
-    right_bd = virt_x(1) + trackErr;
-    back_bd = virt_x(2) - trackErr;
-    front_bd = virt_x(2) + trackErr;
-    bottom_bd = virt_x(3) - trackErr;
-    top_bd = virt_x(3) + trackErr;
+    left_bd = virt_x(1,iter) - trackErr;
+    right_bd = virt_x(1,iter) + trackErr;
+    back_bd = virt_x(2,iter) - trackErr;
+    front_bd = virt_x(2,iter) + trackErr;
+    bottom_bd = virt_x(3,iter) - trackErr;
+    top_bd = virt_x(3,iter) + trackErr;
     
     left_surf = [left_bd, back_bd, bottom_bd; ...
       left_bd, back_bd, top_bd; ...
@@ -251,7 +254,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
     boxShape = cat(3, boxShape, bottom_surf);
     boxShape = cat(3, boxShape, top_surf);
     
-    if iter == 1
+    if iter == 2
       boxMap = ObstacleMapRRT(boxShape);
     else
       boxMap.global_obs = boxShape;
@@ -260,17 +263,28 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
 
     drawnow
 
-%     export_fig(sprintf('pics/%d', iter), '-png')
-%     savefig(sprintf('pics/%d.fig', iter))    
+%     export_fig(sprintf('figsRRT/%d', iter), '-pdf')
+%     savefig(sprintf('figsRRT/%d.fig', iter))
+%     
+%     current_frame = getframe(gcf); % gca does just the plot
+%     writeVideo(vout, current_frame);    
   end
 end
 
+virt_x(:,iter+1:end) = [];
+
+% vout.close
 comp_time = toc(global_start);
+fprintf('=== TOTAL ===\n')
 fprintf('%d iterations in %.4f seconds\n', iter, comp_time)
 fprintf('%.4f seconds per iteration on average\n', comp_time/iter)
 
+fprintf('=== PLANNING ===\n')
+fprintf('%d iterations in %.4f seconds\n', iter, plan_time)
+fprintf('%.4f seconds per iteration on average\n', plan_time/iter)
+
+fprintf('=== TRACKING ===\n')
 fprintf('%d iterations in %.4f seconds\n', iter, lookup_time)
 fprintf('%.4f seconds per iteration on average\n', lookup_time/iter)
-
 
 end
