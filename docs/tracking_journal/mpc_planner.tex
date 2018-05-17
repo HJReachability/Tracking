@@ -107,58 +107,51 @@ Note that unlike the other numerical examples, look-up tables representing the v
 
 \subsubsection{Online sensing and planning}
 %
-We utilize the MPC design introduced in \cite{Zhang2017} for the online path planning. See in Problem~\ref{pr: MPC}.
+We utilize the MPC design introduced in \cite{Zhang2017} for the online path planning. The MPC formulation is given in Problem~\ref{pr: MPC}.
 %
 \begin{problem}\label{pr: MPC}
 \begin{align*}
 \min_{\mathbf{p},\mathbf{u}}  & \quad \sum^{N-1}_{k=0} l(p_k,u_k) + l_f(p_N-p_f)  \\
 s.t. \quad & p_0 = p_{init},\\
-&p_{k+1} = f_p(p_k,u_k),\\
-& p_k \in \mathbb{P}_k ,\enspace u_k \in \mathbb{U},\\
-& \mathbb{S}(p_k)\cap\constrAug(t_k) = \emptyset
+&p_{k+1} = h(p_k,u_k),\\
+& u_k \in \mathbb{U},\enspace p_k \in \constrAug(t_k) 
 \end{align*}
 \end{problem}
-where $l(\cdot,\cdot)$ and $l_f(\cdot)$ are convex stage and terminal cost functions, $N$ is the horizon for the MPC problem, and $t_k = t_0 + k \MCnote{\Delta t}$ denotes the current time used in simulation, with $t_0$ being the time when the MPC problem starts to be solved and $\Delta t$ the MPC sampling interval. The dynamical system $f_p(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \eqref{eq:Quad8D_dyn}. The state and input sequences along the horizon  are denoted by $\mathbf{p}=[p^{T}_0,p^{T}_1,\cdots,p^{T}_N]^{T}$ and $\mathbf{u}=[u^{T}_0,u^{T}_1,\cdots,u^{T}_{N-1}]^{T}$. The velocity states are subject to convex time-varying constraints:
+%
+where $l(\cdot,\cdot)$ and $l_f(\cdot)$ are convex stage and terminal cost functions and $N$ is the horizon for the MPC problem. $t_k = t_0 + k \MCnote{\Delta t}$ denotes for the time index along the MPC horizon with $t_0$ and $\Delta t$ being the initial time step and the sampling interval, respectively. Note that the horizon $N$ and the sampling interval $\Delta t$ are selected such that $t_0 + N \MCnote{\Delta t}\leq \tau - T$ with $\tau$ given by Step~9 in Algorithm~\ref{alg:algOnline} and $T$ defined for TEB in (\ref{eq:TEB}). The initial state is denote by $p_{init}$. The dynamical system $h(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \eqref{eq:Quad8D_dyn}. The state and input constraints are $\mathbb{U}$ and $\constrAug(t_k)$, respectively. Note that the time-varying constraint $\constrAug(t_k)$ contains the augmented state constraints:
 %
 \begin{equation}
-(\hat v_{x,k},\hat v_{y,k}) \subset p_k \in \mathbb{P}_k :=\mathbb{P}\oplus\TEB_\pstate(t_k) \enspace ,
+p_k \in \mathbb{P}_k :=\mathbb{P}\ominus\TEB_\estate(t_k) \enspace ,
 \end{equation}
 %
-where $\oplus$ denotes the Minkowski addition, $\mathbb{P}$ denotes the original state constraint, and $\TEB_\pstate(t_k)$ is the tracking error bound sampled at $t_k$, respectively. Given the state vector $p_k$, we denote the position of the controlled object by $(\hat x_k,\hat y_k) := \mathbb{S}(p_k)\subseteq \mathbb{R}^{2}$. To avoid collision with obstacles, $\mathbb{S}(p_k)$ is subject to the following constraint: 
+where $\mathbb{P}$ denotes the original state constraint, and $\TEB_\estate(t_k)$ is the tracking error bound at $t_k$, and the additional constraints for collision avoidance:
 %
 \begin{equation}
-\mathbb{S}(p_k)\cap\constrAug(t_k) = \emptyset \enspace ,
+\mathbb{S}(p_k)\cap\mathbb{O}\oplus\mathbb{S}(\TEB_\estate(t_k)) = \emptyset \enspace ,
 \end{equation}
 %
-with 
+where the operator $\mathbb{S}(\cdot)$ abstracts the position of the controlled objective from the state $p_k$, i.e., $(\hat x_k,\hat y_k) := \mathbb{S}(p_k)\subseteq \mathbb{R}^{2}$, and $\mathbb{O}$ denotes the union set of the sensed obstacles.
 %
-\begin{equation}
-\constrAug(t_k) := \constrSense(t_0)\oplus\TEB_\pstate(t_k) \enspace .
-\end{equation}
-%
-where $\constrSense(t_0)$ denotes the obstacles sensed at $t_0$.
-
-In this paper, we represent the obstacles as polytopes, i.e., $\constrSense = \cap \constr^{i}$ with $\constr^{i}:= \{z\in\mathbb{R}^{n} \mid A^{i}z\leq b^{i}\}$ for $i = 1,\cdots ,M$. We follow the approach presented in \cite{Zhang2017} to compute a local minimal solution, by involving extra variables $\lambda^{i}$ for each obstacle $\constr^{i}$ and reformulating the collision avoidance constraint equivalently as follows: 
+\begin{remark}
+In this paper, we represent the obstacles as polytopes, i.e., $\mathbb{O} = \cup \mathbb{O}^{i}$ with $\mathbb{O}^{i}:= \{z\in\mathbb{R}^{n} \mid A^{i}z\leq b^{i}\}$ for $i = 1,\cdots ,M$. Due to the collision avoidance constraint, the MPC problem becomes non-convex and thus computationally expensive. We follow the approach presented in \cite{Zhang2017} to compute a local minimal solution, by involving extra variables $\lambda^{i}$ for each obstacle $\mathbb{O}^{i}$ and reformulating the collision avoidance constraint equivalently as follows: 
 %
 \begin{equation}
 \exists \lambda^{i} >0, \; \mbox{s.t.} \; (A^{i} \mathbb{S}(p_k) - b^{i})^{T}\lambda^{i}  > 0, \; \|A^{i^{T}}\lambda^{i}\|_2\leq 1\enspace .
 \end{equation}
 %
-Note that the collision avoidance constraint causes the MPC problem to be non-convex and thus computationally expensive.
-
-The procedure of finding the next state of the planning system using the proposed MPC planner is summarized in Algorithm \ref{alg:mpc}.
+\end{remark}
+%
+The procedure of finding the next tracking state using the MPC-based planner is summarized in Algorithm~\ref{alg:mpc}.
 %
 \begin{algorithm}	
-	\caption{MPC Path Planner Block}
+	\caption{MPC Path Planner}
 	\label{alg:mpc}
 	\begin{algorithmic}[1]
-		\STATE \textbf{Initialization}:
- 		\STATE Set initial time and states: $t_0 \leftarrow \tvar, \pstate_0 \leftarrow \pstate$
+ 		\STATE Initialize the time and state: $t_0 \leftarrow \tvar, \pstate_0 \leftarrow \pstate$
 		\IF{MPC is ready to re-plan}
-			\STATE Solve MPC for the optimal control sequence: $\mathbf{u}_t \leftarrow \text{Problem\ref{pr: MPC}} (t_0,p_0,\constrAug)$
+			\STATE Solve Problem~\ref{pr: MPC} with the inputs $t_0$, $p_{init}$ and $\constrAug$
 		\ENDIF
-        \STATE Get the current control: $u(t) \leftarrow u_k \in \mathbf{u}_t$ such that $t \in [t_0 + k \Delta t, t_0 + (k+1) \Delta t]$
-		\STATE Output the next state: $\pstate_\text{next} = f_p(p,u(t))$
+          \STATE Output the next planed state: $p_{t_1}$
 	\end{algorithmic}
 \end{algorithm}
 
