@@ -1,25 +1,28 @@
 % !TEX root = tracking.tex
 \section{General Framework \label{sec:framework}}
-To achieve our goals, we propose FaSTrack, a framework that decouples the formal guarantee of safety from the planning algorithm.
-Instead of having the system, represented by the tracking model, directly plan trajectories towards $\goal$, in our framework the tracking system ``chases'' the planning system, which uses any planning algorithm to obtain trajectories in real-time.
-Safety is formally guaranteed through a precomputed of a TEB along with a corresponding tracking controller, in combination with augmentation of constraints based on this TEB.
-An illustrate of our framework is shown in Figure \ref{fig:chasing}.
-
-More details of the framework is summarized in Figs. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, \ref{fig:fw_offline}. 
+Details of the framework are summarized in Figs. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, \ref{fig:fw_offline}. 
 The online real-time framework is shown in Fig. \ref{fig:fw_online}. 
-At the center of this framework is the path or trajectory planner; our framework is agnostic to the planner, so any may be used (e.g. MPC, RRT, neural networks). 
+At the center of this framework is the path or trajectory planner; our framework is agnostic to the planner, so any may be used. 
 We will present three example using FSM, RRT, and MPC planners in Section \ref{sec:results}.
 \begin{figure}[h!]
   \centering
 	\includegraphics[width=1\columnwidth]{fig/framework_online}
 	\caption{Online framework}
 	\label{fig:fw_online}
-	\vspace{-.1in}
 \end{figure}
 
-When executing the online framework, the first step is to sense obstacles in the environment, and then augment the sensed obstacles by a precomputed tracking error bound as described in Section \ref{sec:precomp}. This tracking error bound is a safety margin that guarantees robustness despite the worst-case disturbance. Augmenting the obstacles by this margin can be thought of as equivalent to wrapping the planning system with a ``safety bubble". These augmented obstacles are given as inputs to the planner along with the current state of the planning system. The planner then outputs the next desired state of the planning system. 
+Online, the first step is to update constraints $\constr$ and accordingly update the sensed constraints $\constrSense$ in the environment.
+This can be done, for example, by sensing the environment for obstacles.
+Next, $\constrSense$ is augmented  by a precomputed TEB as described in Section \ref{sec:precomp} to produce the augmented constraints $\constrAug$. 
+This TEB can be thought of as a ``safety margin'' that guarantees robustness despite the worst-case disturbance and planning system evolution. 
+In terms of obstacles in the environment, augmenting the constraints by this margin can be thought of as equivalent to wrapping the planning system with a ``safety bubble''. 
+These augmented constraints are given as inputs to the planner along with the current state of the planning system. 
+The planner then outputs the next state of the planning system.
 
-The tracking system is a model of the physical system (such as a quadrotor). The hybrid tracking controller block takes in the state of the tracking system as well as the desired state of the planning system. Based on the relative state between these two systems, the hybrid tracking controller outputs a control signal to the tracking system. The goal of this control is to make the tracking system track the desired planning state as closely as possible.
+The tracking system is a model of the physical system (such as a quadrotor or a car). 
+The hybrid tracking controller block takes in the state of the tracking system as well as the next state of the planning system. 
+Based on the relative state between these two systems, the hybrid tracking controller outputs a control signal to the tracking system. 
+The goal of this control is to make the tracking system track the desired planning state as closely as possible.
 
 %In the context of real-time robust planning towards a target in an unknown environment, we propose a framework for combining fast planning methods that do not need to take into account disturbances, and HJ reachability analysis which provides formal guarantees for systems with disturbances. The high level idea of the framework is summarized in Fig. \ref{fig:fw_online}, \ref{fig:hybrid_ctrl}, and \ref{fig:fw_offline}. Formal definitions will be introduced in \MCnote{Section \ref{}}.
 
@@ -27,25 +30,39 @@ The tracking system is a model of the physical system (such as a quadrotor). The
 
 %The ``real system'' is a model of a physical system such as a quadrotor, and a subset of the state variables forms the virtual state of the virtual system. The state of real system and the desired virtual state are inputs to a hybrid tracking controller. Based on these two inputs, the hybrid tracking controller outputs a control signal to the real system. The goal of this control is to make the real system track the desired virtual state as closely as possible. Our concept of tracking error will be defined in \MCnote{Section \ref{}}.
 
-The hybrid tracking controller is expanded in Fig. \ref{fig:hybrid_ctrl} and consists of two controllers: a safety controller and a performance controller. In general, there may be multiple safety and performance controllers depending on various factors such as observed size of disturbances, but for simplicity we will just consider one safety and one performance controller in this paper. The safety controller consists of a function (or look-up table) computed offline via HJ reachability, and guarantees that the tracking error bound is not violated, \textit{despite the worst-case disturbance}. In addition, the table look-up operation is computationally inexpensive. When the system is close to violating the tracking error bound, the safety controller must be used to prevent the violation. On the other hand, when the system is far from violating the tracking error bound, any controller (such as one that minimizes fuel usage), can be used. This control is used to update the tracking system, which in turn updates the planning system, and the process repeats.
+The hybrid tracking controller is expanded in Fig. \ref{fig:hybrid_ctrl} and consists of two controllers: a safety controller and a performance controller.
+In general, there may be multiple safety and performance controllers depending on various factors such as observed size of disturbances, but for simplicity we will just consider one safety and one performance controller in this paper. 
+The safety controller consists of a function (or look-up table) computed offline by solving a HJ VI, and guarantees that the TEB is not violated, despite the worst-case disturbance and worst-case planning control. 
+Although the planning system in general does not apply the worst-case planning control, assuming the worst allows us to obtain a \textit{trajectory-independent} TEB.
+Note that the computation of the value function and safety controller is done offline; during online execution, the table look-up operation is computationally inexpensive. 
+
+When the system is close to violating the TEB, the safety controller must be used to prevent the violation. 
+On the other hand, when the system is far from violating the TEB, any controller (such as one that minimizes fuel usage), can be used. 
+This control is used to update the tracking system, and the process repeats.
+
 \begin{figure}[h!]
   \centering
 	\includegraphics[width=0.9\columnwidth]{fig/hybrid_controller}
 	\caption{Hybrid controller}
 	\label{fig:hybrid_ctrl}
-	\vspace{-.1in}
 \end{figure}
 
-To determine both the tracking error bound and safety controller functions/look-up tables, an offline framework is used as shown in Fig. \ref{fig:fw_offline}. The planning and tracking system dynamics are plugged into an HJ reachability computation, which computes a value function that acts as the tracking error bound function/look-up table. The spatial gradients of the value function comprise the safety controller function/look-up table. These functions are independent of the online computations---they depend only on the \textit{relative} states and dynamics between the planning and tracking systems, not on the absolute states along the trajectory at execution time.
+To determine both the TEB and safety controller functions/look-up tables, an offline framework is used as shown in Fig. \ref{fig:fw_offline}. 
+The planning and tracking system dynamics are used in the HJ VI, whose solution is a value function that acts as the TEB function/look-up table. 
+The spatial gradients of the value function comprise the safety controller function/look-up table. 
+These functions are independent of the online computations -- they depend only on the \textit{relative} states and dynamics between the planning and tracking systems, not on the absolute states along the trajectory at execution time.
+
 \begin{figure}[h!]
   \centering
 	\includegraphics[width=0.9\columnwidth]{fig/framework_offline}
 	\caption{Offline framework}
 	\label{fig:fw_offline}
-	%\vspace{-.1in}
 \end{figure}
-In the following sections we will first explain the precomputation steps taken in the offline framework. We will then walk through the online framework and provide a complete example.
-%Besides the virtual state, the planner also takes into account any obstacles that must be avoided. In order to be robust to disturbances, planning must be done with a safety margin that accounts for disturbances. A safety margin that guarantees robustness despite the worst-case disturbance is given by a tracking error bound obtained in the offline HJ reachability computation, shown in Fig. \ref{fig:fw_offline} and explained in detail in \MCnote{Section \ref{}}. The virtual and real system dynamics are used to compute a value function, which simultaneously gives the tracking error bound and the safety controller look-up table used by the hybrid tracking controller.
+In the following sections we will first explain the precomputation steps taken in the offline framework. 
+We will then walk through the online framework.
+Finally, we will present three numerical examples.
+
+%Besides the virtual state, the planner also takes into account any obstacles that must be avoided. In order to be robust to disturbances, planning must be done with a safety margin that accounts for disturbances. A safety margin that guarantees robustness despite the worst-case disturbance is given by a TEB obtained in the offline HJ reachability computation, shown in Fig. \ref{fig:fw_offline} and explained in detail in \MCnote{Section \ref{}}. The virtual and real system dynamics are used to compute a value function, which simultaneously gives the TEB and the safety controller look-up table used by the hybrid tracking controller.
 %
 %\textbf{Maybe put next paragraph in the introduction}
 %

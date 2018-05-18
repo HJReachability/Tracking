@@ -1,6 +1,10 @@
 % !TEX root = tracking.tex
 \section{Problem Formulation \label{sec:formulation}}
-In this paper we seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online and in real time. The planning is done using a kinematic or dynamic planning model. The tracking is done by a tracking model representing the autonomous system. The environment may contain static obstacles that are either known a priori or can be observed by the system within a limited sensing range (see Section \ref{sec:online}). In this section we will define the tracking and planning models, as well as the goals of the paper.
+In this paper we seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online and in real-time. 
+The planning is done using a relatively simplified model of the system, called the planning model or planning system. 
+The tracking is done by a tracking model representing the autonomous system. 
+The environment may contain static obstacles that are \textit{a priori} unknown and can be observed by the system within a limited sensing range (see Section \ref{sec:online}). 
+In this section we will define the tracking and planning models, as well as the goals of the paper.
 
 \subsection{Tracking (System) Model}
 The tracking model, or system model, is a representation of the autonomous system dynamics, and in general may be nonlinear and higher-dimensional than the planning model presented in Section \ref{sec:planning_model}. 
@@ -61,9 +65,13 @@ Note that $\constrSense(t)$ depends on time, since the system may gather more in
 In addition, as described throughout the paper, we will augment $\constrSense(t)$ according to the TEB between the tracking and planning systems.
 We denote the augmented obstacles as $\constrAug(t)$.
 
-\subsection{Goals of This Paper}
+\subsection{Goals and Approach}
 Given system dynamics in \eqref{eq:tdyn}, initial state $\tstate_0$, goal states $\goal$, and constraints $\tconstr$ such that $\constr$ is \textit{a priori} unknown and determined in real-time, we would like to steer the system to $\goal$ with formally guaranteed satisfaction of $\tconstr$.
 
-
+To achieve this goal, we propose FaSTrack, a framework that decouples the formal guarantee of safety from the planning algorithm.
+Instead of having the system, represented by the tracking model, directly plan trajectories towards $\goal$, in our framework the tracking system ``chases'' the planning system, which uses any planning algorithm to obtain trajectories in real-time.
+When the planning system reaches sufficiently within the goal region, the tracking system would be at the goal as well.
+Safety is formally guaranteed through a precomputed of a TEB along with a corresponding tracking controller, in combination with augmentation of constraints based on this TEB.
+An illustrate of our framework is shown in Figure \ref{fig:chasing}.
 
 We demonstrate the FaSTrack framework in three representative simulations involving three different tracker system-planning system pairs, using three different planning algorithms.
