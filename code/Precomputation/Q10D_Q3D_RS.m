@@ -111,7 +111,7 @@ dMin = -dMax;
 if isfield(extraArgs,'keepLast')
   keepLast = extraArgs.keepLast;
 else
-  keepLast = 1;
+  keepLast = 0;
 end
 
 % dMax = [1/72*pi; 1/72*pi; 1/72*pi];
@@ -205,10 +205,10 @@ end
 [dataX, tauX] = HJIPDE_solve(dataX0, tau, sD_X, 'maxVOverTime', HJIextraArgs);
 
 %% Find tracking error bound
-dataX_last = dataZ(:,:,:,:,end);
+dataX_last = dataX(:,:,:,:,end);
 dataZ_last = dataZ(:,:,end);
-TEB_Z = min(dataZ_last);
-TEB_X = min(dataX_last);
+TEB_Z = min(dataZ_last(:));
+TEB_X = min(dataX_last(:));
 TEB = max(TEB_Z,TEB_X);
 
 if strcmp(targetType,'quadratic')
