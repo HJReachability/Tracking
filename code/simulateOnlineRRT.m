@@ -279,7 +279,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
 end
 
 virt_x(:,iter+1:end) = [];
-
+controller(iter+1:end) = [];
 % vout.close
 
 comp_time = toc(global_start);

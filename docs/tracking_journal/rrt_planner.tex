@@ -165,11 +165,12 @@ The red points indicate the time points at which the optimal tracking controller
 The blue points indicate the time points at which a performance controller, also depicted in Fig. \ref{fig:hybrid_ctrl}, was used.
 For the performance controller, we used a simple proportional controller that depends on the tracking error in each positional dimension; this controller is used whenever the tracking error is less than a quarter of the TEB.
 From Fig. \ref{fig:tracking_error_RRT}, one can observe that the tracking error is always less than the TEB implied by the value function.
+The disturbance was chosen to be uniformly random within the chosen bounds.
 
 
 \begin{figure}
   \includegraphics[width=\columnwidth]{fig/Q10D_Q3D/tracking_error}
-  \caption{Tracking error over time for the simulation shown in Fig. \ref{fig:simRRT} and \ref{fig:simRRT_combined}.}
+  \caption{Tracking error over time for the 10D-3D example. The red dots indicate that the optimal tracking controller in \eqref{eq:opt_ctrl_inf} is used, while the blue dots indicate that an LQR controller for the linearized system is used. The tracking error stays well below the predicted TEB of 0.55.}
   \label{fig:tracking_error_RRT}  
 \end{figure}
 

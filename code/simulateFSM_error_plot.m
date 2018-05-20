@@ -1,7 +1,9 @@
-function simulateRRT_error_plot(trueQuad, virt_x, controller, dt)
+function simulateFSM_error_plot(trueCar, virt_x, controller, dt)
 
 tau = 0:dt:dt*length(controller);
-error = max(abs(virt_x - trueQuad.xhist([1 5 9],:)));
+
+error = sqrt((virt_x(1, :) - trueCar.xhist(1,:)).^2 + ...
+  (virt_x(2, :) - trueCar.xhist(2,:)).^2);
 
 f = figure;
 f.Color = 'white';
@@ -25,7 +27,7 @@ ylabel('Tracking error')
 grid on
 box on
 xlim([0, max(tau)])
-ylim([0, 0.45])
+ylim([0, 0.05])
 
 tc = plot(1000, 1000, 'r.');
 lc = plot(1000, 1000, 'b.');
