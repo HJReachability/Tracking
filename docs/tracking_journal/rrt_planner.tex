@@ -43,7 +43,7 @@ k_T a_z - g
 \hat v_x \\
 \hat v_y \\
 \hat v_z
-\end{bmatrix}
+\end{bmatrix},
 \end{equation}
 \noindent where quadrotor states $(x, y, z)$ denote the position, $(v_x, v_y, v_z)$ denote the velocity, $(\theta_x, \theta_y)$ denote the pitch and roll, and $(\omega_x, \omega_y)$ denote the pitch and roll rates. 
 The controls of the 10D system are $(u_x, u_y, u_z)$, where $u_x$ and $u_y$ represent the desired pitch and roll angle, and $u_z$ represents the vertical thrust.
@@ -51,7 +51,8 @@ The controls of the 10D system are $(u_x, u_y, u_z)$, where $u_x$ and $u_y$ repr
 The 3D system controls are $(\hat v_x, \hat v_y, \hat v_z)$, and represent the velocity in each positional dimension. 
 The disturbances in the 10D system $(\dstb_x, \dstb_y, \dstb_z)$ are caused by wind, which acts on the velocity in each dimension. 
 
-The model parameters are chosen to be $d_0=10$, $d_1=8$, $n_0=10$, $k_T=0.91$, $g=9.81$, $|u_x| \le $, $|u_y| \le $, $u_z \in []$, $|\hat v_x|, |\hat v_y|, |\hat v_z| \le $.
+The model parameters are chosen to be $d_0=10$, $d_1=8$, $n_0=10$, $k_T=0.91$, $g=9.81$, $|u_x| |u_y| \le \pi/9$, $u_z \in [0, 1.5g]$, $|\hat v_x|, |\hat v_y|, |\hat v_z| \le 0.5$.
+The disturbance bounds were chosen to be $|d_x|, |d_y|, |d_z| \le 0.1$.
 
 \subsubsection{Offline computation}
 We define the relative system states to consist of the error states, or relative position $(x_r, y_r, z_r)$, concatenated with the rest of the state variables of the 10D quadrotor model.

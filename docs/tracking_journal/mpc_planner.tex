@@ -50,7 +50,7 @@ The controls are $(\hat a_x, \hat a_y)$, which represent the acceleration in eac
 The model parameters are chosen to be $d_0=10$, $d_1=8$, $n_0=10$, $k_T=0.91$, $g=9.81$, $|u_x|, |u_y| \le \pi/9$, $|\hat a_x|, |\hat a_y| \le 1$, $|\dstb_x|, |\dstb_y| \le 0.2$.
 
 \subsubsection{Offline precomputation}
-We define the relative states to be the error states $(x_r, v_{x,r}, y_r, v_{y,r})$, which are the relative position and velocity, concatenated with the rest of the states in the 8D system.
+We define the relative system states to be the error states $(x_r, v_{x,r}, y_r, v_{y,r})$, which are the relative position and velocity, concatenated with the rest of the states in the 8D system.
 Defining $\rtrans = \mathbf I_8$ and 
 
 \begin{equation*}
@@ -107,7 +107,7 @@ Note that unlike the other numerical examples, look-up tables representing the v
 
 \subsubsection{Online sensing and planning}
 %
-We utilize the MPC design introduced in \cite{Zhang2017} for the online path planning. The MPC formulation is given in Problem~\ref{pr: MPC}.
+We utilize the MPC design introduced in \cite{Zhang2017} for the online trajectory planning. The MPC formulation is given in Problem~\ref{pr: MPC}.
 %
 \begin{problem}\label{pr: MPC}
 \begin{align*}
