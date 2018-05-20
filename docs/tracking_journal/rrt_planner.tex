@@ -1,21 +1,6 @@
 % !TEX root = tracking.tex
 \subsection{10D quadrotor-3D single integrator example with RRT\label{sec:resultsRRT}}
 
-\MCnote{Convergence (2 slices for 4D, 2D, 3D space)}
-
-\begin{figure*}
-	\centering
-	\includegraphics[width=0.7\textwidth]{fig/quad10D_example_cost}
-	\caption{On the left are the cost and value functions over a 2D slice of the 10D relative state space, with contour lines showing three level sets of these functions. On the right are 3D projections of these level sets at the same slice $(v_{x},v_{y},v_{z})=[1, -1, 1]$ m/s, $(\theta_{x},\omega_{x},\theta_{y},\omega_{y})=0$. The solid boxes show initial relative states, and the transparent boxes show the corresponding tracking error bound. In practice we set the initial relative states to 0 to find the smallest invariant tracking error bound.}
-	\label{fig:quad10D_example}
-	\end{figure*} 
-\begin{figure}
-	\centering
-	\includegraphics[width=0.25\textwidth]{fig/quad10D_slices}
-	\caption{Various 3D slices of the 10D relative states (solid) and the corresponding tracking error bound (transparent)}
-	\label{fig:quad10D_example_slices}
-\end{figure} 
-
 Our second example involves a 10D near-hover quadrotor developed in \cite{Bouffard12} as the tracking model and a single integrator in 3D space as planning model.
 Planning is done using RRT, a well-known sampling-based planner that quickly produces geometric paths from a starting position to a goal position \cite{Kuffner2000,Kavraki1996}.
 Paths given by the RRT planner is converted to time-stamped trajectories by placing a maximum velocity in each dimension along the generated geometric paths.
@@ -92,16 +77,16 @@ Defining $\rtrans = \mathbf I_{10}$ and
 \begin{equation}
 \label{eq:Quad10DRel_dyn}
 \begin{bmatrix}
-\dot{x_r}\\
-\dot{v_{x}}\\
-\dot{\theta_{x}}\\
-\dot\omega_{x}\\
-\dot{y_r}\\
-\dot{v_{y}}\\
-\dot{\theta_{y}}\\
-\dot\omega_{y}\\
-\dot{z_r}\\
-\dot{v_{z}}
+\dot x_r\\
+\dot v_x\\
+\dot \theta_x\\
+\dot\omega_x\\
+\dot y_r\\
+\dot v_y\\
+\dot \theta_y\\
+\dot\omega_y\\
+\dot z_r\\
+\dot v_z
 \end{bmatrix} =
 \begin{bmatrix}
 v_x - \hat v_x + d_x\\
@@ -117,9 +102,30 @@ k_T u_z - g
 \end{bmatrix}.
 \end{equation}
 
-Next, we follow the setup in section \ref{sec:precomp} to create a cost function, which we then evaluate using HJ reachability until convergence to produce the invariant value function as in (\ref{eq:valfunc}). Historically this 10D nonlinear relative system would be intractable for HJ reachability analysis, but using new methods in \cite{Chen2016DecouplingExact, Chen2016DecouplingJournal} we can decompose this system into 3 subsystems (for each positional dimension). Doing this also requires decomposing the cost function; therefore we represent the cost function as a 1-norm instead of a 2-norm. This cost function as well as the resulting value function can be seen projected onto the $x,y$ dimensions in Fig. \ref{fig:quad10D_example}.
 
-Fig. \ref{fig:quad10D_example} also shows 3D positional projections of the mapping between initial relative state to maximum potential relative distance over all time (i.e. tracking error bound). If the real system starts exactly at the origin in relative coordinates, its tracking error bound will be a box of $\underline\valfunc = 0.81$ m in each direction. Slices of the 3D set and corresponding tracking error bounds are also shown in Fig. \ref{fig:quad10D_example_slices}. We save the look-up tables of the value function (i.e. the tracking error function) and its spatial gradients (i.e. the safety controller function).
+The relative system dynamics given in \eqref{eq:Quad10DRel_dyn} is decomposable into three independent subsystems involving the sets of variables $(x_r, v_x, \theta_x, \omega_x)$, $(x_y, v_y, \theta_y, \omega_y)$, $(z_r, v_z)$, allowing us to choose the error function to be also in the decomposable form of $\errfunc(\rstate) = \max(x_r^2, y_r^2, z_r^2)$, so that we can solve \eqref{eq:HJVI} tractably since each subsystem is at most 4D \cite{Chen2016DecouplingJournal}. 
+
+The left subplot of Fig. \ref{fig:valfuncRRT} shows the the projection of the value function $\valfunc$ onto the $(x_r, v_x)$ space resulting from solving \eqref{eq:HJVI} over an increasingly long time horizon.
+Starting from $\tau=0$, we have that $\errfunc(\rstate) = \valfunc(\rstate, 0)$.
+As $\tau$ increases, the value function evolves according to \eqref{eq:HJVI}, and eventually converges when $\tau$ reaches $3.5$.
+This implies that $\valfunc_\infty(\rstate) = \valfunc(\rstate, \tau=3.5)$, since we would still obtain the same function even if we let $\tau$ approach infinity.
+The horizontal plane shows the minimum value, $\underline\valfunc = 0.3$, which corresponds to a TEB of approximately 0.55.
+
+The right subplot of Fig. \ref{fig:valfuncRRT} shows the $\underline\valfunc = 0.3$ level set of value function projection, which is the projection, onto the $(x_r, v_x)$ space, of the TEB $\TEB_{\estate, \infty}$ according to \eqref{eq:TEBp:inf}.
+The range of $x_r$ provides the TEB used for the planner, $\TEB_{\pstate, \infty}$, as given in \eqref{eq:TEBp:inf}.
+
+The value function and TEB in the $(y_r, v_y, \theta_y, \omega_y)$ and $(z_r, v_z)$ spaces are combined together to form the TEB in 3D positional space.
+For conciseness, these value functions are not shown; however, one can see the resulting TEB in Fig. \ref{fig:simRRT} and \ref{fig:simRRT_combined} as the translucent red box.
+
+Offline computations were done on a laptop with an Intel Core i7 4702HQ CPU using a MATLAB implementation of level set methods \cite{Mitchell07c} used for solving \eqref{eq:HJVI}.
+The 4D computations were done on a $61\times 61 \times 41 \times 41$ grid, took approximately 12 hours, and required approximately 300 MB of RAM.
+The 2D computation in the $(z_r, v_z)$ space was done on a $101 \times 101$ grid, took approximately 15 seconds, and required negligible RAM.
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{fig/Q10D_Q3D/valfunc}
+  \caption{}
+  \label{fig:valfuncRRT}
+\end{figure}
 
 \subsubsection{Online sensing and planning}
 The simulation involving the 10D quadrotor model tracking the 3D single integrator is shown in Fig. \ref{fig:simRRT} and \ref{fig:simRRT_combined}.

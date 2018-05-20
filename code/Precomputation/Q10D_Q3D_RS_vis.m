@@ -19,10 +19,10 @@ int_font = {'Interpreter', 'LaTeX', 'FontSize', 14};
 for ii = 1:N
   [g2D, data2D] = proj(g, data(:,:,:,:,inds2plot(ii)), [0 0 1 1], 'min');
   
-  color = colors(ii,:);
+  color = colors(ii+2,:);
   
   subplot(1,2,1)
-  s{ii} = surf(g2D.vs{1}, g2D.vs{2}, data2D);
+  s{ii} = surf(g2D.vs{1}, g2D.vs{2}, data2D');
   s{ii}.EdgeAlpha = (0.9*ii/N).^1;
   s{ii}.FaceColor = color;
   s{ii}.FaceAlpha = (0.9*ii/N).^1;
@@ -30,21 +30,21 @@ for ii = 1:N
   hold on
   
   extraArgs.applyLight = false;
-  c{ii} = visSetIm(g2D, data2D, color, level, extraArgs);
-  c{ii}.LineWidth = 1;
+%   c{ii} = visSetIm(g2D, data2D, color, level, extraArgs);
+%   c{ii}.LineWidth = 1;
   
-  daspect([1 1 0.3])
+  daspect([0.5 1 0.1])
   xlim([-1 1])
-  ylim([-1 1])
-  zlim([0 1])
+  ylim([-2.5 2.5])
+  zlim([0 0.5])
   
   title('$V(r, \tau)$', int_font{:})
-  xlabel('$v_{x,r}$', int_font{:})
-  ylabel('$x_r$', int_font{:})
+  xlabel('$x_r$', int_font{:})
+  ylabel('$v_{x,r}$', int_font{:})
   box on
-  view([-139 9])
+  view([-165 31])
   
-  legKey = [legKey c{ii}];
+  legKey = [legKey s{ii}];
   legVal{ii} = sprintf('$\\tau = %.1f$', tau(inds2plot(ii)));
 end
 
@@ -56,17 +56,21 @@ surf(g2D.vs{1}, g2D.vs{2}, level*ones(size(g2D.xs{1})), 'FaceColor', ...
 legend(legKey, legVal, int_font{:})
 
 subplot(1,2,2)
-c2 = visSetIm(g2D, data2D', color, level, extraArgs);
-c2.LineWidth = 1;
+c2 = visSetIm(g2D, data2D, color, level, extraArgs);
+c2.LineWidth = 3;
 
 hold on
 
 title('$\mathcal B_\infty (r)$', int_font{:})
 xlabel('$x_r$', int_font{:})
 ylabel('$v_{x,r}$', int_font{:})
+
+xlim([-1 1])
+ylim([-2.5 2.5])
+
 grid on
 box on
-axis equal
+axis square
 
 
 end
