@@ -21,11 +21,11 @@ function [trueQuad, virt_x, controller] = ...
 
 addpath(genpath('.'))
 
-% Video
-vout = VideoWriter('figsRRT2/videoRRT.mp4', 'MPEG-4');
-vout.Quality = 100;
-vout.FrameRate = 10;
-vout.open;
+% % Video
+% vout = VideoWriter('figsRRT1/videoRRT.mp4', 'MPEG-4');
+% vout.Quality = 100;
+% vout.FrameRate = 10;
+% vout.open;
 
 % Problem setup
 start = [-12; 0; 0];
@@ -270,17 +270,18 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
     title(sprintf('t = %.1f', dt*(iter-1)));
     drawnow
 
-    export_fig(sprintf('figsRRT2/%d', iter), '-pdf')
-    savefig(sprintf('figsRRT2/%d.fig', iter))
-    
-    current_frame = getframe(gcf); % gca does just the plot
-    writeVideo(vout, current_frame);    
+%     export_fig(sprintf('figsRRT2/%d', iter), '-png')
+%     savefig(sprintf('figsRRT2/%d.fig', iter))
+%     
+%     current_frame = getframe(gcf); % gca does just the plot
+%     writeVideo(vout, current_frame);    
   end
 end
 
 virt_x(:,iter+1:end) = [];
 
-vout.close
+% vout.close
+
 comp_time = toc(global_start);
 fprintf('=== TOTAL ===\n')
 fprintf('%d iterations in %.4f seconds\n', iter, comp_time)

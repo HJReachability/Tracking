@@ -206,8 +206,8 @@ The optimal tracking controller is obtained from the spatial gradients of the va
 
 \begin{subequations} \label{eq:opt_ctrl}
   \begin{align}
-  \tctrl^*(\rstate, \tvar) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb), \\
-  \tctrl^*(\rstate) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb). 
+  \tctrl^*(\rstate, \tvar) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb), \label{eq:opt_ctrl_fin}\\
+  \tctrl^*(\rstate) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb). \label{eq:opt_ctrl_inf}
   \end{align}
 \end{subequations}
 

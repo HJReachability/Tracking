@@ -122,33 +122,51 @@ Next, we follow the setup in section \ref{sec:precomp} to create a cost function
 Fig. \ref{fig:quad10D_example} also shows 3D positional projections of the mapping between initial relative state to maximum potential relative distance over all time (i.e. tracking error bound). If the real system starts exactly at the origin in relative coordinates, its tracking error bound will be a box of $\underline\valfunc = 0.81$ m in each direction. Slices of the 3D set and corresponding tracking error bounds are also shown in Fig. \ref{fig:quad10D_example_slices}. We save the look-up tables of the value function (i.e. the tracking error function) and its spatial gradients (i.e. the safety controller function).
 
 \subsubsection{Online sensing and planning}
-Our precomputed value function can serve as a tracking error bound, and its gradients form a look-up table for the optimal tracking controller. These can be combined with any planning algorithm such as MPC, RRT, or neural-network-based planners in a modular way. 
+The simulation involving the 10D quadrotor model tracking the 3D single integrator is shown in Fig. \ref{fig:simRRT} and \ref{fig:simRRT_combined}.
+Here, the system aims to start at $(x,y,z) = (-12, 0, 0)$ and reach $(12, 0, 0)$. 
+Three rectangular obstacles, which make up the constraints $\constr$, are present and initially unknown.
+Before the obstacles are sensed by the system, they are shown in gray, and when the tracking system is within 1.5 units away from a part of an obstacle, that part is revealed to the system as the sensed obstacles which form the sensed constraints $\constrSense$.
+The sensed obstacles are colored red.
+Whenever new obstacles are revealed, the planning system replans using RRT, in real time, a trajectory to the goal while avoiding the augmented constraint set $\constrAug$.
 
-To demonstrate the combination of fast planning and provably robust tracking, we used a simple multi-tree RRT planner implemented in MATLAB modified from \cite{Gavin2013}. We assigned a speed of $0.5$ m/s to the piecewise linear paths obtained from the RRT planner, so that the planning model is as given in \eqref{eq:Quad10D_dyn}. Besides planning a path to the goal, the quadrotor must also sense obstacles in the vicinity. For illustration, we chose a simple virtual sensor that reveals obstacles within a range of 2 m in the $x$, $y$, or $z$ directions.
+Fig. \ref{fig:simRRT} shows the entire trajectory, with the end of the trajectory being close to the goal position.
+The planning system state is shown as a small green star, and the translucent box around it depicts the TEB: the tracking system position is guaranteed to reside within this box.
+Therefore, as long as the planning system plans in a way such that the the TEB does not intersect with the obstacles, the tracking system is guaranteed to be safe.
+Due to the random nature of RRT, during the simulation the system appears to randomly explore to look for an unobstructed path to the obstacle; we did not implement any exploration algorithms.
 
-Once an obstacle is sensed, the RRT planner replans while taking into account all obstacles that have been sensed so far. To ensure that the quadrotor does not collide with the obstacles despite error in tracking, planning is done with respect to augmented obstacles that are ``expanded'' from the sensed obstacles by $\underline\valfunc$ in the $x$, $y$, and $z$ directions.
+Fig. \ref{fig:simRRT_combined} shows three different time snapshots of the simulation.
+At $t=8$, the planning system has sensed a portion of the previously unknown obstacles, and replans, so that the path deviates from a straight line from the initial position to the goal position.
+The subplot showing $t = 47.7$ is rotated to show the trajectory up to this time from a more informative view angle.
+Here, the tracking system has safely passed by the first planar obstacle, and is moving around the second. 
+Note that the TEB never intersects the obstacles, implying that the tracking system is guaranteed to avoid collision with the obstacles, since it is guaranteed to stay within the TEB.
+At $t=83.5$, the tracking system safely passes by the last planar obstacle.
 
-On an unoptimized MATLAB implementation on a desktop computer with a Core i7-2600K CPU, each iteration took approximately $25$ ms on average. Most of this time is spent on planning: obtaining the tracking controller took approximately $5$ ms per iteration on average. The frequency of control was once every $100$ ms.
-
-Fig. \ref{fig:sim} shows the simulation results. Four time snapshots are shown. The initial position is $(-12, 0, 0)$, and the goal position is $(12, 0, 0)$. The top left subplot shows the entire trajectory from beginning to end. In all plots, a magenta star represents the position of the planning model; its movement is based on the paths planned by RRT, and is modeled by a 3D holonomic vehicle with a maximum speed. The blue box around the magenta star represents the tracking error bound.
 \begin{figure}
-	\centering
-	\begin{subfigure}[t]{0.49\columnwidth} \label{subfig:sim_4}
-		\includegraphics[width=\columnwidth]{fig/1173}
-	\end{subfigure}  
-	\begin{subfigure}[t]{0.49\columnwidth} \label{subfig:sim_1}
-		\includegraphics[width=\columnwidth]{fig/224}
-		\caption{}
-	\end{subfigure}
-	
-	\begin{subfigure}[t]{0.49\columnwidth} \label{subfig:sim_2}
-		\includegraphics[width=\columnwidth]{fig/763}
-		\caption{}
-	\end{subfigure}  
-	\begin{subfigure}[t]{0.49\columnwidth} \label{subfig:sim_3}
-		\includegraphics[width=\columnwidth]{fig/1042}
-		\caption{}
-	\end{subfigure}
-	\caption{Numerical simulation. The tracking model trajectory is shown in blue, the planning model position in magenta, unseen obstacles in gray, and seen obstacles in red. The translucent blue box represents the tracking error bound. The top left subplot shows the entire trajectory; the other subplots zoom in on the positions marked in the top left subplot. The camera angle is also adjusted to illustrate our theoretical guarantees on tracking error and robustness in planning. A video of this simulation can be found at https://youtu.be/ZVvyeK-a62E \label{fig:sim}}
+  \includegraphics[width=\columnwidth]{fig/Q10D_Q3D/10050}
+  \caption{Simulation of the 10D quadrotor tracking (trajectory shown in blue) a 3D single integrator (position shown as green star inside red box) in order to perform real-time robust planning. The system senses initially unknown obstacles (gray), which are revealed (revealed parts shown in red) as the system approaches them. Replanning is done in real-time by RRT when new obstacles are sensed. The TEB is shown as the red box, and is the set of positions that the 10D quadrotor is guaranteed to remain within.}
+  \label{fig:simRRT}
 \end{figure}
-The position of the tracking model is shown in blue. Throughout the simulation, the tracking model's position is always inside the tracking error, in agreement with Proposition \ref{prop:main}. In addition, the tracking error bound never intersects with the obstacles, a consequence of the RRT planner planning with respect to a set of augmented obstacles (not shown). In the latter two subplots, one can see that the quadrotor appears to be exploring the environment briefly before reaching the goal. In this paper, we did not employ any exploration algorithm; this exploration behavior is simply emerging from replanning using RRT whenever a new part (a $3$ m$^2$ portion) of an obstacle is sensed.
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{fig/Q10D_Q3D/combined}
+  \caption{Three time snapshots of the simulation in Fig. \ref{fig:simRRT}.}
+  \label{fig:simRRT_combined}  
+\end{figure}
+
+Fig. \ref{fig:tracking_error_RRT} shows the maximum tracking error, in the three positional dimensions over time.
+The red points indicate the time points at which the optimal tracking controller from Eq. \eqref{eq:opt_ctrl_inf} was used; this is the safety controller depicted in Fig. \ref{fig:hybrid_ctrl}. 
+The blue points indicate the time points at which a performance controller, also depicted in Fig. \ref{fig:hybrid_ctrl}, was used.
+For the performance controller, we used a simple proportional controller that depends on the tracking error in each positional dimension; this controller is used whenever the tracking error is less than a quarter of the TEB.
+From Fig. \ref{fig:tracking_error_RRT}, one can observe that the tracking error is always less than the TEB implied by the value function.
+
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{fig/Q10D_Q3D/tracking_error}
+  \caption{Tracking error over time for the simulation shown in Fig. \ref{fig:simRRT} and \ref{fig:simRRT_combined}.}
+  \label{fig:tracking_error_RRT}  
+\end{figure}
+
+The simulation was done in MATLAB on a desktop computer with an Intel Core i7 2600K CPU.
+The time was discretized in increments of 0.01.
+Per iteration, planning with RRT using a simple multi-tree RRT planner implemented in MATLAB modified from \cite{Gavin2013} took on average 5 ms, and computing the tracking controller took on average 5.5 ms. 
+
