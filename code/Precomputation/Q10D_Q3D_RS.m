@@ -73,10 +73,10 @@ end
 
 
 %% Set up grid
-gMinX = [-2; -2; -45*pi/180; -4];
-gMaxX = [ 2;  2;  45*pi/180;  4];
-gMinZ = [-2; -2];
-gMaxZ = [ 2;  2];
+gMinX = [-2; -4; -45*pi/180; -4];
+gMaxX = [ 2;  4;  45*pi/180;  4];
+gMinZ = [-2; -4];
+gMaxZ = [ 2;  4];
 
 sD_X.grid = createGrid(gMinX, gMaxX, gNX);
 sD_Z.grid = createGrid(gMinZ, gMaxZ, gNZ);

@@ -1,4 +1,4 @@
-function [trueQuad, virt_x] = ...
+function [trueQuad, virt_x, controller] = ...
   simulateOnlineRRT(sD_X, derivX, sD_Z, derivZ, TEB, obs, extraArgs)
 % simulateOnlineRRT(data_filename, obs_filename, extraArgs)
 %     Includes tracking
@@ -22,10 +22,10 @@ function [trueQuad, virt_x] = ...
 addpath(genpath('.'))
 
 % Video
-% vout = VideoWriter('figs/videoRRT.mp4', 'MPEG-4');
-% vout.Quality = 100;
-% vout.FrameRate = 10;
-% vout.open;
+vout = VideoWriter('figsRRT2/videoRRT.mp4', 'MPEG-4');
+vout.Quality = 100;
+vout.FrameRate = 10;
+vout.open;
 
 % Problem setup
 start = [-12; 0; 0];
@@ -122,6 +122,8 @@ plan_time = 0;
 
 virt_x = nan(3, max_iter);
 virt_x(:,1) = start;
+
+controller = nan(1, max_iter-1);
 % while we haven't reached the final iteraction and we haven't reached the
 % goal
 while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
@@ -156,7 +158,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   pY = eval_u(sD_X.grid, derivX, rel_x(YDims));
   pZ = eval_u(sD_Z.grid, derivZ, rel_x(ZDims));
   
-  if norm(virt_x(:,iter) - trueQuad.x([1 5 9])) > trackErr/4
+  if norm(virt_x(:,iter) - trueQuad.x([1 5 9])) > 0.25*trackErr
       uX = sD_X.dynSys.optCtrl([], rel_x(XDims), pX, uMode);
       uY = sD_X.dynSys.optCtrl([], rel_x(YDims), pY, uMode);
       uZ = sD_Z.dynSys.optCtrl([], rel_x(ZDims), pZ, uMode);
@@ -165,6 +167,8 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
       up = u;
       boxColor = 'r';
       
+      controller(iter-1) = 1; % reachability controller
+      
    else
        uX = LQR_Q2D(rel_x(XDims),.5);
        uY = LQR_Q2D(rel_x(YDims),.5);
@@ -172,6 +176,8 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
        
        u = [uX uY uZ];
        boxColor = 'b';
+       
+       controller(iter-1) = 0; % LQR controller
   end
    
   % Find optimal control of relative system (no performance control)
@@ -185,7 +191,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   trueQuad.updateState(u, dt, [], d);
 
   % Make sure error isn't too big (shouldn't happen)
-  max(virt_x(:,iter) - trueQuad.x([1 5 9]))
+  max(abs(virt_x(:,iter) - trueQuad.x([1 5 9])))
 %   if max(virt_x - trueQuad.x([1 5 9])) > 1.5*trackErr
 %     keyboard
 %   end
@@ -194,7 +200,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
 %   fprintf('Iteration took %.2f seconds\n', toc);
   
   % Visualize
-  if (vis && ~mod(iter,50)) || iter == 2
+  if (vis && ~mod(iter,25)) || iter == 2
     % Local obstacles and true position
     obsMap.plotLocal;
     plot3(trueQuad.x(1), trueQuad.x(5), trueQuad.x(9), 'b.')
@@ -261,19 +267,20 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
     end
     boxMap.plotGlobal(boxColor, '-');
 
+    title(sprintf('t = %.1f', dt*(iter-1)));
     drawnow
 
-%     export_fig(sprintf('figsRRT/%d', iter), '-pdf')
-%     savefig(sprintf('figsRRT/%d.fig', iter))
-%     
-%     current_frame = getframe(gcf); % gca does just the plot
-%     writeVideo(vout, current_frame);    
+    export_fig(sprintf('figsRRT2/%d', iter), '-pdf')
+    savefig(sprintf('figsRRT2/%d.fig', iter))
+    
+    current_frame = getframe(gcf); % gca does just the plot
+    writeVideo(vout, current_frame);    
   end
 end
 
 virt_x(:,iter+1:end) = [];
 
-% vout.close
+vout.close
 comp_time = toc(global_start);
 fprintf('=== TOTAL ===\n')
 fprintf('%d iterations in %.4f seconds\n', iter, comp_time)
