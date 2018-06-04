@@ -211,18 +211,35 @@ The optimal tracking controller is obtained from the spatial gradients of the va
   \end{align}
 \end{subequations}
 
-For control and disturbance affine systems, this minimization is given analytically.
+In order to ensure that the relative system remains within the TEB, we also note that the optimal planning control $\pctrl^*$ and optimal disturbance $\dstb^*$ can also obtained from $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$ as follows:
 
-When the framework is executed on a computer, these two functions are saved as look-up tables over a grid representing the state space of the relative system.
- 
+\begin{subequations} \label{eq:opt_dstb}
+  \begin{align}
+  \begin{bmatrix}
+    \pctrl^* \\
+    \dstb^*
+  \end{bmatrix} (\rstate, \tvar) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb), \\
+  \begin{bmatrix}
+    \pctrl^* \\
+    \dstb^*
+  \end{bmatrix}(\rstate) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb). 
+  \end{align}
+\end{subequations}
+
+For system dynamics affine in the tracking control, planning control, and disturbance, the optimizations in \eqref{eq:opt_ctrl} and \eqref{eq:opt_dstb} is given analytically.
+In addition, \eqref{eq:opt_ctrl} or \eqref{eq:opt_dstb} provide the optimal solution to \eqref{eq:valfunc}.
+
+When the framework is executed on a computer, the gradient $\deriv$ is saved as look-up tables over a grid representing the state space of the relative system.
+
 \subsection{Error Bound Guarantee via Value Function} \label{sec:proofs}
 We now state the main theoretical results of this paper in Propositions \ref{prop:nonconv} and \ref{prop:main}, which state that every level set of $\valfunc(\rstate, \tvar)$ in the finite time horizon case and $\valfunc_\infty(\rstate)$ in the infinite time horizon case respectively is invariant under the following conditions:
 \begin{enumerate}
-  \item The tracking system applies the optimal control which tries to track the planning system;
-  \item The planning system applies (at worst) the optimal control that tries to escape from the tracking system; \label{ln:plan}
-  \item The tracking system experiences (at worst) the optimal disturbance that tries to prevent successful tracking. \label{ln:dist}
+  \item The tracking system applies the control in \eqref{eq:opt_ctrl} which tries to track the planning system;
+  \item The planning system applies the control in \eqref{eq:opt_dstb} which tries to escape from the tracking system; \label{ln:plan}
+  \item The tracking system experiences the worst-case disturbance in \eqref{eq:opt_dstb} which tries to prevent successful tracking. \label{ln:dist}
 \end{enumerate}
-In practice, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking system and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$ or $\valfunc_\infty(\rstate)$. 
+
+In practice, we can enact the controller in \eqref{eq:opt_ctrl}, but since the planning control and disturbance are \textit{a priori} unknown and are not directly controlled by the tracking system, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking system and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$ or $\valfunc_\infty(\rstate)$. 
 The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ or $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. 
 The TEB is given by the set\footnote{In practice, since $\valfunc$ is obtained numerically, we set, for example, $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty + \epsilon\}$ for some suitably small $\epsilon>0$}
 \begin{subequations} \label{eq:TEB}
@@ -326,7 +343,7 @@ Now, we finish the proof as follows:
 \end{IEEEproof} 
 
 \begin{rem}
-  As already mentioned, proposition \ref{prop:nonconv} assumes that the planning control $\pctrl$ and disturbance $\dstb$ are optimally trying to maximize the value function $\valfunc$, and thereby increasing the size of the TEB $\TEB$.
+  As already mentioned, Proposition \ref{prop:nonconv} assumes that the planning control $\pctrl$ and disturbance $\dstb$ are optimally trying to maximize the value function $\valfunc$, and thereby increasing the size of the TEB $\TEB$.
   Despite this, \eqref{eq:fin_thor_prop:statement} still holds.
   In reality, $\pctrl$ and $\dstb$ do not behave in a worst-case fashion, and it is often the case that when $\tvar' \ge \tvar$, we have $\rstate \in \TEB(\tvar) \Rightarrow \rtraj(\tvar'; \rstate, \tvar) \in \TEB(\tau)$ for some $\tau \le \tvar'$.
   Thus, one can ``take advantage'' of the suboptimality of $\pctrl$ and $\dstb$ by finding the earliest $\tau$ such that $\rtraj(\tvar'; \rstate, \tvar) \in \TEB(\tau)$ in order to have the tighter TEB over a longer time-horizon.
