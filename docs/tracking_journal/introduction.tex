@@ -30,9 +30,10 @@ This process is repeated as long as desired.
 \end{figure}
 %
 
-Because we designed FaSTrack to be modular, it can be used with any method for computing the TEB in conjunction with any existing fast path or trajectory planners, enabling motion planning that is real-time, guaranteed safe, and dynamically accurate. 
+FaSTrack to be modular, and it can be used with any method for computing the TEB in conjunction with any existing fast path or trajectory planners, enabling motion planning that is real-time, guaranteed safe, and dynamically accurate. 
 In this paper, we demonstrate this tool by computing the TEBs solving a Hamilton-Jacobi (HJ) partial differential equation (PDE), and using a different planning algorithm for each numerical example. 
 In the three examples, we also consider different models for the tracking system and the planning system.
-In the simulations, the system travels through a static environment with obstacles while experiencing disturbances.
- that are only known once they are within the limited sensing range of the vehicle. 
-Combining this bound with a kinematic rapidly exploring random trees (RRT) fast path planner \cite{Kuffner2000,Kavraki1996}, the system is able to safely plan and track a trajectory through the environment in real time.
+In the simulations, the system travels through a static environment with constraints defined, for example, by obstacles, while experiencing disturbances.
+The constraints are only fully known through online sensing, for example, once obstacles are within the limited sensing region of the vehicle. 
+Combining this TEB with real-time planners the system is able to safely plan and track a trajectory through the environment in real time. 
+The planning algorithms used in our numerical examples are the fast sweeping method (FSM) \cite{Takei2013}, rapidly-exploring random trees (RRT) \cite{Kuffner2000,Kavraki1996}, and model-predictive control (MPC) \cite{Qin2003}.

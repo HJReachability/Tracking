@@ -34,7 +34,8 @@ for ii = 1:N
   c{ii} = visSetIm(g2D, data2D, color, level, extraArgs);
   c{ii}.LineWidth = 3;
   
-  daspect([1 1 0.7])
+  axis square
+%   daspect([1 1 0.7])
   
   title('$V(r, T-\tau)$', int_font{:})
   xlabel('$v_{x,r}$', int_font{:})

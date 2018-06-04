@@ -246,10 +246,10 @@ P.~Bouffard, ``On-board model predictive control of a quadrotor helicopter:
   Design, implementation, and experiments,'' Master's thesis, University of
   California, Berkeley, 2012.
 
-\bibitem{Chen2016DecouplingExact}
-M.~Chen, S.~Herbert, and C.~J. Tomlin, ``Exact and efficient
-  hamilton-jacobi-based guaranteed safety analysis via system decomposition,''
-  \emph{arXiv preprint arXiv:1609.05248}, 2016.
+\bibitem{Mitchell07c}
+I.~M. Mitchell, ``{The Flexible, Extensible and Efficient Toolbox of Level Set
+  Methods},'' \emph{J. Scientific Computing}, vol.~35, no. 2-3, pp. 300--329,
+  Jun. 2008.
 
 \bibitem{Gavin2013}
 \BIBentryALTinterwordspacing

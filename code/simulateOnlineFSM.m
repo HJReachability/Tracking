@@ -1,4 +1,5 @@
-function simulateOnlineFSM(g5D, deriv, obs_filename, extraArgs)
+function [trueCar, virt_x, controller] = ...
+  simulateOnlineFSM(g5D, deriv, obs_filename, extraArgs)
 % simulateOnline_full(data_filename, obs_filename, extraArgs)
 %     Includes tracking
 %
@@ -26,11 +27,11 @@ addpath(genpath('.'))
 
 warning off
 
-% Video
-vout = VideoWriter('figs/video.mp4', 'MPEG-4');
-vout.Quality = 100;
-vout.FrameRate = 10;
-vout.open;
+% % Video
+% vout = VideoWriter('figsFSM/video.mp4', 'MPEG-4');
+% vout.Quality = 100;
+% vout.FrameRate = 10;
+% vout.open;
 
 %% Problem setup
 trackErr = 0.065; %%%%%%%
@@ -48,7 +49,7 @@ if nargin < 3
   obs_filename = 'Planners/FSM/obs.mat';
 end
 
-if nargin < 3
+if nargin < 4
   extraArgs = [];
 end
 
@@ -100,8 +101,12 @@ if vis
   grid on
 end
 
-% set initial states to zero
-virt_x = start;
+% set initial state
+max_iter = 50000;
+virt_x = nan(3, max_iter);
+virt_x(:,1) = start;
+
+controller = nan(1, max_iter-1);
 
 % Create real quadrotor system
 trueCar = Plane5D([start; 0.1; 0], dynSys.alphaMax, dynSys.aRange, dynSys.dMax);
@@ -114,10 +119,10 @@ trueCar = Plane5D([start; 0.1; 0], dynSys.alphaMax, dynSys.aRange, dynSys.dMax);
 %input: environment, sensing
 %output: augmented obstacles
 newStates = [];
-iter = 0;
+iter = 1;
 global_start = tic; % Time entire simulation
 
-max_iter = 50000;
+
 lookup_time = 0;
 plan_time = 0;
 
@@ -148,11 +153,11 @@ while iter < max_iter
     
     obs3Ds = migrateGrid(g, obs3D, gs);
     plan_start = tic;
-    if iter == 1
-      [newStates, uPlan] = fsmNextState(virt_x, goal, goal_size, L, gs, ...
+    if iter == 2
+      [newStates, uPlan] = fsmNextState(virt_x(:,iter-1), goal, goal_size, L, gs, ...
         obs3Ds, dt, dynSys.vOther, dynSys.wMax, [], false);
-    else
-      [newStates, uPlan] = fsmNextState(virt_x, goal, goal_size, L, gs, ...
+    else % Warm-start FSM (doesn't actually help much)
+      [newStates, uPlan] = fsmNextState(virt_x(:,iter-1), goal, goal_size, L, gs, ...
         obs3Ds, dt, dynSys.vOther, dynSys.wMax, uPlan, false);
     end
     plan_time = plan_time + toc(plan_start);
@@ -167,12 +172,18 @@ while iter < max_iter
     end    
   end
   
-  virt_x = newStates(:,1);
+  virt_x(:,iter) = newStates(:,1);
   newStates(:,1) = [];
 
   %% Hybrid Tracking Controller
   look_up_start = tic;
-  u = P5D_Dubins_htc(dynSys, uMode, trueCar.x, virt_x, g5D, deriv);
+  if norm(virt_x(1:2, iter) - trueCar.x(1:2)) > 0.015
+    u = P5D_Dubins_htc(dynSys, uMode, trueCar.x, virt_x(:,iter), g5D, deriv);
+    controller(iter-1) = 1;
+  else
+    u = P5D_Dubins_LQR(trueCar, virt_x(:,iter));
+    controller(iter-1) = 0;
+  end
   lookup_time = lookup_time + toc(look_up_start);
   
   %% True System Block
@@ -183,7 +194,7 @@ while iter < max_iter
   trueCar.updateState(u, dt, [], d);
   
   % Make sure error isn't too big (shouldn't happen)
-  if norm(virt_x(1:2) - trueCar.x(1:2)) > 0.22
+  if norm(virt_x(1:2, iter) - trueCar.x(1:2)) > 0.22
     keyboard
   end
   
@@ -191,7 +202,7 @@ while iter < max_iter
 %   fprintf('Iteration took %.2f seconds\n', toc);
   
   % Visualize
-  if vis
+  if vis && ~mod(iter,5)
     % Local obstacles and true position
     obsMap.plotLocal;
     obsMap.plotPadded;
@@ -203,18 +214,18 @@ while iter < max_iter
     
     % Virtual state
     if exist('hV', 'var')
-      hV.XData = virt_x(1);
-      hV.YData = virt_x(2);
-      hV.UData = 0.1*cos(virt_x(3));
-      hV.VData = 0.1*sin(virt_x(3));
+      hV.XData = virt_x(1,iter);
+      hV.YData = virt_x(2,iter);
+      hV.UData = 0.1*cos(virt_x(3,iter));
+      hV.VData = 0.1*sin(virt_x(3,iter));
       
       hV_true.XData = trueCar.x(1);
       hV_true.YData = trueCar.x(2);
       hV_true.UData = 0.1*cos(trueCar.x(3));
       hV_true.VData = 0.1*sin(trueCar.x(3));
     else
-      hV = quiver(virt_x(1), virt_x(2), 0.1*cos(virt_x(3)), ...
-        0.1*sin(virt_x(3)), '*', 'color', [0 0.75 0]);
+      hV = quiver(virt_x(1,iter), virt_x(2,iter), 0.1*cos(virt_x(3,iter)), ...
+        0.1*sin(virt_x(3,iter)), '*', 'color', [0 0.75 0]);
       
       hV_true = quiver(trueCar.x(1), trueCar.x(2), 0.1*cos(trueCar.x(3)), ...
         0.1*sin(trueCar.x(3)));
@@ -227,8 +238,8 @@ while iter < max_iter
     export_fig(sprintf('figs/%d', iter), '-pdf')
     savefig(sprintf('figs/%d.fig', iter))
     
-    current_frame = getframe(gcf); % gca does just the plot
-    writeVideo(vout, current_frame);
+%     current_frame = getframe(gcf); % gca does just the plot
+%     writeVideo(vout, current_frame);
   end
   
   % Check goal status
@@ -242,6 +253,9 @@ while iter < max_iter
   end
   
 end
+
+virt_x(:,iter+1:end) = [];
+controller(iter+1:end) = [];
 
 % vout.close
 comp_time = toc(global_start);
