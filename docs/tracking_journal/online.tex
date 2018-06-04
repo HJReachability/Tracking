@@ -34,10 +34,11 @@ Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the pl
           \STATE{$\tctrl \leftarrow$ desired controller} \ENDIF \label{ln:controllerEnd}
 		
 		\STATE \textbf{Tracking Model Block}: \label{ln:trackingStart}
-		\STATE apply control $\tctrl$ to vehicle for a time step of $\dt$, which brings the vehicle to the state $\tstate_\text{next}$ \label{ln:trackingEnd}
+		\STATE apply control $\tctrl$ to vehicle for a time step of $\dt$
+    \STATE the control $\tctrl$, planning control $\pctrl$, and disturbance $\dstb$ bring the system to a new state $\tstate$ according to \eqref{eq:tdyn} \label{ln:trackingEnd}
 		
 		\STATE \textbf{Planning Model Block}:\label{ln:planningStart}
-		\STATE update planning state $\pstate \leftarrow \pstate_\text{next}$
+		\STATE update planning state, $\pstate \leftarrow \pstate_\text{next}$, from Line \ref{ln:plannerEnd}
 		\STATE check if $\pstate$ is at planning goal \label{ln:planningEnd}
     \STATE \textbf{Update time}:
     \STATE $\tvar \leftarrow \tvar + \Delta \tvar$
@@ -47,7 +48,7 @@ Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the pl
 The TEB block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. 
 The sensor detects obstacles, or in general constraints, $\constrSense(\cdot)$ within the sensing region around the vehicle.
 Note that constraints are defined in the state space of the planning system, and therefore can represent constraints not only in position but also in, for example, velocity or angular space.
-The sensed constraints are augmented by $\TEB_\estate(\cdot)$ in a time-varying fashion (or by $\TEB_{\estate, \infty}$ in a time-invariant fashion) using the Minkowski difference. 
+The sensed constraints are augmented by $\TEB_\estate(\cdot)$ in a time-varying fashion (or by $\TEB_{\estate, \infty}$ in a time-invariant fashion) using the Minkowski difference, denoted ``$\ominus$''. 
 This is done to ensure that no unsafe path or trajectory can be generated\footnote{The minimum allowable sensing distance is $\senseDist = 2\TEB_\estate(\tvar) + \dx$, where $\dx$ is the largest step in space that the planner can make in one time step.}.
 
 The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented constraints $\constrAug$, and outputs the next state of the planning system $\pstate_\text{next}$ through the function $\plannerfunc(\cdot, \cdot)$.

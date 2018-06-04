@@ -28,7 +28,7 @@ The minimum of the value function was approximately $\underline\valfunc = 0.004$
 
 The top left plot of Fig. \ref{fig:vf_TEB:5D3D} shows the TEB $\TEB_{\pstate, \infty}$, which is obtained from \eqref{eq:TEBp:inf}, in green.
 The tracking model, which represents the system of interest, must apply the optimal control \eqref{eq:opt_ctrl} when it is on the green boundary.
-The cross sectional area of the TEB is the largest area in when $\theta_r = 0, \pi$. 
+The cross sectional area of the TEB is the largest area in when $\theta_r = 0,\pi$. 
 This agrees with intuition, since at these $\theta_r$ values the 5D car model is either aligned with or opposite to the 3D car model.
 Since the 5D car is able to move both forward and backward, these two alignments make tracking the easiest.
 For the same reasoning, the cross sectional area is the smallest at $\theta_r = -\pi/2, \pi/2,$ etc.
@@ -54,7 +54,7 @@ These make up the sensed constraints $\constrSense$.
 To ensure that the 5D car does not collide with the obstacles despite error in tracking, planning is done with respect to augmented constraints $\constrAug$, shown in dashed blue.
 
 Given the current planning constraints $\constrAug$, the 3D planning system plans, in real-time using FSM, towards the goal.
-This plan is shown in dotted black.
+This plan is shown in dotted red.
 The 5D system robustly tracks the 3D system within the TEB in Fig. \ref{fig:vf_TEB:5D3D}.
 
 Fig. \ref{fig:5D3Dsim} shows four time snapshots of the simulation.
