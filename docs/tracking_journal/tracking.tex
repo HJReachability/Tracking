@@ -129,15 +129,23 @@
 
 %%%
 \begin{abstract}
-Real-time and guaranteed safe trajectory planning in unknown environments is vital to many applications of autonomous systems. 
-However, algorithms for real-time trajectory planning typically sacrifice robustness to achieve computation speed, while provably safe trajectory planning tends to be computationally intensive and cannot re-plan trajectories in real-time, often a requirement for exploring unknown environments. 
-We propose FaSTrack, Fast and Safe Tracking, to obtain the best of both worlds. 
-In this framework, any path or trajectory planner using simplified dynamics to plan quickly can be used. 
-In conjunction, a differential game approach produces a safety controller for the vehicle along with a guaranteed tracking error bound. 
-This bound captures all possible deviations in the planning space due to model mismatch between higher-dimensional and simplified models of the system, as well as external disturbances.
-The tracking error bound can be either finite time horizon or infinite time horizon.
-In the former case, a time-invariant TEB is obtained, and in the latter, a time-varying TEB is obtained.
-We demonstrate FaSTrack using Hamilton-Jacobi reachability and three different trajectory planners with three different tracker-planner pairs.
+Real-time and guaranteed safe trajectory planning is vital to many applications of autonomous systems, particularly for systems navigating in unknown environments.
+However, algorithms for real-time trajectory planning typically sacrifice robustness to achieve computation speed. 
+Alternatively, provably safe trajectory planning tends to be computationally intensive and cannot re-plan trajectories in real-time. 
+We propose FaSTrack, Fast and Safe Tracking, to allow for real-time robust planning of dynamical systems. 
+In this framework, real-time computation speed is achieved by allowing any path or trajectory planner to plan using a simplified and efficient \textit{planning model} of the autonomous system.  
+The plan is tracked using the autonomous system, represented by a more realistic and higher-dimensional \textit{tracking model}. 
+We can precompute the worst-case tracking error due to model-mismatch between the tracking and planning models, as well as due to external disturbances (e.g. wind).  
+This tracking error bound (TEB) can be either finite time horizon or infinite time horizon.
+In the former case, a time-varying TEB is obtained, and in the latter, a time-invariant TEB is obtained.
+The TEB comes with a precomputed safety control function for the tracking model to stay within the bound during online planning.  
+This allows for fast online planning using the planning model, with guaranteed safe real-time tracking of the plan using the TEB and safety control function.
+%any path or trajectory planner using simplified dynamics to plan quickly can be used. 
+%In conjunction, a differential game approach produces a safety controller for the vehicle along with a guaranteed tracking error bound. 
+%This bound captures all possible deviations in the planning space due to model mismatch between higher-dimensional and simplified models of the system, as well as external disturbances.
+%The tracking error bound can be either finite time horizon or infinite time horizon.
+%In the former case, a time-invariant TEB is obtained, and in the latter, a time-varying TEB is obtained.
+We demonstrate FaSTrack using Hamilton-Jacobi reachability and three different trajectory planners with three different tracking-planning model pairs.
 \end{abstract}
 
 \input{introduction.tex}
