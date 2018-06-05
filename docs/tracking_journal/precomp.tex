@@ -159,7 +159,7 @@ This error function is shown in Fig. \ref{fig:vf_TEB:5D3D} \SHnote{no it's not.}
 When we care about quantifying tracking error for more planning states (for example, error in angular orientation between the two systems), the error function can be defined over these states as well.
 %In genearl the error function can be defined in any desired manner, and can include planning state variables other than position.
 For example, the error function, which corresponds to $\valfunc(\rstate, 0)$ \SHnote{haven't define V yet.  Also shouldn't this be V(r,T)?} in Fig. \ref{fig:vf_TEB:8D4D}, is defined in both position and velocity space; Fig. \ref{fig:valfuncRRT} shows yet another error function defined using the one-norm of the displacement between the two systems. 
-In our pursuit-evasion game formulation, the tracking system tries to minimize the error, while the planning system and any disturbances experienced by the tracking system try to do the opposite -- maximize.
+In our pursuit-evasion game formulation, the tracking system tries to minimize the error, while the planning system and any disturbances experienced by the tracking system try to do the opposite -- maximize. \SHnote{discuss ideas for figures}
 
 \begin{figure}
   \includegraphics[width=\columnwidth]{fig/ti_valfunc_5d3d}

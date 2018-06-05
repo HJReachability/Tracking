@@ -3,9 +3,9 @@
 
 In this section, we demonstrate the FaSTrack framework in three numerical examples involving a 5D car tracking a 3D car model with the FSM planner, a 10D quadrotor tracking a single integrator model with the RRT planner, and an 8D quadrotor tracking a double integrator model with the MPC planner.
 In each example, obstacles in the environment are \textit{a priori} unknown, and are revealed to the vehicle when they are sensed.
-Whenever, obstacle map is updated, the planner re-plans a trajectory in real-time.
+Whenever the obstacle map is updated, the planner re-plans a trajectory in real time.
 In this paper, the details of sensing are kept as simple as possible; we aim to only demonstrate our framework for real-time guaranteed safe planning and re-planning.
-In general, any other planner can be used for planning in unknown environments, as long as planning and re-planning can be done in real-time.
+In general, any other planner can be used for planning in unknown environments, as long as planning and re-planning can be done in real time.
 
 For each example, we first describe the tracking and planning models. 
 Next, we present the relative dynamics as well as the precomputation results. 
