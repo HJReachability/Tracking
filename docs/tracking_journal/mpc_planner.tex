@@ -1,28 +1,24 @@
 % !TEX root = tracking.tex
 \subsection{8D Quadrotor MPC Example \label{sec:resultsMPC}}
 
-In this section, we demonstrate the online computation framework in Algorithm~\ref{alg:algOnline} with a 8D quadrotor example. Unlike in Sections \ref{sec:reach_planner} and \ref{sec:resultsRRT}, we consider a time-varying TEB and utilize the Model Predictive Control (MPC) technique as the online planner. 
+In this section, we demonstrate the online computation framework in Algorithm~\ref{alg:algOnline} with an 8D quadrotor example. Unlike in Sections \ref{sec:reach_planner} and \ref{sec:resultsRRT}, we consider a time-varying TEB and utilize the Model Predictive Control (MPC) technique as the online planner. 
 
-\subsubsection{Offline precomputation}
-
-First we define the 10D dynamics of the tracking quadrotor and the simple 4D dynamics of a quadrotor:
-
-\MCnote{Note that disturbance is now applied to the acceleration instead of velocity}
+First we define the 8D dynamics of the tracking quadrotor, and the 4D dynamics of a double integrator, which serves as the planning system to be used in MPC:
 
 \begin{equation}
-\label{eq:Quad8D}
+\label{eq:Quad8D_dyn}
 \begin{aligned}
 \begin{array}{c}
 \left[
 \begin{array}{c}
-\dot x_s\\
-\dot v_{x,s}\\
+\dot x\\
+\dot v_x\\
 \dot \theta_x\\
-\dot\omega_x\\
-\dot y_s\\
-\dot v_{y,s}\\
-\dot\theta_y\\
-\dot\omega_y
+\dot \omega_x\\
+\dot y\\
+\dot v_y\\
+\dot \theta_y\\
+\dot \omega_y
 \end{array}
 \right]
 =
@@ -32,160 +28,155 @@ v_{x,s} + d_x\\
 g \tan \theta_x\\
 -d_1 \theta_x + \omega_x\\
 -d_0 \theta_x + n_0 a_x\\
-v_{y,s} + d_y\\
-g \tan \theta_y \\
+v_y + d_{v_y}\\
+g \tan \theta_y\\
 -d_1 \theta_y + \omega_y\\
 -d_0 \theta_y + n_0 a_y
 \end{array}
-\right],
+\right], \quad
 \left[
 \begin{array}{c}
-\dot{x_p}\\
-\dot v_{x,p}\\
-\dot{y,p}\\
-\dot v_{y,p}\\
+\dot {\hat x}\\
+\dot {\hat v}_x\\
+\dot {\hat y}\\
+\dot {\hat v}_y\\
 \end{array}
 \right] 
 =
 \left[
 \begin{array}{c}
-v_{x,p}\\
-a_x\\
-v_{y,p}\\
-a_y\\
+\hat v_x\\
+\hat a_x\\
+\hat v_y\\
+\hat a_y\\
 \end{array}
-\right]
+\right],
 \end{array}\\
 \end{aligned}
 \end{equation}
-where states $(x, y, z)$ denote the position, $(v_x, v_y, v_z)$ denote the velocity, $(\theta_x, \theta_y)$ denote the pitch and roll, and $(\omega_x, \omega_y)$ denote the pitch and roll rates. The controls of the 10D system are $(a_x, a_y, a_z)$, where $a_x$ and $a_y$ represent the desired pitch and roll angle, and $a_z$ represents the vertical thrust. The 3D system controls are $(b_x, b_y, b_z)$, and represent the velocity in each positional dimension. The disturbances in the 10D system $(d_x, d_y, d_z)$ are caused by wind, which acts on the velocity in each dimension. Note that the states of the 3D dynamics are a subset of the 10D state space; the matrix Q used in the online computation matches the position states of both systems. Next the relative dynamics between the two systems is defined using (\ref{eq:rdyn}):
+where the states and controls of the 8D system are defined the same as \eqref{eq:Quad10D_dyn}. The position $(\hat x,\hat y)$ and velocity $(\hat v_x, \hat v_y)$ are the states of the 4D system. The controls are $(\hat a_x, \hat a_y)$, which represent the acceleration in each positional dimension. Note that the disturbances in the 8D system $(d_{v_x},d_{v_y})$ act on the \MCnote{acceleration} in each direction. \MCnote{***Explain where the disturbances come from (physically)***}
 
-\begin{equation}
-\begin{aligned}
-\dot x_r &= \dot x_s - \dot x_p = v_{x,s} - v_{x,p} = v_{x,r} + d_x\\
-\dot v_{x,r} &= \dot v_{x,s} - \dot v_{x,p} = g \tan \theta_x - a_x\\
-\dot y_r &= \dot y_s - \dot y_p = v_{y,s} - v_{y,p} = v_{y,r} + d_y\\
-\dot v_{y,r} &= \dot v_{y,s} - \dot v_{y,p} = g \tan \theta_y - a_y\\
-\end{aligned}
-\end{equation}
+\subsubsection{Offline precomputation}
 
+The relative dynamics between the 8D and the 4D system are defined using (\ref{eq:rdyn}):
+%
+% \begin{equation}
+% \begin{aligned}
+% \dot x_r &= \dot x - \dot{\hat x} = v_x - \hat v_x = v_{x,r}\\
+% \dot v_{x,r} &= \dot v_x - \dot{\hat v}_x = g \tan \theta_x - \hat a_x  + \MCnote{d_{v_x}}\\
+% \dot y_r &= \dot y - \dot{\hat y} = v_y - \hat v_y = v_{y,r}\\
+% \dot v_{y,r} &= \dot v_y - \dot{\hat v}_y = g \tan \theta_y - \hat a_y  + \MCnote{d_{v_y}}\\
+% \end{aligned}
+% \end{equation}
+%
 \begin{equation}
 \label{eq:Quad8DRel_dyn}
 \begin{aligned}
 \begin{array}{c}
 \left[
 \begin{array}{c}
-\dot{x_r}\\
+\dot x_r\\
 \dot v_{x,r}\\
-\dot{\theta_{x}}\\
-\dot\omega_{x}\\
-\dot{y_r}\\
-\dot{v_{y}}\\
-\dot{\theta_{y}}\\
-\dot\omega_{y}\\
+\dot \theta_x\\
+\dot \omega_x\\
+\dot y_r\\
+\dot v_{y,r}\\
+\dot \theta_y\\
+\dot \omega_y\\
 \end{array}
 \right]
 =
 \left[
 \begin{array}{c}
-v_{x,r} + d_x\\
-g \tan \theta_x - a_x\\
+v_{x,r}\\
+g \tan \theta_x - \hat a_x + d_{v_x}\\
 -d_1 \theta_x + \omega_x\\
--d_0 \theta_x + n_0 u_x\\
-v_{y,r} + d_y\\
-g \tan \theta_y - a_y\\
+-d_0 \theta_x + n_0 a_x\\
+v_{y,r}\\
+g \tan \theta_y - \hat a_y + d_{v_y}\\
 -d_1 \theta_y + \omega_y\\
--d_0 \theta_y + n_0 u_y\\
+-d_0 \theta_y + n_0 a_y\\
 \end{array}
-\right]
+\right],
 \end{array}\\
 \end{aligned}
 \end{equation}
-The values for parameters $d_0,d_1,n_0,k_T,g$ used were: $d_0=10,d_1=8,n_0=10,k_T=0.91,g=9.81$. The 10D control bounds were $|a_x|,|a_y|\leq10$ degrees, $0\leq a_z\leq 1.5g$ m/s$^{2}$. The 3D control bounds were $|b_x|,|b_y|,|b_z|\leq0.5$ m/s. The disturbance bounds were $|d_x|,|d_y|,|d_z|\leq0.1$ m/s.
+where the states $(x_r,v_{x,r},y_r,v_{y,r})$ are the position and velocity of the 8D quadrotor in the frame of the double integrator. The remaining states $(\theta_x,\omega_x,\theta_y,\omega_y)$ are the pitch (rate) and roll (rate) of the 8D quadrotor.
 
+\MCnote{Added offline reachability computation results and the range of velocity and positional TEBs.}   
 \color{blue} notations for time-varying TEBs and Minkowski addition?modify Alg. 1\color{black}
-
-The time-varying TEB $\TEB_\pstate(t)$ 
-
 
 \subsubsection{Online computation}
 %
-We utilize the MPC design introduced in \cite{zhang_2017_MPC}, given in Problem~\ref{pr: MPC}, for the online path planning.
-%
-\begin{problem}\label{pr:MPC}
-\begin{align*}
-\min_{x,u}  & \quad \sum^{N}_{t=0} l(x_t,u_t)  \\
-s.t. \quad &x_{t+1} = f_p(x_t,u_t)\\
-& x_t \in \mathbb{X}_t\quad u_t \in \mathbb{U}_t\\
-& \mathbb{S}(x_t)\cup\constrAug(t) = \emptyset,\\
-& x_N = x_f ,\quad x(0) = \bar{x} \enspace.
-\end{align*}
-\end{problem}
-\noindent where $l_i(\cdot,\cdot)$ is a  convex stage cost function and $N$ is the horizon for the MPC problem. The dynamical system $f_p(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \ref{eq:Quad8D}. The state and input sequences along the horizon  are denoted by $x=[x^{T}_0,x^{T}_1,\cdots,x^{T}_N]^{T}$ and $u=[u^{T}_0,u^{T}_1,\cdots,u^{T}_{N-1}]^{T}$. The states and inputs are subject to convex time-varying constraints:
-%
-\begin{equation}
-x_t \in \mathbb{X}_t :=\mathbb{X}\oplus\mathcal{X}_{aug,t} \quad u_t \in\mathbb{U}_t := \mathbb{U}\oplus\mathcal{U}_{aug,t} \enspace ,
-\end{equation}
-%
-where $\oplus$ denotes the Minkowski addition, and $\mathbb{X}$ and $\mathbb{U}$ denote the original state and input constraints, respectively. Given the state $x_t$, we denote the position of the controlled objective by $\mathbb{S}(x_t)\subset \mathbb{R}^{2}$. To avoid obstacle collision, the state $x_t$ is also subject to the following constraint: 
-%
-\begin{equation}
-\mathbb{S}(x_t)\cup\constrAug(t) = \emptyset \enspace ,
-\end{equation}
-%
-with 
-%
-\begin{equation}
-\constrAug(t) := \constrSense\oplus\mathcal{S}_{aug,t} \enspace .
-\end{equation}
-%
-where the symbol $\oplus$ denotes for the Minkowski addition.
-%
-In this paper, we represent the obstacles as polytopes, i.e., $\constrSense = \cap \mathcal{O}^{i}$ with $\mathcal{O}^{i}:= \{x\in\mathbb{R}^{n} \mid A^{i}x\leq b^{i}\}$ for $i = 1,\cdots ,M.$. Therefore, the collision avoidance constraint is non-convex and computationally difficult. We follow the approach presented in \cite{zhang_2017_MPC} to compute a local minimal solution, by involving an extra variable $\lambda^{i}$ for each obstacle and reformulating the collision avoidance constraint equivalently as follows: 
-%
-\begin{equation}
-\exists \lambda^{i} >0, \; \mbox{s.t.} \; (A^{i}x- b^{i})^{T}\lambda^{i}  > 0, \; \|A^{i^{T}}\lambda^{i}\|\leq 1\enspace .
-\end{equation}
-%
-\subsubsection{Implement of the MPC planner with ACADO Toolbox}
- 
-
-\subsubsection{Online planner based on MPC}
-%
-We utilize the MPC design introduced in \cite{zhang_2017_MPC} for the online path planning. See in Problem~\ref{pr: MPC}.
+We utilize the MPC design introduced in \cite{Zhang2017} for the online path planning. See in Problem~\ref{pr: MPC}.
 %
 \begin{problem}\label{pr: MPC}
 \begin{align*}
-\min_{x,u}  & \quad \sum^{N-1}_{t=0} l(x_t,u_t)  \\
-s.t. \quad &x_{t+1} = f_p(x_t,u_t)\\
-& x_t \in \mathbb{X}_t\quad u_t \in \mathbb{U}_t\\
-& \mathbb{S}(x_t)\cup\constrAug(t) = \emptyset,\\
-& x_N = x_f ,\quad x(0) = \bar{x} \enspace.
+\min_{\mathbf{p},\mathbf{u}}  & \quad \sum^{N-1}_{k=0} l(p_k,u_k) + l_f(p_N-p_f)  \\
+s.t. \quad & p_0 = p_{init},\\
+&p_{k+1} = f_p(p_k,u_k),\\
+& p_k \in \mathbb{P}_k ,\enspace u_k \in \mathbb{U},\\
+& \mathbb{S}(p_k)\cap\constrAug(t_k) = \emptyset
 \end{align*}
 \end{problem}
-\noindent where $l_i(\cdot,\cdot)$ is a  convex stage cost function and $N$ is the horizon for the MPC problem. The dynamical system $f_p(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \ref{eq:Quad8D}. The state and input sequences along the horizon  are denoted by $x=[x^{T}_0,x^{T}_1,\cdots,x^{T}_N]^{T}$ and $u=[u^{T}_0,u^{T}_1,\cdots,u^{T}_{N-1}]^{T}$. The states and inputs are subject to convex time-varying constraints:
+where $l(\cdot,\cdot)$ and $l_f(\cdot)$ are convex stage and terminal cost functions, $N$ is the horizon for the MPC problem, and $t_k = t_0 + k \MCnote{\Delta t}$ denotes the current time used in simulation, with $t_0$ being the time when the MPC problem starts to be solved and $\Delta t$ the MPC sampling interval. The dynamical system $f_p(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \eqref{eq:Quad8D_dyn}. The state and input sequences along the horizon  are denoted by $\mathbf{p}=[p^{T}_0,p^{T}_1,\cdots,p^{T}_N]^{T}$ and $\mathbf{u}=[u^{T}_0,u^{T}_1,\cdots,u^{T}_{N-1}]^{T}$. The velocity states are subject to convex time-varying constraints:
 %
 \begin{equation}
-x_t \in \mathbb{X}_t :=\mathbb{X}\oplus\TEB_\pstate(t) \quad u_t \in\mathbb{U}_t := \mathbb{U}\oplus\TEB_\pstate(t)  \enspace ,
+(\hat v_{x,k},\hat v_{y,k}) \subset p_k \in \mathbb{P}_k :=\mathbb{P}\oplus\TEB_\pstate(t_k) \enspace ,
 \end{equation}
 %
-where $\oplus$ denotes the Minkowski addition, and $\mathbb{X}$ and $\mathbb{U}$ denote the original state and input constraints, respectively. Given the state $x_t$, we denote the position of the controlled objective by $\mathbb{S}(x_t)\subset \mathbb{R}^{2}$. To avoid obstacle collision, the state $x_t$ is also subject to the following constraint: 
+where $\oplus$ denotes the Minkowski addition, $\mathbb{P}$ denotes the original state constraint, and $\TEB_\pstate(t_k)$ is the tracking error bound sampled at $t_k$, respectively. Given the state vector $p_k$, we denote the position of the controlled object by $(\hat x_k,\hat y_k) := \mathbb{S}(p_k)\subseteq \mathbb{R}^{2}$. To avoid collision with obstacles, $\mathbb{S}(p_k)$ is subject to the following constraint: 
 %
 \begin{equation}
-\mathbb{S}(x_t)\cup\constrAug(t) = \emptyset \enspace ,
+\mathbb{S}(p_k)\cap\constrAug(t_k) = \emptyset \enspace ,
 \end{equation}
 %
 with 
 %
 \begin{equation}
-\constrAug(t) := \constrSense\oplus\TEB_\pstate(t) \enspace .
+\constrAug(t_k) := \constrSense(t_0)\oplus\TEB_\pstate(t_k) \enspace .
 \end{equation}
 %
-In this paper, we represent the obstacles as polytopes, i.e., $\constrSense = \cap \mathcal{O}^{i}$ with $\mathcal{O}^{i}:= \{x\in\mathbb{R}^{n} \mid A^{i}x\leq b^{i}\}$ for $i = 1,\cdots ,M.$. Therefore, the collision avoidance constraint is non-convex and computationally expensive. We follow the approach presented in \cite{zhang_2017_MPC} to compute a local minimal solution, by involving extra variable $\lambda^{i}$ for each obstacle and reformulating the collision avoidance constraint equivalently as follows: 
+where $\constrSense(t_0)$ denotes the obstacles sensed at $t_0$.
+
+In this paper, we represent the obstacles as polytopes, i.e., $\constrSense = \cap \constr^{i}$ with $\constr^{i}:= \{z\in\mathbb{R}^{n} \mid A^{i}z\leq b^{i}\}$ for $i = 1,\cdots ,M$. We follow the approach presented in \cite{Zhang2017} to compute a local minimal solution, by involving extra variables $\lambda^{i}$ for each obstacle $\constr^{i}$ and reformulating the collision avoidance constraint equivalently as follows: 
 %
 \begin{equation}
-\exists \lambda^{i} >0, \; \mbox{s.t.} \; (A^{i}x- b^{i})^{T}\lambda^{i}  > 0, \; \|A^{i^{T}}\lambda^{i}\|\leq 1\enspace .
+\exists \lambda^{i} >0, \; \mbox{s.t.} \; (A^{i} \mathbb{S}(p_k) - b^{i})^{T}\lambda^{i}  > 0, \; \|A^{i^{T}}\lambda^{i}\|_2\leq 1\enspace .
 \end{equation}
 %
-\subsubsection{Implement of the MPC planner with ACADO Toolbox}
- 
+Note that the collision avoidance constraint causes the MPC problem to be non-convex and thus computationally expensive.
+
+The procedure of finding the next state of the planning system using the proposed MPC planner is summarized in Algorithm \ref{alg:mpc}.
+%
+\begin{algorithm}	
+	\caption{MPC Path Planner Block}
+	\label{alg:mpc}
+	\begin{algorithmic}[1]
+		\STATE \textbf{Initialization}:
+ 		\STATE Set initial time and states: $t_0 \leftarrow \tvar, \pstate_0 \leftarrow \pstate$
+		\IF{MPC is ready to re-plan}
+			\STATE Solve MPC for the optimal control sequence: $\mathbf{u}_t \leftarrow \text{Problem\ref{pr: MPC}} (t_0,p_0,\constrAug)$
+		\ENDIF
+        \STATE Get the current control: $u(t) \leftarrow u_k \in \mathbf{u}_t$ such that $t \in [t_0 + k \Delta t, t_0 + (k+1) \Delta t]$
+		\STATE Output the next state: $\pstate_\text{next} = f_p(p,u(t))$
+	\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Simulations}
+
+The values for parameters $d_0,d_1,n_0,k_T,g$ used for the 8D model are: $d_0=10,d_1=8,n_0=10,k_T=0.91,g=9.81$.
+
+The 8D control bounds are $|a_x|,|a_y|\leq10$ degrees.
+
+The 4D control bound is $\|(\hat a_x,\hat a_y)\|_2\leq1.0$ m/s$^{2}$.
+
+The disturbance bounds are $|d_{v_x}|,|d_{v_y}|\leq0.1$ m/s.
+
+The sensing range is $\MCnote{r = 5}$ meters.
+
+For the MPC problem we used a horizon $N=8$ with sampling interval $\Delta t = 0.2$ s.
+
+Implementation of the MPC planner was based on MATLAB and \texttt{ACADO Toolkit} \cite{Houska2011a}. The nonlinear MPC problem was solved using an online active set strategy implemented in \texttt{qpOASES} \cite{Ferreau2014}. All the simulation results were obtained on a laptop with Ubuntu 14.04 LTS operating system and a Core i5-4210U CPU. The MPC planner re-plans every 0.8 s with an average computational time of 0.37 s for each planning loop. The frequency of control was once every 0.1 s for the 8D quadrotor system.
+
+\MCnote{Simulation figures and explanations to be added.}

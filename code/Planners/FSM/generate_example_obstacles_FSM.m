@@ -1,7 +1,8 @@
 function generate_example_obstacles_FSM()
 
 L = 1;
-g = createGrid([-L; -L; 0], [L; L; 2*pi], [35; 35; 35], 3);
+N = 251;
+g = createGrid([-L; -L; 0], [L; L; 2*pi], N*ones(3,1), 3);
 g2D = proj(g, [], [0 0 1]);
 
 % L shape

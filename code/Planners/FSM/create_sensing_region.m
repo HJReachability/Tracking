@@ -3,7 +3,7 @@ function sense_region = create_sensing_region(range, angle)
 %     Creates a sensing region in 2D in the shape of a portion of a circle with 
 %     radius range, with angle in [-angle, angle]
 
-sense_region.g = createGrid(-1.1*range*ones(2,1), 1.1*range*ones(2,1), 101);
+sense_region.g = createGrid(-1.1*range*ones(2,1), 1.1*range*ones(2,1), 251);
 circle = shapeSphere(sense_region.g, [0;0], range);
 
 lower_normal = rotate2D([1; 0], -angle);

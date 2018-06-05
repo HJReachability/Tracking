@@ -48,13 +48,7 @@ This is done to ensure that no unsafe path can be generated\footnote{The minimum
 The path planner block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented obstacles $\constrAug$, and outputs the next state of the planning system $\pstate_{next}$ through the function $\plannerfunc(\cdot, \cdot)$.
 As mentioned, FaSTrack is agnostic to the planning algorithm used, so we assume that $\plannerfunc(\cdot, \cdot)$ has been provided.
 The hybrid tracking controller block (lines \ref{ln:controllerStart}-\ref{ln:controllerEnd}) first computes the updated relative state $\rstate_\text{next}$. 
-If the $\rstate_\text{next}$ is on the boundary of the TEB $\TEB_\pstate(0)$ (or $\TEB_{\pstate, \infty}$), the safety controller must be used to remain within the safe bound. 
-The safety control is given by
-\begin{equation}
-  \label{eq:opt_ctrl}
-	\tctrl^* = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate_\text{next}) \cdot \rdyn(\rstate_\text{next},\tctrl,\pctrl,\dstb).
-\end{equation}
-For many practical systems (such as control affine systems), this minimization can be found extremely quickly.
+If the $\rstate_\text{next}$ is on the boundary of the TEB $\TEB_\pstate(0)$ (or $\TEB_{\pstate, \infty}$), the safety controller given in \eqref{eq:opt_ctrl} must be used to remain within the TEB. 
 
 If the relative state is not on the tracking boundary, a performance controller may be used. For the example in Section \ref{sec:results} the safety and performance controllers are identical, but in general this performance controller can suit the needs of the individual applications.
 

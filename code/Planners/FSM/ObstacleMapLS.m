@@ -43,7 +43,6 @@ classdef ObstacleMapLS < handle
       obj.last_sense_region = migrateGrid(sGridShift, sDataRot, obj.g2D);
       
       % Sense (take intersection of sensing region and local obs)
-      dx = max(obj.g2D.dx);
       obj.last_sense_region = addCRadius(obj.g2D, obj.last_sense_region, 0);
       new_region = max(obj.global_obs, obj.last_sense_region);
       
@@ -55,13 +54,8 @@ classdef ObstacleMapLS < handle
         new_sensed = true;
         obj.local_obs = new_local_obs;
         obj.padded_obs = addCRadius(obj.g2D, obj.local_obs, track_err);
-        
-      elseif nnz(new_local_obs < 0) == nnz(obj.local_obs < 0)
-        new_sensed = false;
-        
       else
-        error('Something is terribly wrong!')
-        
+        new_sensed = false;
       end
       
     end

@@ -8,7 +8,16 @@ Q(3,3) = 1;
 
 rel_x = s - Q*p;
 
-dV = eval_u(g, deriv, rel_x);
+rot_mat = [cos(p(3)) sin(p(3)); -sin(p(3)) cos(p(3))];
+
+rel_x(1:2) = rot_mat*rel_x(1:2);
+
+rel_x(3) = wrapToPi(rel_x(3));
+
+dV4 = eval_u(g, deriv{4}, rel_x);
+dV5 = eval_u(g, deriv{5}, rel_x);
+
+dV = [0; 0; 0; dV4; dV5];
 
 % Find optimal control of relative system (no performance control)
 u = rel_sys.optCtrl([], rel_x, dV, uMode);
