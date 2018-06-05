@@ -28,7 +28,7 @@ We assume that the system dynamics $\tdyn : \tset\ \times\ \tcset \times \dset \
 \end{aligned}
 \end{equation}
 
-\noindent where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn}) for a given $\tctrl(\cdot) \in \tcfset, \dstb(\cdot)\in\dfset$ \cite{Coddington84}. The trajectories of (\ref{eq:tdyn}) that solve this ODE will be denoted as $\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot), \dstb(\cdot))$, where $\tvar_0,\tvar \in [0, \thor]$ and $\tvar_0 \leq \tvar$. These trajectories will satisfy the initial condition and the ODE (\ref{eq:tdyn}) almost everywhere:
+\noindent where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn}) for a given $\tctrl(\cdot) \in \tcfset, \dstb(\cdot)\in\dfset$ \cite{Coddington84}. The trajectories of (\ref{eq:tdyn}) that solve this ODE will be denoted as $\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot), \dstb(\cdot))$, where $\tvar_0,\tvar \in [0, \thor]$ and $\tvar_0 \leq \tvar$. This trajectory notation outputs state that the system will be at time $\tvar$, given that the trajectory initiated at state $\tstate$ and time $\tvar_0$ and applied control signal $\tctrl(\cdot)$ and disturbance signal $\dstb(\cdot)$.  These trajectories will satisfy the initial condition and the ODE (\ref{eq:tdyn}) almost everywhere:
 
 \begin{align*}
 &\frac{d}{d\tvar}\ttraj(\tvar; \tstate_0, \tvar_0, \tctrl(\cdot), \dstb(\cdot)) = \\ &\qquad \tdyn(\ttraj(\tvar; \tstate_0, \tvar_0, \tctrl(\cdot), \dstb(\cdot)), \tctrl(\tvar), \dstb(\cdot)), \\
@@ -40,7 +40,7 @@ Often, $\tconstr$ represents the complement of obstacles that the system must av
 
 \subsection{Planning Model \label{sec:planning_model}}
 The planning model is a simpler or lower-dimensional model of the system used for planning a desired trajectory or path.
-For navigation in unknown environments, real-time re-planning is necessary, so the planning model is typically one for which a real-time planning algorithm exists.
+For navigation in unknown environments, fast re-planning is necessary, so the planning model is typically one that allows the desired path or trajectory planning algorithm to operate in real time.
 For examples of planning models, see Section \ref{sec:results}.
 
 Let $\pstate$ represent the state variables of the planning model, with control $\pctrl$. 
@@ -56,11 +56,11 @@ The dynamics satisfy the ODE
 
 \noindent with the analogous assumptions on continuity and boundedness as those for \eqref{eq:tdyn}.
 
-Note that the planning model does not involve a disturbance input. 
+Note that the planning model does not include a disturbance input. 
 This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances.
 
 Let $\goal \subset \pset$ and $\constr \subset \pset$ denote the projection of $\tgoal$ and $\tconstr$ respectively onto the subspace $\pset$.
-We will assume that $\constr$ is \textbf{a priori} unknown, and must be sensed as the vehicle, or the tracking system, moves around in the environment.
+We will assume that $\constr$ is \textit{a priori} unknown, and must be sensed as the vehicle, or the tracking system, moves around in the environment.
 Therefore, for convenience, we denote the currently known, or ``sensed'' constraints as $\constrSense(t)$.
 Note that $\constrSense(t)$ depends on time, since the system may gather more information about, for example, obstacles over time.
 In addition, as described throughout the paper, we will augment $\constrSense(t)$ according to the TEB between the tracking and planning systems.
@@ -69,10 +69,10 @@ We denote the augmented obstacles as $\constrAug(t)$.
 \subsection{Goals and Approach}
 Given system dynamics in \eqref{eq:tdyn}, initial state $\tstate_0$, goal states $\goal$, and constraints $\tconstr$ such that $\constr$ is \textit{a priori} unknown and determined in real-time, we would like to steer the system to $\goal$ with formally guaranteed satisfaction of $\tconstr$.
 
-To achieve this goal, we propose FaSTrack, a framework that decouples the formal guarantee of safety from the planning algorithm.
+To achieve this goal, FaSTrack decouples the formal guarantee of safety from the planning algorithm.
 Instead of having the system, represented by the tracking model, directly plan trajectories towards $\goal$, in our framework the tracking system ``chases'' the planning system, which uses any planning algorithm to obtain trajectories in real-time.
 When the planning system reaches sufficiently within the goal region, the tracking system would be at the goal as well.
-Safety is formally guaranteed through a precomputed of a TEB along with a corresponding tracking controller, in combination with augmentation of constraints based on this TEB.
-An illustrate of our framework is shown in Figure \ref{fig:chasing}.
+Safety is formally guaranteed through precomputation of a TEB along with a corresponding tracking controller, in combination with augmentation of constraints based on this TEB.
+An illustration of our framework applied to a navigation task is shown in Figure \ref{fig:chasing}.
 
-We demonstrate the FaSTrack framework in three representative simulations involving three different tracker system-planning system pairs, using three different planning algorithms.
+We demonstrate the FaSTrack framework in three representative simulations involving three different tracking-planning system pairs, using three different planning algorithms.

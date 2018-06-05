@@ -153,12 +153,13 @@ More examples of relative systems can be found in Sections \ref{sec:resultsRRT} 
 
 \subsection{Formalizing the Pursuit-Evasion Game}
 Given the relative dynamics between the tracking system and the planning system, we would like to compute a guaranteed TEB between these systems. 
-This is done by first defining a error function $\errfunc(\rstate)$ in the relative state space of the systems. 
-One typical error function is distance to the origin, which corresponds to the tracking error in terms of Euclidean distance between the tracking and planning systems. 
-This error function is shown in Fig. \ref{fig:vf_TEB:5D3D}. 
-Of course, the error function can be defined in any desired manner, and involve planning state variables other than position.
-For example, the error function, which corresponds to $\valfunc(\rstate, 0)$ in Fig. \ref{fig:vf_TEB:8D4D}, is defined in both position and velocity space; Fig. \ref{fig:vf_TEB_10D3D} shows yet another error function defined using the one-norm of the displacement between the two systems. 
-In our pursuit-evasion game formulation, the tracking system tries to minimize this cost, while the planning system and any disturbances experienced by the tracking system try to do the opposite -- maximize.
+This is done by first defining an error function $\errfunc(\rstate)$ in the relative state space of the systems, describing the error associated with a particular relative state. 
+One typical error function is distance to the origin, which corresponds to a tracking error defined as Euclidean relative distance from the tracking system to the planning system. 
+This error function is shown in Fig. \ref{fig:vf_TEB:5D3D} \SHnote{no it's not.}, and is used when one cares about tracking error in position.
+When we care about quantifying tracking error for more planning states (for example, error in angular orientation between the two systems), the error function can be defined over these states as well.
+%In genearl the error function can be defined in any desired manner, and can include planning state variables other than position.
+For example, the error function, which corresponds to $\valfunc(\rstate, 0)$ \SHnote{haven't define V yet.  Also shouldn't this be V(r,T)?} in Fig. \ref{fig:vf_TEB:8D4D}, is defined in both position and velocity space; Fig. \ref{fig:valfuncRRT} shows yet another error function defined using the one-norm of the displacement between the two systems. 
+In our pursuit-evasion game formulation, the tracking system tries to minimize the error, while the planning system and any disturbances experienced by the tracking system try to do the opposite -- maximize.
 
 \begin{figure}
   \includegraphics[width=\columnwidth]{fig/ti_valfunc_5d3d}
@@ -211,7 +212,7 @@ The optimal tracking controller is obtained from the spatial gradients of the va
   \end{align}
 \end{subequations}
 
-In order to ensure that the relative system remains within the TEB, we also note that the optimal planning control $\pctrl^*$ and optimal disturbance $\dstb^*$ can also obtained from $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$ as follows:
+In order to ensure that the relative system remains within the TEB, we also note that the optimal (worst-case) planning control $\pctrl^*$ and disturbance $\dstb^*$ can also obtained from $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$ as follows:
 
 \begin{subequations} \label{eq:opt_dstb}
   \begin{align}
