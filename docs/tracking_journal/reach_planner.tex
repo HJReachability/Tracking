@@ -1,7 +1,7 @@
 % !TEX root = tracking.tex
 \section{Numerical examples} \label{sec:results}
 
-In this section, we demonstrate the FaSTrack framework in three numerical examples involving a 5D car tracking a Dubins car model with the FSM planner, a 10D quadrotor tracking a single integrator model with the RRT planner, and an 8D quadrotor tracking a double integrator model with the MPC planner.
+In this section, we demonstrate the FaSTrack framework in three numerical examples involving a 5D car tracking a 3D car model with the FSM planner, a 10D quadrotor tracking a single integrator model with the RRT planner, and an 8D quadrotor tracking a double integrator model with the MPC planner.
 In each example, obstacles in the environment are \textit{a priori} unknown, and are revealed to the vehicle when they are sensed.
 Whenever, obstacle map is updated, the planner re-plans a trajectory in real-time.
 In this paper, the details of sensing are kept as simple as possible; we aim to only demonstrate our framework for real-time guaranteed safe planning and re-planning.
@@ -12,7 +12,7 @@ Next, we present the relative dynamics as well as the precomputation results.
 Afterwards, we briefly describe the planning algorithm and how obstacles are sensed by the vehicle. 
 Finally, we show trajectory simulation results.
 
-\subsection{5D-3D example with FSM planner \label{sec:reach_planner}}
+\subsection{5D car-3D car example with FSM \label{sec:reach_planner}}
 
 For our first example, we demonstrate the combination of fast planning and provably robust tracking by combining fast sweeping method (FSM) \cite{Takei2013} with our computed TEB. 
 FSM is an efficient optimal control-based planner for car-like systems, and provides numerically convergent globally optimal trajectory in real-time.
@@ -26,9 +26,9 @@ The model parameters are chosen to be $a \in [-0.5, 0.5]$, $|\alpha|\le 6$, $\ha
 Using the relative system dynamics given in \eqref{eq:5D_and_3D_rdyn}, we defined the error function to be $\errfunc(\rstate) = x_\rstate^2 + y_\rstate^2$, and computed $\valfunc_\infty(\rstate)$, which is shown in Fig. \ref{fig:vf_TEB:5D3D}.
 The minimum of the value function was approximately $\underline\valfunc = 0.004$, and the size of the TEB in $(x_r, y_r)$ space is approximately $0.065$.
 
-The top left plot shows the TEB $\TEB_{\pstate, \infty}$, which is obtained from \eqref{eq:TEBp:inf}, in green.
+The top left plot of Fig. \ref{fig:vf_TEB:5D3D} shows the TEB $\TEB_{\pstate, \infty}$, which is obtained from \eqref{eq:TEBp:inf}, in green.
 The tracking model, which represents the system of interest, must apply the optimal control \eqref{eq:opt_ctrl} when it is on the green boundary.
-The cross sectional area of the TEB is the largest area in when $\theta_r = 0, \pi$. 
+The cross sectional area of the TEB is the largest area in when $\theta_r = 0,\pi$. 
 This agrees with intuition, since at these $\theta_r$ values the 5D car model is either aligned with or opposite to the 3D car model.
 Since the 5D car is able to move both forward and backward, these two alignments make tracking the easiest.
 For the same reasoning, the cross sectional area is the smallest at $\theta_r = -\pi/2, \pi/2,$ etc.
@@ -38,7 +38,7 @@ With these $\theta_r$ values fixed, corresponding projections of the value funct
 Here, $\underline\valfunc$ is shown as the gray plane, with the intersection of the gray plane and the value function projection shown by the curve in the $0$-level plane. 
 These curves are slices of $\TEB_{\pstate, \infty}$ at the $\theta_r = \pi/2, -3\pi/4$ levels.
 
-Computation was done on a desktop computer with a Core i7 5820K processor, on a $41\times41\times59\times35\times61$ grid, and took approximately 125 hours and required approximately 10 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
+Computation was done on a desktop computer with an Intel Core i7 5820K processor, on a $41\times41\times59\times35\times61$ grid, and took approximately 125 hours and required approximately 10 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
 
 \subsubsection{Online sensing and planning}
 The simulation showing the combination of tracking and planning is shown in Fig. \ref{fig:5D3Dsim}.
@@ -54,17 +54,13 @@ These make up the sensed constraints $\constrSense$.
 To ensure that the 5D car does not collide with the obstacles despite error in tracking, planning is done with respect to augmented constraints $\constrAug$, shown in dashed blue.
 
 Given the current planning constraints $\constrAug$, the 3D planning system plans, in real-time using FSM, towards the goal.
-This plan is shown in dotted black.
+This plan is shown in dotted red.
 The 5D system robustly tracks the 3D system within the TEB in Fig. \ref{fig:vf_TEB:5D3D}.
 
 Fig. \ref{fig:5D3Dsim} shows four time snapshots of the simulation.
 In the top left subplot, the system has sensed only a very small portion of the obstacles, and hence plans a trajectory through an unknown obstacle to the target.
 However, while tracking this initial trajectory, more of the L-shaped obstacle is made known to the system, and therefore the system plans around this obstacle, as shown in the top right subplot.
 The bottom subplots show that eventually more obstacles are made known, and the system reaches the goal at $t=23.9$.
-
-The simulation was done in MATLAB on a desktop computer with a Core i7 2600K CPU.
-Time was discretized in increments of $0.1$.
-Averaged over the duration of the simulation, planning with FSM took approximately $0.066$ seconds per iteration, and obtaining the tracking controller from \eqref{eq:opt_ctrl} took approximately $0.0018$ seconds per iteration.
 
 \begin{figure}
   \centering
@@ -74,7 +70,7 @@ Averaged over the duration of the simulation, planning with FSM took approximate
   \begin{subfigure}[t]{0.49\columnwidth}
     \includegraphics[width=\columnwidth]{fig/P5D_Dubins/101}
   \end{subfigure}  
-
+  
   \begin{subfigure}[t]{0.49\columnwidth}
     \includegraphics[width=\columnwidth]{fig/P5D_Dubins/136}
   \end{subfigure}
@@ -83,3 +79,20 @@ Averaged over the duration of the simulation, planning with FSM took approximate
   \end{subfigure}
   \caption{Simulation of the 5D-3D example. As the vehicle with 5D car dynamics senses new obstacles in the sensing region (light green), the 3D model replans trajectories, which are robustly tracked by the 5D system. Augmentation of the constraints resulting from the obstacles ensures safety of the 5D system using the optimal tracking controller.} \label{fig:5D3Dsim}
 \end{figure}
+
+As explained in Fig. \ref{fig:hybrid_ctrl}, when the tracking error is relatively large, the tracking system uses the optimal tracking controller given by \eqref{eq:opt_ctrl_inf}; otherwise, it uses a performance controller. 
+In this simulation, we used a simple LQR controller on the linearized system when the tracking error is less than a quarter of the size of the TEB.
+The tracking error over time is shown in Fig. \ref{fig:P5D_Dubins_tracking_error}.
+The red dots indicate the time points at which the optimal tracking controller in \eqref{eq:opt_ctrl_inf} is used, and the blue dots indicate the time points at which the LQR controller is used. 
+One can see that when the optimal tracking controller is used, the error stays below 0.05, well below the predicted TEB of 0.065, since the planning control and the disturbances are not acting optimally.
+The disturbance was chosen to be uniformly random within the chosen bounds.
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{fig/P5D_Dubins/tracking_error}
+  \caption{Tracking error bound over time for the 5D-3D example. The red dots indicate that the optimal tracking controller in \eqref{eq:opt_ctrl_inf} is used, while the blue dots indicate that an LQR controller for the linearized system is used. The tracking error is always well below the predicted TEB of 0.065.}
+  \label{fig:P5D_Dubins_tracking_error}
+\end{figure}
+
+The simulation was done in MATLAB on a desktop computer with an Intel Core i7 2600K CPU.
+Time was discretized in increments of $0.1$.
+Averaged over the duration of the simulation, planning with FSM took approximately $66$ ms per iteration, and obtaining the tracking controller from \eqref{eq:opt_ctrl} took approximately $2$ ms per iteration.

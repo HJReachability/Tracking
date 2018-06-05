@@ -1,16 +1,15 @@
 % !TEX root = tracking.tex
-\subsection{8D Quadrotor MPC Example \label{sec:resultsMPC}}
+\subsection{8D quadrotor-4D double integrator example with MPC \label{sec:resultsMPC}}
 
-In this section, we demonstrate the online computation framework in Algorithm~\ref{alg:algOnline} with an 8D quadrotor example. Unlike in Sections \ref{sec:reach_planner} and \ref{sec:resultsRRT}, we consider a time-varying TEB and utilize the Model Predictive Control (MPC) technique as the online planner. 
+In this section, we demonstrate the online computation framework in Algorithm \ref{alg:algOnline} with an 8D quadrotor example. 
+Unlike in Sections \ref{sec:reach_planner} and \ref{sec:resultsRRT}, we consider a time-varying TEB and utilize MPC as the online planner.
+In addition, the TEB depends on both position and speed, as opposed to just position.
 
-First we define the 8D dynamics of the tracking quadrotor, and the 4D dynamics of a double integrator, which serves as the planning system to be used in MPC:
+First we define the 8D dynamics of the near-hover quadrotor, and the 4D dynamics of a double integrator, which serves as the planning system to be used in MPC:
 
 \begin{equation}
 \label{eq:Quad8D_dyn}
-\begin{aligned}
-\begin{array}{c}
-\left[
-\begin{array}{c}
+\begin{bmatrix}
 \dot x\\
 \dot v_x\\
 \dot \theta_x\\
@@ -19,62 +18,55 @@ First we define the 8D dynamics of the tracking quadrotor, and the 4D dynamics o
 \dot v_y\\
 \dot \theta_y\\
 \dot \omega_y
-\end{array}
-\right]
-=
-\left[
-\begin{array}{c}
+\end{bmatrix} =
+\begin{bmatrix}
 v_{x,s} + d_x\\
 g \tan \theta_x\\
 -d_1 \theta_x + \omega_x\\
 -d_0 \theta_x + n_0 a_x\\
-v_y + d_{v_y}\\
+v_y + d_y\\
 g \tan \theta_y\\
 -d_1 \theta_y + \omega_y\\
 -d_0 \theta_y + n_0 a_y
-\end{array}
-\right], \quad
-\left[
-\begin{array}{c}
+\end{bmatrix}, \quad
+\begin{bmatrix}
 \dot {\hat x}\\
 \dot {\hat v}_x\\
 \dot {\hat y}\\
 \dot {\hat v}_y\\
-\end{array}
-\right] 
-=
-\left[
-\begin{array}{c}
+\end{bmatrix} =
+\begin{bmatrix}
 \hat v_x\\
 \hat a_x\\
 \hat v_y\\
 \hat a_y\\
-\end{array}
-\right],
-\end{array}\\
-\end{aligned}
+\end{bmatrix},
 \end{equation}
-where the states and controls of the 8D system are defined the same as \eqref{eq:Quad10D_dyn}. The position $(\hat x,\hat y)$ and velocity $(\hat v_x, \hat v_y)$ are the states of the 4D system. The controls are $(\hat a_x, \hat a_y)$, which represent the acceleration in each positional dimension. Note that the disturbances in the 8D system $(d_{v_x},d_{v_y})$ act on the \MCnote{acceleration} in each direction. \MCnote{***Explain where the disturbances come from (physically)***}
+
+\noindent where the states, controls, and disturbances are the same as the first 8 components of the dynamics in \eqref{eq:Quad10D_dyn}. 
+The position $(\hat x,\hat y)$ and velocity $(\hat v_x, \hat v_y)$ are the states of the 4D system. 
+The controls are $(\hat a_x, \hat a_y)$, which represent the acceleration in each positional dimension. 
+
+The model parameters are chosen to be $d_0=10$, $d_1=8$, $n_0=10$, $k_T=0.91$, $g=9.81$, $|u_x|, |u_y| \le \pi/9$, $|\hat a_x|, |\hat a_y| \le 1$, $|\dstb_x|, |\dstb_y| \le 0.2$.
 
 \subsubsection{Offline precomputation}
+We define the relative system states to be the error states $(x_r, v_{x,r}, y_r, v_{y,r})$, which are the relative position and velocity, concatenated with the rest of the states in the 8D system.
+Defining $\rtrans = \mathbf I_8$ and 
 
-The relative dynamics between the 8D and the 4D system are defined using (\ref{eq:rdyn}):
-%
-% \begin{equation}
-% \begin{aligned}
-% \dot x_r &= \dot x - \dot{\hat x} = v_x - \hat v_x = v_{x,r}\\
-% \dot v_{x,r} &= \dot v_x - \dot{\hat v}_x = g \tan \theta_x - \hat a_x  + \MCnote{d_{v_x}}\\
-% \dot y_r &= \dot y - \dot{\hat y} = v_y - \hat v_y = v_{y,r}\\
-% \dot v_{y,r} &= \dot v_y - \dot{\hat v}_y = g \tan \theta_y - \hat a_y  + \MCnote{d_{v_y}}\\
-% \end{aligned}
-% \end{equation}
-%
+\begin{equation*}
+\ptmat = 
+\begin{bmatrix}
+  \begin{bmatrix} 1 \\ \mathbf 0_{3 \times 1} \end{bmatrix} 
+    & \mathbf 0_{4\times 1} \\
+  \mathbf 0_{4\times 1} 
+    & \begin{bmatrix} 1 \\ \mathbf 0_{3 \times 1} \end{bmatrix} 
+\end{bmatrix},
+\end{equation*}
+
+\noindent we obtain the following relative system dynamics:
 \begin{equation}
 \label{eq:Quad8DRel_dyn}
-\begin{aligned}
-\begin{array}{c}
-\left[
-\begin{array}{c}
+\begin{bmatrix}
 \dot x_r\\
 \dot v_{x,r}\\
 \dot \theta_x\\
@@ -83,97 +75,97 @@ The relative dynamics between the 8D and the 4D system are defined using (\ref{e
 \dot v_{y,r}\\
 \dot \theta_y\\
 \dot \omega_y\\
-\end{array}
-\right]
-=
-\left[
-\begin{array}{c}
-v_{x,r}\\
-g \tan \theta_x - \hat a_x + d_{v_x}\\
+\end{bmatrix} =
+\begin{bmatrix}
+v_{x,r} + \dstb_x\\
+g \tan \theta_x - \hat a_x\\
 -d_1 \theta_x + \omega_x\\
 -d_0 \theta_x + n_0 a_x\\
-v_{y,r}\\
-g \tan \theta_y - \hat a_y + d_{v_y}\\
+v_{y,r} + \dstb_y\\
+g \tan \theta_y - \hat a_y\\
 -d_1 \theta_y + \omega_y\\
 -d_0 \theta_y + n_0 a_y\\
-\end{array}
-\right],
-\end{array}\\
-\end{aligned}
+\end{bmatrix}.
 \end{equation}
-where the states $(x_r,v_{x,r},y_r,v_{y,r})$ are the position and velocity of the 8D quadrotor in the frame of the double integrator. The remaining states $(\theta_x,\omega_x,\theta_y,\omega_y)$ are the pitch (rate) and roll (rate) of the 8D quadrotor.
 
-\MCnote{Added offline reachability computation results and the range of velocity and positional TEBs.}   
-\color{blue} notations for time-varying TEBs and Minkowski addition?modify Alg. 1\color{black}
+As in the 10D-3D example in Section \ref{sec:resultsRRT}, the relative dynamics are decomposable into two 4D subsystems, and so computations were done in 4D space.
 
-\subsubsection{Online computation}
+Fig. \ref{fig:vf_TEB:8D4D} shows the $(x_r, v_{x,r})$-projection of value function across several different times on the left subplot.
+The total time horizon was $T=15$, and the value function did not converge.
+The gray horizontal plane indicates the value of $\underline V$, which was $1.14$.
+Note that with increasing $\tau$, $V(\rstate,\thor-\tau)$ is non-increasing, as proven in Proposition \ref{prop:nonconv}.
+
+The right subplot of Fig. \ref{fig:vf_TEB:8D4D} shows the $(x_r, v_{x,r})$-projection of the time-varying TEB.
+At $\tau=0$, the TEB is the smallest, and as $\tau$ increases, the size of TEB also increases, consistent with Proposition \ref{prop:nonconv}.
+In other words, the set of possible error states $(x_r, v_{x,r})$ in the relative system increases with time, which makes intuitive sense.
+
+The TEB shown in Fig. \ref{fig:vf_TEB:8D4D} are used to augment planning constraints in the $\hat x$ and $\hat v_x$ dimensions.
+Since we have chosen identical parameters for the first four and last four states, the TEB in the $\hat y$ and $\hat v_y$ dimensions is identical.
+
+On a desktop computer with an Intel Core i7 5820K CPU, the offline computation on a $81\times81\times65\times65$ grid with $75$ time discretization points took approximately 30 hours and  required approximately 17 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}.
+Note that unlike the other numerical examples, look-up tables representing the value function and its gradient must be stored at each time discretization point.
+
+\subsubsection{Online sensing and planning}
 %
-We utilize the MPC design introduced in \cite{Zhang2017} for the online path planning. See in Problem~\ref{pr: MPC}.
+We utilize the MPC design introduced in \cite{Zhang2017} for the online trajectory planning. The MPC formulation is given in Problem~\ref{pr: MPC}.
 %
 \begin{problem}\label{pr: MPC}
 \begin{align*}
 \min_{\mathbf{p},\mathbf{u}}  & \quad \sum^{N-1}_{k=0} l(p_k,u_k) + l_f(p_N-p_f)  \\
 s.t. \quad & p_0 = p_{init},\\
-&p_{k+1} = f_p(p_k,u_k),\\
-& p_k \in \mathbb{P}_k ,\enspace u_k \in \mathbb{U},\\
-& \mathbb{S}(p_k)\cap\constrAug(t_k) = \emptyset
+&p_{k+1} = h(p_k,u_k),\\
+& u_k \in \mathbb{U},\enspace p_k \in \constrAug(t_k) 
 \end{align*}
 \end{problem}
-where $l(\cdot,\cdot)$ and $l_f(\cdot)$ are convex stage and terminal cost functions, $N$ is the horizon for the MPC problem, and $t_k = t_0 + k \MCnote{\Delta t}$ denotes the current time used in simulation, with $t_0$ being the time when the MPC problem starts to be solved and $\Delta t$ the MPC sampling interval. The dynamical system $f_p(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \eqref{eq:Quad8D_dyn}. The state and input sequences along the horizon  are denoted by $\mathbf{p}=[p^{T}_0,p^{T}_1,\cdots,p^{T}_N]^{T}$ and $\mathbf{u}=[u^{T}_0,u^{T}_1,\cdots,u^{T}_{N-1}]^{T}$. The velocity states are subject to convex time-varying constraints:
+%
+where $l(\cdot,\cdot)$ and $l_f(\cdot)$ are convex stage and terminal cost functions and $N$ is the horizon for the MPC problem. $t_k = t_0 + k \MCnote{\Delta t}$ denotes for the time index along the MPC horizon with $t_0$ and $\Delta t$ being the initial time step and the sampling interval, respectively. Note that the horizon $N$ and the sampling interval $\Delta t$ are selected such that $t_0 + N \MCnote{\Delta t}\leq \tau - T$ with $\tau$ given by Step~9 in Algorithm~\ref{alg:algOnline} and $T$ defined for TEB in (\ref{eq:TEB}). The initial state is denote by $p_{init}$. The dynamical system $h(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \eqref{eq:Quad8D_dyn}. The state and input constraints are $\mathbb{U}$ and $\constrAug(t_k)$, respectively. Note that the time-varying constraint $\constrAug(t_k)$ contains the augmented state constraints:
 %
 \begin{equation}
-(\hat v_{x,k},\hat v_{y,k}) \subset p_k \in \mathbb{P}_k :=\mathbb{P}\oplus\TEB_\pstate(t_k) \enspace ,
+p_k \in \mathbb{P}_k :=\mathbb{P}\ominus\TEB_\estate(t_k) \enspace ,
 \end{equation}
 %
-where $\oplus$ denotes the Minkowski addition, $\mathbb{P}$ denotes the original state constraint, and $\TEB_\pstate(t_k)$ is the tracking error bound sampled at $t_k$, respectively. Given the state vector $p_k$, we denote the position of the controlled object by $(\hat x_k,\hat y_k) := \mathbb{S}(p_k)\subseteq \mathbb{R}^{2}$. To avoid collision with obstacles, $\mathbb{S}(p_k)$ is subject to the following constraint: 
+where $\mathbb{P}$ denotes the original state constraint, and $\TEB_\estate(t_k)$ is the tracking error bound at $t_k$, and the additional constraints for collision avoidance:
 %
 \begin{equation}
-\mathbb{S}(p_k)\cap\constrAug(t_k) = \emptyset \enspace ,
+\mathbb{S}(p_k)\cap\mathbb{O}\oplus\mathbb{S}(\TEB_\estate(t_k)) = \emptyset \enspace ,
 \end{equation}
 %
-with 
+where the operator $\mathbb{S}(\cdot)$ abstracts the position of the controlled objective from the state $p_k$, i.e., $(\hat x_k,\hat y_k) := \mathbb{S}(p_k)\subseteq \mathbb{R}^{2}$, and $\mathbb{O}$ denotes the union set of the sensed obstacles.
 %
-\begin{equation}
-\constrAug(t_k) := \constrSense(t_0)\oplus\TEB_\pstate(t_k) \enspace .
-\end{equation}
-%
-where $\constrSense(t_0)$ denotes the obstacles sensed at $t_0$.
-
-In this paper, we represent the obstacles as polytopes, i.e., $\constrSense = \cap \constr^{i}$ with $\constr^{i}:= \{z\in\mathbb{R}^{n} \mid A^{i}z\leq b^{i}\}$ for $i = 1,\cdots ,M$. We follow the approach presented in \cite{Zhang2017} to compute a local minimal solution, by involving extra variables $\lambda^{i}$ for each obstacle $\constr^{i}$ and reformulating the collision avoidance constraint equivalently as follows: 
+\begin{remark}
+In this paper, we represent the obstacles as polytopes, i.e., $\mathbb{O} = \cup \mathbb{O}^{i}$ with $\mathbb{O}^{i}:= \{z\in\mathbb{R}^{n} \mid A^{i}z\leq b^{i}\}$ for $i = 1,\cdots ,M$. Due to the collision avoidance constraint, the MPC problem becomes non-convex and thus computationally expensive. We follow the approach presented in \cite{Zhang2017} to compute a local minimal solution, by involving extra variables $\lambda^{i}$ for each obstacle $\mathbb{O}^{i}$ and reformulating the collision avoidance constraint equivalently as follows: 
 %
 \begin{equation}
 \exists \lambda^{i} >0, \; \mbox{s.t.} \; (A^{i} \mathbb{S}(p_k) - b^{i})^{T}\lambda^{i}  > 0, \; \|A^{i^{T}}\lambda^{i}\|_2\leq 1\enspace .
 \end{equation}
 %
-Note that the collision avoidance constraint causes the MPC problem to be non-convex and thus computationally expensive.
-
-The procedure of finding the next state of the planning system using the proposed MPC planner is summarized in Algorithm \ref{alg:mpc}.
+\end{remark}
+%
+The procedure of finding the next tracking state using the MPC-based planner is summarized in Algorithm~\ref{alg:mpc}.
 %
 \begin{algorithm}	
-	\caption{MPC Path Planner Block}
+	\caption{MPC Path Planner}
 	\label{alg:mpc}
 	\begin{algorithmic}[1]
-		\STATE \textbf{Initialization}:
- 		\STATE Set initial time and states: $t_0 \leftarrow \tvar, \pstate_0 \leftarrow \pstate$
+ 		\STATE Initialize the time and state: $t_0 \leftarrow \tvar, \pstate_0 \leftarrow \pstate$
 		\IF{MPC is ready to re-plan}
-			\STATE Solve MPC for the optimal control sequence: $\mathbf{u}_t \leftarrow \text{Problem\ref{pr: MPC}} (t_0,p_0,\constrAug)$
+			\STATE Solve Problem~\ref{pr: MPC} with the inputs $t_0$, $p_{init}$ and $\constrAug$
 		\ENDIF
-        \STATE Get the current control: $u(t) \leftarrow u_k \in \mathbf{u}_t$ such that $t \in [t_0 + k \Delta t, t_0 + (k+1) \Delta t]$
-		\STATE Output the next state: $\pstate_\text{next} = f_p(p,u(t))$
+          \STATE Output the next planed state: $p_{t_1}$
 	\end{algorithmic}
 \end{algorithm}
 
 \subsubsection{Simulations}
 
-The values for parameters $d_0,d_1,n_0,k_T,g$ used for the 8D model are: $d_0=10,d_1=8,n_0=10,k_T=0.91,g=9.81$.
+%The values for parameters $d_0,d_1,n_0,k_T,g$ used for the 8D model are: $d_0=10,d_1=8,n_0=10,k_T=0.91,g=9.81$.
 
-The 8D control bounds are $|a_x|,|a_y|\leq10$ degrees.
+%The 8D control bounds are $|a_x|,|a_y|\leq10$ degrees.
 
-The 4D control bound is $\|(\hat a_x,\hat a_y)\|_2\leq1.0$ m/s$^{2}$.
+%The 4D control bound is $\|(\hat a_x,\hat a_y)\|_2\leq1.0$ m/s$^{2}$.
 
-The disturbance bounds are $|d_{v_x}|,|d_{v_y}|\leq0.1$ m/s.
+%The disturbance bounds are $|d_{v_x}|,|d_{v_y}|\leq0.1$ m/s.
 
-The sensing range is $\MCnote{r = 5}$ meters.
+%The sensing range is $\MCnote{r = 5}$ meters.
 
 For the MPC problem we used a horizon $N=8$ with sampling interval $\Delta t = 0.2$ s.
 
