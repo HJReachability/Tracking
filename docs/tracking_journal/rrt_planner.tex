@@ -2,8 +2,8 @@
 \subsection{10D quadrotor-3D single integrator example with RRT\label{sec:resultsRRT}}
 
 Our second example involves a 10D near-hover quadrotor developed in \cite{Bouffard12} as the tracking model and a single integrator in 3D space as planning model.
-Planning is done using RRT, a well-known sampling-based planner that quickly produces geometric paths from a starting position to a goal position \cite{Kuffner2000,Kavraki1996}.
-Paths given by the RRT planner is converted to time-stamped trajectories by placing a maximum velocity in each dimension along the generated geometric paths.
+Planning is done using RRT, a well-known sampling-based planning algorithm that quickly produces geometric paths from a starting position to a goal position \cite{Kuffner2000,Kavraki1996}.
+Paths given by the RRT planning algorithm is converted to time-stamped trajectories by placing a maximum velocity in each dimension along the generated geometric paths.
 
 The dynamics of tracking model and of the 3D single integrator is as follows:
 
@@ -113,9 +113,9 @@ This implies that $\valfunc_\infty(\rstate) = \valfunc(\rstate, \tau=3.5)$, sinc
 The horizontal plane shows the minimum value, $\underline\valfunc = 0.3$, which corresponds to a TEB of approximately 0.55.
 
 The right subplot of Fig. \ref{fig:valfuncRRT} shows the $\underline\valfunc = 0.3$ level set of value function projection, which is the projection, onto the $(x_r, v_x)$ space, of the TEB $\TEB_{\estate, \infty}$ according to \eqref{eq:TEBp:inf}.
-The range of $x_r$ provides the TEB used for the planner, $\TEB_{\pstate, \infty}$, as given in \eqref{eq:TEBp:inf}.
+The range of $x_r$ provides the TEB used for the planning algorithm, $\TEB_{\pstate, \infty}$, as given in \eqref{eq:TEBp:inf}.
 
-The value function and TEB in the $(y_r, v_y, \theta_y, \omega_y)$ and $(z_r, v_z)$ spaces are combined together to form the TEB in 3D positional space.
+The value function and TEB in the $(y_r, v_y, \theta_y, \omega_y)$ and $(z_r, v_z)$ spaces are combined together to form the 10D TEB, which is projected down to the 3D positional space.
 For conciseness, these value functions are not shown; however, one can see the resulting TEB in Fig. \ref{fig:simRRT} and \ref{fig:simRRT_combined} as the translucent red box.
 
 Offline computations were done on a laptop with an Intel Core i7 4702HQ CPU using a MATLAB implementation of level set methods \cite{Mitchell07c} used for solving \eqref{eq:HJVI}.
@@ -124,7 +124,7 @@ The 2D computation in the $(z_r, v_z)$ space was done on a $101 \times 101$ grid
 
 \begin{figure}
   \includegraphics[width=\columnwidth]{fig/Q10D_Q3D/valfunc}
-  \caption{}
+  \caption{\SHnote{Sylvia to do: add caption, play with transparencies}}
   \label{fig:valfuncRRT}
 \end{figure}
 
@@ -132,25 +132,26 @@ The 2D computation in the $(z_r, v_z)$ space was done on a $101 \times 101$ grid
 The simulation involving the 10D quadrotor model tracking the 3D single integrator is shown in Fig. \ref{fig:simRRT} and \ref{fig:simRRT_combined}.
 Here, the system aims to start at $(x,y,z) = (-12, 0, 0)$ and reach $(12, 0, 0)$. 
 Three rectangular obstacles, which make up the constraints $\constr$, are present and initially unknown.
-Before the obstacles are sensed by the system, they are shown in gray, and when the tracking system is within 1.5 units away from a part of an obstacle, that part is revealed to the system as the sensed obstacles which form the sensed constraints $\constrSense$.
+Before the obstacles are sensed by the system, they are shown in gray, and when the autonomous is within 1.5 units away from a part of an obstacle, that part is revealed to the system as the sensed obstacles which form the sensed constraints $\constrSense$.
 The sensed obstacles are colored red.
-Whenever new obstacles are revealed, the planning system replans using RRT, in real time, a trajectory to the goal while avoiding the augmented constraint set $\constrAug$.
+Rather than augmenting the obstacles by the TEB, we visualize the TEB around the planning model.
+Whenever new obstacles are revealed, the planning algorithm replans using RRT, in real time, a trajectory to the goal while avoiding the augmented constraint set $\constrAug$.
 
 Fig. \ref{fig:simRRT} shows the entire trajectory, with the end of the trajectory being close to the goal position.
-The planning system state is shown as a small green star, and the translucent box around it depicts the TEB: the tracking system position is guaranteed to reside within this box.
-Therefore, as long as the planning system plans in a way such that the the TEB does not intersect with the obstacles, the tracking system is guaranteed to be safe.
+The planning model state is shown as a small green star, and the translucent box around it depicts the TEB: the tracking model position is guaranteed to reside within this box.
+Therefore, as long as the planning model plans in a way such that the the TEB does not intersect with the obstacles, the tracking model is guaranteed to be safe.
 Due to the random nature of RRT, during the simulation the system appears to randomly explore to look for an unobstructed path to the obstacle; we did not implement any exploration algorithms.
 
 Fig. \ref{fig:simRRT_combined} shows three different time snapshots of the simulation.
-At $t=8$, the planning system has sensed a portion of the previously unknown obstacles, and replans, so that the path deviates from a straight line from the initial position to the goal position.
+At $t=8$, the planning model has sensed a portion of the previously unknown obstacles, and replans, so that the path deviates from a straight line from the initial position to the goal position.
 The subplot showing $t = 47.7$ is rotated to show the trajectory up to this time from a more informative view angle.
-Here, the tracking system has safely passed by the first planar obstacle, and is moving around the second. 
-Note that the TEB never intersects the obstacles, implying that the tracking system is guaranteed to avoid collision with the obstacles, since it is guaranteed to stay within the TEB.
-At $t=83.5$, the tracking system safely passes by the last planar obstacle.
+Here, the autonomous has safely passed by the first planar obstacle, and is moving around the second. 
+Note that the TEB never intersects the obstacles, implying that the autonomous system is guaranteed to avoid collision with the obstacles, since it is guaranteed to stay within the TEB.
+At $t=83.5$, the autonomous system safely passes by the last planar obstacle.
 
 \begin{figure}
   \includegraphics[width=\columnwidth]{fig/Q10D_Q3D/10050}
-  \caption{Simulation of the 10D quadrotor tracking (trajectory shown in blue) a 3D single integrator (position shown as green star inside red box) in order to perform real-time robust planning. The system senses initially unknown obstacles (gray), which are revealed (revealed parts shown in red) as the system approaches them. Replanning is done in real-time by RRT when new obstacles are sensed. The TEB is shown as the red box, and is the set of positions that the 10D quadrotor is guaranteed to remain within.}
+  \caption{Simulation of the 10D quadrotor tracking (trajectory shown in blue) a 3D single integrator (position shown as green star inside red box) in order to perform real-time robust planning. The system senses initially unknown obstacles (gray), which are revealed (revealed parts shown in red) as the system approaches them. Replanning is done in real time by RRT when new obstacles are sensed. The TEB is shown as the red box, and is the set of positions that the 10D quadrotor is guaranteed to remain within.}
   \label{fig:simRRT}
 \end{figure}
 
@@ -161,7 +162,7 @@ At $t=83.5$, the tracking system safely passes by the last planar obstacle.
 \end{figure}
 
 Fig. \ref{fig:tracking_error_RRT} shows the maximum tracking error, in the three positional dimensions over time.
-The red points indicate the time points at which the optimal tracking controller from Eq. \eqref{eq:opt_ctrl_inf} was used; this is the safety controller depicted in Fig. \ref{fig:hybrid_ctrl}. 
+The red points indicate the time points at which the optimal tracking controller from Eq. \eqref{eq:opt_ctrl_inf} was used; this is the optimal tracking controller depicted in Fig. \ref{fig:hybrid_ctrl}. 
 The blue points indicate the time points at which a performance controller, also depicted in Fig. \ref{fig:hybrid_ctrl}, was used.
 For the performance controller, we used a simple proportional controller that depends on the tracking error in each positional dimension; this controller is used whenever the tracking error is less than a quarter of the TEB.
 From Fig. \ref{fig:tracking_error_RRT}, one can observe that the tracking error is always less than the TEB implied by the value function.
@@ -176,5 +177,5 @@ The disturbance was chosen to be uniformly random within the chosen bounds.
 
 The simulation was done in MATLAB on a desktop computer with an Intel Core i7 2600K CPU.
 The time was discretized in increments of 0.01.
-Per iteration, planning with RRT using a simple multi-tree RRT planner implemented in MATLAB modified from \cite{Gavin2013} took on average 5 ms, and computing the tracking controller took on average 5.5 ms. 
+Per iteration, planning with RRT using a simple multi-tree RRT planning algorithm implemented in MATLAB modified from \cite{Gavin2013} took on average 5 ms, and computing the tracking controller took on average 5.5 ms. 
 

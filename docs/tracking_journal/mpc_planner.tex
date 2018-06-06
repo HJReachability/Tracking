@@ -2,10 +2,10 @@
 \subsection{8D quadrotor-4D double integrator example with MPC \label{sec:resultsMPC}}
 
 In this section, we demonstrate the online computation framework in Algorithm \ref{alg:algOnline} with an 8D quadrotor example. 
-Unlike in Sections \ref{sec:reach_planner} and \ref{sec:resultsRRT}, we consider a time-varying TEB and utilize MPC as the online planner.
-In addition, the TEB depends on both position and speed, as opposed to just position.
+Unlike in Sections \ref{sec:reach_planner} and \ref{sec:resultsRRT}, we consider a time-varying TEB and utilize MPC as the online planning algorithm.
+In addition, the TEB depends on both position and speed, as opposed to just position. \SHnote{explain why we're using time-varying TEB, why we're including speed in the TEB}
 
-First we define the 8D dynamics of the near-hover quadrotor, and the 4D dynamics of a double integrator, which serves as the planning system to be used in MPC:
+First we define the 8D dynamics of the near-hover quadrotor, and the 4D dynamics of a double integrator, which serves as the planning model to be used in MPC:
 
 \begin{equation}
 \label{eq:Quad8D_dyn}
@@ -141,17 +141,17 @@ In this paper, we represent the obstacles as polytopes, i.e., $\mathbb{O} = \cup
 %
 \end{remark}
 %
-The procedure of finding the next tracking state using the MPC-based planner is summarized in Algorithm~\ref{alg:mpc}.
+The procedure of finding the next tracking state using the MPC-based planning algorithm is summarized in Algorithm~\ref{alg:mpc}.
 %
 \begin{algorithm}	
-	\caption{MPC Path Planner}
+	\caption{MPC Path Planning Algorithm}
 	\label{alg:mpc}
 	\begin{algorithmic}[1]
  		\STATE Initialize the time and state: $t_0 \leftarrow \tvar, \pstate_0 \leftarrow \pstate$
-		\IF{MPC is ready to re-plan}
+		\IF{MPC is ready to replan}
 			\STATE Solve Problem~\ref{pr: MPC} with the inputs $t_0$, $p_{init}$ and $\constrAug$
 		\ENDIF
-          \STATE Output the next planed state: $p_{t_1}$
+          \STATE Output the next planned state: $p_{t_1}$
 	\end{algorithmic}
 \end{algorithm}
 
@@ -169,6 +169,6 @@ The procedure of finding the next tracking state using the MPC-based planner is 
 
 For the MPC problem we used a horizon $N=8$ with sampling interval $\Delta t = 0.2$ s.
 
-Implementation of the MPC planner was based on MATLAB and \texttt{ACADO Toolkit} \cite{Houska2011a}. The nonlinear MPC problem was solved using an online active set strategy implemented in \texttt{qpOASES} \cite{Ferreau2014}. All the simulation results were obtained on a laptop with Ubuntu 14.04 LTS operating system and a Core i5-4210U CPU. The MPC planner re-plans every 0.8 s with an average computational time of 0.37 s for each planning loop. The frequency of control was once every 0.1 s for the 8D quadrotor system.
+Implementation of the MPC planning algorithm was based on MATLAB and \texttt{ACADO Toolkit} \cite{Houska2011a}. The nonlinear MPC problem was solved using an online active set strategy implemented in \texttt{qpOASES} \cite{Ferreau2014}. All the simulation results were obtained on a laptop with Ubuntu 14.04 LTS operating system and a Core i5-4210U CPU. The MPC planning algorithm replans every 0.8 s with an average computational time of 0.37 s for each planning loop. The frequency of control was once every 0.1 s for the 8D quadrotor system.
 
 \MCnote{Simulation figures and explanations to be added.}

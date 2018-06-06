@@ -1,10 +1,10 @@
 % !TEX root = tracking.tex
 \section{Offline Computation \label{sec:precomp}}
-The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking system and the planning system. 
-In this game, the tracking system will try to ``capture" the planning system, while the planning system is doing everything it can to avoid capture. 
-In reality the planner is typically not actively trying to avoid the tracking system, but this allows us to account for worst-case scenarios and more crucially, ensure that the TEB is \textit{trajectory-independent}. 
+\SHnote{Sylvia to do: emphasize why it's important to be able to compute time-varying TEB in this section.}The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking model and the planning model of the system. 
+In this game, the tracking model will try to ``capture" the planning model, while the planning model is doing everything it can to avoid capture. 
+In reality the planning algorithm is typically not actively trying to avoid the tracking model, but this allows us to account for worst-case scenarios and more crucially, ensure that the TEB is \textit{trajectory-independent}. 
 If both systems are acting optimally in this way, we want to determine the largest relative distance (based on some suitable metric) that may occur over time. 
-This distance is the maximum possible tracking error between the two systems, and is captured by the value function obtained from solving the HJ VI \eqref{eq:HJVI}.
+This distance is the maximum possible tracking error between the two models, and is captured by the value function obtained from solving the HJ VI \eqref{eq:HJVI}.
 
 \subsection{Relative System Dynamics}
 To determine the relative distance (or another error metric) that may occur over time, we must first define the relative system derived from the tracking and planning models. 
@@ -31,7 +31,7 @@ The function $\rtrans$ is a nonlinear transform, usually either the identity fun
 A transform $\rtrans$ that achieves the relative system dynamics in the form of \eqref{eq:rdyn} is not strictly needed and may not exist; however, in principle the theory we present can be easily adapted to this case, albeit at a cost of having a higher-dimensional relative system.
 In this paper, we assume that a suitable $\rtrans$ is available so that the dimensionality of the relative system state space is at most that of the tracking model.
 
-In addition, we define the error state $\estate$ to be the relative system state \textit{excluding} the absolute states of the tracking system, and the auxiliary states $\astate$ to be the relative system state \textit{excluding} the error state.
+In addition, we define the error state $\estate$ to be the relative system state \textit{excluding} the absolute states of the tracking model, and the auxiliary states $\astate$ to be the relative system state \textit{excluding} the error state.
 Hence, $\rstate = (\estate, \astate)$.
 
 To be concrete, let the tracking model be a 5D car model, and the planning model be a 3D kinematic car model as follows:
@@ -152,30 +152,30 @@ a + \dstb_a\\
 More examples of relative systems can be found in Sections \ref{sec:resultsRRT} and \ref{sec:resultsMPC}.
 
 \subsection{Formalizing the Pursuit-Evasion Game}
-Given the relative dynamics between the tracking system and the planning system, we would like to compute a guaranteed TEB between these systems. 
-This is done by first defining an error function $\errfunc(\rstate)$ in the relative state space of the systems, describing the error associated with a particular relative state. 
-One typical error function is distance to the origin, which corresponds to a tracking error defined as Euclidean relative distance from the tracking system to the planning system. 
-This error function is shown in Fig. \ref{fig:vf_TEB:5D3D} \SHnote{no it's not.}, and is used when one cares about tracking error in position.
-When we care about quantifying tracking error for more planning states (for example, error in angular orientation between the two systems), the error function can be defined over these states as well.
+Given the relative dynamics between the tracking model and the planning model, we would like to compute a guaranteed TEB between these models. 
+This is done by first defining an error function $\errfunc(\rstate)$ in the relative state space, describing the error associated with a particular relative state. 
+One typical error function is distance to the origin, which corresponds to a tracking error defined as Euclidean relative distance from the tracking model to the planning model. 
+This error function is shown in Fig. \ref{fig:placeholder}, and is used when one cares about tracking error in position.
+When we care about quantifying tracking error for more planning states (for example, error in angular orientation between the two models), the error function can be defined over these states as well.
 %In genearl the error function can be defined in any desired manner, and can include planning state variables other than position.
-For example, the error function, which corresponds to $\valfunc(\rstate, 0)$ \SHnote{haven't define V yet.  Also shouldn't this be V(r,T)?} in Fig. \ref{fig:vf_TEB:8D4D}, is defined in both position and velocity space; Fig. \ref{fig:valfuncRRT} shows yet another error function defined using the one-norm of the displacement between the two systems. 
-In our pursuit-evasion game formulation, the tracking system tries to minimize the error, while the planning system and any disturbances experienced by the tracking system try to do the opposite -- maximize. \SHnote{discuss ideas for figures}
+For example, the error function seen in Fig. \ref{fig:vf_TEB:8D4D} is defined in both position and velocity space; Fig. \ref{fig:valfuncRRT} shows yet another error function defined using the one-norm of the displacement between the two models. 
+In our pursuit-evasion game formulation, the tracking model tries to minimize the error, while the planning model and any disturbances experienced by the tracking model try to do the opposite -- maximize.
 
 \begin{figure}
-  \includegraphics[width=\columnwidth]{fig/ti_valfunc_5d3d}
-  \caption{Infinite time horizon TEB (top left), two slices of the value function at $\theta_r = \pi/2, -3\pi/4$ (top right, bottom left), and corresponding TEB slices (bottom right) for the 5D car tracking 3D Dubins car example in Section \ref{sec:reach_planner}.}
-  \label{fig:vf_TEB:5D3D}  
+  \includegraphics[width=\columnwidth]{fig/placeholder}
+  \caption{placeholder figure showing 5D3D error function, value function, TEB, and position-space slice}
+  \label{fig:placeholder}  
 \end{figure}
 
 \begin{figure}
 	\centering
   \includegraphics[width=\columnwidth]{fig/tv_valfunc}
-  \caption{Finite time horizon value function (top) and TEBs (bottom) for the 8D quadrotor tracking 4D double integrator example in Section \ref{sec:resultsMPC}.}  
+  \caption{Finite time horizon value function (left) and TEBs (right) for the 8D quadrotor tracking 4D double integrator example in Section \ref{sec:resultsMPC}. Note that $\valfunc(\rstate,0) = \errfunc(\rstate)$, which occurs at $\tau = 15$.}  
   \label{fig:vf_TEB:8D4D}
 \end{figure} 
 
 Before constructing the pursuit-evasion game we must first define the method each player must use for making decisions. 
-We define a strategy for planning system as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a control for the planning model based on the control of the planning model. We restrict $\gamma$ to draw from only non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$, as defined in \cite{Mitchell05}. 
+We define a strategy for planning model as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a control for the planning model based on the control of the planning model. We restrict $\gamma$ to draw from only non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$, as defined in \cite{Mitchell05}. 
 We similarly define the disturbance strategy $\gamma_{\dstb}: \tcset \rightarrow \dset$, $\gamma_{\dstb} \in \Gamma_\dstb(t)$.
 
 We compute the highest cost that this game will ever attain when both players are acting optimally. 
@@ -197,7 +197,7 @@ Adapting the formulation in \cite{Fisac15} and taking a convention of negative t
 \noindent from which we obtain the value function $\valfunc(\rstate, t)$.
 
 
-If the control authority of the tracking system is powerful enough to always eventually remain within some distance from the planning system, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. 
+If the control authority of the tracking model is powerful enough to always eventually remain within some distance from the planning model, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. 
 An example of this converged value function is in Fig. \ref{fig:vf_TEB:5D3D}. 
 
 In some cases, the value function does not converge, and provides a finite time horizon, time-varying TEB, an example of which is shown in Fig. \ref{fig:vf_TEB:8D4D}.
@@ -219,11 +219,11 @@ In order to ensure that the relative system remains within the TEB, we also note
   \begin{bmatrix}
     \pctrl^* \\
     \dstb^*
-  \end{bmatrix} (\rstate, \tvar) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb), \\
+  \end{bmatrix} (\rstate, \tvar) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc_\infty(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb), \\
   \begin{bmatrix}
     \pctrl^* \\
     \dstb^*
-  \end{bmatrix}(\rstate) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb). 
+  \end{bmatrix}(\rstate) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc_\infty(\rstate) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb). 
   \end{align}
 \end{subequations}
 
@@ -235,12 +235,12 @@ When the framework is executed on a computer, the gradient $\deriv$ is saved as 
 \subsection{Error Bound Guarantee via Value Function} \label{sec:proofs}
 We now state the main theoretical results of this paper in Propositions \ref{prop:nonconv} and \ref{prop:main}, which state that every level set of $\valfunc(\rstate, \tvar)$ in the finite time horizon case and $\valfunc_\infty(\rstate)$ in the infinite time horizon case respectively is invariant under the following conditions:
 \begin{enumerate}
-  \item The tracking system applies the control in \eqref{eq:opt_ctrl} which tries to track the planning system;
-  \item The planning system applies the control in \eqref{eq:opt_dstb} which tries to escape from the tracking system; \label{ln:plan}
-  \item The tracking system experiences the worst-case disturbance in \eqref{eq:opt_dstb} which tries to prevent successful tracking. \label{ln:dist}
+  \item The tracking model applies the control in \eqref{eq:opt_ctrl} which tries to track the planning model;
+  \item The planning model applies the control in \eqref{eq:opt_dstb} which tries to escape from the tracking model; \label{ln:plan}
+  \item The tracking model experiences the worst-case disturbance in \eqref{eq:opt_dstb} which tries to prevent successful tracking. \label{ln:dist}
 \end{enumerate}
 
-In practice, we can enact the controller in \eqref{eq:opt_ctrl}, but since the planning control and disturbance are \textit{a priori} unknown and are not directly controlled by the tracking system, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking system and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$ or $\valfunc_\infty(\rstate)$. 
+In practice, we can enact the controller in \eqref{eq:opt_ctrl}, but since the planning control and disturbance are \textit{a priori} unknown and are not directly controlled by the tracking model, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking model and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$ or $\valfunc_\infty(\rstate)$. 
 The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ or $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. 
 The TEB is given by the set\footnote{In practice, since $\valfunc$ is obtained numerically, we set, for example, $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty + \epsilon\}$ for some suitably small $\epsilon>0$}
 \begin{subequations} \label{eq:TEB}
@@ -263,11 +263,11 @@ Therefore, the TEB in the error state subspace is given by projecting away the a
   \end{align}
 \end{subequations}
 This is the TEB that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. 
-Within this bound the tracking system may use any controller, but on the boundary\footnote{Practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and are not the focus of our paper.} of this bound the tracking system must use the safety optimal controller.
-In general, the TEB is defined as a set in the error space, which allows the TEB to not only be in terms of position, but any state of the planning system such as velocity, as demonstrated in the example in Section \ref{sec:resultsMPC}.
+Within this bound the tracking model may use any controller, but on the boundary\footnote{Practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and are not the focus of our paper.} of this bound the tracking model must use the optimal tracking controller.
+In general, the TEB is defined as a set in the error space, which allows the TEB to not only be in terms of position, but any state of the planning model such as velocity, as demonstrated in the example in Section \ref{sec:resultsMPC}.
 
 We now formally state and prove the propositions. 
-Note that an interpretation of \eqref{eq:TEBp} is that $\walfunc(\rstate, t) := \valfunc(\rstate, \thor - \tvar)$ and $\valfunc_\infty(\rstate)$ are control-Lyapunov functions for the relative dynamics between the tracking system and the planning system.
+Note that an interpretation of \eqref{eq:TEBp} is that $\valfunc(\rstate, \thor - \tvar)$ and $\valfunc_\infty(\rstate)$ are control-Lyapunov functions for the relative dynamics between the tracking model and the planning model.
 
 \begin{prop}
   \label{prop:nonconv}
