@@ -50,7 +50,7 @@ This control is used to update the tracking system, and the process repeats.
 To determine both the TEB and safety controller functions/look-up tables, an offline framework is used as shown in Fig. \ref{fig:fw_offline}. 
 The planning and tracking system dynamics are used in the HJ VI, whose solution is a value function that acts as the TEB function/look-up table. 
 The spatial gradients of the value function comprise the safety controller function/look-up table. 
-These functions are independent of the online computations -- they depend only on the \textit{relative} states and dynamics between the planning and tracking systems, not on the absolute states along the trajectory at execution time.
+These functions are independent of the online computations -- they depend only on the \textit{relative system state} and dynamics between the planning and tracking systems, not on the absolute states along the trajectory at execution time.
 
 \begin{figure}[h!]
   \centering

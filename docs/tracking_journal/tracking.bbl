@@ -204,6 +204,17 @@ J.~F. Fisac, M.~Chen, C.~J. Tomlin, and S.~S. Shankar, ``Reach-avoid problems
   with time-varying dynamics, targets and constraints,'' in \emph{18th
   International Conference on Hybrid Systems: Computation and Controls}, 2015.
 
+\bibitem{Chen2016DecouplingJournal}
+M.~Chen, S.~L. Herbert, M.~Vashishtha, S.~Bansal, and C.~J. Tomlin,
+  ``{Decomposition of Reachable Sets and Tubes for a Class of Nonlinear
+  Systems},'' \emph{IEEE Trans. Autom. Control}, Nov. 2018.
+
+\bibitem{Chen2018}
+M.~Chen and C.~J. Tomlin, ``{Hamilton-Jacobi Reachability: Some Recent
+  Theoretical Advances and Applications in Unmanned Airspace Management},''
+  \emph{Annual Review of Control, Robotics, and Autonomous Systems}, vol.~1,
+  2018.
+
 \bibitem{Mitchell2012}
 I.~M. Mitchell, M.~Chen, and M.~Oishi, ``{Ensuring safety of nonlinear sampled
   data systems through reachability},'' \emph{IFAC Proc. Volumes}, vol.~45,
@@ -225,20 +236,20 @@ A.~K. Akametalu, J.~F. Fisac, J.~H. Gillula, S.~Kaynama, M.~N. Zeilinger, and
   C.~J. Tomlin, ``{Reachability-based safe learning with Gaussian processes},''
   in \emph{Proc. IEEE Conf. on Decision and Control}, Dec. 2014.
 
+\bibitem{Takei2013}
+R.~Takei and R.~Tsai, ``{Optimal Trajectories of Curvature Constrained Motion
+  in the Hamilton–Jacobi Formulation},'' \emph{J. Scientific Computing},
+  vol.~54, no. 2-3, pp. 622--644, Feb. 2013.
+
 \bibitem{Bouffard12}
 P.~Bouffard, ``On-board model predictive control of a quadrotor helicopter:
   Design, implementation, and experiments,'' Master's thesis, University of
   California, Berkeley, 2012.
 
-\bibitem{Chen2016DecouplingExact}
-M.~Chen, S.~Herbert, and C.~J. Tomlin, ``Exact and efficient
-  hamilton-jacobi-based guaranteed safety analysis via system decomposition,''
-  \emph{arXiv preprint arXiv:1609.05248}, 2016.
-
-\bibitem{Chen2016DecouplingJournal}
-M.~Chen, S.~L. Herbert, M.~S. Vashishtha, S.~Bansal, and C.~J. Tomlin, ``A
-  general system decomposition method for computing reachable sets and tubes,''
-  \emph{arXiv preprint arXiv:1611.00122}, 2016.
+\bibitem{Mitchell07c}
+I.~M. Mitchell, ``{The Flexible, Extensible and Efficient Toolbox of Level Set
+  Methods},'' \emph{J. Scientific Computing}, vol.~35, no. 2-3, pp. 300--329,
+  Jun. 2008.
 
 \bibitem{Gavin2013}
 \BIBentryALTinterwordspacing
@@ -246,5 +257,24 @@ M.~Chen, S.~L. Herbert, M.~S. Vashishtha, S.~Bansal, and C.~J. Tomlin, ``A
   Tree (RRT)},'' 2013. [Online]. Available:
   \url{https://www.mathworks.com/matlabcentral/fileexchange/21443-multiple-rapidly-exploring-random-tree--rrt-}
 \BIBentrySTDinterwordspacing
+
+\bibitem{Zhang2017}
+\BIBentryALTinterwordspacing
+X.~Zhang, A.~Liniger, and F.~Borrelli, ``{Optimization-Based Collision
+  Avoidance},'' Nov. 2017. [Online]. Available:
+  \url{http://arxiv.org/abs/1711.03449}
+\BIBentrySTDinterwordspacing
+
+\bibitem{Houska2011a}
+B.~Houska, H.~Ferreau, and M.~Diehl, ``{ACADO} {T}oolkit -- {A}n {O}pen
+  {S}ource {F}ramework for {A}utomatic {C}ontrol and {D}ynamic
+  {O}ptimization,'' \emph{Optimal Control Applications and Methods}, vol.~32,
+  no.~3, pp. 298--312, 2011.
+
+\bibitem{Ferreau2014}
+H.~Ferreau, C.~Kirches, A.~Potschka, H.~Bock, and M.~Diehl, ``qp{OASES}: A
+  parametric active-set algorithm for quadratic programming,''
+  \emph{Mathematical Programming Computation}, vol.~6, no.~4, pp. 327–--363,
+  2014.
 
 \end{thebibliography}
