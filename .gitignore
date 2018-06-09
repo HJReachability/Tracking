@@ -57,3 +57,5 @@ code/figsRRT1/
 code/figsRRT2/
 
 docs/tracking_journal/tracking\.pdf
+
+*.bbl
