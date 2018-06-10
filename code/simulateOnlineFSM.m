@@ -43,7 +43,7 @@ start = [-0.75; -0.75; pi/6];
 goal = [0.5; 0.5; pi/2];
 goal_size = [2.1*trackErr; 2.1*trackErr; pi/6];
 
-dt = 0.1;
+dt = 1/15;
 
 if nargin < 3
   obs_filename = 'Planners/FSM/obs.mat';
