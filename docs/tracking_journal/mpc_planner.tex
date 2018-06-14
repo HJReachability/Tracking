@@ -1,9 +1,9 @@
 % !TEX root = tracking.tex
 \subsection{8D quadrotor-4D double integrator example with MPC \label{sec:resultsMPC}}
 
-In this section, we demonstrate the online computation framework in Algorithm \ref{alg:algOnline} with an 8D quadrotor example. 
-Unlike in Sections \ref{sec:reach_planner} and \ref{sec:resultsRRT}, we consider a time-varying TEB and utilize MPC as the online planning algorithm.
-In addition, the TEB depends on both position and speed, as opposed to just position. \SHnote{explain why we're using time-varying TEB, why we're including speed in the TEB}
+In this section, we demonstrate the online computation framework in Algorithm \ref{alg:algOnline} with an 8D quadrotor example and MPC as the online planning algorithm. 
+Unlike in Sections \ref{sec:reach_planner} and \ref{sec:resultsRRT}, we consider a planning-tracking model pair that does not converge; the computation instead provides a time-varying TEB. In addition, the TEB depends on both position and speed, as opposed to just position. This is to accomodate velocity bounds on the system.
+
 
 First we define the 8D dynamics of the near-hover quadrotor, and the 4D dynamics of a double integrator, which serves as the planning model to be used in MPC:
 

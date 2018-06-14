@@ -75,7 +75,7 @@ The 5D system robustly tracks the 3D system within the TEB in Fig. \ref{fig:vf_T
 Fig. \ref{fig:5D3Dsim} shows four time snapshots of the simulation.
 In the top left subplot, the system has sensed only a very small portion of the obstacles, and hence plans a trajectory through an unknown obstacle to the target.
 However, while tracking this initial trajectory, more of the L-shaped obstacle is made known to the system, and therefore the system plans around this obstacle, as shown in the top right subplot.
-The bottom subplots show that eventually more obstacles are made known, and the system reaches the goal at $t=23.9$.
+The bottom subplots show that eventually more obstacles are made known, and the system reaches the goal at $t=23.9$ s.
 
 \begin{figure}
   \centering
@@ -109,5 +109,5 @@ The disturbance was chosen to be uniformly random within the chosen bounds.
 \end{figure}
 
 The simulation was done in MATLAB on a desktop computer with an Intel Core i7 2600K CPU.
-Time was discretized in increments of $0.067$ seconds, (15 Hz) \SHnote{Sylvia To Do: add units for time everywhere}.
+Time was discretized in increments of $0.067$ seconds, (15 Hz).
 Averaged over the duration of the simulation, planning with FSM took approximately $66$ ms per iteration, and obtaining the tracking controller from \eqref{eq:opt_ctrl} took approximately $2$ ms per iteration.
