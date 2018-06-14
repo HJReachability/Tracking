@@ -107,63 +107,74 @@ Note that unlike the other numerical examples, look-up tables representing the v
 
 \subsubsection{Online sensing and planning}
 %
-We utilize the MPC design introduced in \cite{Zhang2017} for the online trajectory planning. The MPC formulation is given in Problem~\ref{pr: MPC}.
+We utilize the MPC design introduced in \cite{Zhang2017} for the online trajectory planning. The MPC formulation is given as follows.
 %
-\begin{problem}\label{pr: MPC}
-\begin{align*}
-\min_{\mathbf{p},\mathbf{u}}  & \quad \sum^{N-1}_{k=0} l(p_k,u_k) + l_f(p_N-p_f)  \\
-s.t. \quad & p_0 = p_{\text{init}},\\
-&p_{k+1} = h(p_k,u_k),\\
-& u_k \in \mathbb{U},\enspace p_k \in \constrAug(t_k) 
-\end{align*}
-\end{problem}
+%\begin{problem}\label{pr: MPC}
+\begin{subequations} \label{eq:MPC}
+  \begin{align}
+  \underset{\{p_k\}_{k=0}^N, \{u_k\}_{k=0}^{N-1}}{\text{minimize}} \quad
+  & \sum^{N-1}_{k=0} l(p_k,u_k) + l_f(p_N-p_f)  \\
+  \text{subject to} \quad & p_0 = p_{\text{init}},\\
+  &p_{k+1} = h(p_k,u_k),\\
+  & u_k \in \mathbb{U},\enspace p_k \in \constrAug(t_k) 
+  \end{align}
+\end{subequations}
+
+%\end{problem}
 %
-where $l(\cdot,\cdot)$ and $l_f(\cdot)$ are convex stage and terminal cost functions and $N$ is the horizon for the MPC problem. $t_k = t_0 + k \Delta t_{\text{mpc}}$ denotes for the time index along the MPC horizon with $t_0$ and $\Delta t_{\text{mpc}}$ being the initial time step and the sampling interval, respectively. Note that the horizon $N$ and the sampling interval $\Delta t_{\text{mpc}}$ are selected such that $t_0 + N \Delta t_{\text{mpc}}\leq \tau - T$ with $\tau$ given by Step~9 in Algorithm~\ref{alg:algOnline} and $T$ defined for TEB in (\ref{eq:TEB}). The initial state is denote by $p_{\text{init}}$. The dynamical system $h(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \eqref{eq:Quad8D_dyn}. The state and input constraints are $\constrAug(t_k)$ and $\mathbb{U}$, respectively. Note that the time-varying constraint $\constrAug(t_k)$ contains the augmented state constraints:
+where $l(\cdot,\cdot)$ and $l_f(\cdot)$ are convex stage and terminal cost functions and $N$ is the horizon for the MPC problem. 
+$t_k = t_0 + k \Delta t_{\text{mpc}}$ denotes for the time index along the MPC horizon with $t_0$ and $\Delta t_{\text{mpc}}$ being the initial time step and the sampling interval, respectively. 
+Note that the horizon $N$ and the sampling interval $\Delta t_{\text{mpc}}$ are selected such that $t_0 + N \Delta t_{\text{mpc}}\leq T - \tau$ with $\tau$ given by Step~9 in Algorithm~\ref{alg:algOnline} and $T$ defined for TEB in (\ref{eq:TEB}). 
+Planning model states are denoted with the variable $p = (\hat x, \hat v_x, \hat y, \hat v_y)$ with the initial planning model state denoted by $p_{\text{init}}$.
+The planning control denoted with the variable $u = (\hat a_x, \hat a_y)$.
+The dynamical system $h(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \eqref{eq:Quad8D_dyn}. The state and input constraints are $\constrAug(t_k)$ and $\mathbb{U}$, respectively. Note that the time-varying constraint $\constrAug(t_k)$ contains the augmented state constraints:
 %
 \begin{equation}
 p_k \in \mathbb{P}_k :=\mathbb{P}\ominus\TEB_\estate(t_k) \enspace ,
 \end{equation}
 %
-where $\mathbb{P}$ denotes the original state constraint, and $\TEB_\estate(t_k)$ is the tracking error bound at $t_k$, and the additional constraints for collision avoidance:
-%
-\begin{equation}
-\mathbb{S}(p_k)\cap\mathbb{O}\oplus\mathbb{S}(\TEB_\estate(t_k)) = \emptyset \enspace ,
-\end{equation}
-%
-where the operator $\mathbb{S}(\cdot)$ abstracts the position of the controlled objective from the state $p_k$, i.e., $(\hat x_k,\hat y_k) := \mathbb{S}(p_k)\subseteq \mathbb{R}^{2}$, and $\mathbb{O}$ denotes the union set of the sensed obstacles.
-%
-\begin{remark}
-In this paper, we represent the obstacles as polytopes, i.e., $\mathbb{O} = \cup \mathbb{O}^{i}$ with $\mathbb{O}^{i}:= \{z\in\mathbb{R}^{n} \mid A^{i}z\leq b^{i}\}$ for $i = 1,\cdots ,M$. Due to the collision avoidance constraint, the MPC problem becomes non-convex and thus computationally expensive. We follow the approach presented in \cite{Zhang2017} to compute a local optimal solution, by involving extra variables $\lambda^{i}$ for each obstacle $\mathbb{O}^{i}$ and reformulating the collision avoidance constraint equivalently as follows: 
-%
-\begin{equation}
-\exists \lambda^{i} >0, \; \mbox{s.t.} \; (A^{i} \mathbb{S}(p_k) - b^{i})^{T}\lambda^{i}  > 0, \; \|A^{i^{T}}\lambda^{i}\|_2\leq 1\enspace .
-\end{equation}
-%
-\end{remark}
-%
-The procedure of finding the next tracking state using the MPC-based planner is summarized in Algorithm~\ref{alg:mpc}.
-%
-\begin{algorithm}	
-	\caption{MPC Path Planner}
-	\label{alg:mpc}
-	\begin{algorithmic}[1]
- 		\STATE Initialize the time and state: $t_0 \leftarrow \tvar, \ p_{\text{init}} \leftarrow \pstate$
-		\IF{MPC is ready to re-plan}
-			\STATE Solve Problem~\ref{pr: MPC} with the inputs $t_0$, $p_{\text{init}}$ and $\constrAug$
-		\ENDIF
-          \STATE Output the next planed state: $p_{\text{next}} \leftarrow p_{t_1}$, where $t_1 = t + \Delta t$
-	\end{algorithmic}
-\end{algorithm}
+where $\mathbb{P}$ denotes the original state constraint, and $\TEB_\estate(t_k)$ is the tracking error bound at $t_k$., and the additional constraints for collision avoidance:
 
-The simulation showing the 8D quadrotor tracking the 4D double integrator is presented in Fig \ref{fig:8D4Dsim}. The quadrotor starts at $(2.0,0.0)$ and seeks to reach the blue circle centered at $(9.0,11.5)$ with a radius of 1.0. Three polytopic obstacles, which are initially unknown, make up the constraints $\constr$. 
+%\begin{equation}
+%\mathbb{S}(p_k)\cap\mathbb{O}\oplus\mathbb{S}(\TEB_\estate(t_k)) = \emptyset \enspace ,
+%\end{equation}
+%
+%where the operator $\mathbb{S}(\cdot)$ abstracts the position of the controlled objective from the state $p_k$, i.e., $(\hat x_k,\hat y_k) := \mathbb{S}(p_k)\subseteq \mathbb{R}^{2}$, and $\mathbb{O}$ denotes the union set of the sensed obstacles.
+%
+%\begin{remark}
+For this example, we represent the augmented constraints as the complement of polytopes, which makes the MPC problem becomes non-convex and thus computationally expensive. 
+We follow the approach presented in \cite{Zhang2017} to compute a local optimal solution, by involving extra auxiliary variables for each non-convex constraint. 
+%reformulating the collision avoidance constraint equivalently as follows: 
+%
+%\begin{equation}
+%\exists \lambda^{i} >0, \; \mbox{s.t.} \; (A^{i} \mathbb{S}(p_k) - b^{i})^{T}\lambda^{i}  > 0, \; \|A^{i^{T}}\lambda^{i}\|_2\leq 1\enspace .
+%\end{equation}
+%
+%\end{remark}
+%
+%The procedure of finding the next tracking state using the MPC-based planner is summarized in Algorithm~\ref{alg:mpc}.
+%%
+%\begin{algorithm}	
+%	\caption{MPC Path Planner}
+%	\label{alg:mpc}
+%	\begin{algorithmic}[1]
+% 		\STATE Initialize the time and state: $t_0 \leftarrow \tvar, \ p_{\text{init}} \leftarrow \pstate$
+%		\IF{MPC is ready to re-plan}
+%			\STATE Solve Problem~\ref{pr: MPC} with the inputs $t_0$, $p_{\text{init}}$ and $\constrAug$
+%		\ENDIF
+%          \STATE Output the next planed state: $p_{\text{next}} \leftarrow p_{t_1}$, where $t_1 = t + \Delta t$
+%	\end{algorithmic}
+%\end{algorithm}
 
-The quadrotor has a circular sensing region with a radius of 6.0, colored in light green. The unknown part of an obstacle is marked with dotted black boundaries. As the quadrotor exploring around in the environment, more obstacles are made known to the quadrotor once they are within the sensing range. All of those sensed obstacles make up the sensed constraints $\constrSense$, whose boundaries are colored in red. To ensure that a collision-free path is generated despite the worst-case tracking error, the augmented constraints $\constrAug$ are used in MPC planner, as can be seen in Problem~\ref{pr: MPC}. The augmented obstacles are shown in dashed blue.
+The simulation showing the 8D quadrotor tracking the 4D double integrator is presented in Fig. \ref{fig:8D4Dsim}. The quadrotor starts at $(2.0,0.0)$ and seeks to reach the blue circle centered at $(9.0,11.5)$ with a radius of 1.0. Three polytopic obstacles, which are initially unknown, make up the constraints $\constr$. 
+
+The quadrotor has a circular sensing region with a radius of 6.0, colored in light green. The unknown part of an obstacle is marked with dotted black boundaries. As the quadrotor exploring around in the environment, more obstacles are made known to the quadrotor once they are within the sensing range. All of those sensed obstacles make up the sensed constraints $\constrSense$, whose boundaries are colored in red. To ensure that a collision-free path is generated despite the worst-case tracking error, the augmented constraints $\constrAug$ are used in MPC planner, as can be seen in \eqref{eq:MPC}. The augmented obstacles are shown in dashed blue.
 
 The MPC planner replans in real-time with a fixed frequency, generating a trajectory that heads towards the goal and avoids currently known obstacles. This evolves forward the 4D planning system, shown as a green star. The planned and traveled path of the 4D system are represented as dotted and solid grey curves, respectively. Unlike the commonly used MPC algorithm where only the first element of the control inputs is used within a single planning loop, the MPC planner presented here feeds back multiple control inputs into the 4D system before the replanning takes place. This is because the control frequency of the planning system has to be synchronized with the tracking system, which is usually much higher than the MPC replanning frequency.
 
-The 8D quadrotor system is represented as a red circle. Using the hybrid tracking controller depicted in Fig. \ref{fig:hybrid_ctrl}, it tracks the 4D system within the time-varying TEB in Fig. \ref{fig:vf_TEB:8D4D}, and thus guarantees the constraint satisfaction despite the tracking error at all times. The traveled path of the quadrotor is shown in solid black.
+The 8D quadrotor system is represented as a red circle. Using the hybrid tracking controller depicted in Fig. \ref{fig:hybrid_ctrl}, the tracking model tracks the 4D system within the time-varying TEB in Fig. \ref{fig:vf_TEB:8D4D}, and thus guarantees the constraint satisfaction despite the tracking error at all times. The traveled path of the quadrotor is shown in solid black.
 
-Fig \ref{fig:8D4Dsim} includes four time snapshots of the simulation. The top left subplot shows the positional trajectories of the planning and tracking system at $t=2.6$. They almost coincides with each other since the systems evolve with slow velocities along a straight path. At $t=4.4$, the systems speed up and make a sharp turn into the narrow corridor surrounded by two obstacles. This results in a significant deviation between the two trajectories. However, the tracking controller keeps the system within the TEB and no collision is incurred at this time, as shown in the top right subplot. A similar case can be observed in the lower left subplot. Finally, at $t=13.4$ the quadrotor safely arrives at the destination.
+Fig. \ref{fig:8D4Dsim} includes four time snapshots of the simulation. The top left subplot shows the positional trajectories of the planning and tracking system at $t=2.6$. They almost coincides with each other since the systems evolve with slow velocities along a straight path. At $t=4.4$, the systems speed up and make a sharp turn into the narrow corridor surrounded by two obstacles. This results in a significant deviation between the two trajectories. However, the tracking controller keeps the system within the TEB and no collision is incurred at this time, as shown in the top right subplot. A similar case can be observed in the lower left subplot. Finally, at $t=13.4$ the quadrotor safely arrives at the destination.
 
 \begin{figure}
   \centering
