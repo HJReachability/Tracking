@@ -1,9 +1,9 @@
 % !TEX root = tracking.tex
 \section{Offline Computation \label{sec:precomp}}
-\SHnote{Sylvia to do: emphasize why it's important to be able to compute time-varying TEB in this section.}The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking model and the planning model of the system. 
+The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking model and the planning model of the system. 
 In this game, the tracking model will try to ``capture" the planning model, while the planning model is doing everything it can to avoid capture. 
 In reality the planning algorithm is typically not actively trying to avoid the tracking model, but this allows us to account for worst-case scenarios and more crucially, ensure that the TEB is \textit{trajectory-independent}. 
-If both systems are acting optimally in this way, we want to determine the largest relative distance (based on some suitable metric) that may occur over time. 
+If both systems are acting optimally in this way, we want to determine the largest relative distance (based on some suitable metric) that may occur over as time progresses.
 This distance is the maximum possible tracking error between the two models, and is captured by the value function obtained from solving the HJ VI \eqref{eq:HJVI}.
 
 \subsection{Relative System Dynamics}
@@ -199,8 +199,9 @@ Adapting the formulation in \cite{Fisac15} and taking a convention of negative t
 
 If the control authority of the tracking model is powerful enough to always eventually remain within some distance from the planning model, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. 
 An example of this converged value function is in Fig. \ref{fig:vf_TEB:5D3D}. 
-
-In some cases, the value function does not converge, and provides a finite time horizon, time-varying TEB, an example of which is shown in Fig. \ref{fig:vf_TEB:8D4D}.
+Because the planning model is user-defined, convergence can often be achieved by tuning the planning model.  However, there may be tracking-planning model pairs where the value function does not converge.  
+In these cases the value function provides a finite time horizon, time-varying TEB, an example of which is shown in Fig. \ref{fig:vf_TEB:8D4D}.
+Therefore, even when convergence does not occur we can still provide time-varying safey guarantees.
 In Section \ref{sec:proofs}, we will formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ and $\valfunc_\infty(\rstate)$ respectively provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case, and time-invariant $\TEB_\infty$ for the infinite time horizon case.
  
 The optimal tracking controller is obtained from the spatial gradients of the value function \cite{Mitchell05, Fisac15, Chen2018}, $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$ as
