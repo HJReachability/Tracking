@@ -17,7 +17,7 @@ These tracking errors can lead to dangerous situations in which the planned path
  \end{figure}
  %Real-time planning that is both safe and accurate presents a very difficult challenge: accuracy and robustness in many dyanimcal systme sis difficult to compute, often precluding real-time computer hands.fast planning is generally at odds with the need for maintaining safety and robustness.  
 
-To attain fast planning speed while maintaining safety, we propose the modular framework FaSTrack: Fast and Safe Tracking.  As before, FaSTrack allows path or trajectory planning algorithms to use a simplified model of the system in order to operate in real time using augmented obstacles.  However, the bound for augmenting obstacles is rigorously computed and comes with a corresponding optimal tracking controller. Together this bound and controller guarantees safety for the autonomous system as it tracks the simplified plans.
+To attain fast planning speed while maintaining safety, we propose the modular framework FaSTrack: Fast and Safe Tracking.  As before, FaSTrack allows path or trajectory planning algorithms to use a simplified model of the system in order to operate in real time using augmented obstacles.  However, the bound for augmenting obstacles is rigorously computed and comes with a corresponding optimal tracking controller. Together this bound and controller guarantees safety for the autonomous system as it tracks the simplified plans.  
 
 We compute this bound and controller by modeling the navigation task as a pursuit-evasion game between a sophisticated \textit{tracking model} (pusuer) and the simplified \textit{planning model} of the system (evader). 
 The tracking model accounts for complex system dynamics as well as bounded external disturbances, while the simple planning model enables the use of real-time planning algorithms. 
@@ -38,7 +38,7 @@ This process is repeated as long as desired.
 
 FaSTrack was designed to be modular, and can be used with any method for computing the TEB in conjunction with any existing fast path or trajectory planning algorithms.  
 This enables motion planning that is real-time, guaranteed safe, and dynamically accurate. 
-In this paper, we demonstrate the FaSTrack framework by using three different real-time planning algorithms that have been ``robustified" by precomputing the TEB and tracking controller. 
+FaSTrack was first introduced in conference form \cite{herbert2017fastrack}, and is expanded upon here. In this paper, we demonstrate the FaSTrack framework by using three different real-time planning algorithms that have been ``robustified" by precomputing the TEB and tracking controller. 
 The planning algorithms used in our numerical examples are the fast sweeping method (FSM) \cite{Takei2013}, rapidly-exploring random trees (RRT) \cite{Kuffner2000,Kavraki1996}, and model-predictive control (MPC) \cite{Qin2003}. 
 In the three examples, we also consider different tracking and planning models.
 The precomputation of the TEB and optimal tracking control function for each planning-tracking model pair is done by solving a Hamilton-Jacobi (HJ) partial differential equation (PDE). 
