@@ -4,7 +4,7 @@ In this paper we seek to simultaneously plan and track a trajectory (or path con
 The planning is done using a relatively simplified model of the system, called the planning model. 
 The tracking is done by a tracking model representing the autonomous system. 
 The environment may contain static obstacles that are \textit{a priori} unknown and can be observed by the system within a limited sensing range (see Section \ref{sec:online}). 
-In this section we will define the tracking and planning models, as well as the goals of the paper.
+In this section we define the tracking and planning models, as well as the goals of the paper.
 
 \subsection{Tracking  Model}
 The tracking model is a more accurate representation of the autonomous system dynamics, and in general may be nonlinear and higher-dimensional than the planning model presented in Section \ref{sec:planning_model}. 
@@ -50,8 +50,7 @@ The dynamics satisfy the ODE
 
 \begin{align}
 \label{eq:pdyn}
-\frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \\
-\pstate \in \pset, \pctrl \in \pcset
+\frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \quad \pstate \in \pset, \pctrl \in \pcset
 \end{align}
 
 \noindent with the analogous assumptions on continuity and boundedness as those for \eqref{eq:tdyn}.

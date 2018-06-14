@@ -49,8 +49,8 @@ This control is used to update the autonomous system, and the process repeats.
 
 To determine both the TEB and optimal tracking controller functions/look-up tables, an offline framework is used as shown in Fig. \ref{fig:fw_offline}. 
 The planning and tracking model dynamics are used in the HJ VI, whose solution is a value function that acts as the TEB function/look-up table. 
-The spatial gradients of the value function comprise the optimal tracking controller function/look-up table. 
-These functions are independent of the online computations -- they depend only on the \textit{relative system state} and dynamics between the planning and tracking models, not on the absolute states along the trajectory at execution time.
+The gradients of the value function comprise the optimal tracking controller function/look-up table. 
+These functions are independent of the online computations -- they depend only on the \textit{relative system state} and dynamics between the planning and tracking models, not on absolute states along the trajectory at execution time.
 
 \begin{figure}[h!]
   \centering

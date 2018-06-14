@@ -34,7 +34,7 @@ In this paper, we assume that a suitable $\rtrans$ is available so that the dime
 In addition, we define the error state $\estate$ to be the relative system state \textit{excluding} the absolute states of the tracking model, and the auxiliary states $\astate$ to be the relative system state \textit{excluding} the error state.
 Hence, $\rstate = (\estate, \astate)$.
 
-To be concrete, let the tracking model be a 5D car model, and the planning model be a 3D kinematic car model as follows:
+To be concrete, let the tracking model be a 5D car model, and the planning model be a 3D kinematic car model:
 
 \begin{equation}
 \label{eq:5D_and_3D_dyn}
@@ -153,24 +153,24 @@ More examples of relative systems can be found in Sections \ref{sec:resultsRRT} 
 
 \subsection{Formalizing the Pursuit-Evasion Game}
 Given the relative dynamics between the tracking model and the planning model, we would like to compute a guaranteed TEB between these models. 
-This is done by first defining an error function $\errfunc(\rstate)$ in the relative state space, describing the error associated with a particular relative state. 
-One typical error function is distance to the origin, which corresponds to a tracking error defined as Euclidean relative distance from the tracking model to the planning model. 
-This error function is shown in Fig. \ref{fig:placeholder}, and is used when one cares about tracking error in position.
-When we care about quantifying tracking error for more planning states (for example, error in angular orientation between the two models), the error function can be defined over these states as well.
+This is done by first defining an error function $\errfunc(\rstate)$ in the relative state space. 
+One simple error function is the squared distance to the origin, which is shown in Fig. \ref{fig:valfunc_illustration} (top left, blue), and is used when one is concerned with the tracking error in position.
+
+When we would like to quantify the tracking error for more planning states (for example, error in angular orientation between the two models), the error function can be defined over these states as well.
 %In genearl the error function can be defined in any desired manner, and can include planning state variables other than position.
 For example, the error function seen in Fig. \ref{fig:vf_TEB:8D4D} is defined in both position and velocity space; Fig. \ref{fig:valfuncRRT} shows yet another error function defined using the one-norm of the displacement between the two models. 
 In our pursuit-evasion game formulation, the tracking model tries to minimize the error, while the planning model and any disturbances experienced by the tracking model try to do the opposite -- maximize.
 
 \begin{figure}
-  \includegraphics[width=\columnwidth]{fig/placeholder}
-  \caption{placeholder figure showing 5D3D error function, value function, TEB, and position-space slice}
-  \label{fig:placeholder}  
+  \includegraphics[width=\columnwidth]{fig/valfunc_illustration}
+  \caption{Projected slice of the error function (blue), value function (magenta), and the minimum value $\underline\valfunc$ (black) that determines the TEB according to \eqref{eq:TEBp} (top left); a slice of the TEB (bottom left), and the TEB in the error states with the sliced value of $\theta_r$ shown as the magenta plane (right).}
+  \label{fig:valfunc_illustration}  
 \end{figure}
 
 \begin{figure}
 	\centering
   \includegraphics[width=\columnwidth]{fig/tv_valfunc}
-  \caption{Finite time horizon value function (left) and TEBs (right) for the 8D quadrotor tracking 4D double integrator example in Section \ref{sec:resultsMPC}. Note that $\valfunc(\rstate,0) = \errfunc(\rstate)$, which occurs at $\tau = 15$.}  
+  \caption{FTH value function (left) and TEBs (right) for the 8D quadrotor tracking 4D double integrator example in Section \ref{sec:resultsMPC}. Note that $\valfunc(\rstate,0) = \errfunc(\rstate)$, which occurs at $\tau = 15$.}  
   \label{fig:vf_TEB:8D4D}
 \end{figure} 
 
@@ -412,5 +412,5 @@ Now, we finish the proof as follows:
 
 \end{IEEEproof} 
  \begin{rem} 
-   Propositions \ref{prop:nonconv} and \ref{prop:main} are very similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc$ or $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In this work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to effectively solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
+   Propositions \ref{prop:nonconv} and \ref{prop:main} are similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc$ or $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In this work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to effectively solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
  \end{rem}
