@@ -43,12 +43,13 @@ end
 
 
 %% Grid and cost
-gMin = [-1.5; -1.5; -pi];
-gMax = [ 1.5;  1.5;  pi];
+gMin = [-5; -5; -5];
+gMax = [ 5;  5;  5];
 sD.grid = createGrid(gMin, gMax, gN,3);
 
 data0 = sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2;
-extraArgs.obstacles = -data0;
+%data0 =sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2 + sD.grid.xs{3}.^2;
+
 [g2D, data02D] = proj(sD.grid,data0,[0 0 1],'max');
 
 if visualize
@@ -59,20 +60,20 @@ if visualize
 end
 
 %% Dynamical system
-uMin = [-8];
-uMax = [8];
+wMin = [-1];
+wMax = [1];
 
-pMin = [-.5; -.5];
-pMax = [.5; .5];
+aMin =[-1];
+aMax = [1];
+
+pMax = [.1];
 
 dMax = [0; 0];
 dMin = [0; 0];
 
-vel = 3;
-
 dims = 1:3;
 
-sD.dynSys = P3D_Q2D_Rel([], uMin, uMax, pMin, pMax, dMin, dMax, vel, dims);
+sD.dynSys = P3D_Q2D_Rel([], wMin, wMax, aMin, aMax, pMax, dMin, dMax,dims);
 
 %% Otherparameters
 sD.uMode = 'min';

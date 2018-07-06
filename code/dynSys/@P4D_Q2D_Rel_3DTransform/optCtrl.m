@@ -15,15 +15,20 @@ end
 dims = obj.dims;
 %% Optimal control
 if strcmp(uMode, 'max')
-  uOpt{1} = ((-deriv{1}.*x{2}+deriv{2}.*x{1})>=0)*obj.uMax(1) +...
-      ((-deriv{1}.*x{2}+deriv{2}.*x{1})<0)*obj.uMin(1);
-  uOpt{2} = (deriv{3}>=0)*obj.uMax(2) +...
-      (deriv{3}<0)*obj.uMin(2);
+    deriv_uOpt1 = -deriv{1}.*x{2}+deriv{2}.*x{1};
+  uOpt{1} = (deriv_uOpt1>=0)*obj.wMax +...
+      (deriv_uOpt1<0)*obj.wMin;
+  
+  uOpt{2} = (deriv{3}>=0)*obj.aMax +...
+      (deriv{3}<0)*obj.aMin;
+  
 elseif strcmp(uMode, 'min')
-    uOpt{1} = ((-deriv{1}.*x{2}+deriv{2}.*x{1})>=0)*obj.uMin(1) +...
-      ((-deriv{1}.*x{2}+deriv{2}.*x{1})<0)*obj.uMax(1);
-  uOpt{2} = (deriv{3}>=0)*obj.uMin(2) +...
-      (deriv{3}<0)*obj.uMax(2);
+    deriv_uOpt1 = -deriv{1}.*x{2}+deriv{2}.*x{1};
+    uOpt{1} = (deriv_uOpt1>=0)*obj.wMin +...
+      (deriv_uOpt1<0)*obj.wMax;
+  
+  uOpt{2} = (deriv{3}>=0)*obj.aMin +...
+      (deriv{3}<0)*obj.aMax;
 else
   error('Unknown uMode!')
 end
