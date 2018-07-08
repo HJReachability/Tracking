@@ -4,7 +4,7 @@ function [data,tau,sD,teb]=P4D_Q2D_Rel_3DTransform_RS(gN, accuracy,...
 %   Detailed explanation goes here
 
 if nargin < 1
-  gN = [81; 81; 161];
+  gN = [51; 51; 51];
 end
 
 if nargin < 2

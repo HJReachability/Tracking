@@ -14,8 +14,10 @@ end
 
 dims = obj.dims;
 %% Optimal control
+deriv_uOpt1 = deriv{1}.*x{2}-deriv{2}.*x{1};
+
 if strcmp(uMode, 'max')
-    deriv_uOpt1 = -deriv{1}.*x{2}+deriv{2}.*x{1};
+    
   uOpt{1} = (deriv_uOpt1>=0)*obj.wMax +...
       (deriv_uOpt1<0)*obj.wMin;
   
@@ -23,7 +25,6 @@ if strcmp(uMode, 'max')
       (deriv{3}<0)*obj.aMin;
   
 elseif strcmp(uMode, 'min')
-    deriv_uOpt1 = -deriv{1}.*x{2}+deriv{2}.*x{1};
     uOpt{1} = (deriv_uOpt1>=0)*obj.wMin +...
       (deriv_uOpt1<0)*obj.wMax;
   

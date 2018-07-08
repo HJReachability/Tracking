@@ -35,15 +35,11 @@ if strcmp(dMode, 'max')
     
     % Planning control
     dOpt{2} = (obj.pMax).*deriv{1}./denom;
-    
-    %if gradient was 0, replace those values with arbitrary control
-    dOpt{2}(isnan(dOpt{2}))=((obj.pMax)^2/2).^2; 
+
     
     % Planning control
     dOpt{4} = (obj.pMax).*deriv{2}./denom;
-    
-    %if gradient was 0, replace those values with arbitrary control
-    dOpt{4}(isnan(dOpt{4}))=((obj.pMax)^2/2).^2; 
+   
     
 elseif strcmp(dMode, 'min')
 
@@ -69,8 +65,14 @@ elseif strcmp(dMode, 'min')
     % Planning control
     dOpt{4} = -(obj.pMax).*deriv{2}./denom;
 else
-  error('Unknown uMode!')
+    error('Unknown uMode!')
 end
+
+%if gradient was 0, replace those values with arbitrary control
+dOpt{2}(isnan(dOpt{2}))=0;
+
+%if gradient was 0, replace those values with arbitrary control
+dOpt{4}(isnan(dOpt{4}))=0;
 
 if convert_back
   dOpt = cell2mat(dOpt);

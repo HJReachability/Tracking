@@ -1,7 +1,7 @@
 function dx = dynamics(obj, ~, x, u, d)
       % Dynamics:
-      %     \dot x_1 = v - u{1}.*y - d1 - d2
-      %     \dot x_2 = u{1}.*x - d3 - d4           
+      %     \dot x_1 = v + u{1}.*y - d1 - d2
+      %     \dot x_2 = -u{1}.*x - d3 - d4           
       %     \dot x_3 = u{2} - d5
       %         wMin <= u{1} <= wMax
       %         aMin <= u{2} <= aMax
@@ -35,10 +35,10 @@ function dx = dynamics_cell_helper(obj, x, u, d, dims, dim)
 switch dim
   case 1
     %dx = v - w.*y - d1 - d2
-    dx = x{3}- u{1}.*x{2} - d{1} - d{2};
+    dx = x{3}+ u{1}.*x{2} - d{1} + d{2};
   case 2
     %dx = w.*x - d3 - d4
-    dx = u{1}.*x{1} - d{3} - d{4};
+    dx = -u{1}.*x{1} - d{3} + d{4};
   case 3
     dx = u{2} - d{5};
   otherwise
