@@ -1,58 +1,37 @@
-function [data,tau,sD,teb]=P4D_Q2D_Rel_3DTransform_RS(gN, visualize, video)
+function [data,tau,sD,teb]=P4D_Q2D_Rel_3DTransform_RS(gN, accuracy,...
+    visualize_sylvia, visualize_sumeet)
 %Q10D_Q4D_RS Summary of this function goes here
 %   Detailed explanation goes here
 
 if nargin < 1
-  gN = [81; 81; 81];
+  gN = [81; 81; 161];
 end
 
 if nargin < 2
-  visualize = 1;
+  accuracy = 'high';
 end
 
-if nargin < 3
-  video = 0;
+if nargin <3
+    visualize_sylvia = 1;
 end
 
-% if video
-%   %This file makes a videos of the value function and slices of the
-%   function in 2D and 3D
-%   
-%   gif_out_filename1 = './visualize_tracking_sweep.gif'; %v_goal.gif';   %Setup filename for gif
-%   avi_out_filename1 = './visualize_tracking_sweep.avi'; %v_goal.avi';
-%   
-%   % Have to prepare the video writer object first
-%   v1 = VideoWriter(avi_out_filename1);
-%   v1.FrameRate = 30;   %Set framerate of playback. 30 is normal.
-%   open(v1)   %Opens the file for writing. Make sure to close at the end!!
-%   
-%   gif_out_filename2 = './visualize_tracking_function_1.gif'; %v_goal.gif';   %Setup filename for gif
-%   avi_out_filename2 = './visualize_tracking_function_1.avi'; %v_goal.avi';
-%   
-%   v2 = VideoWriter(avi_out_filename2);
-%   v2.FrameRate = 30;   %Set framerate of playback. 30 is normal.
-%   open(v2)   %Opens the file for writing. Make sure to close at the end!!
-%   
-%     gif_out_filename3 = './visualize_tracking_function_2.gif'; %v_goal.gif';   %Setup filename for gif
-%   avi_out_filename3 = './visualize_tracking_function_2.avi'; %v_goal.avi';
-%   
-%   v3 = VideoWriter(avi_out_filename3);
-%   v3.FrameRate = 30;   %Set framerate of playback. 30 is normal.
-%   open(v3)   %Opens the file for writing. Make sure to close at the end!!
-% end
-
+if nargin <4
+    visualize_sumeet = 1;
+end
 
 %% Grid and cost
-gMin = [-5; -5; -5];
-gMax = [ 5;  5;  5];
+gMin = [-.5; -.5; -1];
+gMax = [ .5;  .5;  1];
 sD.grid = createGrid(gMin, gMax, gN,3);
 
+% select which cost function to use
 data0 = sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2;
 %data0 =sD.grid.xs{1}.^2 + sD.grid.xs{2}.^2 + sD.grid.xs{3}.^2;
 
+% visualize cost function
 [g2D, data02D] = proj(sD.grid,data0,[0 0 1],'max');
 
-if visualize
+if visualize_sylvia
   figure(1)
   clf
   subplot(1,2,1)
@@ -78,200 +57,33 @@ sD.dynSys = P4D_Q2D_Rel_3DTransform([], wMin, wMax, aMin, aMax, pMax, dMin, dMax
 %% Otherparameters
 sD.uMode = 'min';
 sD.dMode = 'max';
-sD.accuracy = 'medium';
+sD.accuracy = accuracy;
 
-% if video
-%   dt = 0.01;
-%   tMax = 2;
-%   for i = 0:tMax/dt
-%     tMaxTemp = dt*i;
-%     tau = 0:dt:tMaxTemp;
-%     
-%     extraArgs.stopConverge = true;
-%     extraArgs.convergeThreshold = 0.5*dt;
-%     
-%     if i == 0
-%       data = data0;
-%     else
-%     [data, tau] = HJIPDE_solve(data0, tau, sD, 'maxVOverTime');%, extraArgs);
-%     
-%     max over time
-%     data = max(data,[],4);
-%     end
-%     [g2D, data2D] = proj(sD.grid,data,[0 0 1],0);%'max');
-%     levels = [.5, .75, 1];
-%     levelColor = {[0, .6, .6], [.7 0 .7], [.7 .3 .3]};
-%     
-%     figure(1)
-%     clf
-%     hV = surf(g2D.xs{1}, g2D.xs{2}, sqrt(data2D));
-%     hV.LineStyle = 'none';
-%     hV.FaceLighting = 'phong';
-%     axis([-1.5 1.5 -1.5 1.5 0 1.5])
-%     set(gcf, 'Color','white')
-%     hV.FaceColor = [.7 .7 .7];
-%     hV.FaceAlpha = .7;
-%     c = camlight;
-%     c.Position = [-10 -80 -20];
-%     axis square
-%     hold on
-%     view(40,20)
-%     title(['T = ' num2str(tau(end)) ' s'],'Interpreter','latex','FontSize',20)
-%     xlabel('$x_r$','Interpreter','latex','FontSize',20)
-%     ylabel('$y_r$','Interpreter','latex','FontSize',20)
-%     zlabel('$V(r,T)$','Interpreter','latex','FontSize',20)
-% 
-%     if i == 0   %Make sure this is the loop index == 1      
-%       frame = getframe(gcf);   %Get data from figue 1
-%       image_data = frame2im(frame);   %convert data to image information (this goes straight into avi)
-%       [imind,cm] = rgb2ind(image_data,256);   %convert image information to index and colormap for gif (don't
-%       
-%       imwrite(imind,cm,gif_out_filename2,'gif', 'Loopcount',inf);   %If you're on the first pass, make a new gif
-%       writeVideo(v2,image_data)
-%     end
-% 
-%       
-% 
-%       frame = getframe(gcf);   %Get data from figue 1
-%       image_data = frame2im(frame);   %convert data to image information (this goes straight into avi)
-%       [imind,cm] = rgb2ind(image_data,256);   %convert image information to index and colormap for gif (don't
-%       
-%       imwrite(imind,cm,gif_out_filename2,'gif','WriteMode','append');   %If it's not the first pass, append
-%     writeVideo(v2,image_data)
-%       h3 = visSetIm(g2D, sqrt(data2D), levelColor{3}, levels(3));
-%       h3.LineWidth = 3;
-%       h3.ContourZLevel = levels(3);
-%         
-%     h2 = visSetIm(g2D, sqrt(data2D), levelColor{2}, levels(2));
-%     h2.LineWidth = 3;
-%     h2.ContourZLevel = levels(2);
-%     h1 = visSetIm(g2D, sqrt(data2D), levelColor{1}, levels(1));
-%     h1.LineWidth = 3;
-%     h1.ContourZLevel = levels(1);
-%     
-%         frame = getframe(gcf);   %Get data from figue 1
-%     image_data = frame2im(frame);   %convert data to image information (this goes straight into avi)
-%     [imind,cm] = rgb2ind(image_data,256);   %convert image information to index and colormap for gif (don't
-%     
-%     if i == 0   %Make sure this is the loop index == 1
-%       imwrite(imind,cm,gif_out_filename3,'gif', 'Loopcount',inf);   %If you're on the first pass, make a new gif
-%     else
-%       imwrite(imind,cm,gif_out_filename3,'gif','WriteMode','append');   %If it's not the first pass, append
-%     end
-%     writeVideo(v3,image_data)
-% 
-%     figure(2)
-%     clf
-%     alpha = .2;
-%     
-%     small = .01;
-%     subplot(2,3,1)
-%     h0 = visSetIm(sD.grid, sqrt(data0), 'blue', levels(1)+small);
-%     h0.FaceAlpha = alpha;
-%     hold on
-%     h = visSetIm(sD.grid, sqrt(data), levelColor{1}, levels(1));
-%     axis([-levels(3)-small levels(3)+small ...
-%       -levels(3)-small levels(3)+small -pi pi])
-%     xlabel('$x_r$','Interpreter','latex','FontSize',20)
-%     ylabel('$y_r$','Interpreter','latex','FontSize',20)
-%     zlabel('$\theta$','Interpreter','latex','FontSize',20)
-%     axis square
-%     
-%     subplot(2,3,4)
-%     h0 = visSetIm(g2D, sqrt(data02D), 'blue', levels(1));
-%     h0.LineWidth = 2;
-%     hold on
-%     h = visSetIm(g2D, sqrt(data2D), levelColor{1}, levels(1));
-%     axis([-levels(3)-small levels(3)+small ...
-%       -levels(3)-small levels(3)+small])
-%     title(['V(r,T) = ' num2str(levels(1))],'Interpreter','latex','FontSize',20)
-%     xlabel('$x_r$','Interpreter','latex','FontSize',20)
-%     ylabel('$y_r$','Interpreter','latex','FontSize',20)
-%     h.LineWidth = 2;
-%     axis square
-%     
-%     subplot(2,3,2)
-%     h0 = visSetIm(sD.grid, sqrt(data0), 'blue', levels(2)+small);
-%     h0.FaceAlpha = alpha;
-%     hold on
-%     h = visSetIm(sD.grid, sqrt(data), levelColor{2}, levels(2));
-%     axis([-levels(3)-small levels(3)+small ...
-%       -levels(3)-small levels(3)+small -pi pi])
-%     title(['T = ' num2str(tau(end)) ' s'],'Interpreter','latex','FontSize',20)
-%     xlabel('$x_r$','Interpreter','latex','FontSize',20)
-%     ylabel('$y_r$','Interpreter','latex','FontSize',20)
-%     zlabel('$\theta$','Interpreter','latex','FontSize',20)
-%     axis square
-%     
-%     subplot(2,3,5)
-%     h0 = visSetIm(g2D, sqrt(data02D), 'blue', levels(2));
-%     h0.LineWidth = 2;
-%     hold on
-%     h = visSetIm(g2D, sqrt(data2D), levelColor{2}, levels(2));
-%     axis([-levels(3)-small levels(3)+small ...
-%       -levels(3)-small levels(3)+small])
-%     h.LineWidth = 2;
-%     title(['V(r,T) = ' num2str(levels(2))],'Interpreter','latex','FontSize',20)
-%     xlabel('$x_r$','Interpreter','latex','FontSize',20)
-%     ylabel('$y_r$','Interpreter','latex','FontSize',20)
-%     axis square
-%     
-%     subplot(2,3,3)
-%     h0 = visSetIm(sD.grid, sqrt(data0), 'blue', levels(3)+small);
-%     h0.FaceAlpha = alpha;
-%     hold on
-%     h = visSetIm(sD.grid, sqrt(data), levelColor{3}, levels(3));
-%     axis([-levels(3)-small levels(3)+small ...
-%       -levels(3)-small levels(3)+small -pi pi])
-%     xlabel('$x_r$','Interpreter','latex','FontSize',20)
-%     ylabel('$y_r$','Interpreter','latex','FontSize',20)
-%     zlabel('$\theta$','Interpreter','latex','FontSize',20)
-%     axis square
-% 
-%     subplot(2,3,6)
-%     h0 = visSetIm(g2D, sqrt(data02D), 'blue', levels(3));
-%     h0.LineWidth = 2;
-%     hold on
-%     h = visSetIm(g2D, sqrt(data2D), levelColor{3}, levels(3));
-%     axis([-levels(3)-small levels(3)+small ...
-%       -levels(3)-small levels(3)+small])
-%     title(['V(r,T) = ' num2str(levels(3))],'Interpreter','latex','FontSize',20)
-%     xlabel('$x_r$','Interpreter','latex','FontSize',20)
-%     ylabel('$y_r$','Interpreter','latex','FontSize',20)
-%     h.LineWidth = 2;
-%     axis square
-%     
-%     set(gcf,'Color','white')
-%     frame = getframe(gcf);   %Get data from figue 1
-%     image_data = frame2im(frame);   %convert data to image information (this goes straight into avi)
-%     [imind,cm] = rgb2ind(image_data,256);   %convert image information to index and colormap for gif (don't
-%     
-%     if i == 0   %Make sure this is the loop index == 1
-%       imwrite(imind,cm,gif_out_filename1,'gif', 'Loopcount',inf);   %If you're on the first pass, make a new gif
-%     else
-%       imwrite(imind,cm,gif_out_filename1,'gif','WriteMode','append');   %If it's not the first pass, append
-%     end
-%     writeVideo(v1,image_data)
-%    end
-%   close(v1)
-%    close(v2)
-%  close(v3)
-% else
-  if visualize
+
+  if visualize_sylvia
     extraArgs.visualize = true;
-    extraArgs.RS_level = 2;
+    extraArgs.RS_level = .1;
     extraArgs.fig_num = 2;
     extraArgs.deleteLastPlot = true;
   end
+  
+  % bounds on time
   dt = 0.1;
   tMax = 10;
   tau = 0:dt:tMax;
   
+  
   extraArgs.stopConverge = true;
-  extraArgs.convergeThreshold = dt;%0.5*dt;
+  
+  % convergence metric
+  extraArgs.convergeThreshold = 0.1*dt;
+  
   [data, tau] = HJIPDE_solve(data0, tau, sD, 'maxVOverTime', extraArgs);
-  data = max(data,[],4);
-  if visualize
+  
+  % get the final value function
+  data = data(:,:,:,end);
+  
+  if visualize_sylvia
     figure(1)
     subplot(1,2,2)
     [g2D, data2D] = proj(sD.grid, data, [0 0 1], 'min');
@@ -281,7 +93,7 @@ sD.accuracy = 'medium';
        figure(2)
     clf
     alpha = .2;
-    levels = [.5, .75, 1];
+    levels = [.01, .05, .1];
     
     [g2D, data2D] = proj(sD.grid,data,[0 0 1],1);%'max');
     small = .05;
@@ -342,13 +154,65 @@ sD.accuracy = 'medium';
     
     set(gcf,'Color','white')
   end
-%end
 
 
-
-%tracking error bound
-teb = sqrt(min(data(:)))
-%% Save and output worst value
-%save(sprintf('%s_%f.mat', mfilename, now), 'sD', 'data', 'teb', '-v7.3');
+  
+  %tracking error bound
+  teb = sqrt(min(data(:)));
+  if teb == 0
+      keyboard
+      teb = .05;
+  end
+  
+  %% Save and output worst value
+  %save(sprintf('%s_%f.mat', mfilename, now), 'sD', 'data', 'teb', '-v7.3');
+  
+  %% Adapt Sumeet's visualization code
+  
+  if visualize_sumeet
+      %Single (v,theta) slice
+      figure(5)
+      clf
+      th = 0;
+      v = 0.013;
+      
+      [g2D, data2D_vslice] = proj(sD.grid, data, [0 0 1], v);
+      data2D_vslice(data2D_vslice>teb) = NaN;
+      
+      %h = surf(g2D.xs{1}, g2D.xs{2}, data2D_vslice);
+      contourf(cos(th)*g2D.xs{1}-sin(th)*g2D.xs{2},...
+          sin(th)*g2D.xs{1}+cos(th)*g2D.xs{2},...
+          data2D_vslice,'linestyle','none'); hold on
+      
+      xlabel('$e_x''$','interpreter','latex'); ylabel('$e_y''$','interpreter','latex');
+      set(findall(gcf,'type','text'),'FontSize',38);set(gca,'FontSize',38)
+      set(gcf,'Color','w');
+      grid on
+      axis equal
+      colorbar
+      
+      % %all (v,theta)
+      figure()
+      theta = linspace(-pi, pi, 20);
+      vel = linspace(-.1, .1, 20);
+      
+      for k = 1:length(vel)
+          v = vel(k);
+          [~, data2D_temp] = proj(sD.grid, data, [0 0 1], v);
+          data2D_temp(data2D_temp>teb) = NaN;
+          for j = 1:length(theta)
+              th = theta(j);
+              contourf(cos(th)*g2D.xs{1}-sin(th)*g2D.xs{2},...
+                  sin(th)*g2D.xs{1}+cos(th)*g2D.xs{2},...
+                  data2D_temp,'linestyle','none'); hold on
+          end
+      end
+      grid on
+      axis equal
+      colorbar
+      xlabel('$e_x''$','interpreter','latex'); ylabel('$e_y''$','interpreter','latex');
+      set(findall(gcf,'type','text'),'FontSize',38);set(gca,'FontSize',38)
+      set(gcf,'Color','w');
+  end
 end
 

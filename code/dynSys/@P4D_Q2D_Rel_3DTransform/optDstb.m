@@ -29,9 +29,10 @@ if strcmp(dMode, 'max')
     
     
     %optimal planning control vector points along gradient. so
-    %up* = (upMax)*p/||p|| where p = [deriv1, deriv2]
+    %up* = (pMax)*deriv/||deriv|| where deriv = [deriv1, deriv2]
     
     denom = (deriv{1}.^2 + deriv{2}.^2 ).^(1/2);
+    
     % Planning control
     dOpt{2} = (obj.pMax).*deriv{1}./denom;
     
