@@ -35,8 +35,30 @@ We assume that the tracking model dynamics $\tdyn : \tset\ \times\ \tcset \times
 &\ttraj(\tvar_0; \tstate_0, \tvar_0, \tctrl(\cdot), \dstb(\cdot)) = \tstate_0.
 \end{align*}
 
-Let $\goal \subset \tset$ represent the set of goal states, and let $\tconstr \subset \tset$ represent state constraints that must be satisfied for all time.
+Let $\tgoal \subset \tset$ represent the set of goal states, and let $\tconstr \subset \tset$ represent state constraints that must be satisfied for all time.
 Often, $\tconstr$ represents the complement of obstacles that the system must avoid.
+
+\example{We introduce a running example for illustration throughout the paper. In this example a car will have to navigate through an environment with a priori unknown obstacles ($\tconstr$) towards a goal $\tgoal$. The tracking model of the car is represented by the following five-dimensional dynamics:
+\begin{equation}
+\label{eq:5Ddyn}
+\begin{bmatrix}
+\dot x\\
+\dot y\\
+\dot\theta\\
+\dot v\\
+\dot \omega
+\end{bmatrix} =
+\begin{bmatrix}
+v \cos \theta + \dstb_x\\
+v \sin \theta + \dstb_y\\
+\omega \\
+a + \dstb_a\\
+\alpha + \dstb_\alpha
+\end{bmatrix},
+\end{equation}
+\noindent where $(x,y,\theta)$ represent the pose (position and heading) of the 5D car model, and $(v, \omega)$ are the speed and turn rate.
+The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$, and the disturbances are $(\dstb_x, \dstb_y, \dstb_a, \dstb_\alpha)$.
+}
 
 \subsection{Planning Model \label{sec:planning_model}}
 The planning model is a simpler, lower-dimensional model of the system.
@@ -64,6 +86,24 @@ Therefore, for convenience, we denote the currently known, or ``sensed'' constra
 Note that $\constrSense(t)$ depends on time, since the system may gather more information about, for example, obstacles over time.
 In addition, as described throughout the paper, we will augment $\constrSense(t)$ according to the TEB between the tracking and planning models.
 We denote the augmented obstacles as $\constrAug(t)$.
+
+\example{For efficient planning we will simplify the 5D car down to a 3D planning model with the following dynamics:
+\begin{equation}
+\dot \pstate = 
+\begin{bmatrix}
+\dot {\hat x}\\
+\dot {\hat y}\\
+\dot {\hat \theta}
+\end{bmatrix}
+=
+\begin{bmatrix}
+\hat v \cos \hat\theta\\
+\hat v \sin \hat\theta\\
+\hat \omega
+\end{bmatrix},
+\end{equation}
+\noindent where $(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 3D car model. Here the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control. The planning model must reach its goal $\goal$ while avoiding obstacles represented by $\constr$.
+}
 
 \subsection{Goals and Approach}
 Given system dynamics in \eqref{eq:tdyn}, initial state $\tstate_0$, goal states $\goal$, and constraints $\tconstr$ such that $\constr$ is \textit{a priori} unknown and determined in real time, we would like to steer the system to $\goal$ with formally guaranteed satisfaction of $\tconstr$.
