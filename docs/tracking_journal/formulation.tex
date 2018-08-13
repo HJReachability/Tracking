@@ -1,15 +1,15 @@
 % !TEX root = tracking.tex
 \section{Problem Formulation \label{sec:formulation}}
 In this paper we seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online and in real time. 
-The planning is done using a relatively simplified model of the system, called the planning model. 
+The planning is done using a relatively simple model of the system, called the planning model. 
 The tracking is done by a tracking model representing the autonomous system. 
 The environment may contain static obstacles that are \textit{a priori} unknown and can be observed by the system within a limited sensing range (see Section \ref{sec:online}). 
 In this section we define the tracking and planning models, as well as the goals of the paper.
 
 \subsection{Tracking  Model}
-The tracking model is a more accurate representation of the autonomous system dynamics, and in general may be nonlinear and higher-dimensional than the planning model presented in Section \ref{sec:planning_model}. 
-Let $\tstate$ represent the state variables of the tracking model. 
-The evolution of the dynamics satisfy ordinary differential equation (ODE)
+The tracking model is a more accurate and typically higher-dimensional representation of the autonomous system dynamics than the planning model presented in Section \ref{sec:planning_model}. 
+Let $\tstate$ represent the states of the tracking model. 
+The evolution of the tracking model dynamics satisfy ordinary differential equation (ODE)
 
 \begin{equation}
 \begin{aligned}
@@ -28,7 +28,7 @@ We assume that the tracking model dynamics $\tdyn : \tset\ \times\ \tcset \times
 \end{aligned}
 \end{equation}
 
-\noindent where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn}) for a given $\tctrl(\cdot) \in \tcfset, \dstb(\cdot)\in\dfset$ \cite{Coddington84}. The trajectories of (\ref{eq:tdyn}) that solve this ODE will be denoted as $\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot), \dstb(\cdot))$, where $\tvar_0,\tvar \in [0, \thor]$ and $\tvar_0 \leq \tvar$. This trajectory notation outputs state that the system will be at time $\tvar$, given that the trajectory initiated at state $\tstate$ and time $\tvar_0$ and applied control signal $\tctrl(\cdot)$ and disturbance signal $\dstb(\cdot)$.  These trajectories will satisfy the initial condition and the ODE (\ref{eq:tdyn}) almost everywhere:
+\noindent where $\tcset, \dset$ are compact and $t\in[0, \thor]$ for some $T>0$. Under these assumptions there exists a unique trajectory solving (\ref{eq:tdyn}) for a given $\tctrl(\cdot) \in \tcfset, \dstb(\cdot)\in\dfset$ \cite{Coddington84}. The trajectories of (\ref{eq:tdyn}) that solve this ODE will be denoted as $\ttraj(\tvar; \tstate, \tvar_0, \tctrl(\cdot), \dstb(\cdot))$, where $\tvar_0,\tvar \in [0, \thor]$ and $\tvar_0 \leq \tvar$. This trajectory notation represents the state of the system at time $\tvar$, given that the trajectory is initiated at state $\tstate$ and time $\tvar_0$ and applied control signal $\tctrl(\cdot)$ and disturbance signal $\dstb(\cdot)$.  These trajectories will satisfy the initial condition and the ODE (\ref{eq:tdyn}) almost everywhere:
 
 \begin{align*}
 &\frac{d}{d\tvar}\ttraj(\tvar; \tstate_0, \tvar_0, \tctrl(\cdot), \dstb(\cdot)) = \\ &\qquad \tdyn(\ttraj(\tvar; \tstate_0, \tvar_0, \tctrl(\cdot), \dstb(\cdot)), \tctrl(\tvar), \dstb(\cdot)), \\
@@ -36,17 +36,17 @@ We assume that the tracking model dynamics $\tdyn : \tset\ \times\ \tcset \times
 \end{align*}
 
 Let $\goal \subset \tset$ represent the set of goal states, and let $\tconstr \subset \tset$ represent state constraints that must be satisfied for all time.
-Often, $\tconstr$ represents the complement of obstacles that the system must avoid; however, more generally, $\tconstr$ also represents general state constraints.
+Often, $\tconstr$ represents the complement of obstacles that the system must avoid.
 
 \subsection{Planning Model \label{sec:planning_model}}
-The planning model is a simpler or lower-dimensional model of the system used for planning a desired trajectory or path.
-For navigation in unknown environments, fast replanning is necessary, so the planning model is typically one that allows the desired path or trajectory planning algorithm to operate in real time.
-For examples of planning models, see Section \ref{sec:results}.
+The planning model is a simpler, lower-dimensional model of the system.
+For navigation in unknown environments, fast replanning is necessary, so the planning model is typically one that allows the desired planning algorithm to operate in real time.
+%For examples of planning models, see Section \ref{sec:results}.
 
 Let $\pstate$ represent the state variables of the planning model, with control $\pctrl$. 
 We assume that the planning states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$, so that $\pset$ is a subspace within $\tset$.
 This assumption is reasonable since a lower-fidelity model of a system typically involves a subset of the system's states, as with the numerical examples provided in this paper.
-The dynamics satisfy the ODE
+The dynamics of the planning model satisfy the ODE
 
 \begin{align}
 \label{eq:pdyn}
@@ -56,7 +56,7 @@ The dynamics satisfy the ODE
 \noindent with the analogous assumptions on continuity and boundedness as those for \eqref{eq:tdyn}.
 
 Note that the planning model does not include a disturbance input. 
-This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method, including those that do not account for disturbances.
+This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method. Therefore we can and will assume that the planning model (and the planning algorithm) do not consider disturbances.
 
 Let $\goal \subset \pset$ and $\constr \subset \pset$ denote the projection of $\tgoal$ and $\tconstr$ respectively onto the subspace $\pset$.
 We will assume that $\constr$ is \textit{a priori} unknown, and must be sensed as the autonomous system moves around in the environment.
@@ -70,8 +70,6 @@ Given system dynamics in \eqref{eq:tdyn}, initial state $\tstate_0$, goal states
 
 To achieve this goal, FaSTrack decouples the formal guarantee of safety from the planning algorithm.
 Instead of having the system, represented by the tracking model, directly plan trajectories towards $\goal$, in our framework the autonomous system (represented by the tracking model) ``chases'' the planning model of the system, which uses any planning algorithm to obtain trajectories in real time.
-When the planning model of the system reaches sufficiently within the goal region, the autonomous system would be at the goal as well.
+When the planning model of the system reaches the goal set, the autonomous system will be contained within the goal set augmented by the TEB. The ensure that the autonomous sytem has in fact reached the goal, the planning model should end within the goal set contracted by the TEB.
 Safety is formally guaranteed through precomputation of a TEB along with a corresponding optimal tracking controller, in combination with augmentation of constraints based on this TEB.
 An illustration of our framework applied to a navigation task is shown in Figure \ref{fig:chasing}.
-
-We demonstrate the FaSTrack framework in three representative simulations involving three different tracking-planning model pairs, using three different planning algorithms.
