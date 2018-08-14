@@ -15,6 +15,11 @@ Model predictive control (MPC) has been a very successful method for dynamic tra
 
 There are other methods of dynamic trajectory planning that manage to cleverly skirt the issue of solving for optimal trajectories online.  One such class of methods involve motion primitives \cite{Gillula2010, Dey2016}. Other methods include making use of safety funnels \cite{Majumdar2016}, or generating and choosing random trajectories at waypoints \cite{Kalakrishnan2011, Schwesinger2013}. The latter has been implemented successfully in many scenarios, but is risky in its reliance on finding randomly-generated safe trajectories. 
 
+%%%%%%
+One notable real-time planning method that also involves robustness guarantees is given by \cite{KousikVaskovEtAl2017}, in which a forward reachable set for a high-fidelity model of the system is computed offline and then used to prune motion plans generated online using a low-fidelity model. 
+The approach relies on an {\em assumed} model mismatch bound; therefore our work has potential to complement works such as \cite{KousikVaskovEtAl2017} by providing the TEB as well as a corresponding feedback tracking controller.
+%%%%%
+
 Recent work has considered using offline Hamilton-Jacobi analysis to guarantee tracking error bounds, which can then be used for robust trajectory planning \cite{Bansal2017}. A similar new approach, based on contraction theory and convex optimization, allows computation of offline error bounds that can then define safe tubes around a nominal dynamic trajectory computable online \cite{Singh2017}.
 
 Finally, some online control techniques can be applied to trajectory tracking with constraint satisfaction. For control-affine systems in which a control barrier function can be identified, it is possible to guarantee forward invariance of the desired set through a state-dependent affine constraint on the control, which can be incorporated into an online optimization problem, and solved in real time \cite{Ames2014}. %This can be seen as a method for smoothly blending some of the above safety results with other, performance-based objectives.

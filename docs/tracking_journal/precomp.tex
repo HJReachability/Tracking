@@ -14,13 +14,12 @@ Defining $\rstate$ to be the relative system state, we write
 
 \begin{equation}
 \label{eq:rstate}
-\rstate = \rtrans(\tstate - \ptmat\pstate)
+\rstate = \rtrans(\tstate,\pstate)(\tstate - \ptmat\pstate)
 \end{equation}
 
 \noindent where $\ptmat$ matches the common states of $\tstate$ and $\pstate$ by augmenting the state space of the planning model.
 The relative system states $\rstate$ represent the tracking system states relative to the planning states.
-
-The function $\rtrans$ is a nonlinear transform, usually either the identity function or a rotation, that facilitates simplification of the relative system dynamics to be of the form
+The function $\rtrans$ is a linear transform that simplifies the relative system dynamics to be of the form
 
 \begin{equation}
 \label{eq:rdyn}
@@ -28,8 +27,8 @@ The function $\rtrans$ is a nonlinear transform, usually either the identity fun
 \end{equation}
 
 \noindent which only depends on the relative system state $r$.
-A transform $\rtrans$ that achieves the relative system dynamics in the form of \eqref{eq:rdyn} is not strictly needed and may not exist; however, in principle the theory we present can be easily adapted to this case, albeit at a cost of having a higher-dimensional relative system.
-In this paper, we assume that a suitable $\rtrans$ is available so that the dimensionality of the relative system state space is at most that of the tracking model.
+A transform $\rtrans$ that achieves the relative system dynamics in the form of \eqref{eq:rdyn} is often the identity map or the rotation map when the autonomous system is a mobile robot; therefore, in this paper, we assume that a suitable $\rtrans$ is available.
+For general dynamical systems, it may be difficult to determine $\rtrans$; a catalog of tracking and planning models with suitable transforms $\rtrans$, as well as a more detailed discussion of $\rtrans$, can be found in \cite{SinghChenEtAl2018}.
 
 In addition, we define the error state $\estate$ to be the relative system state \textit{excluding} the absolute states of the tracking model, and the auxiliary states $\astate$ to be the relative system state \textit{excluding} the error state.
 Hence, $\rstate = (\estate, \astate)$.
