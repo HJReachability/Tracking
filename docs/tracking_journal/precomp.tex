@@ -193,81 +193,67 @@ Adapting the formulation in \cite{Fisac15} and taking a convention of negative t
 &\tilde\valfunc(\rstate, 0) = \errfunc(\rstate), \nonumber
 \end{align}
 
-\noindent from which we obtain the value function $\valfunc(\rstate, t)$.
-
+\noindent from which we obtain the value function, $\valfunc(\rstate, t) = \tilde\valfunc(\rstate, -t)$.
 
 If the control authority of the tracking model is powerful enough to always eventually remain within some distance from the planning model, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. 
 An example of this converged value function is in Fig. \ref{fig:vf_TEB:5D3D}. 
-Because the planning model is user-defined, convergence can often be achieved by tuning the planning model.  However, there may be tracking-planning model pairs where the value function does not converge.  
+Because the planning model is user-defined, convergence can often be achieved by tuning the planning model.
+
+However, there may be tracking-planning model pairs where the value function does not converge.  
 In these cases the value function provides a finite time horizon, time-varying TEB, an example of which is shown in Fig. \ref{fig:vf_TEB:8D4D}.
 Therefore, even when convergence does not occur we can still provide time-varying safey guarantees.
-In Section \ref{sec:proofs}, we will formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ and $\valfunc_\infty(\rstate)$ respectively provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case, and time-invariant $\TEB_\infty$ for the infinite time horizon case.
- 
-The optimal tracking controller is obtained from the spatial gradients of the value function \cite{Mitchell05, Fisac15, Chen2018}, $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$ as
+In the rest of this paper, we will focus on the more general case of time-varying TEB, and leave the specific discussion of the case of time-invariant TEB in the appendix.
 
-\begin{subequations} \label{eq:opt_ctrl}
-  \begin{align}
-  \tctrl^*(\rstate, \tvar) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb), \label{eq:opt_ctrl_fin}\\
-  \tctrl^*(\rstate) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb). \label{eq:opt_ctrl_inf}
-  \end{align}
-\end{subequations}
+In Section \ref{sec:proofs}, we will formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case.
+The analogous result for the time-invariant, infinite time horizon case will be proven in the appendix.
 
-In order to ensure that the relative system remains within the TEB, we also note that the optimal (worst-case) planning control $\pctrl^*$ and disturbance $\dstb^*$ can also obtained from $\deriv(\rstate, \tvar)$ or $\deriv_\infty(\rstate)$ as follows:
+The optimal tracking controller is obtained from the value function's spatial gradient \cite{Mitchell05, Fisac15, Chen2018}, $\deriv(\rstate, \tvar)$, as
 
-\begin{subequations} \label{eq:opt_dstb}
-  \begin{align}
-  \begin{bmatrix}
-    \pctrl^* \\
-    \dstb^*
-  \end{bmatrix} (\rstate, \tvar) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc_\infty(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb), \\
-  \begin{bmatrix}
-    \pctrl^* \\
-    \dstb^*
-  \end{bmatrix}(\rstate) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc_\infty(\rstate) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb). 
-  \end{align}
-\end{subequations}
+\begin{align} \label{eq:opt_ctrl_fin}
+\tctrl^*(\rstate, \tvar) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb)
+\end{align}
 
-For system dynamics affine in the tracking control, planning control, and disturbance, the optimizations in \eqref{eq:opt_ctrl} and \eqref{eq:opt_dstb} is given analytically.
-In addition, \eqref{eq:opt_ctrl} or \eqref{eq:opt_dstb} provide the optimal solution to \eqref{eq:valfunc}.
+To ensure the relative system remains within the TEB, we also note that the optimal (worst-case) planning control $\pctrl^*$ and disturbance $\dstb^*$ can also obtained from $\deriv(\rstate, \tvar)$ as follows:
 
-When the framework is executed on a computer, the gradient $\deriv$ is saved as look-up tables over a grid representing the state space of the relative system.
+\begin{align} \label{eq:opt_dstb_fin}
+\begin{bmatrix}
+  \pctrl^* \\
+  \dstb^*
+\end{bmatrix} (\rstate, \tvar) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc_\infty(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb)
+\end{align}
+
+For system dynamics affine in the tracking control, planning control, and disturbance, the optimizations in \eqref{eq:opt_ctrl_fin} and \eqref{eq:opt_dstb_fin} are given analytically, and provide the optimal solution to \eqref{eq:valfunc}.
+In practice, the gradient $\deriv$ is saved as look-up tables over a grid representing the state space of the relative system.
 
 \subsection{Error Bound Guarantee via Value Function} \label{sec:proofs}
-We now state the main theoretical results of this paper in Propositions \ref{prop:nonconv} and \ref{prop:main}, which state that every level set of $\valfunc(\rstate, \tvar)$ in the finite time horizon case and $\valfunc_\infty(\rstate)$ in the infinite time horizon case respectively is invariant under the following conditions:
+We now state the main theoretical results of this paper in Prop. \ref{prop:nonconv} and \ref{prop:main}, which state that every level set of $\valfunc(\rstate, \tvar)$ in the finite time horizon case and $\valfunc_\infty(\rstate)$ in the infinite time horizon case respectively is invariant under the following conditions:
 \begin{enumerate}
-  \item The tracking model applies the control in \eqref{eq:opt_ctrl} which tries to track the planning model;
-  \item The planning model applies the control in \eqref{eq:opt_dstb} which tries to escape from the tracking model; \label{ln:plan}
-  \item The tracking model experiences the worst-case disturbance in \eqref{eq:opt_dstb} which tries to prevent successful tracking. \label{ln:dist}
+  \item The tracking model applies the control in \eqref{eq:opt_ctrl_fin} which tries to track the planning model;
+  \item The planning model applies the control in \eqref{eq:opt_dstb_fin} which tries to escape from the tracking model; \label{ln:plan}
+  \item The tracking model experiences the worst-case disturbance in \eqref{eq:opt_dstb_fin} which tries to prevent successful tracking. \label{ln:dist}
 \end{enumerate}
 
-In practice, we can enact the controller in \eqref{eq:opt_ctrl}, but since the planning control and disturbance are \textit{a priori} unknown and are not directly controlled by the tracking model, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking model and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$ or $\valfunc_\infty(\rstate)$. 
+In practice, we can enact the controller in \eqref{eq:opt_ctrl_fin}, but since the planning control and disturbance are \textit{a priori} unknown and are not directly controlled by the tracking model, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking model and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$ or $\valfunc_\infty(\rstate)$. 
 The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ or $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. 
 The TEB is given by the set\footnote{In practice, since $\valfunc$ is obtained numerically, we set, for example, $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty + \epsilon\}$ for some suitably small $\epsilon>0$}
-\begin{subequations} \label{eq:TEB}
-  \begin{align}
-  \TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc\}, \\
-  \quad \text{(Finite time horizon)} \nonumber\\
-  \TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty\}. \\
-  \quad \text{(Infinite time horizon)} \nonumber
-  \end{align}
-\end{subequations}
+
+\begin{align} \label{eq:TEB_fin}
+\TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc\}.
+\end{align}
+
 
 Recall that we write the relative system state as $\rstate = (\estate, \astate)$, where $\estate,\astate$ are the error and auxiliary states.
-Therefore, the TEB in the error state subspace is given by projecting away the auxiliary states $\astate$ in $\TEB(\tau)$ or $\TEB_\infty$:
-\begin{subequations} \label{eq:TEBp}
-  \begin{align} 
-  \TEB_\estate(\tau) = \{\estate: \exists \astate, \valfunc(\estate, \astate, \thor-\tau) \le \underline\valfunc\},\label{eq:TEBp:inf} \\
-  \quad \text{(Finite time horizon)} \nonumber\\
-  \TEB_{\estate, \infty} = \{\estate: \exists \astate, \valfunc_\infty(\estate, \astate) \le \underline\valfunc_\infty\}. \label{eq:TEBp:fin} \\
-  \quad \text{(Infinite time horizon)} \nonumber
+Therefore, the TEB in the error state subspace is given by projecting away the auxiliary states $\astate$ in $\TEB(\tau)$:
+  \begin{align} \label{eq:TEBp_fin}
+  \TEB_\estate(\tau) = \{\estate: \exists \astate, \valfunc(\estate, \astate, \thor-\tau) \le \underline\valfunc\}
   \end{align}
-\end{subequations}
+  
 This is the TEB that will be used in the online framework as shown in Fig. \ref{fig:fw_online}. 
 Within this bound the tracking model may use any controller, but on the boundary\footnote{Practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and are not the focus of our paper.} of this bound the tracking model must use the optimal tracking controller.
 In general, the TEB is defined as a set in the error space, which allows the TEB to not only be in terms of position, but any state of the planning model such as velocity, as demonstrated in the example in Section \ref{sec:resultsMPC}.
 
 We now formally state and prove the propositions. 
-Note that an interpretation of \eqref{eq:TEBp} is that $\valfunc(\rstate, \thor - \tvar)$ and $\valfunc_\infty(\rstate)$ are control-Lyapunov functions for the relative dynamics between the tracking model and the planning model.
+Note that an interpretation of \eqref{eq:TEBp_fin} is that $\valfunc(\rstate, \thor - \tvar)$ is a control-Lyapunov functions for the relative dynamics between the tracking model and the planning model.
 
 \begin{prop}
   \label{prop:nonconv}
@@ -344,73 +330,12 @@ Now, we finish the proof as follows:
 \end{IEEEproof} 
 
 \begin{rem}
-  As already mentioned, Proposition \ref{prop:nonconv} assumes that the planning control $\pctrl$ and disturbance $\dstb$ are optimally trying to maximize the value function $\valfunc$, and thereby increasing the size of the TEB $\TEB$.
+  As already mentioned, Prop. \ref{prop:nonconv} assumes that the planning control $\pctrl$ and disturbance $\dstb$ are optimally trying to maximize the value function $\valfunc$, and thereby increasing the size of the TEB $\TEB$.
   Despite this, \eqref{eq:fin_thor_prop:statement} still holds.
   In reality, $\pctrl$ and $\dstb$ do not behave in a worst-case fashion, and it is often the case that when $\tvar' \ge \tvar$, we have $\rstate \in \TEB(\tvar) \Rightarrow \rtraj(\tvar'; \rstate, \tvar) \in \TEB(\tau)$ for some $\tau \le \tvar'$.
   Thus, one can ``take advantage'' of the suboptimality of $\pctrl$ and $\dstb$ by finding the earliest $\tau$ such that $\rtraj(\tvar'; \rstate, \tvar) \in \TEB(\tau)$ in order to have the tighter TEB over a longer time-horizon.
 \end{rem}
 
- \begin{prop}
-   \label{prop:main}
-   \textbf{Infinite time horizon guaranteed TEB}. Given $\tvar \ge 0$,
-   
-   \begin{equation}
-     \forall \tvar' \ge \tvar, ~\rstate\in\TEB_\infty \Rightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB_\infty,
-   \end{equation}
-   
-   \noindent with $\rtraj^*$ defined the same way as in \eqref{eq:fin_thor_prop:here} to \eqref{eq:fin_thor_prop:there}.
-   
- \end{prop}
-
-
-\begin{IEEEproof}
-  
-  Suppose that the value function converges, and define
-  \begin{equation}
-  \label{eq:conv_valfunc}
-  \valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty}\valfunc(\rstate, T)
-  \end{equation}
-  
-  We first show that for all $\tvar, \tvar'$ with $\tvar' \ge \tvar$,
-  \begin{equation}
-  \label{eq:invariant}
-  \valfunc_\infty(\rstate) \ge \valfunc_\infty(\rtraj^*(\tvar'; \rstate, \tvar)).
-  \end{equation}
-  
-Without loss of generality, assume $\tvar=0$. By definition, we have
-
-\begin{subequations} \label{eq:inf_thor_steps}
-  \begin{align}
-  \valfunc_\infty(\rstate) & = \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rstate, 0)) \label{eq:inf_thor_steps:1}\\
-  &= \lim_{\thor\rightarrow\infty}\max_{\tau \in [-\tvar', \thor]} \errfunc(\rtraj^*(\tau; \rstate, -\tvar')) \label{eq:inf_thor_steps:2}\\
-  &\ge \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rstate, -\tvar')) \label{eq:inf_thor_steps:3}\\
-  & = \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rtraj^*(0; \rstate, -\tvar'), 0)) \label{eq:inf_thor_steps:4}\\
-  & = \lim_{\thor\rightarrow\infty}\max_{\tau \in [0, \thor]} \errfunc(\rtraj^*(\tau; \rtraj^*(\tvar'; \rstate, 0), 0)) \label{eq:inf_thor_steps:5}\\
-  & = \valfunc_\infty(\rtraj^*(\tvar'; \rstate, 0)) \label{eq:inf_thor_steps:6}
-  \end{align}
-\end{subequations}
-
-Explanation of steps:
-\begin{itemize}
-  \item \eqref{eq:inf_thor_steps:1} and \eqref{eq:fin_thor_steps:6}: by definition of value function
-  \item \eqref{eq:inf_thor_steps:2}: shifting time by $-\tvar'$
-  \item \eqref{eq:inf_thor_steps:3}: removing the time interval $[-\tvar',0)$ in the $\max$ operator
-  \item \eqref{eq:inf_thor_steps:4}: splitting trajectory $\rtraj^*(\tau; \rstate, -\tvar')$ into two stages corresponding to time intervals $[-\tvar', 0]$ and $[0, \tau]$
-  \item \eqref{eq:inf_thor_steps:5}: shifting time reference in $\rtraj^*(0; \rstate, -\tvar')$ by $\tvar'$, since dynamics are time-invariant
-\end{itemize}
-
-Now, we finish the proof as follows:
-\begin{subequations} \label{eq:inf_hor}
-  \begin{align}
-  \rstate \in \TEB_\infty &\Leftrightarrow \valfunc_\infty(\rstate) \le \underline\valfunc \\
-  & \Rightarrow \valfunc_\infty(\rtraj^*(\tvar'; \rstate, \tvar)) \le \underline\valfunc \label{eq:inf_hor:2}\\
-  & \Leftrightarrow \rtraj^*(\tvar'; \rstate, \tvar) \in \TEB_\infty,
-  \end{align}
-\end{subequations}
-
-\noindent where $\eqref{eq:invariant}$ is used for the step in \eqref{eq:inf_hor:2}.
-
-\end{IEEEproof} 
  \begin{rem} 
-   Propositions \ref{prop:nonconv} and \ref{prop:main} are similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc$ or $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In this work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to effectively solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
+   Prop. \ref{prop:nonconv} is similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc$ or $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In this work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to effectively solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
  \end{rem}

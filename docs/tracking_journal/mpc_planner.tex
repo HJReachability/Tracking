@@ -124,7 +124,7 @@ We utilize the MPC design introduced in \cite{Zhang2017} for the online trajecto
 %
 where $l(\cdot,\cdot)$ and $l_f(\cdot)$ are convex stage and terminal cost functions and $N$ is the horizon for the MPC problem. 
 $t_k = t_0 + k \Delta t_{\text{mpc}}$ denotes for the time index along the MPC horizon with $t_0$ and $\Delta t_{\text{mpc}}$ being the initial time step and the sampling interval, respectively. 
-Note that the horizon $N$ and the sampling interval $\Delta t_{\text{mpc}}$ are selected such that $t_0 + N \Delta t_{\text{mpc}}\leq T - \tau$ with $\tau$ given by Step~9 in Algorithm~\ref{alg:algOnline} and $T$ defined for TEB in (\ref{eq:TEB}). 
+Note that the horizon $N$ and the sampling interval $\Delta t_{\text{mpc}}$ are selected such that $t_0 + N \Delta t_{\text{mpc}}\leq T - \tau$ with $\tau$ given by Step~9 in Algorithm~\ref{alg:algOnline} and $T$ defined for TEB in (\ref{eq:TEB_fin}). 
 Planning model states are denoted with the variable $p = (\hat x, \hat v_x, \hat y, \hat v_y)$ with the initial planning model state denoted by $p_{\text{init}}$.
 The planning control denoted with the variable $u = (\hat a_x, \hat a_y)$.
 The dynamical system $h(\cdot,\cdot)$ is set to be a discretized model of the 4D dynamics in \eqref{eq:Quad8D_dyn}. The state and input constraints are $\constrAug(t_k)$ and $\mathbb{U}$, respectively. Note that the time-varying constraint $\constrAug(t_k)$ contains the augmented state constraints:
