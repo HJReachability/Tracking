@@ -26,8 +26,8 @@ The model parameters are chosen to be $a \in [-0.5, 0.5]$, $|\alpha|\le 6$, $\ha
 Using the relative system dynamics given in \eqref{eq:5D_and_3D_rdyn}, we defined the error function to be $\errfunc(\rstate) = x_\rstate^2 + y_\rstate^2$, and computed $\valfunc_\infty(\rstate)$, which is shown in Fig. \ref{fig:vf_TEB:5D3D}.
 The minimum of the value function was approximately $\underline\valfunc = 0.004$, and the size of the TEB in $(x_r, y_r)$ space is approximately $0.065$.
 
-The top left plot of Fig. \ref{fig:vf_TEB:5D3D} shows the TEB $\TEB_{\pstate, \infty}$, which is obtained from \eqref{eq:TEBp:inf}, in green.
-The tracking model, which represents the system of interest, must apply the optimal control \eqref{eq:opt_ctrl} when it is on the green boundary.
+The top left plot of Fig. \ref{fig:vf_TEB:5D3D} shows the TEB $\TEB_{\pstate, \infty}$, which is obtained from \eqref{eq:TEBp_inf}, in green.
+The tracking model, which represents the system of interest, must apply the optimal control \eqref{eq:opt_ctrl_inf} when it is on the green boundary.
 The cross sectional area of the TEB is the largest area in when $\theta_r = 0,\pi$. 
 This agrees with intuition, since at these $\theta_r$ values the 5D car model is either aligned with or opposite to the 3D car model.
 Since the 5D car is able to move both forward and backward, these two alignments make tracking the easiest.
@@ -47,7 +47,7 @@ These curves are slices of $\TEB_{\pstate, \infty}$ at the $\theta_r = \pi/2, -3
 Computation was done on a desktop computer with an Intel Core i7 5820K processor, on a $31\times31\times45\times27\times47$ grid, and took approximately 23 hours and required approximately 2 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}. 
 %\SHnote{add time it took on a coarser grid, explain that we're dealing with the computational issue by researching methods for decomposition, SOS, and the neural net stuff}
 A 5D computation is at the limit of computational tractability using the HJ method.
-Fortunately, FaSTrack is modular with respect to the method for computating the TEB, and we are exploring techniques for computing TEBs for higher-dimensional systems through sum-of-squares optimization \cite{} and neural networks \cite{}.
+Fortunately, FaSTrack is modular with respect to the method for computating the TEB, and we are exploring techniques for computing TEBs for higher-dimensional systems through sum-of-squares optimization \cite{SinghChenEtAl2018} and \MCnote{neural networks \cite{}}.
 
 %$41\times41T\times59\times35\times61$ grid took 125 hours and 10GB of RAM
 

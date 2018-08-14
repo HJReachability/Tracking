@@ -1,14 +1,15 @@
 % !TEX root = tracking.tex
-\section*{Appendix}
+\section*{Appendix: Infinite Time Horizon TEB}
 
-The optimal tracking controller is obtained from the value function's spatial gradient
+When the value function in \eqref{eq:valfunc} converges, we write $\valfunc(\thor, \rstate) := \valfunc_\infty(\rstate)$.
+The optimal tracking controller is then given by
 or $\deriv_\infty(\rstate)$
 
 \begin{align} \label{eq:opt_ctrl_inf}
 \tctrl^*(\rstate) = \arg\min_{\tctrl\in\tcset} \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate) \cdot \rdyn(\rstate,\tctrl,\pctrl,\dstb). 
 \end{align}
 
-In order to ensure that the relative system remains within the TEB, we also note that the optimal (worst-case) planning control $\pctrl^*$ and disturbance $\dstb^*$ can also obtained from $\deriv_\infty(\rstate)$ as follows:
+\noindent with the optimal planning control and disturbance given by 
 
 \begin{align} \label{eq:opt_dstb_inf}
 \begin{bmatrix}
@@ -17,21 +18,19 @@ In order to ensure that the relative system remains within the TEB, we also note
 \end{bmatrix}(\rstate) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc_\infty(\rstate) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb). 
 \end{align}
 
-In practice, we can enact the controller in \eqref{eq:opt_ctrl_inf}, but since the planning control and disturbance are \textit{a priori} unknown and are not directly controlled by the tracking model, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking model and will make it ``easier'' to stay within its current level set of  $\valfunc_\infty(\rstate)$. 
-The smallest level set corresponding to the value $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. 
-The TEB is given by the set 
-  \begin{align} \label{eq:TEB_inf}
-  \TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty\}.
-  \end{align}
+The smallest level set corresponding to the value $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system, and
+the TEB is given by the set 
+\begin{align} \label{eq:TEB_inf}
+\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty\}.
+\end{align}
 
-Recall that we write the relative system state as $\rstate = (\estate, \astate)$, where $\estate,\astate$ are the error and auxiliary states.
-Therefore, the TEB in the error state subspace is given by projecting away the auxiliary states $\astate$ in  $\TEB_\infty$:
+\noindent with the TEB in error state subspace is given by 
   \begin{align}  \label{eq:TEBp_inf}
   \TEB_{\estate, \infty} = \{\estate: \exists \astate, \valfunc_\infty(\estate, \astate) \le \underline\valfunc_\infty\}. 
   \end{align}
 
-We now formally state and prove the propositions. 
-Note that an interpretation of \eqref{eq:TEBp_inf} is that $\valfunc_\infty(\rstate)$ is a control-Lyapunov function for the relative dynamics between the tracking model and the planning model.
+In the online implementation in Alg. \ref{alg:algOnline}, one replaces all mentions of the value function and TEB with their infinite time horizon counterpart, and skip Line \ref{ln:infSkip} since the Minkowski difference is now taken with a time-invariant TEB.
+Finally, Prop. \ref{prop:main} provides the infinite time horizon result analogous to Prop. \ref{prop:nonconv}.
 
 \begin{prop}
   \label{prop:main}
@@ -60,7 +59,7 @@ Note that an interpretation of \eqref{eq:TEBp_inf} is that $\valfunc_\infty(\rst
   \valfunc_\infty(\rstate) \ge \valfunc_\infty(\rtraj^*(\tvar'; \rstate, \tvar)).
   \end{equation}
   
-  Without loss of generality, assume $\tvar=0$. By definition, we have
+  Without loss of generality, assume $\tvar=0$. Then, we have
   
   \begin{subequations} \label{eq:inf_thor_steps}
     \begin{align}

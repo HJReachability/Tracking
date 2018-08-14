@@ -1,35 +1,34 @@
 % !TEX root = tracking.tex
 \section{Online Computation \label{sec:online}}
 Algorithm \ref{alg:algOnline} describes the online computation. 
-Lines \ref{ln:gStart} to \ref{ln:gEnd} indicate that the value function $\valfunc(\rstate,\tvar'')$ (for finite time horizon, or $\valfunc_\infty(\rstate)$ for infinite time horizon), the gradient $\deriv$ from which the optimal tracking controller is obtained, as well as the TEB sets $\TEB,\TEB_\estate$ are given from offline precomputation. 
-Note that when discretized on a computer the value function and its gradient will be look-up tables.
-
-Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the planning and tracking model states such that the relative system state is inside the TEB $\TEB$ (or $\TEB_\infty$). 
+Lines \ref{ln:gStart} to \ref{ln:gEnd} indicate that the value function $\valfunc(\rstate,\tvar'')$, the gradient $\deriv$ from which the optimal tracking controller is obtained, as well as the TEB sets $\TEB,\TEB_\estate$ are given from offline precomputation. 
+%Note that when discretized on a computer the value function and its gradient will be look-up tables.
+Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the planning and tracking model states such that the relative system state is inside the TEB $\TEB$. 
 
 \begin{algorithm}	
 	\caption{Online Trajectory Planning}
 	\label{alg:algOnline}
 	\begin{algorithmic}[1]
 		\STATE \textbf{Given}: \label{ln:gStart}
-		\STATE $\valfunc(\rstate, \tvar''), \tvar'' \in [0, \thor]$ or $\valfunc_\infty(\rstate)$, and gradient $\nabla \valfunc(\rstate, \tvar'')$ or $\deriv_\infty(\rstate)$
- 		\STATE $\TEB(\tvar'), \tvar' \in [0,\thor]$ (finite time horizon) or $\TEB_\infty$ (infinite time horizon) from \eqref{eq:TEB}, and $\TEB_\estate$ from \eqref{eq:TEBp} \label{ln:gEnd}
+		\STATE $\valfunc(\rstate, \tvar''), \tvar'' \in [0, \thor]$ and gradient $\nabla \valfunc(\rstate, \tvar'')$
+ 		\STATE $\TEB(\tvar'), \tvar' \in [0,\thor]$ from \eqref{eq:TEB_fin}, and $\TEB_\estate$ from \eqref{eq:TEBp_fin} \label{ln:gEnd}
     \STATE \textbf{Initialization}: \label{ln:Istart}
-		\STATE Choose $\pstate, \tstate$ such that $\rstate \in \TEB(0)$ (or $\rstate\in\TEB_\infty$).
+		\STATE Choose $\pstate, \tstate$ such that $\rstate \in \TEB(0)$ 
     \STATE Set initial time: $\tvar \leftarrow 0$. \label{ln:Iend}
 		\WHILE{Planning goal is not reached OR planning horizon is exceeded}
 		\STATE \textbf{TEB Block}: \label{ln:obsStart}
-    \STATE Look for the smallest $\tau$ such that $\rstate \in \TEB(\tau)$ (finite time-horizon case only)
+    \STATE Look for the smallest $\tau$ such that $\rstate \in \TEB(\tau)$ \label{ln:infSkip}
 		\STATE $\constrAug(\tvar + \tvar') \leftarrow \constrSense \ominus \TEB_\estate(\tau + \tvar')$ \label{ln:obsEnd}
-    \STATE (or $\constrAug \leftarrow \constrSense \ominus \TEB_{\estate, \infty}$) 
+%    \STATE (or $\constrAug \leftarrow \constrSense \ominus \TEB_{\estate, \infty}$) 
 		
 		\STATE \textbf{Path Planning Block}:\label{ln:plannerStart}
 		\STATE $\pstate_\text{next} \leftarrow \plannerfunc(\pstate, \constrAug)$\label{ln:plannerEnd}
 		
 		\STATE \textbf{Hybrid Tracking Controller Block}:\label{ln:controllerStart}
-		\STATE $\rstate_\text{next} \leftarrow \rtrans(\tstate - \ptmat\pstate_\text{next})$
+		\STATE $\rstate_\text{next} \leftarrow \rtrans(\tstate,\pstate)(\tstate - \ptmat\pstate_\text{next})$
 		
-		\IF{$\rstate_\text{next}$ is on boundary $\TEB_\estate(\tvar)$ (or $\TEB_{\estate, \infty}$)} 
-		\STATE {use optimal tracking controller: $\tctrl \leftarrow \tctrl^*$ in \eqref{eq:opt_ctrl}}
+		\IF{$\rstate_\text{next}$ is on boundary $\TEB_\estate(\tvar)$} 
+		\STATE {use optimal tracking controller: $\tctrl \leftarrow \tctrl^*$ in \eqref{eq:opt_ctrl_fin}}
 		\ELSE \STATE{use performance controller: } 
           \STATE{$\tctrl \leftarrow$ desired controller} \ENDIF \label{ln:controllerEnd}
 		
@@ -48,14 +47,13 @@ Lines \ref{ln:Istart}-\ref{ln:Iend} initialize the computation by setting the pl
 The TEB block is shown on lines \ref{ln:obsStart}-\ref{ln:obsEnd}. 
 The sensor detects obstacles, or in general constraints, $\constrSense(\cdot)$ within the sensing region around the vehicle.
 Note that constraints are defined in the state space of the planning model, and therefore can represent constraints not only in position but also in, for example, velocity or angular space.
-The sensed constraints are augmented by $\TEB_\estate(\cdot)$ in a time-varying fashion (or by $\TEB_{\estate, \infty}$ in a time-invariant fashion) using the Minkowski difference, denoted ``$\ominus$''.\footnote{For fast augmentation of obstacles we typically expand obstacles by the max distance of the TEB in each dimension for a conservative approximation.} 
+The sensed constraints are augmented by $\TEB_\estate(\cdot)$ in a time-varying fashion using the Minkowski difference, denoted ``$\ominus$''.\footnote{For fast augmentation of obstacles we typically expand obstacles by the max distance of the TEB in each dimension for a conservative approximation.} 
 This is done to ensure that no unsafe path or trajectory can be generated\footnote{The minimum allowable sensing distance is $\senseDist = 2\TEB_\estate(\tvar) + \dx$, where $\dx$ is the largest step in space that the planning algorithm can make in one time step.}.
 
 The path planning block (lines \ref{ln:plannerStart}-\ref{ln:plannerEnd}) takes in the planning model state $\pstate$ and the augmented constraints $\constrAug$, and outputs the next state of the planning model $\pstate_\text{next}$ through the function $\plannerfunc(\cdot, \cdot)$.
 As mentioned, FaSTrack is agnostic to the planning algorithm used, so we assume that $\plannerfunc(\cdot, \cdot)$ has been provided.
 The hybrid tracking controller block (lines \ref{ln:controllerStart}-\ref{ln:controllerEnd}) first computes the updated relative system state $\rstate_\text{next}$. 
-If the $\rstate_\text{next}$ is on the boundary of the TEB $\TEB_\estate(0)$ (or $\TEB_{\estate, \infty}$), the optimal tracking controller given in \eqref{eq:opt_ctrl} must be used to remain within the TEB. 
-
+If the $\rstate_\text{next}$ is on the boundary of the TEB $\TEB_\estate(0)$, the optimal tracking controller given in \eqref{eq:opt_ctrl_inf} must be used to remain within the TEB. 
 If the relative system state is not on the tracking boundary, a performance controller may be used. For the example in Section \ref{sec:results} the safety and performance controllers are identical, but in general this performance controller can suit the needs of the individual applications.
 
 The control $\tctrl^*$ is then applied to the physical system in the tracking block (lines \ref{ln:trackingStart}-\ref{ln:trackingEnd}) for a time period of $\dt$. 

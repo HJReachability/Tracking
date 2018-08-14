@@ -151,7 +151,7 @@ a + \dstb_a\\
 More examples of relative systems can be found in Sections \ref{sec:resultsRRT} and \ref{sec:resultsMPC}.
 
 \subsection{Formalizing the Pursuit-Evasion Game}
-Given the relative dynamics between the tracking model and the planning model, we would like to compute a guaranteed TEB between these models. 
+Given the relative system dynamics between the tracking model and the planning model, we would like to compute a guaranteed TEB between these models. 
 This is done by first defining an error function $\errfunc(\rstate)$ in the relative state space. 
 One simple error function is the squared distance to the origin, which is shown in Fig. \ref{fig:valfunc_illustration} (top left, blue), and is used when one is concerned with the tracking error in position.
 
@@ -174,7 +174,7 @@ In our pursuit-evasion game formulation, the tracking model tries to minimize th
 \end{figure} 
 
 Before constructing the pursuit-evasion game we must first define the method each player must use for making decisions. 
-We define a strategy for planning model as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a control for the planning model based on the control of the planning model. We restrict $\gamma$ to draw from only non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$, as defined in \cite{Mitchell05}. 
+We define a strategy for planning model as the mapping $\gamma_{\pstate} : \tcset \rightarrow \pcset$ that determines a planning control based on the tracking control. We restrict $\gamma$ to non-anticipative strategies $\gamma_{\pstate} \in \Gamma_\pstate(t)$, as defined in \cite{Mitchell05}. 
 We similarly define the disturbance strategy $\gamma_{\dstb}: \tcset \rightarrow \dset$, $\gamma_{\dstb} \in \Gamma_\dstb(t)$.
 
 We compute the highest cost that this game will ever attain when both players are acting optimally. 
@@ -202,10 +202,11 @@ Because the planning model is user-defined, convergence can often be achieved by
 However, there may be tracking-planning model pairs where the value function does not converge.  
 In these cases the value function provides a finite time horizon, time-varying TEB, an example of which is shown in Fig. \ref{fig:vf_TEB:8D4D}.
 Therefore, even when convergence does not occur we can still provide time-varying safey guarantees.
-In the rest of this paper, we will focus on the more general case of time-varying TEB, and leave the specific discussion of the case of time-invariant TEB in the appendix.
+In the rest of this paper, we will focus on the more general case of time-varying TEB for clarity, and leave the specific discussion of the case of time-invariant TEB in the appendix.
+Our numerical examples will demonstrate both cases.
 
-In Section \ref{sec:proofs}, we will formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case.
-The analogous result for the time-invariant, infinite time horizon case will be proven in the appendix.
+In Section \ref{sec:proofs}, we formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case.
+The analogous result for the time-invariant, infinite time horizon case is proven in the appendix.
 
 The optimal tracking controller is obtained from the value function's spatial gradient \cite{Mitchell05, Fisac15, Chen2018}, $\deriv(\rstate, \tvar)$, as
 
@@ -233,9 +234,9 @@ We now state the main theoretical results of this paper in Prop. \ref{prop:nonco
   \item The tracking model experiences the worst-case disturbance in \eqref{eq:opt_dstb_fin} which tries to prevent successful tracking. \label{ln:dist}
 \end{enumerate}
 
-In practice, we can enact the controller in \eqref{eq:opt_ctrl_fin}, but since the planning control and disturbance are \textit{a priori} unknown and are not directly controlled by the tracking model, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking model and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$ or $\valfunc_\infty(\rstate)$. 
-The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ or $\underline\valfunc_\infty := \min_{\rstate} \valfunc_\infty(\rstate)$ can be interpreted as the smallest possible tracking error of the system. 
-The TEB is given by the set\footnote{In practice, since $\valfunc$ is obtained numerically, we set, for example, $\TEB_\infty = \{\rstate: \valfunc_\infty(\rstate) \le \underline\valfunc_\infty + \epsilon\}$ for some suitably small $\epsilon>0$}
+In practice, since the planning control and disturbance are \textit{a priori} unknown and are not directly controlled by the tracking model, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking model and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$. 
+The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ can be interpreted as the smallest possible tracking error of the system. 
+The TEB is given by the set\footnote{In practice, since $\valfunc$ is obtained numerically, we set $\TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc + \epsilon\}$ for some suitably small $\epsilon>0$.}
 
 \begin{align} \label{eq:TEB_fin}
 \TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc\}.
