@@ -1,7 +1,7 @@
 % !TEX root = tracking.tex
 \section{General Framework \label{sec:framework}}
 Details of the framework are summarized in Figs. \ref{fig:fw_offline}, \ref{fig:fw_online}, and \ref{fig:hybrid_ctrl}. 
-\subsection{Offline Framework}
+%\subsection{Offline Framework}
 The purpose of the offline framework (Fig. \ref{fig:fw_offline}) is to generate a TEB and corresponding optimal tracking controller that can be quickly and easily used by the online framework.
 %To determine both the TEB and optimal tracking controller functions/look-up tables, an offline framework is used as shown in Fig. \ref{fig:fw_offline}. 
 The planning and tracking model dynamics are used in the reachability precomputation (described in sec. \ref{sec:precomp}), whose solution is a value function that acts as the TEB function/look-up table. 
@@ -15,8 +15,7 @@ These functions are independent of the online computations and environment -- th
 	\label{fig:fw_offline}
 \end{figure}
 
-\subsection{Online Framework}
-
+%\subsection{Online Framework}
 Online, we start in the bottom-left corner of Fig. \ref{fig:fw_online} to determine the tracking model's initial state (i.e. autonomous system's initial state). Based on this we initialize the planning model such that the tracking model is within the TEB relative to the planning model. The state of the planning model is entered into a planning algorithm.  
 \begin{figure}[h!]
 	\centering

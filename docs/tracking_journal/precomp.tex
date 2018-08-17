@@ -3,12 +3,13 @@
 The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking model and the planning model of the system. 
 In this game, the tracking model will try to ``capture" the planning model, while the planning model is doing everything it can to avoid capture. 
 In reality the planning algorithm is typically not actively trying to avoid the tracking model, but this allows us to account for worst-case scenarios and more crucially, ensure that the TEB is \textit{trajectory-independent}. 
-If both systems are acting optimally in this way, we want to determine the largest relative distance (based on some suitable metric) that may occur over as time progresses.
-This distance is the maximum possible tracking error between the two models, and is captured by the value function obtained from solving the HJ VI \eqref{eq:HJVI}.
+If both systems are acting optimally in this way, we can determine the %largest relative distance (based on some suitable metric) that may occur over as time progresses.
+%This distance is the 
+maximum possible tracking error between the two models, which is captured by the value function obtained from solving a Hamilton-Jacobi variational inequality (HJ VI), as described below.
 
 \subsection{Relative System Dynamics}
-To determine the relative distance (or another error metric) that may occur over time, we must first define the relative system derived from the tracking and planning models. 
-The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). 
+To determine the relative distance over time, we must first define the relative system derived from the tracking (\ref{eq:tdyn}) and planning (\ref{eq:pdyn}) models. 
+%The individual dynamics are defined in Section \ref{sec:formulation}, equations (\ref{eq:tdyn}) and (\ref{eq:pdyn}). 
 The relative system is obtained by fixing the planning model to the origin and finding the dynamics of the tracking model relative to the planning model.
 Defining $\rstate$ to be the relative system state, we write
 
@@ -31,124 +32,85 @@ A transform $\rtrans$ that achieves the relative system dynamics in the form of 
 For general dynamical systems, it may be difficult to determine $\rtrans$; a catalog of tracking and planning models with suitable transforms $\rtrans$, as well as a more detailed discussion of $\rtrans$, can be found in \cite{SinghChenEtAl2018}.
 
 In addition, we define the error state $\estate$ to be the relative system state \textit{excluding} the absolute states of the tracking model, and the auxiliary states $\astate$ to be the relative system state \textit{excluding} the error state.
-Hence, $\rstate = (\estate, \astate)$.
+Hence, $\rstate = \begin{bmatrix} \estate, \astate \end{bmatrix}^\intercal$.
 
-To be concrete, let the tracking model be a 5D car model, and the planning model be a 3D kinematic car model:
+\example{In our running example we must determine the relative system state between our 5D tracking and 3D planning models of the autonomous car. We define the relative system state to be $(x_r, y_r, \theta_r, v, \omega)$, such that the error state $\estate=[x_r, y_r, \theta_r]^\intercal$ is the position and heading of the 5D model in the reference frame of the 3D model, and the auxiliary state $\astate = [v, \omega]^\intercal$ represents the speed and turn rate of the 5D model.
+	The relative system state $\rstate = \begin{bmatrix} \estate, \astate \end{bmatrix}^\intercal$, tracking model state $\tstate$, and planning model state $\pstate$ are related through $\rtrans$ and $\ptmat$ as follows:
+	\begin{equation}\small
+	\label{eq:5D_and_3D_err_state}
+	\underbrace{
+		\begin{bmatrix}
+		x_r\\
+		y_r\\
+		\theta_r \\
+		v \\
+		\omega
+		\end{bmatrix}
+	}_\rstate
+	=
+	\underbrace{
+		\begin{bmatrix}
+		\begin{bmatrix}
+		\cos\hat\theta & \sin\hat\theta \\
+		-\sin\hat\theta & \cos\hat\theta
+		\end{bmatrix} & \mathbf{0_{2\times 3}} \\
+		\mathbf{0_{3\times 2}} & \mathbf I_3
+		\end{bmatrix}
+	}_\rtrans
+	\Bigg(
+	\underbrace{
+		\begin{bmatrix}
+		x\\
+		y\\
+		\theta \\
+		v \\
+		\omega
+		\end{bmatrix}
+	}_\tstate -
+	\underbrace{
+		\begin{bmatrix}
+		\mathbf I_3 \\
+		\mathbf{0_{2\times 3}}
+		\end{bmatrix}
+	}_\ptmat
+	\underbrace{
+		\begin{bmatrix}
+		\hat x\\
+		\hat y \\
+		\hat \theta \\
+		\end{bmatrix}
+	}_\pstate
+	\Bigg),
+	\end{equation}
+	\noindent where $\mathbf 0, \mathbf I$ denote the zero and identity matrices of the indicated sizes.
+	Taking the time derivative, we obtain the following relative system dynamics:
+	\begin{equation}
+	\label{eq:5D_and_3D_rdyn}
+	\dot \rstate = 
+	\begin{bmatrix}
+	\dot \estate\\
+	\dot \astate
+	\end{bmatrix}
+	=
+	\begin{bmatrix}
+	\dot x_r\\
+	\dot y_r\\
+	\dot\theta_r\\
+	\dot v\\
+	\dot \omega
+	\end{bmatrix}
+	=
+	\begin{bmatrix}
+	- \hat v + v \cos \theta_r + \hat \omega y_r + \dstb_x\\
+	v \sin \theta_r - \hat \omega x_r + \dstb_y\\
+	\omega - \hat \omega \\
+	a + \dstb_a\\
+	\alpha + \dstb_\alpha
+	\end{bmatrix}.
+	\end{equation}
+}
 
-\begin{equation}
-\label{eq:5D_and_3D_dyn}
-\dot \tstate = 
-\begin{bmatrix}
-\dot x\\
-\dot y\\
-\dot\theta\\
-\dot v\\
-\dot \omega
-\end{bmatrix} =
-\begin{bmatrix}
-v \cos \theta + \dstb_x\\
-v \sin \theta + \dstb_y\\
-\omega \\
-a + \dstb_a\\
-\alpha + \dstb_\alpha
-\end{bmatrix}, \quad
-\dot \pstate = 
-\begin{bmatrix}
-\dot {\hat x}\\
-\dot {\hat y}\\
-\dot {\hat \theta}
-\end{bmatrix}
-=
-\begin{bmatrix}
-\hat v \cos \hat\theta\\
-\hat v \sin \hat\theta\\
-\hat \omega
-\end{bmatrix},
-\end{equation}
-
-\noindent where $(x,y,\theta),(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 5D and 3D car model respectively.
-The speed and turn rate $(v, \omega)$ are states for the 5D model; for the 3D model the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control.
-The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$, and the disturbances are $(\dstb_x, \dstb_y, \dstb_a, \dstb_\alpha)$.
-
-We define the relative system state to be $(x_r, y_r, \theta_r, v, \omega)$, such that the error state $\estate=(x_r, y_r, \theta_r)$ is the position and heading of the 5D model in the reference frame of the 3D model, and the auxiliary state $\astate = (v, \omega)$ represents the speed and turn rate of the 5D model.
-The relative system state $\rstate = (\estate, \astate)$, tracking model state $\tstate$, and planning model state $\pstate$ are related through $\rtrans$ and $\ptmat$ as follows:
-
-\begin{equation}\small
-\label{eq:5D_and_3D_err_state}
-\underbrace{
-\begin{bmatrix}
-x_r\\
-y_r\\
-\theta_r \\
-v \\
-\omega
-\end{bmatrix}
-}_\rstate
-=
-\underbrace{
-\begin{bmatrix}
-  \begin{bmatrix}
-  \cos\hat\theta & \sin\hat\theta \\
-  -\sin\hat\theta & \cos\hat\theta
-  \end{bmatrix} & \mathbf{0_{2\times 3}} \\
-  \mathbf{0_{3\times 2}} & \mathbf I_3
-\end{bmatrix}
-}_\rtrans
-\Bigg(
-\underbrace{
-\begin{bmatrix}
-x\\
-y\\
-\theta \\
-v \\
-\omega
-\end{bmatrix}
-}_\tstate -
-\underbrace{
-\begin{bmatrix}
-\mathbf I_3 \\
-\mathbf{0_{2\times 3}}
-\end{bmatrix}
-}_\ptmat
-\underbrace{
-\begin{bmatrix}
-\hat x\\
-\hat y \\
-\hat \theta \\
-\end{bmatrix}
-}_\pstate
-\Bigg),
-\end{equation}
-
-\noindent where $\mathbf 0, \mathbf I$ denote the zero and identity matrices of the indicated sizes.
-Taking the time derivative, we obtain the following relative system dynamics:
-
-\begin{equation}
-\label{eq:5D_and_3D_rdyn}
-\dot \rstate = 
-\begin{bmatrix}
-\dot \estate\\
-\dot \astate
-\end{bmatrix}
-=
-\begin{bmatrix}
-\dot x_r\\
-\dot y_r\\
-\dot\theta_r\\
-\dot v\\
-\dot \omega
-\end{bmatrix}
-=
-\begin{bmatrix}
-- \hat v + v \cos \theta_r + \hat \omega y_r + \dstb_x\\
-v \sin \theta_r - \hat \omega x_r + \dstb_y\\
-\omega - \hat \omega \\
-a + \dstb_a\\
-\alpha + \dstb_\alpha
-\end{bmatrix}.
-\end{equation}
-
-More examples of relative systems can be found in Sections \ref{sec:resultsRRT} and \ref{sec:resultsMPC}.
+More examples of relative systems are in Section \ref{sec:results}.
 
 \subsection{Formalizing the Pursuit-Evasion Game}
 Given the relative system dynamics between the tracking model and the planning model, we would like to compute a guaranteed TEB between these models. 
