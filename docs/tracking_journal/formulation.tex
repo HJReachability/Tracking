@@ -7,7 +7,7 @@ The environment may contain static obstacles that are \textit{a priori} unknown 
 In this section we define the tracking and planning models, as well as the goals of the paper.
 
 \subsection{Tracking  Model}
-The tracking model is a more accurate and typically higher-dimensional representation of the autonomous system dynamics than the planning model presented in Section \ref{sec:planning_model}. 
+The tracking model is a more accurate and typically higher-dimensional representation of the autonomous system dynamics. 
 Let $\tstate$ represent the states of the tracking model. 
 The evolution of the tracking model dynamics satisfy ordinary differential equation (ODE)
 
@@ -37,7 +37,7 @@ We assume that the tracking model dynamics $\tdyn : \tset\ \times\ \tcset \times
 Let $\tgoal \subset \tset$ represent the set of goal states, and let $\tconstr \subset \tset$ represent state constraints that must be satisfied for all time.
 Often, $\tconstr$ represents the complement of obstacles that the system must avoid.
 
-\example{We introduce a running example for illustration throughout the paper. In this example a car will have to navigate through an environment with a priori unknown obstacles ($\tconstr$) towards a goal $\tgoal$. The tracking model of the car is represented by the following five-dimensional dynamics:
+\example{We introduce a running example for illustration throughout the paper. In this example a car will have to navigate through an environment with a priori unknown obstacles ($\tconstr^\complement$) towards a goal ($\tgoal$). The tracking model of the car is represented by the following five-dimensional dynamics:
 \begin{equation}
 \label{eq:5Ddyn}
 \begin{bmatrix}
@@ -61,23 +61,23 @@ The control of the 5D model consists of the linear and angular acceleration, $(a
 
 \subsection{Planning Model \label{sec:planning_model}}
 The planning model is a simpler, lower-dimensional model of the system.
-Replanning is necessary for navigation in unknown environments, so the planning model is typically one that allows a desired planning algorithm to operate in real time.
+Replanning is necessary for navigation in unknown environments, so the planning model is typically constructed by the user so that the desired planning algorithm can operate in real time.
 %For examples of planning models, see Section \ref{sec:results}.
 
 Let $\pstate$ represent the state variables of the planning model, with control $\pctrl$. 
 We assume that the planning states $\pstate \in \pset$ are a subset of the tracking states $\tstate \in \tset$, so that $\pset$ is a subspace within $\tset$.
-This assumption is reasonable since a lower-fidelity model of a system typically involves a subset of the system's states, as with the numerical examples provided in this paper.
+This assumption is reasonable since a lower-fidelity model of a system typically involves a subset of the system's states; this is illustrated in the numerical examples provided in this paper.
 The dynamics of the planning model satisfy the ODE
 
 \begin{align}
 \label{eq:pdyn}
-\frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \quad \pstate \in \pset, \pctrl \in \pcset
+\frac{d\pstate}{d\tvar} = \dot{\pstate} = \pdyn(\pstate, \pctrl), \tvar \in [0, \thor], \quad \pstate \in \pset, \pctrl \in \pcset,
 \end{align}
 
 \noindent with the analogous assumptions on continuity and boundedness as those for \eqref{eq:tdyn}.
 
 Note that the planning model does not include a disturbance input. 
-This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method. Therefore we can and will assume that the planning model (and the planning algorithm) do not consider disturbances.
+This is a key feature of FaSTrack: the treatment of disturbances is only necessary in the tracking model, which is modular with respect to any planning method. Therefore we can and will assume that the planning model (and the planning algorithm) do not consider disturbances. If the planning algorithm does consider disturbances then the added robustness of FaSTrack may result in added conservativeness.
 
 Let $\goal \subset \pset$ and $\constr \subset \pset$ denote the projection of $\tgoal$ and $\tconstr$ respectively onto the subspace $\pset$.
 We will assume that $\constr$ is \textit{a priori} unknown, and must be sensed as the autonomous system moves around in the environment.
@@ -101,14 +101,15 @@ We denote the augmented obstacles as $\constrAug(t)$.
 \hat \omega
 \end{bmatrix},
 \end{equation}
-\noindent where $(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 3D car model. Here the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control. The planning model must reach its goal $\goal$ while avoiding obstacles represented by $\constr$.
+\noindent where $(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 3D car model. Here the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control. The planning model must reach its goal $\goal$ while avoiding obstacles represented by $\constrAug(t)$.
 }
 
 \subsection{Goals and Approach}
-Given system dynamics in \eqref{eq:tdyn}, initial state $\tstate_0$, goal states $\goal$, and constraints $\tconstr$ such that $\constr$ is \textit{a priori} unknown and determined in real time, we would like to steer the system to $\goal$ with formally guaranteed satisfaction of $\tconstr$.
+Given system dynamics in \eqref{eq:tdyn}, initial state $\tstate_0$, goal states $\tgoal$, and constraints $\tconstr$ such that $\constr$ is \textit{a priori} unknown and determined in real time, we would like to steer the system to $\tgoal$ with formally guaranteed satisfaction of $\tconstr$.
 
 To achieve this goal, FaSTrack decouples the formal guarantee of safety from the planning algorithm.
-Instead of having the system, represented by the tracking model, directly plan trajectories towards $\goal$, in our framework the autonomous system (represented by the tracking model) ``chases'' the planning model of the system, which uses any planning algorithm to obtain trajectories in real time.
-When the planning model of the system reaches the goal set, the autonomous system will be contained within the goal set augmented by the TEB. The ensure that the autonomous sytem has in fact reached the goal, the planning model should end within the goal set contracted by the TEB.
-Safety is formally guaranteed through precomputation of a TEB along with a corresponding optimal tracking controller, in combination with augmentation of constraints based on this TEB.
+Instead of having the system, represented by the tracking model, directly plan trajectories towards $\tgoal$, in our framework the autonomous system (represented by the tracking model) ``chases'' the planning model of the system, which uses any planning algorithm to obtain trajectories in real time.
+We know that the autonomous system will always be within the TEB relative to the planning model. Therefore we set $\contrgoal$ to be the projection of $\tgoal$ onto the subspace $\pset$ and contracted by one TEB.  When the planning algorithm reaches $\contrgoal$, we know that the autonomous system will be within $\tgoal$.
+%When the planning model of the system reaches its goal set $\goal$, the autonomous system will be contained within $\goal$ augmented by the TEB. To ensure that the autonomous sytem has in fact reached the goal in the full state space $\tgoal$, the planning model should end within the goal set contracted by the TEB.
+Safety is formally guaranteed through precomputation of the TEB along with a corresponding optimal tracking controller, in combination with augmentation of constraints based on this TEB.
 An illustration of our framework applied to a navigation task is shown in Fig. \ref{fig:chasing}.
