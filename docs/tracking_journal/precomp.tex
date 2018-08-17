@@ -160,7 +160,6 @@ Adapting the formulation in \cite{Fisac15} and taking a convention of negative t
 \noindent from which we obtain the value function, $\valfunc(\rstate, t) = \tilde\valfunc(\rstate, -t)$. There are many methods for solving this HJ VI; in this paper we focus on using the level set method toolbox \SHnote{cite ian mitchell level set toolbox}.
 
 If the planning model is ``close" to the tracking model and/or if the control authority of the tracking model is powerful enough to always eventually remain within some distance from the planning model, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. 
-An example of this converged value function is in Fig. \ref{fig:vf_TEB:5D3D}. 
 Because the planning model is user-defined, convergence can often be achieved by tuning the planning model.
 
 However, there may be tracking-planning model pairs where the value function does not converge.  
@@ -168,6 +167,9 @@ In these cases the value function provides a finite time horizon, time-varying T
 Therefore, even when convergence does not occur we can still provide time-varying safey guarantees.
 In the rest of this paper, we will focus on the more general case of time-varying TEB for clarity, and leave the specific discussion of the case of time-invariant TEB in the appendix.
 Our numerical examples will demonstrate both cases.
+
+\example{In our running example we will set the cost to $\errfunc(\rstate) = x_r^2 + y_r ^2$, i.e. squared distance to the origin in position space. This means we only care about the autonomous system staying within an $(x_r,y_r)$ bound relative to the planning algorithm, and do not care about, for example, difference in relative angle.  We initialize equation (\ref{eq:HJVI}) with this cost function and the relative \ref{eq:5D_and_3D_rdyn}.  We propagate the HJ VI using the level set method toolbox until convergence or until we reach a planning time limit. In this case the value function converges to $\valfunc_\infty$ as seen in Fig. \ref{fig:vf_TEB:5D3D}. 
+}
 
 In Section \ref{sec:proofs}, we formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case.
 The analogous result for the time-invariant, infinite time horizon case is proven in the appendix.
@@ -184,7 +186,7 @@ To ensure the relative system remains within the TEB, we also note that the opti
 \begin{bmatrix}
   \pctrl^* \\
   \dstb^*
-\end{bmatrix} (\rstate, \tvar) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc_\infty(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb)
+\end{bmatrix} (\rstate, \tvar) = \arg \max_{\pctrl\in\pcset, \dstb\in\dset} \nabla\valfunc(\rstate, \tvar) \cdot \rdyn(\rstate,\tctrl^*,\pctrl,\dstb)
 \end{align}
 
 For system dynamics affine in the tracking control, planning control, and disturbance, the optimizations in \eqref{eq:opt_ctrl_fin} and \eqref{eq:opt_dstb_fin} are given analytically, and provide the optimal solution to \eqref{eq:valfunc}.
@@ -304,3 +306,6 @@ Now, we finish the proof as follows:
  \begin{rem} 
    Prop. \ref{prop:nonconv} is similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc$ or $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In this work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to effectively solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
  \end{rem}
+
+\example{In our running example we have computed a converged value function $\valfunc_\infty$.  The corresponding TEB can be found by plugging $\valfunc_\infty$ in for $\valfunc(r, T-\tau)$ in (\ref{eq:TEB_fin}). We can similarly find the TEB projected onto the planning states using (\ref{eq:TEBp_fin}). The converged value function and TEB can be seen in Fig. \ref{fig:vf_TEB:5D3D}. The corresponding optimal tracking controller is optained by plugging the gradients of our converged value function and our relative system dynamics into (\ref{eq:opt_ctrl_fin}). 
+}
