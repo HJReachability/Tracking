@@ -1,8 +1,8 @@
 % !TEX root = tracking.tex
 \section{Numerical examples} \label{sec:results}
 
-In this section, we demonstrate the FaSTrack framework in three numerical examples involving a 5D car tracking a 3D car model with the FSM planning algorithm, a 10D quadrotor tracking a single integrator model with the RRT planning algorithm, and an 8D quadrotor tracking a double integrator model with the MPC planning algorithm.
-In each example, obstacles in the environment are \textit{a priori} unknown, and are revealed to the vehicle when they are sensed.
+In this section, we demonstrate the FaSTrack framework in three numerical simulation examples involving a 5D car tracking a 3D car model with the FSM planning algorithm, a 10D quadrotor tracking a single integrator model with the RRT planning algorithm, and an 8D quadrotor tracking a double integrator model with the MPC planning algorithm.
+In each example, obstacles in the environment are \textit{a priori} unknown, and are revealed to the vehicle when they are ``sensed," i.e. come within the minimum allowable sensing distance.
 Whenever the obstacle map is updated, the planning algorithm replans a trajectory in real time.
 In this paper, the details of sensing are kept as simple as possible; we aim to only demonstrate our framework for real-time guaranteed safe planning and replanning.
 In general, any other planning algorithm can be used for planning in unknown environments, as long as planning and replanning can be done in real time.
@@ -12,19 +12,16 @@ Next, we present the relative dynamics as well as the precomputation results.
 Afterwards, we briefly describe the planning algorithm and how obstacles are sensed by the vehicle. 
 Finally, we show trajectory simulation results.
 
-\subsection{5D car-3D car example with FSM \label{sec:reach_planner}}
+\subsection{\textbf{Running Example:} 5D car-3D car example with FSM \label{sec:reach_planner}}
 
-For our first example, we demonstrate the combination of fast planning and provably robust tracking by combining fast sweeping method (FSM) \cite{Takei2013} with our computed TEB. 
+For our first example, we pick up our running example of the 5D tracking model and 3D planning model of an autonomous car. We will demonstrate the combination of fast planning and provably robust tracking by combining the fast sweeping method (FSM) \cite{Takei2013} with our computed TEB. 
 FSM is an efficient optimal control-based planning algorithm for car-like systems, and provides numerically convergent globally optimal trajectory in real time.
-
 In this example, we use FSM to perform real-time planning for the 3D kinematic car model, whose trajectory is tracked by the 5D car model.
-The dynamics of these models are given in \eqref{eq:5D_and_3D_dyn}.
-The model parameters are chosen to be $a \in [-0.5, 0.5]$, $|\alpha|\le 6$, $\hat v = 0.1$, $|\hat\omega|\le 1.5$, $|\dstb_x|, |\dstb_y|, |\dstb_\alpha|\le0.02$, $|\dstb_a| \le 0.2$.
+%The model parameters are chosen to be $a \in [-0.5, 0.5]$, $|\alpha|\le 6$, $\hat v = 0.1$, $|\hat\omega|\le 1.5$, $|\dstb_x|, |\dstb_y|, |\dstb_\alpha|\le0.02$, $|\dstb_a| \le 0.2$.
 
 \subsubsection{Offline computation}
 
-Using the relative system dynamics given in \eqref{eq:5D_and_3D_rdyn}, we defined the error function to be $\errfunc(\rstate) = x_\rstate^2 + y_\rstate^2$, and computed $\valfunc_\infty(\rstate)$, which is shown in Fig. \ref{fig:vf_TEB:5D3D}.
-The minimum of the value function was approximately $\underline\valfunc = 0.004$, and the size of the TEB in $(x_r, y_r)$ space is approximately $0.065$.
+As stated in Sec. \ref{sec:precomp}, we computed the converged value function $\valfunc_\infty(\rstate)$, which is shown in Fig. \ref{fig:vf_TEB:5D3D}, with $\underline\valfunc = 0.004$, and $\TEB_{\pstate, \infty} = 0.065$.
 
 The top left plot of Fig. \ref{fig:vf_TEB:5D3D} shows the TEB $\TEB_{\pstate, \infty}$, which is obtained from \eqref{eq:TEBp_inf}, in green.
 The tracking model, which represents the system of interest, must apply the optimal control \eqref{eq:opt_ctrl_inf} when it is on the green boundary.
@@ -47,7 +44,7 @@ These curves are slices of $\TEB_{\pstate, \infty}$ at the $\theta_r = \pi/2, -3
 Computation was done on a desktop computer with an Intel Core i7 5820K processor, on a $31\times31\times45\times27\times47$ grid, and took approximately 23 hours and required approximately 2 GB of RAM using a C++ implementation of level set methods for solving \eqref{eq:HJVI}. 
 %\SHnote{add time it took on a coarser grid, explain that we're dealing with the computational issue by researching methods for decomposition, SOS, and the neural net stuff}
 A 5D computation is at the limit of computational tractability using the HJ method.
-Fortunately, FaSTrack is modular with respect to the method for computating the TEB, and we are exploring techniques for computing TEBs for higher-dimensional systems through sum-of-squares optimization \cite{SinghChenEtAl2018} and \MCnote{neural networks \cite{}}.
+Fortunately, FaSTrack is modular with respect to the method for computating the TEB, and we are exploring techniques for computing TEBs for higher-dimensional systems through sum-of-squares optimization \cite{SinghChenEtAl2018} and approximate dynamic programming \cite{royo2018classification}.
 
 %$41\times41T\times59\times35\times61$ grid took 125 hours and 10GB of RAM
 
@@ -60,7 +57,7 @@ The simulation showing the combination of tracking and planning is shown in Fig.
 The goal of the system, the 5D car, is to reach the blue circle at $(0.5, 0.5)$ with a heading that is within $\pi/6$ of the direction indicated by the arrow inside the blue circle, $\pi/2$.
 Three initially unknown obstacles, whose boundaries are shown in dotted black, make up the constraints $\constr$.
 
-While planning a trajectory to the goal, the car also senses obstacles in the vicinity.
+While planning a path to the goal, the car also senses obstacles in the vicinity.
 For this example, we chose a simple virtual sensor that reveals obstacles within a range of $0.5$ units and in front of the vehicle within an angle of $\pi/6$.
 This sensing region is depicted as the light green fan.
 

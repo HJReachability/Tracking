@@ -25,7 +25,7 @@ To attain fast planning speed while maintaining safety, we propose the modular f
 
 We compute this bound and controller by modeling the navigation task as a pursuit-evasion game between a sophisticated \textit{tracking model} (pursuer) and the simplified \textit{planning model} of the system (evader). 
 The tracking model accounts for complex system dynamics as well as bounded external disturbances, while the simple planning model enables the use of real-time planning algorithms. 
-Offline, the pursuit-evasion game between the two models can be analyzed using any suitable method \SHnote{cite HJ, SOS, approx dynamic programming}. 
+Offline, the pursuit-evasion game between the two models can be analyzed using any suitable method \SHnote{cite lygeros/tomlin/sastry and mitchell/bayen/tomlin?}, \cite{SinghChenEtAl2018},  \cite{royo2018classification}. 
 This results in a \textit{tracking error function} that maps the initial relative state between the two models to the \textit{tracking error bound} (TEB): the maximum possible relative distance that could occur over time. 
 This TEB can be thought of as a ``safety bubble" around the planning model of the system that the tracking model of the system is guaranteed to stay within.
 

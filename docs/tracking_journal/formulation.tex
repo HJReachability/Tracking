@@ -56,7 +56,7 @@ a + \dstb_a\\
 \end{bmatrix},
 \end{equation}
 \noindent where $(x,y,\theta)$ represent the pose (position and heading) of the 5D car model, and $(v, \omega)$ are the speed and turn rate.
-The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$, and the disturbances are $(\dstb_x, \dstb_y, \dstb_a, \dstb_\alpha)$.
+The control of the 5D model consists of the linear and angular acceleration, $(a, \alpha)$, and the disturbances are $(\dstb_x, \dstb_y, \dstb_a, \dstb_\alpha)$.  The model parameters are chosen to be $a \in [-0.5, 0.5]$, $|\alpha|\le 6$, $|\dstb_x|, |\dstb_y|, |\dstb_\alpha|\le0.02$, $|\dstb_a| \le 0.2$.
 }
 
 \subsection{Planning Model \label{sec:planning_model}}
@@ -101,7 +101,7 @@ We denote the augmented obstacles as $\constrAug(t)$.
 \hat \omega
 \end{bmatrix},
 \end{equation}
-\noindent where $(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 3D car model. Here the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control. The planning model must reach its goal $\goal$ while avoiding obstacles represented by $\constrAug(t)$.
+\noindent where $(\hat x, \hat y, \hat\theta)$ represent the pose (position and heading) of the 3D car model. Here the speed $\hat v$ is a constant, and the turn rate $\hat \omega$ is the control. The planning model must reach its goal $\goal$ while avoiding obstacles represented by $\constrAug(t)$.  The model parameters are chosen to be $\hat v = 0.1$, $|\hat\omega|\le 1.5$.
 }
 
 \subsection{Goals and Approach}
