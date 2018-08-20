@@ -1,6 +1,6 @@
 % !TEX root = tracking.tex
 \section{Offline Computation \label{sec:precomp}}
-The offline computation begins with setting up a pursuit-evasion game \cite{Huang11, Chen17} between the tracking model and the planning model of the system. 
+The offline computation begins with setting up a pursuit-evasion game \cite{Tomlin00,Mitchell05} between the tracking model and the planning model of the system. 
 In this game, the tracking model will try to ``capture" the planning model, while the planning model is doing everything it can to avoid capture. 
 In reality the planning algorithm is typically not actively trying to avoid the tracking model, but this allows us to account for worst-case scenarios and more crucially, ensure that the TEB is \textit{trajectory-independent}. 
 If both systems are acting optimally in this way, we can determine the %largest relative distance (based on some suitable metric) that may occur over as time progresses.
@@ -138,16 +138,18 @@ Adapting the formulation in \cite{Fisac15} and taking a convention of negative t
 
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/valfunc_illustration}
-	\caption{Top Left: projected slice ($\theta_r = \pi/2$) of the error function (blue hatch) and converged value function (magenta). The minimum value $\underline\valfunc$ of the converged value function is marked by the black plane; the slice of the value function at $\underline\valfunc$ determines the TEB (pink set), also shown on the bottom left.
+	\caption{Value function and TEB for the running example in \eqref{eq:5D_and_3D_err_state} and \eqref{eq:5D_and_3D_rdyn}. Top Left: projected slice ($\theta_r = \pi/2$) of the error function (blue hatch) and converged value function (magenta). The minimum value $\underline\valfunc$ of the converged value function is marked by the black plane; the slice of the value function at $\underline\valfunc$ determines the TEB (pink set), also shown on the bottom left.
 		%. Bottom Left: closeup of this TEB (also projected at $\theta_r = \pi/2$) that corresponds to the minimum value $\underline\valfunc$ of the converged value function.  
-		Right: the full TEB (no longer projected) in the error states. Note that the slice shown on the bottom right corresponds to the slice marked by the magenta plane at $\theta_r = /pi/2$.}
+		Right: the full TEB (no longer projected) in the error states. Note that the slice shown on the bottom right corresponds to the slice marked by the magenta plane at $\theta_r = \pi/2$.}
 	\label{fig:valfunc_illustration}  
 \end{figure}
 
 \begin{figure}
 	\centering
 	\includegraphics[width=\columnwidth]{fig/tv_valfunc}
-	\caption{Time-varying value function (left) and TEBs (right) for the 8D quadrotor tracking 4D double integrator example in Section \ref{sec:resultsMPC}. Note that $\valfunc(\rstate,0) = \errfunc(\rstate)$. The function varies as the HJ VI is propagated backwards in time from $\tau = 15$s to $\tau = 0$s. The error states shown are the relative position $x_r$ and velocity $v_{x,r}$.}  
+	\caption{Time-varying value function (left) and TEBs (right) for the 8D quadrotor tracking 4D double integrator example in Section \ref{sec:resultsMPC}. The value function and the TEB varies with $\tau$, which represents time into the future. 
+  The size of the TEB increase with $\tau$ because the disturbance and planning control may drive the error states farther and farther from the origin over time. 
+  The error states shown are the relative position $x_r$ and velocity $v_{x,r}$.  Note that $\valfunc(\rstate,0) = \errfunc(\rstate)$.}
 	\label{fig:vf_TEB:8D4D}
 \end{figure} 
 
@@ -162,10 +164,10 @@ Adapting the formulation in \cite{Fisac15} and taking a convention of negative t
 If the planning model is ``close" to the tracking model and/or if the control authority of the tracking model is powerful enough to always eventually remain within some distance from the planning model, this value function will converge to an invariant solution for all time, i.e. $\valfunc_\infty(\rstate) := \lim_{\thor\rightarrow\infty} \valfunc(\rstate, \thor)$. 
 Because the planning model is user-defined, convergence can often be achieved by tuning the planning model.
 
-However, there may be tracking-planning model pairs where the value function does not converge.  
+However, there may be tracking-planning model pairs for which the value function does not converge.  
 In these cases the value function provides a finite time horizon, time-varying TEB, an example of which is shown in Fig. \ref{fig:vf_TEB:8D4D}.
-Therefore, even when convergence does not occur we can still provide time-varying safey guarantees.
-In the rest of this paper, we will focus on the more general case of time-varying TEB for clarity, and leave the specific discussion of the case of time-invariant TEB in the appendix.
+Thus, even when convergence does not occur we can still provide time-varying safety guarantees.
+In the rest of this paper, we will focus on the more general time-varying TEB case for clarity, and leave discussion of the time-invariant TEB case in the Appendix.
 Our numerical examples will demonstrate both cases.
 
 \example{In our running example we will set the cost to $\errfunc(\rstate) = x_r^2 + y_r ^2$, i.e. squared distance to the origin in position space. This means we only care about the autonomous system staying within an $(x_r,y_r)$ bound relative to the planning algorithm, and do not care about, for example, difference in relative angle.  We initialize equation (\ref{eq:HJVI}) with this cost function and the relative \ref{eq:5D_and_3D_rdyn}.  We propagate the HJ VI using the level set method toolbox until convergence or until we reach a planning time limit. In this case the value function converges to $\valfunc_\infty$ as seen in Fig. \ref{fig:vf_TEB:5D3D}. 
@@ -193,14 +195,14 @@ For system dynamics affine in the tracking control, planning control, and distur
 In practice, the gradient $\deriv$ is saved as look-up tables over a grid representing the state space of the relative system.
 
 \subsection{Error Bound Guarantee via Value Function} \label{sec:proofs}
-We state the main theoretical results of this paper in Prop. \ref{prop:nonconv} and \ref{prop:main}, which asserts that every level set of $\valfunc(\rstate, \tvar)$ in the finite time horizon case and $\valfunc_\infty(\rstate)$ in the infinite time horizon case respectively is invariant under the following conditions:
+We state the main theoretical result of this paper\footnote{The analogous infinite time horizon case is discussed in Prop. \ref{prop:main} in the Appendix.} in Prop. \ref{prop:nonconv}, which asserts that every level set of $\valfunc(\rstate, \tvar)$ is invariant under the following conditions:
 \begin{enumerate}
   \item The tracking model applies the control in \eqref{eq:opt_ctrl_fin} which tries to track the planning model;
   \item The planning model applies the control in \eqref{eq:opt_dstb_fin} which tries to escape from the tracking model; \label{ln:plan}
   \item The tracking model experiences the worst-case disturbance in \eqref{eq:opt_dstb_fin} which tries to prevent successful tracking. \label{ln:dist}
 \end{enumerate}
 
-In practice, since the planning control and disturbance are \textit{a priori} unknown and are not directly controlled by the tracking model, conditions \ref{ln:plan} and \ref{ln:dist} may not hold; the result of this is only advantageous to the tracking model and will make it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$. 
+In practice, since the planning control and disturbance are \textit{a priori} unknown and are not directly controlled by the tracking model, conditions \ref{ln:plan} and \ref{ln:dist} may not hold. In this case, our theoretical results still hold; in fact, the absence of conditions \ref{ln:plan} and \ref{ln:dist} is advantageous to the tracking model and makes it ``easier'' to stay within its current level set of $\valfunc(\rstate, \tvar)$. 
 The smallest level set corresponding to the value $\underline\valfunc := \min_{\rstate} \valfunc(\rstate,\thor)$ can be interpreted as the smallest possible tracking error of the system. 
 The TEB is given by the set\footnote{In practice, since $\valfunc$ is obtained numerically, we set $\TEB(\tau) = \{\rstate: \valfunc(\rstate, \thor - \tau) \le \underline\valfunc + \epsilon\}$ for some suitably small $\epsilon>0$.}
 
