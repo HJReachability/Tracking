@@ -23,7 +23,7 @@ Online, we start in the bottom-left corner of Fig. \ref{fig:fw_online} to determ
 	\caption{Online framework. Components from offline computation shown in red.}
 	\label{fig:fw_online}
 \end{figure}
-Another input to the planning algorithm is the set of augmented constraints $\constrAug$.  These are acquired by updating constraints $\constr$ and accordingly updating the sensed constraints $\constrSense$ in the environment.  This can be done, for example, by sensing the environment for obstacles. Next, $\constrSense$ is augmented  by the precomputed TEB using the Minkowski difference to produce the augmented constraints $\constrAug$. \footnote{for a faster method of augmenting obstacles we typically simply expand each obstacle by the maximum distance of the TEB in each dimension for a conservative approximation}
+Another input to the planning algorithm is the set of augmented constraints $\constrAug$.  These are acquired by updating constraints $\constr$ and accordingly updating the sensed constraints $\constrSense$ in the environment.  This can be done, for example, by sensing the environment for obstacles. Next, $\constrSense$ is augmented  by the precomputed TEB using the Minkowski difference to produce the augmented constraints $\constrAug$. \footnote{for a faster method of augmenting obstacles we typically simply expand each obstacle by the maximum distance of the TEB in each dimension as a conservative approximation}
 %; our framework is agnostic to the planing algorithm, so any may be used. 
 %We will present three example using planning algorithms FSM, RRT, and MPC in Section \ref{sec:results}.
 
@@ -31,7 +31,7 @@ Another input to the planning algorithm is the set of augmented constraints $\co
 
 %This TEB can be thought of as a ``safety margin'' that guarantees robustness despite the worst-case disturbance and planning model evolution. 
 In terms of obstacles in the environment, augmenting the constraints by this margin can be thought of as equivalent to wrapping the planning model of the system with a ``safety bubble''. 
-The planning algorithm takes in the planning model state and augmented constraints and outputs a next desired state for the planning model towards $\contrgoal$.
+The planning algorithm takes in the planning model state and augmented constraints, then outputs a next desired state for the planning model towards $\contrgoal$.
 %then These augmented constraints are given as inputs to the planning algorithm along with the current state of the planning model of the system. 
 %The planning algorithm then outputs the next state of the planning model.
 %The tracking model is a more accurate representation of the physical system (such as a quadrotor or a car). 
@@ -46,7 +46,7 @@ This cycle continues as the planning algorithm moves towards $\contrgoal$.
 
 %The ``real system'' is a model of a physical system such as a quadrotor, and a subset of the state variables forms the virtual state of the virtual system. The state of real system and the desired virtual state are inputs to a hybrid tracking controller. Based on these two inputs, the hybrid tracking controller outputs a control signal to the real system. The goal of this control is to make the real system track the desired virtual state as closely as possible. Our concept of tracking error will be defined in \MCnote{Section \ref{}}.
 
-The hybrid tracking controller is expanded in Fig. \ref{fig:hybrid_ctrl} and consists of two controllers: an optimal tracking controller (also referred to as the safety controller) and a performance controller.
+The hybrid tracking controller is expanded in Fig. \ref{fig:hybrid_ctrl} and consists of two controllers: an \textit{optimal tracking controller }(also referred to as the safety controller) and a \textit{performance controller}.
 In general, there may be multiple safety and performance controllers depending on various factors such as observed size of disturbances, but for simplicity we will just consider one safety and one performance controller in this paper. 
 The optimal tracking controller consists of a function (or look-up table) computed offline by solving a HJ variational inequality (VI), and guarantees that the TEB is not violated, despite the worst-case disturbance and worst-case planning control. 
 Although the planning model in general does not apply the worst-case planning control, assuming the worst allows us to obtain a \textit{trajectory-independent} TEB and an optimal tracking controller that is guaranteed safe.
@@ -54,7 +54,7 @@ Note that the computation of the value function and optimal tracking controller 
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=\columnwidth]{fig/hybrid_controller_2}
-	\caption{Hybrid controller. Components from offline computation shown in red.}
+	\caption{Hybrid controller. Components from offline computation are shown in red.}
 	\label{fig:hybrid_ctrl}
 \end{figure}
 

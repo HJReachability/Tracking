@@ -21,11 +21,11 @@ These tracking errors can lead to dangerous situations in which the planned path
  \end{figure}
  %Real-time planning that is both safe and accurate presents a very difficult challenge: accuracy and robustness in many dyanimcal systme sis difficult to compute, often precluding real-time computer hands.fast planning is generally at odds with the need for maintaining safety and robustness.  
 
-To attain fast planning speed while maintaining safety, we propose the modular framework FaSTrack: Fast and Safe Tracking.  As before, FaSTrack allows planning algorithms to use a simplified model of the system in order to operate in real time using augmented obstacles.  However, the bound for augmenting obstacles is rigorously computed and comes with a corresponding optimal tracking controller. Together this bound and controller guarantees safety for the autonomous system as it tracks the simplified plans (see Fig. \ref{fig:chasing}, right).  
+To attain fast planning speed while maintaining safety, we propose the modular framework FaSTrack: Fast and Safe Tracking.  As before, FaSTrack allows planning algorithms to use a simplified model of the system in order to operate in real time using augmented obstacles.  However, the bound for augmenting obstacles is rigorously computed and comes with a corresponding optimal tracking controller. Together this bound and controller guarantee safety for the autonomous system as it tracks the simplified plans (see Fig. \ref{fig:chasing}, right).  
 
 We compute this bound and controller by modeling the navigation task as a pursuit-evasion game between a sophisticated \textit{tracking model} (pursuer) and the simplified \textit{planning model} of the system (evader). 
 The tracking model accounts for complex system dynamics as well as bounded external disturbances, while the simple planning model enables the use of real-time planning algorithms. 
-Offline, the pursuit-evasion game between the two models can be analyzed using any suitable method \SHnote{cite lygeros/tomlin/sastry and mitchell/bayen/tomlin?}, \cite{SinghChenEtAl2018},  \cite{royo2018classification}. 
+Offline, the pursuit-evasion game between the two models can be analyzed using any suitable method \cite{Mitchell05, SinghChenEtAl2018, royo2018classification}. 
 This results in a \textit{tracking error function} that maps the initial relative state between the two models to the \textit{tracking error bound} (TEB): the maximum possible relative distance that could occur over time. 
 This TEB can be thought of as a ``safety bubble" around the planning model of the system that the tracking model of the system is guaranteed to stay within.
 
@@ -38,18 +38,18 @@ Because the tracking error is bounded in the relative state space, we can precom
 The offline computations are \textit{independent} of the path planned in real time.
 
 Online, the autonomous system senses local obstacles, which are then augmented by the TEB to ensure that no potentially unsafe paths can be computed. 
-Next, any chosen path or trajectory planning algorithm uses the simplified planning model and the local environment to determine the next desired state. 
+Next, any chosen path or trajectory planning algorithm uses the simplified planning model and the local environment to determine the next planning state. 
 The autonomous system (represented by the tracking model) then finds the relative state between itself and the next desired state. 
 If this relative state is nearing the TEB then it is plugged into the optimal tracking controller to find the instantaneous optimal tracking control of the tracking model required to stay within the error bound; otherwise, any tracking controller may be used. In this sense, FaSTrack provides a \emph{least-restrictive} control law.
-This process is repeated for as long as the planning algorithm (rapidly exploring random trees, model-predictive control, etc.) is active. 
+This process is repeated for as long as the planning algorithm is active. 
 
 FaSTrack was designed to be modular, and can be used with any method for computing the TEB in conjunction with any existing path or trajectory planning algorithms.  
 This enables motion planning that is real-time, guaranteed safe, and dynamically accurate. 
 FaSTrack was first introduced in conference form \cite{herbert2017fastrack}, and is expanded upon here. In this paper, we demonstrate the FaSTrack framework by using three different real-time planning algorithms that have been ``robustified" by precomputing the TEB and tracking controller. 
-The planning algorithms used in our numerical examples are the fast sweeping method (FSM) \cite{Takei2013}, rapidly-exploring random trees (RRT) \cite{Kuffner2000,Kavraki1996}, and model-predictive control (MPC) \cite{Qin2003}. 
+The planning algorithms used in our numerical examples are the fast sweeping method (FSM) \cite{Takei2013}, rapidly-exploring random trees (RRT) \cite{Kuffner2000,Kavraki1996}, and model-predictive control (MPC) \cite{Qin2003,Zhang2017}. 
 In the three examples, we also consider different tracking and planning models.
 The precomputation of the TEB and optimal tracking control function for each planning-tracking model pair is done by solving a Hamilton-Jacobi (HJ) partial differential equation (PDE). 
-Two of the precomputations converge to an invariant TEB, and one uses a time-varying TEB.
+Two of the precomputations converge to a time-invariant TEB, and one uses a time-varying TEB.
 In the simulations, the system travels through a static environment with constraints defined, for example, by obstacles, while experiencing disturbances.
-The constraints are only fully known through online sensing, for example, once obstacles are within the limited sensing region of the autonomous system. 
+The constraints are only fully known through online sensing (e.g. once obstacles are within the limited sensing region of the autonomous system). 
 By combining the TEB with real-time planning algorithms, the system is able to safely plan and track a trajectory through the environment in real time. 

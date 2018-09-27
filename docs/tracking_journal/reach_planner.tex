@@ -37,7 +37,7 @@ These curves are slices of $\TEB_{\pstate, \infty}$ at the $\theta_r = \pi/2, -3
 
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/ti_valfunc_5d3d}
-	\caption{Infinite time horizon TEB (top left), two slices of the value function at $\theta_r = \pi/2, -3\pi/4$ (top right, bottom left), and corresponding TEB slices (bottom right) for the 5D car tracking 3D Dubins car example in Section \ref{sec:reach_planner}.}
+	\caption{Infinite time horizon TEB (top left), two slices of the value function at $\theta_r = \pi/2, -3\pi/4$ (top right, bottom left), and corresponding TEB slices (bottom right) for the running example (5D car tracking 3D car) introduced in Section \ref{sec:reach_planner}.}
 	\label{fig:vf_TEB:5D3D}  
 \end{figure}
 
@@ -60,7 +60,6 @@ Three initially unknown obstacles, whose boundaries are shown in dotted black, m
 While planning a path to the goal, the car also senses obstacles in the vicinity.
 For this example, we chose a simple virtual sensor that reveals obstacles within a range of $0.5$ units and in front of the vehicle within an angle of $\pi/6$.
 This sensing region is depicted as the light green fan.
-
 When a portion of the unknown obstacles is within this region, that portion is made known to the vehicle, and is shown in red.
 These make up the sensed constraints $\constrSense$.
 To ensure that the 5D car does not collide with the obstacles despite error in tracking, planning is done with respect to augmented constraints $\constrAug$, shown in dashed blue.
@@ -68,11 +67,10 @@ To ensure that the 5D car does not collide with the obstacles despite error in t
 Given the current planning constraints $\constrAug$, the planning algorithm uses the 3D planning model to generate a trajectory, in real time using FSM, towards the goal.
 This plan is shown in dotted red.
 The 5D system robustly tracks the 3D system within the TEB in Fig. \ref{fig:vf_TEB:5D3D}.
-
-Fig. \ref{fig:5D3Dsim} shows four time snapshots of the simulation.
+Four time snapshots of the simulation are shown in Fig. \ref{fig:5D3Dsim}.
 In the top left subplot, the system has sensed only a very small portion of the obstacles, and hence plans a trajectory through an unknown obstacle to the target.
 However, while tracking this initial trajectory, more of the L-shaped obstacle is made known to the system, and therefore the system plans around this obstacle, as shown in the top right subplot.
-The bottom subplots show that eventually more obstacles are made known, and the system reaches the goal at $t=23.9$ s.
+The bottom subplots show the system navigating through sensed obstacles and reaching the goal at $t=23.9$ s.
 
 \begin{figure}
   \centering
@@ -94,6 +92,7 @@ The bottom subplots show that eventually more obstacles are made known, and the 
 
 As explained in Fig. \ref{fig:hybrid_ctrl}, when the tracking error is relatively large, the autonomous system uses the optimal tracking controller given by \eqref{eq:opt_ctrl_inf}; otherwise, it uses a performance controller. 
 In this simulation, we used a simple LQR controller on the linearized system when the tracking error is less than a quarter of the size of the TEB.
+In general, this switching condition is user-defined.
 The tracking error over time is shown in Fig. \ref{fig:P5D_Dubins_tracking_error}.
 The red dots indicate the time points at which the optimal tracking controller in \eqref{eq:opt_ctrl_inf} is used, and the blue dots indicate the time points at which the LQR controller is used. 
 One can see that when the optimal tracking controller is used, the error stays below 0.05, well below the predicted TEB of 0.065, since the planning control and the disturbances are not acting optimally.
@@ -107,4 +106,4 @@ The disturbance was chosen to be uniformly random within the chosen bounds.
 
 The simulation was done in MATLAB on a desktop computer with an Intel Core i7 2600K CPU.
 Time was discretized in increments of $0.067$ seconds, (15 Hz).
-Averaged over the duration of the simulation, planning with FSM took approximately $66$ ms per iteration, and obtaining the tracking controller from \eqref{eq:opt_ctrl_inf} took approximately $2$ ms per iteration.
+Averaged over the duration of the simulation, planning with FSM took approximately $66$ ms per iteration, and obtaining the tracking control from \eqref{eq:opt_ctrl_inf} took approximately $2$ ms per iteration.

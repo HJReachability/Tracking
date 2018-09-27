@@ -50,7 +50,6 @@ The controls of the 10D system are $(u_x, u_y, u_z)$, where $u_x$ and $u_y$ repr
 
 The 3D system controls are $(\hat v_x, \hat v_y, \hat v_z)$, and represent the velocity in each positional dimension. 
 The disturbances in the 10D system $(\dstb_x, \dstb_y, \dstb_z)$ are caused by wind, which acts on the velocity in each dimension. 
-
 The model parameters are chosen to be $d_0=10$, $d_1=8$, $n_0=10$, $k_T=0.91$, $g=9.81$, $|u_x| |u_y| \le \pi/9$, $u_z \in [0, 1.5g]$, $|\hat v_x|, |\hat v_y|, |\hat v_z| \le 0.5$.
 The disturbance bounds were chosen to be $|d_x|, |d_y|, |d_z| \le 0.1$.
 
@@ -112,9 +111,8 @@ As $\tau$ increases, the value function evolves according to \eqref{eq:HJVI}, an
 This implies that $\valfunc_\infty(\rstate) = \valfunc(\rstate, \tau=3.5)$, since we would still obtain the same function even if we let $\tau$ approach infinity.
 The horizontal plane shows $\underline\valfunc = 0.3$, which corresponds to a TEB of approximately 0.55.
 
-The right subplot of Fig. \ref{fig:valfuncRRT} shows the $\underline\valfunc = 0.3$ level set of value function projection, which is the projection, onto the $(x_r, v_x)$ space, of the TEB $\TEB_{\estate, \infty}$ according to \eqref{eq:TEBp:inf}.
-The range of $x_r$ provides the TEB used for the planning algorithm, $\TEB_{\pstate, \infty}$, as given in \eqref{eq:TEBp:inf}.
-
+The right subplot of Fig. \ref{fig:valfuncRRT} shows the $\underline\valfunc = 0.3$ level set of value function projection, which is the projection, onto the $(x_r, v_x)$ space, of the TEB $\TEB_{\estate, \infty}$.
+The range of $x_r$ provides the TEB used for the planning algorithm, $\TEB_{\pstate, \infty}$.
 The value function and TEB in the $(y_r, v_y, \theta_y, \omega_y)$ and $(z_r, v_z)$ spaces are combined to form the 10D TEB, which is projected down to the 3D positional space.
 For conciseness, these value functions are not shown; however, one can see the resulting TEB in Fig. \ref{fig:simRRT} and \ref{fig:simRRT_combined} as the translucent red box.
 

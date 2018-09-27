@@ -5,7 +5,7 @@ In this game, the tracking model will try to ``capture" the planning model, whil
 In reality the planning algorithm is typically not actively trying to avoid the tracking model, but this allows us to account for worst-case scenarios and more crucially, ensure that the TEB is \textit{trajectory-independent}. 
 If both systems are acting optimally in this way, we can determine the %largest relative distance (based on some suitable metric) that may occur over as time progresses.
 %This distance is the 
-maximum possible tracking error between the two models, which is captured by the value function obtained from solving a Hamilton-Jacobi variational inequality (HJ VI), as described below.
+maximum possible tracking error between the two models, which is captured by the value function obtained from solving a Hamilton-Jacobi variational inequality, as described below.
 
 \subsection{Relative System Dynamics}
 To determine the relative distance over time, we must first define the relative system derived from the tracking (\ref{eq:tdyn}) and planning (\ref{eq:pdyn}) models. 
@@ -170,7 +170,7 @@ Thus, even when convergence does not occur we can still provide time-varying saf
 In the rest of this paper, we will focus on the more general time-varying TEB case for clarity, and leave discussion of the time-invariant TEB case in the Appendix.
 Our numerical examples will demonstrate both cases.
 
-\example{In our running example we will set the cost to $\errfunc(\rstate) = x_r^2 + y_r ^2$, i.e. squared distance to the origin in position space. This means we only care about the autonomous system staying within an $(x_r,y_r)$ bound relative to the planning algorithm, and do not care about, for example, difference in relative angle.  We initialize equation (\ref{eq:HJVI}) with this cost function and the relative \ref{eq:5D_and_3D_rdyn}.  We propagate the HJ VI using the level set method toolbox until convergence or until we reach a planning time limit. In this case the value function converges to $\valfunc_\infty$ as seen in Fig. \ref{fig:vf_TEB:5D3D}. 
+\example{In our running example we will set the cost to $\errfunc(\rstate) = x_r^2 + y_r ^2$, i.e. squared distance to the origin in position space. This means we only care about the autonomous system staying within an $(x_r,y_r)$ bound relative to the planning algorithm, and do not care about, for example, difference in relative angle.  We initialize equation (\ref{eq:HJVI}) with this cost function and the relative \ref{eq:5D_and_3D_rdyn}.  We propagate the HJ VI using the level set method toolbox until convergence or until we reach the planning horizon. In this case the value function converges to $\valfunc_\infty$ as seen in Fig. \ref{fig:vf_TEB:5D3D}. 
 }
 
 In Section \ref{sec:proofs}, we formally prove that sublevel sets of $\valfunc(\rstate,\tvar)$ provide the corresponding time-varying TEBs $\TEB(t)$ for the finite time horizon case.
@@ -221,8 +221,8 @@ This is the TEB that will be used in the online framework as shown in Fig. \ref{
 Within this bound the tracking model may use any controller, but on the boundary\footnote{Practical issues arising from sampled data control can be handled using methods such as \cite{Mitchell2012, Mitchell13, Dabadie2014} and are not the focus of our paper.} of this bound the tracking model must use the optimal tracking controller.
 In general, the TEB is defined as a set in the error space, which allows the TEB to not only be in terms of position, but any state of the planning model such as velocity, as demonstrated in the example in Section \ref{sec:resultsMPC}.
 
-We now formally state and prove the propositions. 
-Note that an interpretation of \eqref{eq:TEBp_fin} is that $\valfunc(\rstate, \thor - \tvar)$ is a control-Lyapunov functions for the relative dynamics between the tracking model and the planning model.
+We now formally state and prove the proposition. 
+Note that an interpretation of \eqref{eq:TEBp_fin} is that $\valfunc(\rstate, \thor - \tvar)$ is a control-Lyapunov function for the relative dynamics between the tracking model and the planning model.
 
 \begin{prop}
   \label{prop:nonconv}

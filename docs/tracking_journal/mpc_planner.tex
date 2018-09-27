@@ -46,7 +46,6 @@ g \tan \theta_y\\
 \noindent where the states, controls, and disturbances are the same as the first 8 components of the dynamics in \eqref{eq:Quad10D_dyn}. 
 The position $(\hat x,\hat y)$ and velocity $(\hat v_x, \hat v_y)$ are the states of the 4D system. 
 The controls are $(\hat a_x, \hat a_y)$, which represent the acceleration in each positional dimension. 
-
 The model parameters are chosen to be $d_0=10$, $d_1=8$, $n_0=10$, $k_T=0.91$, $g=9.81$, $|u_x|, |u_y| \le \pi/9$, $|\hat a_x|, |\hat a_y| \le 1$, $|\dstb_x|, |\dstb_y| \le 0.2$.
 
 \subsubsection{Offline precomputation}
@@ -94,7 +93,6 @@ Fig. \ref{fig:vf_TEB:8D4D} shows the $(x_r, v_{x,r})$-projection of value functi
 The total time horizon was $T=15$, and the value function did not converge.
 The gray horizontal plane indicates the value of $\underline V$, which was $1.14$.
 Note that with increasing $\tau$, $V(\rstate,\thor-\tau)$ is non-increasing, as proven in Prop. \ref{prop:nonconv}.
-
 The right subplot of Fig. \ref{fig:vf_TEB:8D4D} shows the $(x_r, v_{x,r})$-projection of the time-varying TEB.
 At $\tau=0$, the TEB is the smallest, and as $\tau$ increases, the size of TEB also increases, consistent with Proposition \ref{prop:nonconv}.
 In other words, the set of possible error states $(x_r, v_{x,r})$ in the relative system increases with time, which makes intuitive sense.
@@ -133,7 +131,7 @@ The dynamical system $h(\cdot,\cdot)$ is set to be a discretized model of the 4D
 p_k \in \mathbb{P}_k :=\mathbb{P}\ominus\TEB_\estate(t_k) \enspace ,
 \end{equation}
 %
-where $\mathbb{P}$ denotes the original state constraint, and $\TEB_\estate(t_k)$ is the tracking error bound at $t_k$., and the additional constraints for collision avoidance:
+where $\mathbb{P}$ denotes the original state constraint, and $\TEB_\estate(t_k)$ is the tracking error bound at $t_k$.%, and the additional constraints for collision avoidance:
 
 %\begin{equation}
 %\mathbb{S}(p_k)\cap\mathbb{O}\oplus\mathbb{S}(\TEB_\estate(t_k)) = \emptyset \enspace ,
