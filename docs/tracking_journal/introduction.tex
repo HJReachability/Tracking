@@ -41,15 +41,15 @@ Online, the autonomous system senses local obstacles, which are then augmented b
 Next, any chosen path or trajectory planning algorithm uses the simplified planning model and the local environment to determine the next planning state. 
 The autonomous system (represented by the tracking model) then finds the relative state between itself and the next desired state. 
 If this relative state is nearing the TEB then it is plugged into the optimal tracking controller to find the instantaneous optimal tracking control of the tracking model required to stay within the error bound; otherwise, any tracking controller may be used. In this sense, FaSTrack provides a \emph{least-restrictive} control law.
-This process is repeated for as long as the planning algorithm is active. 
+This process is repeated for as long as the planning algorithm (rapidly-exploring random trees, model predictive control, etc.) is active. 
 
 FaSTrack was designed to be modular, and can be used with any method for computing the TEB in conjunction with any existing path or trajectory planning algorithms.  
 This enables motion planning that is real-time, guaranteed safe, and dynamically accurate. 
 FaSTrack was first introduced in conference form \cite{herbert2017fastrack}, and is expanded upon here. In this paper, we demonstrate the FaSTrack framework by using three different real-time planning algorithms that have been ``robustified" by precomputing the TEB and tracking controller. 
-The planning algorithms used in our numerical examples are the fast sweeping method (FSM) \cite{Takei2013}, rapidly-exploring random trees (RRT) \cite{Kuffner2000,Kavraki1996}, and model-predictive control (MPC) \cite{Qin2003,Zhang2017}. 
+The planning algorithms used in our numerical examples are the fast sweeping method (FSM) \cite{Takei2013}, rapidly-exploring random trees (RRT) \cite{Kuffner2000,Kavraki1996}, and model predictive control (MPC) \cite{Qin2003,Zhang2017}. 
 In the three examples, we also consider different tracking and planning models.
 The precomputation of the TEB and optimal tracking control function for each planning-tracking model pair is done by solving a Hamilton-Jacobi (HJ) partial differential equation (PDE). 
-Two of the precomputations converge to a time-invariant TEB, and one uses a time-varying TEB.
+Two of the precomputations converge to a time-invariant TEB, and one results in a time-varying TEB.
 In the simulations, the system travels through a static environment with constraints defined, for example, by obstacles, while experiencing disturbances.
 The constraints are only fully known through online sensing (e.g. once obstacles are within the limited sensing region of the autonomous system). 
 By combining the TEB with real-time planning algorithms, the system is able to safely plan and track a trajectory through the environment in real time. 
