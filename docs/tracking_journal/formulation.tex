@@ -22,8 +22,8 @@ The evolution of the tracking model dynamics satisfy ordinary differential equat
 We assume that the tracking model dynamics $\tdyn : \tset\ \times\ \tcset \times \dset \rightarrow \tset$ are uniformly continuous, bounded, and Lipschitz continuous in the system state $\tstate$ for a fixed control and disturbance functions $\tctrl(\cdot), \dstb(\cdot)$. The control function $\tctrl(\cdot)$ and disturbance function $\dstb(\cdot)$ are drawn from
 
 \begin{align}
-\tctrl(\cdot) \in \tcfset &= \{\phi: [0, \thor] \rightarrow \tcset: \phi(\cdot) \text{ is measurable}\},\\
-\dstb(\cdot) \in \dfset &= \{\phi: [0, \thor] \rightarrow \dset: \phi(\cdot) \text{ is measurable}\}.
+\tctrl(\cdot) \in \tcfset &:= \{\phi: [0, \thor] \rightarrow \tcset, \phi(\cdot) \text{ is measurable}\},\\
+\dstb(\cdot) \in \dfset &:= \{\phi: [0, \thor] \rightarrow \dset, \phi(\cdot) \text{ is measurable}\}.
 \end{align}
 
 
@@ -86,7 +86,7 @@ Note that $\constrSense(t)$ depends on time, since the system may gather more in
 In addition, as described throughout the paper, we will augment $\constrSense(t)$ according to the TEB between the tracking and planning models.
 We denote the augmented obstacles as $\constrAug(t)$.
 
-\example{For efficient planning we will simplify the 5D car down to a 3D planning model with the following dynamics:
+\example{For efficient planning use a simpler 3D model with the following dynamics:
 \begin{equation}
 \dot \pstate = 
 \begin{bmatrix}

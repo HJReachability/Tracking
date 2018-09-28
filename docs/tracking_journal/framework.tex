@@ -48,7 +48,7 @@ This cycle continues as the planning algorithm moves towards $\contrgoal$.
 
 The hybrid tracking controller is expanded in Fig. \ref{fig:hybrid_ctrl} and consists of two controllers: an \textit{optimal tracking controller }(also referred to as the safety controller) and a \textit{performance controller}.
 In general, there may be multiple safety and performance controllers depending on various factors such as observed size of disturbances, but for simplicity we will just consider one safety and one performance controller in this paper. 
-The optimal tracking controller consists of a function (or look-up table) computed offline by solving a HJ variational inequality (VI), and guarantees that the TEB is not violated, despite the worst-case disturbance and worst-case planning control. 
+The optimal tracking controller consists of a function (or look-up table) computed offline by solving a HJ variational inequality (VI) \cite{Fisac15}, and guarantees that the TEB is not violated, despite the worst-case disturbance and worst-case planning control. 
 Although the planning model in general does not apply the worst-case planning control, assuming the worst allows us to obtain a \textit{trajectory-independent} TEB and an optimal tracking controller that is guaranteed safe.
 Note that the computation of the value function and optimal tracking controller is done offline; during online execution, the table look-up operation is computationally inexpensive. 
 \begin{figure}[h!]
@@ -60,7 +60,7 @@ Note that the computation of the value function and optimal tracking controller 
 
 When the system is close to violating the TEB, the optimal tracking controller must be used to prevent the violation. 
 On the other hand, when the system is far from violating the TEB, any controller (such as one that minimizes fuel usage), can be used. 
-This control is used to update the autonomous system, and the process repeats.
+This control is used to update the autonomous system's state, and the process repeats.
 
 In the following sections we will first explain the precomputation steps taken in the offline framework. 
 We will then walk through the online framework.
