@@ -15,7 +15,7 @@ Additionally, external disturbances (e.g. wind) can be difficult to account for 
 These tracking errors can lead to dangerous situations in which the planned path is safe, but the actual system trajectory enters unsafe regions.  Therefore, real-time planning is achieved at the cost of guaranteeing safety.  Common practice techniques augment obstacles by an ad hoc safety margin, which may alleviate the problem but is performed heuristically and therefore does not guarantee safety.
  \begin{figure}
  	\centering
- 	\includegraphics[width=0.35\textwidth]{fig/chasing}
+ 	\includegraphics[width=0.7\columnwidth]{fig/chasing}
  	\caption{Left: A planning algorithm uses a fast but simple model (blue disk), to plan around obstacles (gray disks). The more complicated tracking model (green plane) tracks the path. By using FaSTrack the autonomous system is guaranteed to stay within some TEB (black circle). Right: Safety can be guaranteed by planning with respect to obstacles augmented by the TEB (large black circles).}
  	\label{fig:chasing}
  \end{figure}
