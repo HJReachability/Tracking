@@ -36,12 +36,12 @@ sD_big.uMode = 'min';
 sD_big.dMode = 'max';
 sD_big.accuracy = accuracy;
 
-extraArgs.visualize = true;
-extraArgs.RS_level = 3;
-extraArgs.fig_num = 2;
-%extraArgs.plotData.plotDims = [0 0 1];
-%extraArgs.plotData.projpt = 0;
-extraArgs.deleteLastPlot = true;
+extraArgs.visualize.valueFunction = 1;
+extraArgs.visualize.sliceLevel = 3;
+extraArgs.visualize.figNum = 2;
+extraArgs.visualize.plotData.plotDims = [1 1 0];
+extraArgs.visualize.plotData.projpt = 0;
+extraArgs.visualize.deleteLastPlot = true;
   dt = 0.02;
   tMax = 5;
   tau = 0:dt:tMax;
@@ -49,7 +49,7 @@ extraArgs.deleteLastPlot = true;
   extraArgs.stopConverge = true;
   extraArgs.convergeThreshold = dt;%0.5*dt;
   extraArgs.keepLast = 1;
-  [data_big, tau] = HJIPDE_solve(data0, tau, sD_big, 'max_data0', extraArgs);
+  [data_big, tau] = HJIPDE_solve(data0, tau, sD_big, 'maxVWithV0', extraArgs);
  TEB_big = min(sqrt(data_big(:)))+small;
   
   %% compute TEB2
@@ -80,12 +80,12 @@ sD_small.uMode = 'min';
 sD_small.dMode = 'max';
 sD_small.accuracy = accuracy;
 
-extraArgs.visualize = true;
-extraArgs.RS_level = 3;
-extraArgs.fig_num = 2;
-%extraArgs.plotData.plotDims = [0 0 1];
-%extraArgs.plotData.projpt = 0;
-extraArgs.deleteLastPlot = true;
+%extraArgs.visualize. = true;
+extraArgs.visualize.sliceLevel = 3;
+extraArgs.visualize.figNum = 2;
+extraArgs.visualize.plotData.plotDims = [1 1 0];
+extraArgs.visualize.plotData.projpt = 0;
+extraArgs.visualize.deleteLastPlot = true;
   dt = 0.02;
   tMax = 5;
   tau = 0:dt:tMax;

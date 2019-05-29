@@ -3,11 +3,11 @@ f1 = 1;
 f2 = 2;
 f3 = 3;
 if nargin < 1
-  gN = [55; 55; 55; 55];
+  gN = [30; 30; 30; 30];
 end
 
 if nargin < 2
-  visualize = true;
+  visualize = 0;
 end
 
 %% Grid and cost
@@ -106,7 +106,9 @@ extraArgs.stopConverge = true;
 extraArgs.convergeThreshold = dt;
 
 % solve backwards reachable set
+tic;
 [data, tau] = HJIPDE_solve(data0, tau, sD, 'none', extraArgs); %%%%%%%%%%%%%%%%%%%%%%
+runtime = toc;
 
 % largest cost along all time (along the entire 5th dimension which is
 % time)

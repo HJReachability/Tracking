@@ -21,8 +21,8 @@ if strcmp(dMode, 'max')
     dOpt{1} = ((-deriv{dims==1})>=0)*(obj.dMax(1)) + ...
               ((-deriv{dims==1})<0)*(obj.dMin(1));
     % Planning control
-    dOpt{2} = ((-deriv{dims==1})>=0)*(obj.pxMax) + ...
-              ((-deriv{dims==1})<0)*(-obj.pxMax); 
+    dOpt{2} = ((-deriv{dims==1})>=0)*(obj.pxMax(1)) + ...
+              ((-deriv{dims==1})<0)*(-obj.pxMax(1)); 
   end
   
   if any(dims == 2)
@@ -31,8 +31,8 @@ if strcmp(dMode, 'max')
               ((-deriv{dims==2})<0)*(obj.dMin(2));
             
     % Planning control
-    dOpt{4} = ((-deriv{dims==2})>=0)*(obj.pyMax) + ...
-              ((-deriv{dims==2})<0)*(-obj.pyMax); %%%% taking away "pyMax(2)"
+    dOpt{4} = ((-deriv{dims==2})>=0)*(obj.pyMax(2)) + ...
+              ((-deriv{dims==2})<0)*(-obj.pyMax(2)); %%%% taking away "pyMax(2)"
   end  
   
 elseif strcmp(dMode, 'min')

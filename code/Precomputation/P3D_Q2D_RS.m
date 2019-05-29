@@ -7,11 +7,11 @@ if nargin < 1
 end
 
 if nargin < 2
-  visualize = true;
+  visualize = 1;
 end
 
 if nargin < 3
-  video = 0;
+  video = 1;
 end
 
 if video
@@ -60,20 +60,24 @@ if visualize
 end
 
 %% Dynamical system
-wMin = [-1];
-wMax = [1];
+uMin = [-1, -1];
+uMax = [1, 1];
+%wMin = [-1];
+%wMax = [1];
 
-aMin =[-1];
-aMax = [1];
+%aMin =[-1];
+%aMax = [1];
 
-pMax = [.1];
+pMax = [.1, .1];
+pMin = [-.1, -.1];
 
 dMax = [0; 0];
 dMin = [0; 0];
 
 dims = 1:3;
 
-sD.dynSys = P3D_Q2D_Rel([], wMin, wMax, aMin, aMax, pMax, dMin, dMax,dims);
+%P3D_Q2D_Rel(x, uMin, uMax, pMin, pMax, dMin, dMax, v, dims)
+sD.dynSys = P3D_Q2D_Rel([], uMin, uMax, pMin, pMax, dMin, dMax);
 
 %% Otherparameters
 sD.uMode = 'min';
@@ -83,20 +87,32 @@ sD.accuracy = 'low';
 if video
   dt = 0.01;
   tMax = 1;
-  for i = 0:tMax/dt
-    tMaxTemp = dt*i;
-    tau = 0:dt:tMaxTemp;
-    
-    %extraArgs.stopConverge = true;
-    %extraArgs.convergeThreshold = 0.5*dt;
+  converge = 0;
+  i = 0;
+  for i = 1:tMax/dt
+      tMaxTemp = dt*i;
+      tau = 0:dt:tMaxTemp;
+      % tau = 0:dt:dt;
+      
+      extraArgs.stopConverge = true;
+    extraArgs.convergeThreshold = 0.5*dt;
+    extraArgs.keepLast = 1;
     
     if i == 0
-      data = data0;
+        data = data0;
+        i = 1;
+        tNow = 0;
     else
-    [data, tau] = HJIPDE_solve(data0, tau, sD, 'none', extraArgs);
-    
+    [data, tau] = HJIPDE_solve(data0, tau, sD, 'maxVWithV0', extraArgs);
+    %tNow = tNow + tau(end);
+    tNow = tau(end);
     % max over time
     data = max(data,[],4);
+%     change = max(abs(data(:)-dataprev(:)));
+%     if change <= extraArgs.convergeThreshold
+%         converge = 1;
+%     end
+%     
     end
     [g2D, data2D] = proj(sD.grid,data,[0 0 1],0);%'max');
     levels = [.5, .75, 1];
@@ -116,7 +132,7 @@ if video
     axis square
     hold on
     view(40,20)
-    title(['T = ' num2str(tau(end)) ' s'],'Interpreter','latex','FontSize',20)
+    title(['T = ' num2str(tNow,'%4.2f') ' s'],'Interpreter','latex','FontSize',20)
     xlabel('$x_r$','Interpreter','latex','FontSize',20)
     ylabel('$y_r$','Interpreter','latex','FontSize',20)
     zlabel('$V(r,T)$','Interpreter','latex','FontSize',20)
@@ -197,7 +213,7 @@ if video
     h = visSetIm(sD.grid, sqrt(data), levelColor{2}, levels(2));
     axis([-levels(3)-small levels(3)+small ...
       -levels(3)-small levels(3)+small -pi pi])
-    title(['T = ' num2str(tau(end)) ' s'],'Interpreter','latex','FontSize',20)
+    title(['T = ' num2str(tNow,'%4.2f') ' s'],'Interpreter','latex','FontSize',20)
     xlabel('$x_r$','Interpreter','latex','FontSize',20)
     ylabel('$y_r$','Interpreter','latex','FontSize',20)
     zlabel('$\theta$','Interpreter','latex','FontSize',20)
@@ -252,27 +268,33 @@ if video
       imwrite(imind,cm,gif_out_filename1,'gif','WriteMode','append');   %If it's not the first pass, append
     end
     writeVideo(v1,image_data)
+    %dataprev = data;
    end
   close(v1)
    close(v2)
  close(v3)
 else
   if visualize
-    extraArgs.visualize = true;
-    extraArgs.RS_level = 2;
-    extraArgs.fig_num = 2;
-    %extraArgs.plotData.plotDims = [0 0 1];
-    %extraArgs.plotData.projpt = 0;
-    extraArgs.deleteLastPlot = true;
+    extraArgs.visualize.valueFunction = true;
+    extraArgs.visualize.sliceLevel = 2;
+    extraArgs.visualize.figNum = 2;
+    extraArgs.visualize.plotData.plotDims = [1 1 0];
+    extraArgs.visualize.plotData.projpt = 0;
+    extraArgs.visualize.deleteLastPlot = true;
   end
   dt = 0.1;
   tMax = .75;
   tau = 0:dt:tMax;
   
+  extraArgs.keepLast = 1;
   extraArgs.stopConverge = true;
   extraArgs.convergeThreshold = dt;%0.5*dt;
-  [data, tau] = HJIPDE_solve(data0, tau, sD, 'none', extraArgs);
-  data = max(data,[],4);
+  
+  tic
+  [data, tau] = HJIPDE_solve(data0, tau, sD, 'maxVWithV0', extraArgs);
+  runtime = toc;
+  
+  %data = max(data,[],4);
   if visualize
     figure(1)
     subplot(1,2,2)
@@ -280,7 +302,7 @@ else
     data2D = sqrt(data2D);
     surf(g2D.xs{1}, g2D.xs{2}, data2D)
     
-       figure(2)
+       figure(3)
     clf
     alpha = .2;
     levels = [.5, .75, 1];
@@ -312,7 +334,7 @@ else
     h = visSetIm(sD.grid, sqrt(data), 'red', levels(2));
     axis([-levels(3)-small levels(3)+small ...
       -levels(3)-small levels(3)+small -pi pi])
-    title(['t = ' num2str(tau(end)) ' s'])
+    title(['t = ' num2str(tNow,'%4.2f') ' s'])
     axis square
     
     subplot(2,3,5)

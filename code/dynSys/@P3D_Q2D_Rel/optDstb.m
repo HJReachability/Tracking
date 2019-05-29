@@ -21,8 +21,8 @@ if strcmp(dMode, 'max')
     dOpt{1} = ((deriv{dims==1})>=0)*(obj.dMax(1)) + ...
               ((deriv{dims==1})<0)*(obj.dMin(1));
     % Planning control
-    dOpt{2} = ((-deriv{dims==1})>=0)*(obj.pMax(1)) + ...
-              ((-deriv{dims==1})<0)*(obj.pMin(1));
+    dOpt{2} = ((deriv{dims==1})>=0)*(obj.pMax(1)) + ...
+              ((deriv{dims==1})<0)*(obj.pMin(1));
   end
   
   if any(dims == 2)
@@ -31,8 +31,8 @@ if strcmp(dMode, 'max')
               ((deriv{dims==2})<0)*(obj.dMin(2));
             
     % Planning control
-    dOpt{4} = ((-deriv{dims==2})>=0)*(obj.pMax(2)) + ...
-              ((-deriv{dims==2})<0)*(obj.pMin(2));
+    dOpt{4} = ((deriv{dims==2})>=0)*(obj.pMax(2)) + ...
+              ((deriv{dims==2})<0)*(obj.pMin(2));
   end  
   
 elseif strcmp(dMode, 'min')
@@ -42,8 +42,8 @@ elseif strcmp(dMode, 'min')
               ((deriv{dims==1})<0)*(obj.dMax(1));
             
     % Planning control
-    dOpt{2} = ((-deriv{dims==1})>=0)*(obj.pMin(1)) + ...
-              ((-deriv{dims==1})<0)*(obj.pMax(1));
+    dOpt{2} = ((deriv{dims==1})>=0)*(obj.pMin(1)) + ...
+              ((deriv{dims==1})<0)*(obj.pMax(1));
   end
   
   if any(dims == 2)
@@ -51,8 +51,8 @@ elseif strcmp(dMode, 'min')
     dOpt{3} = ((deriv{dims==2})>=0)*(obj.dMin(2)) + ...
               ((deriv{dims==2})<0)*(obj.dMax(2));
     % Planning control
-    dOpt{4} = ((-deriv{dims==2})>=0)*(obj.pMin(2)) + ...
-              ((-deriv{dims==2})<0)*(obj.pMax(2));
+    dOpt{4} = ((deriv{dims==2})>=0)*(obj.pMin(2)) + ...
+              ((deriv{dims==2})<0)*(obj.pMax(2));
   end  
   
 else

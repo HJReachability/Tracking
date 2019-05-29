@@ -33,9 +33,9 @@ end
 function dx = dynamics_cell_helper(obj, x, u, d, dims, dim)
 switch dim
   case 1
-    dx = obj.v*cos(x{dims==3}) + d{1} - d{2};
+    dx = obj.v*cos(x{dims==3}) + d{1} + d{2};
   case 2
-    dx = obj.v*sin(x{dims==3}) + d{3} - d{4};
+    dx = obj.v*sin(x{dims==3}) + d{3} + d{4};
   case 3
     dx = u{1}; 
   otherwise
