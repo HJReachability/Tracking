@@ -1,0 +1,266 @@
+Reviews of Version 1. Reviewed for publication as Full Paper
+Review ID	Reviewer number	Comments to the author	Attachment
+167553 	2 	
+
+Paper has a good theoretical contribution, although the result section
+should be improved. 
+
+The concept of relative system dynamics is defined in section V-A, but
+it is used many times before that section. I suggest explaining it (at
+least giving the main idea, not necessarily the complete mathematical
+definition) before.
+
+A better explanation of how expanding each obstacle by the maximum
+distance of the TEB (instead of computing the Minkowski difference)
+affects the conservativeness of the algorithm seems to be missing.   
+
+In the theoretical explanation, the worst-case disturbances are
+considered. But then, in the result section, most of the experiments
+are done with uniformly random disturbances between some bounds. This
+seems quite conservative, and an experiment in the worst-case scenario
+may be needed.	
+
+In the numerical examples, why using RRT and not other planning
+algorithms (for example incremental approaches such as	D*, D*
+Lite,...)? 
+
+The switching behavior between the performance controller and the
+optimal controller seems a little ad-hoc. How Does this switching have
+any consequences on stability?	How should the threshold used in this
+switching computed?
+
+How does (in terms of the optimal cost achieved, not in terms of
+runtime) FastTrack compare with an approach where the full dynamic
+system is solved online? (i.e. in a case where there is no switching 
+between the performance controller and the optimal controller). 
+
+What are the runtimes achieved when running FastTrack in complex
+cluttered 3D environments?
+
+As noted in the future work, the worst-case assumptions may give a TEB
+quite conservative.   
+
+The running example helps a lot to understand what's going on in each
+step of the proposed framework. Good work.
+
+In the caption of Fig. 5, it says "note that the slice shown on the
+bottom right..." Does it refer to the plot on the bottom left? Or to
+the plot on the right?
+
+The use of HJ VI as "Hamilton-Jacobi Variational Inequality" leads to
+confusion with section VI. 
+
+In the result section, there are several paragraphs that explain only
+what is clearly seen in the figures. I suggest going deeper into the
+explanation. 
+
+There are several repetitions along the different 3 numerical
+experiments (for example, the specifications of the computer used, or
+the explanation of the legends used in the figures).
+
+I suggest improving the labels of the axes in Fig. 12 (rotating them
+could be a good option). 
+
+There are also some sentences that could be improved:
+"As the quadrotor exploring around in the environment, more
+obstacles..."  could be improved as "As the quadrotor explores the
+environment, more obstacles..."
+
+"The...controller is optained by..." should be	"The..controller is
+obtained by..."
+
+"The evolution of the tracking model dynamics satisfy ordinary
+differential equation" should be "The evolution of the tracking model
+dynamics satisfies this ordinary differential equation" 
+
+"The planning algorithm takes..., then outputs..." could be improved as
+"The planning algorithm takes..., and then outputs...".
+ 
+
+	 
+167559 	5 	
+
+The paper presents a guaranteed safe trajectory planning framework for
+a priori unknown obstacles. The proposed control framework is
+hierarchical with two layers: planning and control. Since trajectory
+synthesis for high-dimensional systems computationally demanding and
+possibly intractable, the planning layer computes trajectories to a
+lower dimensional dynamical system. Thus, the control layer job is to
+track this trajectory using a high fidelity dynamical model, which is a
+high-dimensional. The obstacles boundaries are augmented in the
+planning layer using a tracking error bound (TEB) to ensure that the
+control can safely follow the planned trajectory. The framework can
+achieve real-time constraints by computing TEB and the control law
+offline using a value function obtained from solving Hamilton-Jacobi
+(HJ) variational inequality (VI), which tools are available. The paper
+is well-written and publishable. 
+
+However, there are some questions which answered would make the
+contribution clearer:
+1. Does it works for dynamical systems such as fixed-wing UAVs with
+constant velocity? It looks like it would work since previous similar
+work from authors dealt with this problem. However, it would be
+interesting to have one example for this case. 
+2. Does it provide conditions for sensor design such as bound for
+sensing horizon?
+3. Does it only work for static obstacles?
+4. Is there any advantage of using the proposed approach comparing with
+Barrier Function (Funnels) design such as in [32]? 
+
+	 
+169227 	6 	
+
+This paper proposes a modular framework that is able to ensure safe
+tracking in the real time motion planning. The main results of this
+paper are the so called tracking error bound (TEB) within which the
+safe trajectory is generated online by optimal tracking controller.
+Overall, this paper is not bad written and contains some publishable
+results.    However, the contributions of this paper are not
+significant to be considered as a full paper. Moreover, it is unclear
+that how the proposed FaSTrack framework differs from the existing
+robust planning methods. The contributions are not clearly stated,
+leading the reviewer to question the novelty of the methods.  There are
+also some major concerns and comments that need to be addressed before
+the publication. The main comments and concerns are listed as below
+
+(1) The mathematical representation of the models is unclear and lacks
+of rigorous definition. For instance, when the authors introduce the
+state of the tracking model, s, so what is nature of the state s? Is it
+a vector or scalar, is it a real or integer? It is a very vague and
+sloppy way to define a mathematical variable. Similar issues occur in
+the following context, what is the function \phi in (2) and (3)? What
+is the dimension of the functions u_s, d? What are the sets of S? There
+are so many careless defined symbols that make the technical part of
+this paper hard to understand.	
+
+(2) In the technical parts, they read like the combinations of well
+known methods putting together. It is unclear of what is the real
+theoretical contribution of this paper? For instance, in the section of
+offline computation, the TEB between the tracking and planning models
+is obtained by formulating a Pursuit-evasion game, which can be solved
+by using the Hamilton-Jacobi. It is well known that the reachability
+problem can be solved by the level set method. So I am not sure what is
+the contribution here? In the section of online computation, the
+authors provide an online trajectory planning algorithm without
+performance guarantee. How to specify the safety and tracking
+performance by the proposed algorithm? What can we say about the
+performance?  
+
+	 
+169229 	7 	
+
+In general I found the paper well written and well organized. The paper
+expands a previous work, [4], of some of the authors by including more
+details and numerical examples to demonstrate the FaSTrack framework. 
+My main concern is about the contribution of this manuscript with
+respect to [4]. I'm not sure if the two additional
+examples/case-studies justify publication.
+
+
+Comments:
+
+1. For system (1) it is assumed that f is uniformly continuous, bounded
+and Lipschitz continuous. This doesn't really make sense since
+Lipschitz continuity implies uniform continuity. Why do you need the
+boundedness assumption? Existence and uniqueness of solutions does not
+require bounded dynamics.
+
+
+2. The authors write that the planning model does not include
+disturbance inputs and that's a key feature of the proposed framework.
+I do not see how this is a novelty of this work since several
+techniques in trajectory tracking for instance use a nominal system
+which does not include any disturbance.
+
+3. In Proposition 1 it is written "Given t, t'\in[0,T], \forall t' \ge
+t ...". I believe this is not written properly. Maybe the authors mean:
+Given t\in[0,T] then \forall t' \in [t,T] etc...
+
+In addition, Proposition 1 seems like a forward invariance type of
+result.  As mentioned in  Section II (control barrier functions) and in
+Remark 2, there are many similar and well known results in the
+literature. Also, since V(r,T-t) can be interpreted as a
+control-Lyapunov function, it is not clear what is the new theoretical
+result in Proposition 1.
+
+Finally, and given that the current manuscript is an expanded version
+of a conference paper, it not clear what the contribution that
+justifies journal publication is.
+
+4. minor typos, page 10, "...Fig 10 shows [the] the projection..." and 
+page 11, "...such that [the] the TEB..."
+
+5. In example A you augmented the sensed obstacles by the maximum
+distance of the TEB, whereas in example B you augmented the planning
+model. Does this affect the online computations or the planning
+algorithm? Does the geometry of the obstacles affect the online
+planning/re-planning? Also, in example C, the TEB is time-varying which
+means that the tracking error bound increases as time progresses.  How
+do you augment in this case the sensed obstacles to obtain a safe zone?
+In Fig. 14 it seems that you enlarged the obstacles by the same amount
+(blue dashed lines). Does this mean that in time-varying TEBs the
+tracking error bound increases over time but cannot exceed some
+specific value? I think that for this framework to work, the sensing
+radius of the system should be greater than the maximum TEB. Finally,
+is it possible to reduce the time of the offline computations required
+by this framework? It seems that this is the main drawback of the
+approach.
+
+6. Is it possible to extend this framework to environments with
+non-static obstacles? 
+
+	 
+Publication decision on Version 1 — May 5, 2019  10:08:42  PST
+Decision 	Reject - may be resubmitted as Paper or Technical Note [3]
+Cover message 	
+
+Dear Dr. Chen:
+
+Your paper “FaSTrack: a Modular Framework for Real-Time Motion Planning
+and Guaranteed Safe Tracking”, Number 18-1690, that you submitted for
+possible publication in the IEEE Transactions on Automatic Control has
+now been reviewed.  Copies of the reviews are enclosed.
+
+Based on the reviews, it is our decision that the paper cannot be
+accepted for publication in the Transactions in its present form.
+Detailed comments can be found in the attachments, and below is a list
+of some key points based on the review comments and my own reading. 
+
+1. There are concerns on the new contributions, especially from a
+control theory perspective, of the current work in the context of
+existing rich literature on, e.g., robust trajectory tracking,
+pursuit-evasion game, and HJ based reachability analysis. Also, it is
+very important to distinguish the current version from its published
+conference version [4].
+
+2. A discussion on how to deal with the time varying feature (or a
+better illustration of its asymptotic or convergence properties) of the
+tracking error bound (TEB) estimation and the conservativeness that it
+may cause would be very helpful. 
+
+3. There is questions on how to set the threshold to decide the
+switching between tracking and planning controllers. Also, a discussion
+of the overall system stability/performance in face of these switchings
+would be helpful.
+
+4. There are also some concerns on the model formulation, mathematical
+notations and assumptions in the paper. Details can be found in the
+reviewers’ comments as attached.
+
+We encourage you to examine carefully the comments of the enclosed
+reviews and to consider making a major revision of the paper, which can
+be resubmitted to the Transactions on Automatic Control within 3 months
+from the date of this letter. You should include a detailed "author's
+response" document describing the changes in the paper.
+
+Please log-in, click on the "Author" link at the bottom of your access
+page, and upload your revised paper under the SAME reference number
+within 3 months from the time of this letter.  A new reference number
+will be assigned to your paper. 
+
+Sincerely,
+
+Prof. Hai Lin
+Associate Editor
+hlin1@nd.edu
+University of Notre Dame

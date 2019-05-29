@@ -59,3 +59,4 @@ code/figsRRT2/
 docs/tracking_journal/tracking\.pdf
 
 *.bbl
+*.out
