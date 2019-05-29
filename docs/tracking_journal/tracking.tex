@@ -122,16 +122,17 @@
 \title{\LARGE \bf FaSTrack: a Modular Framework for Real-Time Motion Planning and Guaranteed Safe Tracking}
 
 \author{Mo Chen*, Sylvia L. Herbert*, Haimin Hu, Ye Pu, Jaime F. Fisac, Somil Bansal, SooJean Han, Claire J. Tomlin
-%\tks{This research is supported by ONR under the Embedded Humans MURI (N00014-16-1-2206). The research of S. Herbert has received funding from the NSF GRFP and the UC Berkeley Chancellor's Fellowship Program.}
+\thanks{This research is supported by ONR under the Embedded Humans MURI (N00014-16-1-2206). The research of S. Herbert has received funding from the NSF GRFP and the UC Berkeley Chancellor's Fellowship Program.}
 \thanks{* Both authors contributed equally to this work.}
-\thanks{M. Chen is with the Department of Aeronautics and Astronautics, Stanford University. mochen72@stanford.edu}
-\thanks{S. Herbert, Y. Pu, J. Fisac, S. Bansal, C. Tomlin are with the Department of Electrical Engineering and Computer Sciences, UC Berkeley. \{sylvia.herbert, ye.pu, jfisac, somil, tomlin\}@berkeley.edu}
-\thanks{H. Hu is with the School of Information Science and Technology (SIST), ShanghaiTech
-University. huhm@shanghaitech.edu.cn }
-\thanks{S. Han is with the Control and Dynamical Systems program at Caltech}
+\thanks{M. Chen is with the School of Computing Science, Simon Fraser University. mochen@cs.sfu.ca}
+\thanks{S. Herbert, J. Fisac, S. Bansal, C. Tomlin are with the Department of Electrical Engineering and Computer Sciences, UC Berkeley. \{sylvia.herbert, ye.pu, jfisac, somil, tomlin\}@berkeley.edu}
+\thanks{H. Hu is with the Department of Electrical Systems Engineering, University of Pennsylvania. haiminhu@seas.upenn.edu}
+\thanks{Y. Pu is with the Department of Electrical and Electronic Engineering, University of Melbourne.}
+\thanks{S. Han is with the Control and Dynamical Systems program, California Institute of Technology.}
+\thanks{A preliminary version of this paper was published in \cite{herbert2017fastrack}.}
 }
 
-
+\renewcommand{\baselinestretch}{.92}
 \begin{document}
 \maketitle
 \thispagestyle{empty}
@@ -150,13 +151,7 @@ With this tracking error bound (TEB) we also precompute the corresponding optima
 The TEB can be either finite time horizon or infinite time horizon depending on the relationship between the tracking and planning models.
 In the former case, a time-varying TEB is obtained, and in the latter, a time-invariant TEB is obtained.
 Note that since the TEB and optimal tracking controller depend only on the relative state space between the tracking and planning models, the precomputation does not require \textit{a priori} knowledge of the environment.
-%The TEB comes with a precomputed safety control function for the tracking model to stay within the bound during online planning.  
 This framework allows for fast online planning using the planning model, with guaranteed safe real-time tracking of the plan using the TEB and optimal tracking controller.
-%any path or trajectory planner using simplified dynamics to plan quickly can be used. 
-%In conjunction, a differential game approach produces a safety controller for the vehicle along with a guaranteed tracking error bound. 
-%This bound captures all possible deviations in the planning space due to model mismatch between higher-dimensional and simplified models of the system, as well as external disturbances.
-%The tracking error bound can be either finite time horizon or infinite time horizon.
-%In the former case, a time-invariant TEB is obtained, and in the latter, a time-varying TEB is obtained.
 We demonstrate FaSTrack using Hamilton-Jacobi reachability for the precomputation and three different online trajectory planners with three different tracking-planning model pairs.
 \end{abstract}
 
@@ -215,26 +210,26 @@ We demonstrate FaSTrack using Hamilton-Jacobi reachability for the precomputatio
 
 \input{appendix.tex}
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{fig/mo_bio}}]{Mo Chen}
-	received the B.A.Sc. degree in Engineering Physics from the University of British Columbia, Vancouver, BC, Canada, in 2011, and is currently a Ph.D. candidate in Electrical Engineering and Computer Sciences at the University of California, Berkeley.\vspace{-2cm}
+	is an Assistant Professor in the School of Computing Science at Simon Fraser University, Burnaby, BC, Canada, where he directs the Multi-Agent Robotic Systems Lab. He completed his PhD in the Electrical Engineering and Computer Sciences Department at the University of California, Berkeley with Claire Tomlin in 2017, and received his BASc in Engineering Physics from the University of British Columbia in 2011. From 2017 to 2018, Mo was a postdoctoral researcher in the Aeronautics and Astronautics Department in Stanford University with Marco Pavone. His research interests include multi-agent systems, safety-critical systems, and practical robotics. Mo received the 2017 Eli Jury Award for his research and the 2016 Demetri Angelakos Memorial Achievement Award and his mentorship of students.\vspace{-1cm}
 \end{IEEEbiography}
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{fig/sylvia_bio}}]{Sylvia L. Herbert}
-	received her B.S. and M.S. degrees in Mechanical Engineering at Drexel University, Philadelphia, PA, in 2014. She is currently a Ph.D. student in Electrical Engineering and Computer Sciences at the University of California, Berkeley.\vspace{-2cm}
+	received her B.S. and M.S. degrees in Mechanical Engineering at Drexel University, Philadelphia, PA, in 2014. She is currently a Ph.D. student in Electrical Engineering and Computer Sciences at the University of California, Berkeley.\vspace{-1cm}
 \end{IEEEbiography}
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{fig/haimin_bio}}]{Haimin Hu}
-	received his B.E. degree in Electronic and Information Engineering from ShanghaiTech University, China, in 2018. He is currently a M.S. student in Electrical and Systems Engineering at the University of Pennsylvania. He was a visiting student at the University of California, Berkeley (2017-2018).\vspace{-2cm}
+	received his B.E. degree in Electronic and Information Engineering from ShanghaiTech University, China, in 2018. He is currently a M.S. student in Electrical and Systems Engineering at the University of Pennsylvania. He was a visiting student at the University of California, Berkeley (2017-2018).\vspace{-1cm}
 \end{IEEEbiography}
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{fig/ye_bio}}]{Ye Pu}
-	received the B.S. degree from the School of Electronic Information and Electrical Engineering at Shanghai Jiao Tong University, China, in 2008, the M.S. degree from the department of Electrical Engineering and Computer Sciences at the Technical University Berlin, Germany, in 2011, and the Ph.D. degree form the Swiss Federal Institute of Technology (EPFL), Lausanne, Switzerland, in 2016. She is a Lecture in the Department of Electrical and Electronic Engineering at the University of Melbourne, Australia. Prior to that, she was a Postdoctoral Scholar in the Hybrid Systems Lab, EECS, University of California at Berkeley, USA.\vspace{-2cm}
+	received the B.S. degree from the School of Electronic Information and Electrical Engineering at Shanghai Jiao Tong University, China, in 2008, the M.S. degree from the department of Electrical Engineering and Computer Sciences at the Technical University Berlin, Germany, in 2011, and the Ph.D. degree form the Swiss Federal Institute of Technology (EPFL), Lausanne, Switzerland, in 2016. She is a Lecturer in the Department of Electrical and Electronic Engineering at the University of Melbourne, Australia. Prior to that, she was a Postdoctoral Scholar in the Hybrid Systems Lab, EECS, University of California at Berkeley, USA.\vspace{-1cm}
 \end{IEEEbiography}
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{fig/jaime_bio}}]{Jaime F. Fisac}
-	is a Ph.D. candidate in Electrical Engineering and Computer Sciences at UC Berkeley. He received a B.S./M.S. degree in Electrical Engineering from the Universidad Politécnica de Madrid, Spain, in 2012, and a M.Sc. in Aeronautics from Cranfield University, U.K., in 2013. He was then awarded the La Caixa Foundation fellowship to pursue his Ph.D. His research interests lie in control theory and artificial intelligence, with a focus on safety for human-centered autonomy.\vspace{-2cm}
+	is a Ph.D. candidate in Electrical Engineering and Computer Sciences at UC Berkeley. He received a B.S./M.S. degree in Electrical Engineering from the Universidad Politécnica de Madrid, Spain, in 2012, and a M.Sc. in Aeronautics from Cranfield University, U.K., in 2013. He was then awarded the La Caixa Foundation fellowship to pursue his Ph.D. His research interests lie in control theory and artificial intelligence, with a focus on safety for human-centered autonomy.\vspace{-1cm}
 \end{IEEEbiography}
 %\newpage
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{fig/somil_bio}}]{Somil Bansal}
-	is currently a Ph.D. candidate in Electrical Engineering and Computer Sciences at the University of California, Berkeley. He completed his B.Tech. in Electrical Engineering from Indian Institute of Technology, Kanpur, and an M.S. in  Electrical Engineering and Computer Sciences from UC Berkeley in 2012 and 2014, respectively.\vspace{-2cm}
+	is currently a Ph.D. candidate in Electrical Engineering and Computer Sciences at the University of California, Berkeley. He completed his B.Tech. in Electrical Engineering from Indian Institute of Technology, Kanpur, and an M.S. in  Electrical Engineering and Computer Sciences from UC Berkeley in 2012 and 2014, respectively.\vspace{-1cm}
 \end{IEEEbiography}
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{fig/soojean_bio}}]{SooJean Han}
-	SooJean Han received her B.S. degree in Electrical Engineering and Computer Science, and Applied Mathematics at the University of California, Berkeley in 2016.  She is currently pursuing her PhD degree in Control and Dynamical Systems at California Institute of Technology.\vspace{-2cm}
+	SooJean Han received her B.S. degree in Electrical Engineering and Computer Science, and Applied Mathematics at the University of California, Berkeley in 2016.  She is currently pursuing her PhD degree in Control and Dynamical Systems at California Institute of Technology.\vspace{-1cm}
 \end{IEEEbiography}
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{fig/claire_bio}}]{Claire J. Tomlin}
 	is the Charles A. Desoer Professor of Engineering in Electrical Engineering and Computer Sciences at the University of California, Berkeley. She was an Assistant, Associate, and Full Professor in Aeronautics and Astronautics at Stanford from 1998 to 2007, and in 2005 joined Berkeley. Claire works in the area of control theory and hybrid systems, with applications to air traffic management, UAV systems, energy, robotics, and systems biology.  She is a MacArthur Foundation Fellow (2006) and an IEEE Fellow (2010), and in 2010 held the Tage Erlander Professorship of the Swedish Research Council at KTH in Stockholm.
