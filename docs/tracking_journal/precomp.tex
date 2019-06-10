@@ -222,7 +222,6 @@ Within this bound the tracking model may use any controller, but on the boundary
 In general, the TEB is defined as a set in the error space, which allows the TEB to not only be in terms of position, but any state of the planning model such as velocity, as demonstrated in the example in Section \ref{sec:resultsMPC}.
 
 We now formally state and prove the proposition. 
-Note that an interpretation of \eqref{eq:TEBp_fin} is that $\valfunc(\rstate, \thor - \tvar)$ is a control-Lyapunov function for the relative dynamics between the tracking model and the planning model.
 
 \begin{prop}
   \label{prop:nonconv}
@@ -299,15 +298,20 @@ Now, we finish the proof as follows:
 \end{IEEEproof} 
 
 \begin{rem}
-  As already mentioned, Prop. \ref{prop:nonconv} assumes that the planning control $\pctrl$ and disturbance $\dstb$ are optimally trying to maximize the value function $\valfunc$, and thereby increasing the size of the TEB $\TEB$.
+  \textbf{Worst-case assumptions:} Prop. \ref{prop:nonconv} assumes that the planning control $\pctrl$ and disturbance $\dstb$ are optimally trying to maximize the value function $\valfunc$, and thereby increasing the size of the TEB $\TEB$.
   Despite this, \eqref{eq:fin_thor_prop:statement} still holds.
   In reality, $\pctrl$ and $\dstb$ do not behave in a worst-case fashion, and it is often the case that when $\tvar' \ge \tvar$, we have $\rstate \in \TEB(\tvar) \Rightarrow \rtraj(\tvar'; \rstate, \tvar) \in \TEB(\tau)$ for some $\tau \le \tvar'$.
   Thus, one can ``take advantage'' of the suboptimality of $\pctrl$ and $\dstb$ by finding the earliest $\tau$ such that $\rtraj(\tvar'; \rstate, \tvar) \in \TEB(\tau)$ in order to have the tighter TEB over a longer time-horizon.
 \end{rem}
 
  \begin{rem} 
-   Prop. \ref{prop:nonconv} is similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc$ or $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In this work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to effectively solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
+   \textbf{Relationship to reachable sets:} Prop. \ref{prop:nonconv} is similar to well-known results in differential game theory with a slightly different cost function \cite{Akametalu2014}, and has been utilized in the context of using the subzero level set of $\valfunc$ or $\valfunc_\infty$ as a backward reachable set for tasks such as collision avoidance or reach-avoid games \cite{Mitchell05}. In this work we do not assign special meaning to any particular level set, and instead consider all level sets at the same time. This effectively allows us to effectively solve many simultaneous reachability problems in a single computation, thereby removing the need to check whether resulting invariant sets are empty, as was done in \cite{Bansal2017}.
  \end{rem}
+
+\begin{rem}
+    \MCnote{\textbf{Relationship to control-Lyapunov functions:} One interpretation of \eqref{eq:TEBp_fin} is that $\valfunc(\rstate, \thor - \tvar)$ is a control-Lyapunov function for the relative dynamics between the tracking model and the planning model, and any level set of $\valfunc(\rstate, \thor - \tvar)$ is the optimal region of attraction.
+    In addition, the relative system trajectories are guaranteed remain within the initial level set despite the worst-case disturbance.}
+\end{rem}
 
 \example{In our running example we have computed a converged value function $\valfunc_\infty$.  The corresponding TEB can be found using the converged form of (\ref{eq:TEB_fin}) found in the appendix as (\ref{eq:TEB_inf}). We can similarly find the TEB projected onto the planning states using (\ref{eq:TEBp_inf}). The minimum of the value function was approximately $\underline\valfunc = 0.004$, and the size of the TEB in $(x_r, y_r)$ space is approximately $0.065$. The converged value function and TEB can be seen in Fig. \ref{fig:vf_TEB:5D3D}. The corresponding optimal tracking controller is optained by plugging the gradients of our converged value function and our relative system dynamics into (\ref{eq:opt_ctrl_inf}). 
 }

@@ -1,13 +1,23 @@
 % !TEX root = tracking.tex
 \section{Problem Formulation \label{sec:formulation}}
-In this paper we seek to simultaneously plan and track a trajectory (or path converted to a trajectory) online and in real time. 
-The planning is done using a relatively simple model of the system, called the \textit{planning model}. 
-The tracking is done by a \textit{tracking model} representing the autonomous system. 
+\MCnote{FaSTrack is a modular framework to simultaneously plan and track a trajectory (or path converted to a trajectory) online and in real time.}
+
+\MCnote{In FaSTrack, planning is done using a relatively simple model of the system, called the \textit{planning model}. 
+Practically, the planning model and algorithm should be chosen to allow real-time planning.
+In Section \ref{sec:results}, we will use the fast sweeping method, model-predictive control, and rapidly-exploring random trees as examples of planning systems; FaSTrack is compatible with any other planning model and algorithm.}
+
+\MCnote{On the other hand, tracking is done by a \textit{tracking model} that more accurately represents the autonomous system. 
+Practically, the tracking model should be chosen to consider factors such as higher-order dynamics and disturbances.
+Under the FaSTrack framework, a tracking error bound (TEB) is computed to account for the mismatch between the planning and tracking models to realize the benefits of both using a simplified model and a higher-fidelity model.
+Although this paper focuses on using the Hamilton-Jacobi method to compute time-invariant and time-varying TEBs, in general any method can be used under the FaSTrack framework.
+For example, the authors in \cite{} use SOS optimization to achieve better computational scalability.}
+
 The environment may contain static obstacles that are \textit{a priori} unknown and can be observed by the system within a limited sensing range (see Section \ref{sec:online}). 
+
 In this section we define the tracking and planning models, as well as the goals of the paper.
 
 \subsection{Tracking  Model}
-The tracking model is a more accurate and typically higher-dimensional representation of the autonomous system dynamics. 
+The tracking model is a relatively accurate and typically higher-dimensional representation of the autonomous system dynamics. 
 Let $\tstate$ represent the states of the tracking model. 
 The evolution of the tracking model dynamics satisfy ordinary differential equation (ODE)
 
@@ -105,7 +115,7 @@ We denote the augmented obstacles as $\constrAug(t)$.
 }
 
 \subsection{Goals and Approach}
-Given system dynamics in \eqref{eq:tdyn}, initial state $\tstate_0$, goal states $\tgoal$, and constraints $\tconstr$ such that $\constr$ is \textit{a priori} unknown and determined in real time, we would like to steer the system to $\tgoal$ with formally guaranteed satisfaction of $\tconstr$.
+Given system dynamics in \eqref{eq:tdyn}, initial state $\tstate_0$, goal states $\tgoal$, and constraints $\tconstr$ such that $\constr$ is \textit{a priori} unknown and determined in real time, we would like to steer the system to $\tgoal$ with formally guaranteed satisfaction of $\tconstr$, despite any disturbances the system may experience.
 
 To achieve this goal, FaSTrack decouples the formal guarantee of safety from the planning algorithm.
 Instead of having the system, represented by the tracking model, directly plan trajectories towards $\tgoal$, in our framework the autonomous system (represented by the tracking model) ``chases'' the planning model of the system, which uses any planning algorithm to obtain trajectories in real time.
