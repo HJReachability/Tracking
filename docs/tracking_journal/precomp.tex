@@ -309,8 +309,12 @@ Now, we finish the proof as follows:
  \end{rem}
 
 \begin{rem}
-    \MCnote{\textbf{Relationship to control-Lyapunov functions:} One interpretation of \eqref{eq:TEBp_fin} is that $\valfunc(\rstate, \thor - \tvar)$ is a control-Lyapunov function for the relative dynamics between the tracking model and the planning model, and any level set of $\valfunc(\rstate, \thor - \tvar)$ is the optimal region of attraction.
-    In addition, the relative system trajectories are guaranteed remain within the initial level set despite the worst-case disturbance.}
+    \MCnote{
+    \textbf{Relationship to control-Lyapunov functions:} One interpretation of \eqref{eq:TEBp_fin} is that $\valfunc(\rstate, \thor - \tvar)$ is a control-Lyapunov function for the relative dynamics between the tracking model and the planning model, and any level set of $\valfunc(\rstate, \thor - \tvar)$ is the optimal region of attraction.
+    It should be noted that computing control-Lyapunov functions for general nonlinear systems is difficult.
+    In addition, the relative system trajectories are guaranteed remain within the initial level set despite the worst-case disturbance.
+    In the absence of any information about, for example, the intent of the planning system, such a worst-case assumption is needed.
+    }
 \end{rem}
 
 \example{In our running example we have computed a converged value function $\valfunc_\infty$.  The corresponding TEB can be found using the converged form of (\ref{eq:TEB_fin}) found in the appendix as (\ref{eq:TEB_inf}). We can similarly find the TEB projected onto the planning states using (\ref{eq:TEBp_inf}). The minimum of the value function was approximately $\underline\valfunc = 0.004$, and the size of the TEB in $(x_r, y_r)$ space is approximately $0.065$. The converged value function and TEB can be seen in Fig. \ref{fig:vf_TEB:5D3D}. The corresponding optimal tracking controller is optained by plugging the gradients of our converged value function and our relative system dynamics into (\ref{eq:opt_ctrl_inf}). 
