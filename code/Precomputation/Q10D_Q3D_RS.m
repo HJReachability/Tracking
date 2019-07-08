@@ -177,7 +177,7 @@ else
 end
 
 if visualize
-  HJIextraArgs.visualize = 1;
+  %HJIextraArgs.visualize = 1;
   %HJIextraArgs.RS_level = 1;
   HJIextraArgs.visualizeValueFunction = 1;
   HJIextraArgs.fig_num = 2;

@@ -18,7 +18,7 @@ if nargin <3
 end
 
 if nargin < 4
-    gN = 275*ones(1,length(dims));
+    gN = 50*ones(1,length(dims));
 end
 
 if nargin < 5
@@ -112,18 +112,18 @@ end
 
 if visualize
     % set visualize to true
-    extraArgs.visualize = true;
+    extraArgs.visualize.valueFunction = 1;
     
     % set slice of function to visualize
-    extraArgs.RS_level = level;
+    extraArgs.visualize.sliceLevel = level;
     
     % figure number
-    extraArgs.fig_num = 2;
+    extraArgs.visualize.figNum = 2;
     f = figure(2);
     %   set(f, 'Position', [400 400 450 400]);
     
     % delete previous time step's plot
-    extraArgs.deleteLastPlot = false;
+    extraArgs.visualize.deleteLastPlot = true;
 end
 
 % time step
@@ -143,13 +143,13 @@ extraArgs.convergeThreshold = dt/2;
 
 extraArgs.keepLast = 1;
 
-extraArgs.quiet = 1;
+extraArgs.quiet = 0;
 
 % solve backwards reachable set
 datas = cell(1,length(subDims));
 for ii = 1:length(subDims)
     [datas{ii}, ~] = HJIPDE_solve(data0{ii}, tau, ...
-        sD{ii}, 'max_data0', extraArgs);
+        sD{ii}, 'maxVWithV0', extraArgs);
 end
 
 trackingErrorBound = zeros(1,3);
