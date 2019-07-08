@@ -19,7 +19,7 @@ function [trueQuad, virt_x, controller] = ...
 %       inputs related to sensing environment
 %       inputs related to RRT (goal?)
 
-addpath(genpath('.'))
+%addpath(genpath('.'))
 
 % % Video
 % vout = VideoWriter('figsRRT1/videoRRT.mp4', 'MPEG-4');
