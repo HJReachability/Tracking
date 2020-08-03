@@ -59,7 +59,7 @@ load(obs_filename)
 uMode = 'max';
 % dMode = 'min'; % Not needed since we're not using worst-case control
 
-obsMap = ObstacleMap(obs);
+obsMap = ObstacleMapRRT(obs);
 
 % plot global obstacles
 if vis

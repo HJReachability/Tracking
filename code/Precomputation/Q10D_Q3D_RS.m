@@ -1,5 +1,5 @@
 function [sD_X, sD_Z, dataX, dataZ, derivX, derivZ, TEB] = ...
-  Q10D_Q3D_RS(gNX, gNZ, dt, tMax, extraArgs)
+  Q10D_Q3D_RS(gNX, gNZ, dt, tMax, uPlan, extraArgs)
 % Computes the tracking error bound and optimal control policy for a 10D
 % quadrotor tracking a 3D point source.
 % Inputs:
@@ -48,8 +48,12 @@ end
 t0 = 0;
 tau = t0:dt:tMax;
 
-% set up extraArgs stuff
 if nargin<4
+    uPlan = 1.5;
+end
+
+% set up extraArgs stuff
+if nargin<5
   extraArgs = [];
 end
 
@@ -92,13 +96,13 @@ gravity = 9.81;
 if isfield(extraArgs,'uMax')
   uMax = extraArgs.uMax;
 else
-uMax = [.5; 20/180*pi; .5; 20/180*pi; 0.5; 1.5*gravity];
+uMax = [uPlan; 20/180*pi; uPlan; 20/180*pi; uPlan; 1.5*gravity];
 end
 
 if isfield(extraArgs,'uMin')
   uMin = extraArgs.uMin;
 else
-  uMin = [-.5; -20/180*pi; -.5; -20/180*pi; -0.5; 0];
+  uMin = [-uPlan; -20/180*pi; -uPlan; -20/180*pi; -uPlan; 0];
 end
 
 if isfield(extraArgs,'dMax')
@@ -235,9 +239,21 @@ derivX = computeGradients(sD_X.grid, dataX_last);
 derivZ = computeGradients(sD_Z.grid, dataZ_last);
 
 %% save
-save(['Quad10D_g' num2str(gNZ(1)) '_dt0' num2str(dt*100) '_t' ...
-    num2str(tMax) '_' accuracy '_' targetType '.mat'], 'TEB','sD_X', ...
-    'sD_Z', 'dataX', 'dataZ', 'derivX','derivZ', '-v7.3')
+directory = ['mat/Q10D_Q3D_RS_' num2str(now)];
+mkdir(directory);
+save([directory '/Q10D_Q3D_uplan_' num2str(sD_X.dynSys.uMax(1)*10) '_tenth.mat'], 'TEB','sD_X', ...
+    'sD_Z', 'dataX', 'dataZ', 'derivX','derivZ', 'tauX','tauZ','-v7.3')
+% save([directory '/Quad10D_g' num2str(gNZ(1)) '_dt0' num2str(dt*100) '_t' ...
+%     num2str(tMax) '_' accuracy '_' targetType '.mat'], 'TEB','sD_X', ...
+%     'sD_Z', 'dataX', 'dataZ', 'derivX','derivZ', 'tauX','tauZ','-v7.3')
+
+size_dataX = size(dataX);
+size_dataZ = size(dataZ);
+
+save([directory '/Quad10D_g' num2str(gNZ(1)) '_dt0' num2str(dt*100) '_t' ...
+    num2str(tMax) '_' accuracy '_' targetType '_info.mat'], 'TEB','sD_X', ...
+    'sD_Z', 'size_dataX', 'size_dataZ', 'tauX','tauZ','-v7.3')
+
 %save(sprintf('%s_%f.mat', mfilename, now), 'sD_X', 'sD_Z', 'dataX', 'dataZ', ...
 %  'tau', '-v7.3')
 end

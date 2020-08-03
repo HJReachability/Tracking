@@ -1,4 +1,4 @@
-function simulateOnlineRRTSwitching(data_filenames, obs_filename, extraArgs)
+function simulateOnlineRRTSwitching(Mode, obs_filename, extraArgs)
 % simulateOnlineRRT(data_filename, obs_filename, extraArgs)
 %     Includes tracking
 %
@@ -31,14 +31,23 @@ XDims = 1:4;
 YDims = 5:8;
 ZDims = 9:10;
 
+% 
+% % Mode 1 (fast)
+% if nargin <1
+%   data_filenames{1} = 'Q10D_Q3D_uplan_15_tenth.mat';
+% %  data_filenames{2} = 'Q10D_Q3D_Rel_u_10_tenth.mat';
+%   data_filenames{2} = 'Q10D_Q3D_uplan_5_tenth.mat';
+% %  data_filenames{4} = 'Q10D_Q3D_Rel_u_1_tenth.mat';
+% end
+
 % obstacles
-if nargin <3
+if nargin <2
   obs_filename = 'obs.mat';
 end
 load(obs_filename)
 
 %extraArgs
-if nargin <4
+if nargin <3
   extraArgs.vis = 1;
   extraArgs.auto = 1;
   extraArgs.human = 0;
@@ -62,30 +71,26 @@ end
 
 uMode = 'min';
 
-% Mode 1 (fast)
-if nargin <2
-  data_filenames{1} = 'Q10D_Q3D_Rel_u_15_tenth.mat';
-  data_filenames{2} = 'Q10D_Q3D_Rel_u_10_tenth.mat';
-  data_filenames{3} = 'Q10D_Q3D_Rel_u_5_tenth.mat';
-  data_filenames{4} = 'Q10D_Q3D_Rel_u_1_tenth.mat';
-  modeNum = length(data_filenames);
-end
 
+
+%modeNum = length(data_filenames);
+modeNum = length(Mode);
 %% Before Looping
 dt = 0.1;
 senseRange = 6;
+tGreedy = 5; %switching look-ahead time
 
-Mode = cell(1,modeNum);
+% Mode = cell(1,modeNum);
 obsMap = cell(1,modeNum);
 
 %get all the info about the different modes
 for i = 1:modeNum
-  Mode{i} = load(data_filenames{i});
-  Mode{i}.derivX = computeGradients(Mode{i}.sD_X.grid,Mode{i}.dataX);
-  Mode{i}.derivZ = computeGradients(Mode{i}.sD_Z.grid,Mode{i}.dataZ);
-  Mode{i}.trackErr = Mode{i}.TEB + .1;
-  Mode{i}.virt_v = Mode{i}.u;
-  Mode{i}.delta_x = Mode{i}.virt_v*dt;
+%   Mode{i} = load(data_filenames{i});
+%   Mode{i}.derivX = computeGradients(Mode{i}.sD_X.grid,Mode{i}.dataX);
+%   Mode{i}.derivZ = computeGradients(Mode{i}.sD_Z.grid,Mode{i}.dataZ);
+%   Mode{i}.trackErr = Mode{i}.TEB + .1;
+%   Mode{i}.virt_v = Mode{i}.sD_X.dynSys.uMax(1);
+%   Mode{i}.delta_x = Mode{i}.virt_v*dt;
   obsMap{i} = ObstacleMapRRT(obs);
 end
 
@@ -184,7 +189,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
     elseif isfield(extraArgs,'auto')&&extraArgs.auto %if auto switching
       
       [m, newStates_test] = autoSwitch(mlast,virt_x,goal,trueQuad,...
-         Mode,obsMap,modeNum);
+         Mode,obsMap,modeNum,tGreedy,dt);
 
     else
       error('auto or human?')
@@ -419,7 +424,7 @@ end
 
 
 function [m, newStates_test] = autoSwitch(mlast,virt_x,goal,trueQuad,...
-        Mode,obsMap,modeNum)
+        Mode,obsMap,modeNum,tGreedy,dt)
       
       %try going down a mode
       m = max(1,mlast-1);
@@ -445,11 +450,15 @@ function [m, newStates_test] = autoSwitch(mlast,virt_x,goal,trueQuad,...
         
       elseif ~isempty(newStates_test) && ~isempty(newStates_test2)
         %if neither are empty, pick the mode that is closest to the goal
+        % in the next 5 seconds
         
-        goaldist1 = norm(newStates_test(end,:)'-goal);
-        goaldist2 = norm(newStates_test2(end,:)'-goal);
+        timeLeft = min(length(newStates_test),length(newStates_test2));
+        timeCheck = min(tGreedy/dt,timeLeft);
         
-        val = goaldist2-goaldist1; %which mode thinks it'll get you closest to the goal?
+        goaldist1 = norm(newStates_test(timeCheck,:)'-goal,Inf);
+        goaldist2 = norm(newStates_test2(timeCheck,:)'-goal,Inf);
+        
+        val = goaldist1-goaldist2; %which mode thinks it'll get you closest to the goal?
         
         if val > 0.05 && ... % if this value is high enough
             (norm(newStates_test2(1,:)'-trueQuad.x([1 5 9])) < Mode{m+1}.trackErr) 

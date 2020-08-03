@@ -2,7 +2,7 @@ function Q8D_Q4D_RS(A, D, gN, visualize)
 %Q10D_Q4D_RS Summary of this function goes here
 %   Detailed explanation goes here
 
-addpath(genpath('..'))
+%addpath(genpath('..'))
 
 if nargin < 3
   gN = [41; 41; 25; 21];
