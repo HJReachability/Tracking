@@ -423,61 +423,183 @@ function [m,newStates_test]= humanSwitch(mlast,virt_x,goal,trueQuad,...
 end
 
 
-function [m, newStates_test] = autoSwitch(mlast,virt_x,goal,trueQuad,...
-        Mode,obsMap,modeNum,tGreedy,dt)
-      
-      %try going down a mode
-      m = max(1,mlast-1);
-      
-      %test for this mode and the next
-      newStates_test = rrtNextState((virt_x), goal, ...
-        obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
-      
-      newStates_test2 = rrtNextState((virt_x),goal, ...
-        obsMap{m+1}.padded_obs,Mode{m+1}.delta_x, [], false);
-      
-      if isempty(newStates_test) && isempty(newStates_test2)
-        %if both are empty, move up a mode
+function [m, newStates] = autoSwitch(mlast,virt_x,goal,trueQuad,...
+    Mode,obsMap,modeNum,tGreedy,dt)
+
+%index previous, current, and next nodes
+
+mvec = [];
+mlegend = {};
+
+% previous
+if mlast(1) > 1
+    mvec(end+1) = mlast -1;
+    mlegend{length(mvec)} = 'previous';
+end
+
+% current
+mvec(end+1) = max(1,mlast-1);
+mlegend{length(mvec)} = 'current';
+
+% next
+if mlast(1) < modeNum
+    mvec(end+1) = mvec(1) +1;
+    mlegend{length(mvec)} = 'next';
+end
+
+%test for this mode and the next
+empty_flag = zeros(size(mvec));
+parfor ii = 1:length(mvec)
+    newStates_test{ii} = rrtNextState((virt_x), goal, ...
+        obsMap{mvec(ii)}.padded_obs, Mode{mvec(ii)}.delta_x, [], false);
+    
+    %       newStates_test2 = rrtNextState((virt_x),goal, ...
+    %         obsMap{m+1}.padded_obs,Mode{m+1}.delta_x, [], false);
+    if isempty(newStates_test{ii})
+        empty_flag(ii) = 1;
+    end
+end
+
+
+
+if sum(empty_flag) == 0
+    % if the modes aren't empty, pick the mode that is closest to
+    % the goal in the next 5 seconds
+    
+    timeLeft = Inf;
+    parfor ii = 1:length(empty_flag)
+            timeLeft = min(timeLeft,length(newStates_test{ii}));
+
+    end
+    
+    timeCheck = min(tGreedy/dt,timeLeft);
+    
+    parfor ii = 1:length(mvec)
+        goaldist(ii) = norm(newStates_test{ii}(timeCheck,:)'-goal,Inf);
+    end
+    
+    [~,idx] = min(goaldist);
+    
+    %val = goaldist(2)-bestdist; %which mode thinks it'll get you closest to the goal?
+    
+%     if val > 0.05 && ... % if this value is high enough
+%             (norm(newStates_test{idx}(1,:)'-trueQuad.x([1 5 9])) < Mode{idx}.trackErr)
+   if (norm(newStates_test{idx}(1,:)'-trueQuad.x([1 5 9])) < Mode{idx}.trackErr)
+
+        %and switching won't violate new TEB
         
-        while isempty(newStates_test) %&& isempty(newStates_test2)
-          m = m+1;
-          if m > modeNum
-            error('no path found!')
-          end
-          newStates_test = rrtNextState(virt_x, goal, ...
-            obsMap{m}.padded_obs, Mode{m}.delta_x, [], false);
+        %then go to that node
+        m = mvec(idx);
+        newStates = newStates_test{idx};
+   else
+        idx = find(contains(mlegend,'current'));
+         m = mvec(idx);
+         newStates = newStates_test{idx};
+    end
+elseif sum(empty_flag) > 0 && sum(empty_flag) < length(empty_flag)
+
+    timeLeft = Inf;
+    for ii = 1:length(empty_flag)
+        if empty_flag(ii) == 0
+            timeLeft = min(timeLeft,length(newStates_test{ii}));
         end
-        
-      elseif ~isempty(newStates_test) && ~isempty(newStates_test2)
-        %if neither are empty, pick the mode that is closest to the goal
-        % in the next 5 seconds
-        
-        timeLeft = min(length(newStates_test),length(newStates_test2));
-        timeCheck = min(tGreedy/dt,timeLeft);
-        
-        goaldist1 = norm(newStates_test(timeCheck,:)'-goal,Inf);
-        goaldist2 = norm(newStates_test2(timeCheck,:)'-goal,Inf);
-        
-        val = goaldist1-goaldist2; %which mode thinks it'll get you closest to the goal?
-        
-        if val > 0.05 && ... % if this value is high enough
-            (norm(newStates_test2(1,:)'-trueQuad.x([1 5 9])) < Mode{m+1}.trackErr) 
-          %and switching won't violate new TEB
-          
-          %then move up a mode
-          m = m+1;
-          newStates_test = newStates_test2;
+    end
+    
+    timeCheck = min(tGreedy/dt,timeLeft);
+    
+    goaldist = inf*ones(length(mvec));
+    parfor ii = 1:length(mvec)
+        if empty_flag(ii) == 0
+            goaldist(ii) = norm(newStates_test{ii}(timeCheck,:)'-goal,Inf);
         end
+    end
+    
         
-      elseif isempty(newStates_test) && ~isempty(newStates_test2)
-        %if only the first mode is empty, pick mode m+1
-        if (norm(newStates_test2(1,:)'-trueQuad.x([1 5 9])) < Mode{m}.trackErr)
-        m = m+1;
-        newStates_test = newStates_test2;
+    [~,idx] = min(goaldist);
+    
+    %val = goaldist(2)-bestdist; %which mode thinks it'll get you closest to the goal?
+    
+%     if val > 0.05 && ... % if this value is high enough
+%             (norm(newStates_test{idx}(1,:)'-trueQuad.x([1 5 9])) < Mode{idx}.trackErr)
+   if (norm(newStates_test{idx}(1,:)'-trueQuad.x([1 5 9])) < Mode{idx}.trackErr)
+
+        %and switching won't violate new TEB
+        
+        %then go to that node
+        m = mvec(idx);
+        newStates = newStates_test{idx};
+   else
+        idx = find(contains(mlegend,'current'));
+        
+        if empty_flag(idx) == 0
+         m = mvec(idx);
+         newStates = newStates_test{idx};
         else
-          error('no path feasible!')
+            error('no safe path found!')
         end
-      else
-        error('no path found!')
-      end
+    end
+else
+    error('no path found!')
+end
+    
+% elseif isempty(newStates_test{1}) ...
+%         && ~isempty(newStates_test{2})...
+%         
+%     if ~isempty(newStates_test{3})
+%         timeLeft = min(length(newStates_test{2}),length(newStates_test{3}));
+%         
+%         timeCheck = min(tGreedy/dt,timeLeft);
+%         
+%         goaldist(1) = Inf;
+%         parfor ii = 2:length(mvec)
+%             goaldist(ii) = norm(newStates_test{ii}(timeCheck,:)'-goal,Inf);
+%         end
+%          
+%         val = goaldist(3)-goaldist(2); %which mode thinks it'll get you closest to the goal?
+%         
+%         if val > 0.05 && ... % if this value is high enough
+%                 (norm(newStates_test{3}(1,:)'-trueQuad.x([1 5 9])) < Mode{3}.trackErr)
+%             %and switching won't violate new TEB
+%             
+%             %then go to that node
+%             m = mvec(3);
+%             newStates = newStates_test{3};
+%         else
+%             m = mvec(2);
+%             newStates = newStates_test{2};
+%         end
+%     
+%     else
+%         % set 2 to default
+%         m = mvec(2);
+%         newStates = newStates_test{2};
+%     end
+%     
+%     
+%     
+%     
+% %     if (norm(newStates_test{2}(1,:)'-trueQuad.x([1 5 9])) < Mode{2}.trackErr)
+% %         m = mvec(2);
+% %         newStates = newStates_test{2};
+% %         
+% %     elseif (norm(newStates_test{3}(1,:)'-trueQuad.x([1 5 9])) < Mode{3}.trackErr)
+% %         m = mvec(3);
+% %         newStates = newStates_test{3};
+% %     else
+% %         error('no path feasible!')
+% %     end
+%     
+% elseif isempty(newStates_test{1}) ...
+%         && isempty(newStates_test{2})...
+%         && ~isempty(newStates_test{3})
+%     
+%     if (norm(newStates_test{3}(1,:)'-trueQuad.x([1 5 9])) < Mode{3}.trackErr)
+%         m = mvec(3);
+%         newStates = newStates_test{3};
+%     else
+%         error('no path feasible!')
+%     end
+% else
+%     error('no path found!')
+% end
 end

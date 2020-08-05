@@ -49,7 +49,7 @@ t0 = 0;
 tau = t0:dt:tMax;
 
 if nargin<4
-    uPlan = 1.5;
+    uPlan = 1;
 end
 
 % set up extraArgs stuff
