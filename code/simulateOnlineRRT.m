@@ -33,7 +33,7 @@ goal = [12; 0; 0];
 small = 0.1;
 virt_v = sD_X.dynSys.uMax(1);
 
-dt = 0.01;
+dt = 0.001;
 delta_x = virt_v*dt;
 
 % Subsystems
@@ -72,9 +72,10 @@ obsMap = ObstacleMapRRT(obs);
 
 % plot global obstacles
 if vis
-  f = figure;
+  f = figure(1);
+  clf
   f.Color = 'white';
-  f.Position = [100 100 1280 720];
+  %f.Position = [100 100 1280 720];
   
   obsMap.plotGlobal()
   f.Children.FontSize = 16;
@@ -158,7 +159,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   pY = eval_u(sD_X.grid, derivX, rel_x(YDims));
   pZ = eval_u(sD_Z.grid, derivZ, rel_x(ZDims));
   
-  if norm(virt_x(:,iter) - trueQuad.x([1 5 9])) > 0.25*trackErr
+  if norm(virt_x(:,iter) - trueQuad.x([1 5 9])) > 0.5*trackErr
       uX = sD_X.dynSys.optCtrl([], rel_x(XDims), pX, uMode);
       uY = sD_X.dynSys.optCtrl([], rel_x(YDims), pY, uMode);
       uZ = sD_Z.dynSys.optCtrl([], rel_x(ZDims), pZ, uMode);
@@ -168,6 +169,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
       boxColor = 'r';
       
       controller(iter-1) = 1; % reachability controller
+      control_type = 'optimal';
       
    else
        uX = LQR_Q2D(rel_x(XDims),.5);
@@ -178,6 +180,7 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
        boxColor = 'b';
        
        controller(iter-1) = 0; % LQR controller
+       control_type = 'lqr';
   end
    
   % Find optimal control of relative system (no performance control)
@@ -203,7 +206,11 @@ while iter < max_iter && norm(trueQuad.x([1 5 9]) - goal) > 0.5
   if (vis && ~mod(iter,25)) || iter == 2
     % Local obstacles and true position
     obsMap.plotLocal;
+    if strcmp(control_type,'optimal')
+    plot3(trueQuad.x(1), trueQuad.x(5), trueQuad.x(9), 'r.')
+    else
     plot3(trueQuad.x(1), trueQuad.x(5), trueQuad.x(9), 'b.')
+    end
     hold on
     
     % Virtual state
